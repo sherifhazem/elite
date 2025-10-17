@@ -9,7 +9,12 @@ from celery import Celery
 import redis
 
 from .config import Config
-from .routes import main as main_blueprint
+from .routes import (
+    company_routes,
+    main as main_blueprint,
+    offer_routes,
+    user_routes,
+)
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -30,3 +35,6 @@ celery.conf.update(app.config)
 app.logger.info("✅ Database connection configured for %s", app.config["SQLALCHEMY_DATABASE_URI"])
 
 app.register_blueprint(main_blueprint)
+app.register_blueprint(user_routes, url_prefix="/api/users")
+app.register_blueprint(company_routes, url_prefix="/api/companies")
+app.register_blueprint(offer_routes, url_prefix="/api/offers")

@@ -128,6 +128,118 @@ After starting the server, visit [`http://localhost:5000/health`](http://localho
 {"status": "ok"}
 ```
 
+## API Endpoints
+
+The CRUD API is namespaced under the `/api` prefix. All endpoints exchange JSON payloads and return the status codes listed in each section.
+
+### Users
+
+- `GET /api/users/` – Retrieve all registered users.
+- `POST /api/users/` – Create a new user.
+- `PUT /api/users/<id>` – Update an existing user.
+- `DELETE /api/users/<id>` – Remove a user.
+
+Example create request:
+
+```bash
+curl -X POST http://localhost:5000/api/users/ \
+    -H "Content-Type: application/json" \
+    -d '{
+        "username": "elite_user",
+        "email": "elite@example.com",
+        "password_hash": "plain-or-hashed"
+    }'
+```
+
+Successful response (`201 Created`):
+
+```json
+{
+    "id": 1,
+    "username": "elite_user",
+    "email": "elite@example.com",
+    "joined_at": "2025-01-17T12:00:00"
+}
+```
+
+Possible errors:
+
+- `400 Bad Request` when required fields are missing or the username/email already exist.
+- `404 Not Found` when updating or deleting a non-existent user.
+
+### Companies
+
+- `GET /api/companies/` – Retrieve all companies.
+- `POST /api/companies/` – Create a new company profile.
+- `PUT /api/companies/<id>` – Update company details.
+- `DELETE /api/companies/<id>` – Remove a company.
+
+Example update request:
+
+```bash
+curl -X PUT http://localhost:5000/api/companies/3 \
+    -H "Content-Type: application/json" \
+    -d '{
+        "description": "Updated partnership summary."
+    }'
+```
+
+Successful response (`200 OK`):
+
+```json
+{
+    "id": 3,
+    "name": "Tech Corp",
+    "description": "Updated partnership summary.",
+    "created_at": "2025-01-17T09:00:00"
+}
+```
+
+Possible errors:
+
+- `400 Bad Request` when the company name already exists.
+- `404 Not Found` when the specified company does not exist.
+
+### Offers
+
+- `GET /api/offers/` – Retrieve all offers.
+- `POST /api/offers/` – Create a new offer.
+- `PUT /api/offers/<id>` – Update an existing offer.
+- `DELETE /api/offers/<id>` – Remove an offer.
+
+Example create request:
+
+```bash
+curl -X POST http://localhost:5000/api/offers/ \
+    -H "Content-Type: application/json" \
+    -d '{
+        "title": "New Year Discount",
+        "discount_percent": 20,
+        "company_id": 3,
+        "valid_until": "2025-02-01T23:59:59"
+    }'
+```
+
+Successful response (`201 Created`):
+
+```json
+{
+    "id": 5,
+    "title": "New Year Discount",
+    "discount_percent": 20.0,
+    "valid_until": "2025-02-01T23:59:59",
+    "company_id": 3,
+    "created_at": "2025-01-17T10:15:00"
+}
+```
+
+Possible errors:
+
+- `400 Bad Request` when required fields are missing, the discount is not numeric, or `valid_until` is not ISO formatted.
+- `404 Not Found` when the associated company or the target offer cannot be located.
+
+> ℹ️ Use `curl` or Postman to exercise each endpoint after starting the Flask server. Ensure the content type is `application/json` for all mutation requests.
+
 ## Frontend Initialization
 
 _Last updated: 2025-10-17_
