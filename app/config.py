@@ -35,6 +35,11 @@ class Config:
     TIMEZONE = os.getenv("TIMEZONE", "UTC")
 
 
+logger.info(
+    "SQLALCHEMY_DATABASE_URI loaded from environment: %s",
+    Config.SQLALCHEMY_DATABASE_URI,
+)
+
 try:
     database_name = make_url(Config.SQLALCHEMY_DATABASE_URI).database or "unknown"
 except Exception as exc:  # pragma: no cover - defensive logging

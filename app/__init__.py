@@ -17,6 +17,9 @@ app.config.from_object(Config)
 CORS(app)
 
 db = SQLAlchemy(app)
+
+# Ensure models are registered with SQLAlchemy's metadata for migrations
+from app.models import *  # noqa: F401,F403
 migrate = Migrate(app, db)
 
 redis_client = redis.from_url(app.config["REDIS_URL"])
