@@ -1,4 +1,5 @@
 # ELITE Backend – Initial Setup
+Last Updated: 2025-10-17
 
 The ELITE backend provides the foundational services for managing elite offers and related business logic. This initial setup prepares the project with a clean structure, environment configuration, and basic health monitoring endpoint.
 
@@ -83,3 +84,36 @@ After starting the server, visit [`http://localhost:5000/health`](http://localho
 ## Next Step
 
 The next development stage is to implement the core data models such as `User`, `Company`, and `Offer`, followed by their related services and API endpoints.
+
+## Frontend Initialization
+
+_Last updated: 2025-10-17_
+
+The project now includes a minimal Flask frontend for the Elite Discounts platform.
+Use this section as a reference when iterating on the presentation layer.
+
+### Template and Static Structure
+
+```text
+app/
+    templates/
+        base.html        # Shared layout for all pages
+        index.html       # Landing page content
+    static/
+        css/
+            style.css    # Global styles used by the base layout
+        js/              # Placeholder for future scripts
+        images/          # Placeholder for shared media assets
+```
+
+### Customizing Styles and Templates
+
+- Update `app/static/css/style.css` to adjust colors, typography, or layouts across the site.
+- Extend `app/templates/base.html` to add navigation, footer content, or additional blocks as needed.
+- Create new templates within `app/templates/` that `{% extends "base.html" %}` to reuse the shared structure.
+
+### Available Routes
+
+- `/` – Renders the homepage template.
+- `/about` – Returns a short description of Elite Discounts.
+- `/health` – Provides the JSON health check `{"status": "ok"}`.

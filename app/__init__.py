@@ -8,7 +8,7 @@ from celery import Celery
 import redis
 
 from .config import Config
-from .routes import test_blueprint
+from .routes import main as main_blueprint
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -22,4 +22,4 @@ redis_client = redis.from_url(app.config["REDIS_URL"])
 celery = Celery(app.import_name, broker=app.config["CELERY_BROKER_URL"])
 celery.conf.update(app.config)
 
-app.register_blueprint(test_blueprint)
+app.register_blueprint(main_blueprint)
