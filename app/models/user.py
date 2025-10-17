@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from app import db
+from .. import db
 
 
 class User(db.Model):
