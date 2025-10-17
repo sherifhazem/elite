@@ -4,6 +4,7 @@
 from flask import Flask
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from celery import Celery
 import redis
 
@@ -16,10 +17,13 @@ app.config.from_object(Config)
 CORS(app)
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 redis_client = redis.from_url(app.config["REDIS_URL"])
 
 celery = Celery(app.import_name, broker=app.config["CELERY_BROKER_URL"])
 celery.conf.update(app.config)
+
+app.logger.info("✅ Database connection configured for %s", app.config["SQLALCHEMY_DATABASE_URI"])
 
 app.register_blueprint(main_blueprint)

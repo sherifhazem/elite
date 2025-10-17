@@ -8,6 +8,7 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Python 3.11
 - Flask >= 2.3
 - Redis (for Celery and caching requirements)
+- PostgreSQL 13+
 
 ## Project Structure
 
@@ -15,15 +16,22 @@ The ELITE backend provides the foundational services for managing elite offers a
 app/
     __init__.py          # Initializes the Flask app, extensions, and blueprints
     config.py            # Loads environment variables and centralizes configuration
-    models/              # Future SQLAlchemy models
+    models/              # SQLAlchemy models
         __init__.py
+        user.py
+        company.py
+        offer.py
     routes/              # Application blueprints and route definitions
         __init__.py
     services/            # Business logic and service layer implementations
         __init__.py
     utils/               # Shared utilities and helper functions
         __init__.py
-migrations/              # Placeholder for database migration scripts (e.g., Alembic)
+migrations/              # Alembic migrations managed via Flask-Migrate
+    env.py
+    script.py.mako
+    versions/
+        20250117_01_initial_tables.py
 run.py                   # Entry point for running the Flask development server
 README.md                # Project documentation
 ```
@@ -34,15 +42,55 @@ Create a `.env` file in the project root with the following variables:
 
 ```dotenv
 SECRET_KEY=super-secret-key
-DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/elite
+SQLALCHEMY_DATABASE_URI=postgresql://user:password@localhost:5432/elite
 REDIS_URL=redis://localhost:6379/0
 TIMEZONE=Asia/Riyadh
 ```
 
 - `SECRET_KEY`: Used for securing sessions and cryptographic components.
-- `DATABASE_URL`: SQLAlchemy database connection string.
+- `SQLALCHEMY_DATABASE_URI`: PostgreSQL connection string used by SQLAlchemy.
 - `REDIS_URL`: Redis instance used by both Redis client and Celery.
 - `TIMEZONE`: Default timezone for Celery and application-level scheduling.
+
+## Database Setup
+
+This stage connects the application to PostgreSQL through SQLAlchemy and Flask-Migrate.
+
+### Core Tables
+
+- **User (`users`)**: `id`, `username`, `email`, `password_hash`, `joined_at`.
+- **Company (`companies`)**: `id`, `name`, `description`, `created_at`.
+- **Offer (`offers`)**: `id`, `title`, `discount_percent`, `valid_until`, `company_id`, `created_at`.
+
+### Migration Workflow
+
+1. Ensure dependencies are installed:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Set the Flask application context:
+   ```bash
+   export FLASK_APP=run.py
+   ```
+3. Initialize the migration repository (only once):
+   ```bash
+   flask db init
+   ```
+4. Generate the initial migration:
+   ```bash
+   flask db migrate -m "Initial tables"
+   ```
+5. Apply the migration to the PostgreSQL database:
+   ```bash
+   flask db upgrade
+   ```
+
+### Database Environment Variables
+
+- `SQLALCHEMY_DATABASE_URI` must point to a reachable PostgreSQL instance.
+- For local development, the default URI assumes the `elite` database exists with accessible credentials.
+
+> **Note:** This phase represents the "التهيئة الأساسية للبيانات" (basic data initialization). The subsequent phase will introduce the CRUD API layer on top of these models.
 
 ## Local Development
 
@@ -53,11 +101,10 @@ TIMEZONE=Asia/Riyadh
     source .venv/bin/activate
     ```
 
-2. **Install dependencies** (update `requirements.txt` as the project grows)
+2. **Install dependencies**
 
     ```bash
-    pip install -U pip
-    pip install flask flask-cors flask-sqlalchemy celery redis python-dotenv
+    pip install -r requirements.txt
     ```
 
 3. **Run the application**
@@ -81,16 +128,11 @@ After starting the server, visit [`http://localhost:5000/health`](http://localho
 {"status": "ok"}
 ```
 
-## Next Step
-
-The next development stage is to implement the core data models such as `User`, `Company`, and `Offer`, followed by their related services and API endpoints.
-
 ## Frontend Initialization
 
 _Last updated: 2025-10-17_
 
-The project now includes a minimal Flask frontend for the Elite Discounts platform.
-Use this section as a reference when iterating on the presentation layer.
+The project now includes a minimal Flask frontend for the Elite Discounts platform. Use this section as a reference when iterating on the presentation layer.
 
 ### Template and Static Structure
 
