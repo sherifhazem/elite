@@ -5,5 +5,6 @@ from .. import db
 from .user import User
 from .company import Company
 from .offer import Offer
+from .notification import Notification
 
-__all__ = ["db", "User", "Company", "Offer"]
+__all__ = ["db", "User", "Company", "Offer", "Notification"]
