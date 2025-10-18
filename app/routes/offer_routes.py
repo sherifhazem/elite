@@ -4,9 +4,9 @@ from datetime import datetime
 
 from flask import Blueprint, jsonify, request
 
-from app import db
-from app.models.company import Company
-from app.models.offer import Offer
+from .. import db
+from ..models.company import Company
+from ..models.offer import Offer
 
 
 offer_routes = Blueprint("offer_routes", __name__)

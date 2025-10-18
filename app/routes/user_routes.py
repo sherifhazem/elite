@@ -3,8 +3,8 @@
 from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
-from app import db
-from app.models.user import User
+from .. import db
+from ..models.user import User
 
 
 user_routes = Blueprint("user_routes", __name__)
