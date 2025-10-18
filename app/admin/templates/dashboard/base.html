@@ -11,6 +11,8 @@
             integrity="sha384-TN6N6pAoCYXM5PLQ4KJIp4jOSAmhpN6wX6Z1GDZCBoBPXaGNsq4CPGK/c/pXHi1S"
             crossorigin="anonymous"
         >
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        {% block extra_styles %}{% endblock %}
     </head>
     <body class="bg-light">
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
@@ -41,6 +43,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('admin.dashboard_offers') }}">Offers</a>
                         </li>
+                           <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('reports.reports_home') }}">Reports</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -67,5 +72,6 @@
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
             crossorigin="anonymous"
         ></script>
+            {% block extra_scripts %}{% endblock %}
     </body>
 </html>

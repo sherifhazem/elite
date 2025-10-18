@@ -1,0 +1,167 @@
+/* Dedicated styling for the ELITE admin reports dashboard. */
+
+:root {
+    --elite-primary: #0b3d91;
+    --elite-accent: #c9a227;
+    --elite-neutral: #f0f2f5;
+}
+
+.reports-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 2rem;
+}
+
+.reports-sidebar {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem 1.5rem;
+    box-shadow: 0 10px 30px rgba(20, 20, 20, 0.08);
+}
+
+.sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4a4f63;
+    margin-bottom: 1rem;
+}
+
+.sidebar-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.sidebar-links a {
+    display: block;
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    color: #4a4f63;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-links a:hover,
+.sidebar-links a.active {
+    background: var(--elite-primary);
+    color: #fff;
+}
+
+.reports-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reports-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2532;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #ffffff, #f8f9fb);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(11, 61, 145, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.stat-card .label {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c7283;
+    letter-spacing: 0.08em;
+}
+
+.stat-card .value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--elite-primary);
+}
+
+.stat-card .subtext {
+    font-size: 0.95rem;
+    color: #6c7283;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.chart-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.chart-card h3 {
+    font-size: 1.1rem;
+    color: #1f2532;
+    margin-bottom: 1rem;
+}
+
+.table-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.table thead th {
+    color: #606778;
+    font-weight: 600;
+}
+
+.table tbody td {
+    vertical-align: middle;
+}
+
+@media (max-width: 992px) {
+    .reports-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .reports-sidebar {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .reports-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}

@@ -652,3 +652,36 @@ All endpoints require a valid JWT delivered via `Authorization: Bearer <token>` 
 1. **Membership upgrade notification** – log in, upgrade a membership through `/portal/profile`, and confirm the queued notification appears.
 2. **Offer broadcast** – create or update an offer (enable **Send notifications**) from `/admin/offers`, then verify members receive the "new offer" notification.
 3. **Portal interaction** – visit `/portal/notifications`, mark a single notification as read, mark all as read, and confirm the navigation badge updates accordingly.
+
+## Reports & Analytics Dashboard
+
+The administrative analytics suite at `/admin/reports` surfaces near-real-time indicators for platform growth and marketplace performance.
+
+### Visual Components
+
+- **Stats Cards:** summarize total users, partner companies, and active offers with supporting context on recent growth.
+- **Pie Chart:** membership distribution across Basic, Silver, Gold, and Premium tiers for instant segmentation insight.
+- **Bar Chart:** seven-day registration timeline to reveal daily acquisition trends.
+- **Line Chart:** weekly offer creation trend line illustrating catalogue momentum.
+- **Recent Offers Table:** highlights the five most recent promotions with discount and validity metadata.
+
+### Routes & Data Sources
+
+- `GET /admin/reports` – renders the interactive dashboard layout.
+- `GET /admin/api/summary` – provides the JSON snapshot consumed by the JavaScript charts.
+- `GET /admin/reports/export` – streams a generated PDF summarizing the latest metrics.
+
+The summary payload combines the following datasets:
+
+- Total users, new registrations (7-day window), and membership-level counts.
+- Partner company totals with 30-day onboarding figures.
+- Offer analytics covering active/expired counts, average base discount, trend breakdown, and recent offers.
+- Membership distribution prepared for chart rendering.
+- Daily registration activity for the last seven days.
+
+### Implementation Notes
+
+- Data is aggregated in-memory using lightweight SQLAlchemy queries and refreshed on the client every 60 seconds.
+- All administrative routes continue to enforce `is_admin=True` validation through the existing `admin_required` decorator.
+- Chart rendering relies exclusively on Chart.js delivered via CDN, with custom styling in `app/static/css/reports.css`.
+- PDF exports are produced through ReportLab with on-demand generation—no historical snapshots are persisted.
