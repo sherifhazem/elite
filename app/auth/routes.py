@@ -136,7 +136,3 @@ def profile() -> tuple:
     }
     return jsonify(response), HTTPStatus.OK
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 09ef9c02f76ea1f059b93b90d540908dd4879660
