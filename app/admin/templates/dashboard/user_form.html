@@ -1,0 +1,72 @@
+<!-- Form for creating or editing a user record. -->
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+    {% set form_action = url_for('admin.edit_user', user_id=user.id) if user else url_for('admin.add_user') %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title mb-4">{{ 'Edit User' if user else 'Add User' }}</h2>
+            <form action="{{ form_action }}" method="post" novalidate>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="username">Username</label>
+                        <input
+                            class="form-control"
+                            id="username"
+                            name="username"
+                            required
+                            value="{{ user.username if user else '' }}"
+                        >
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="email">Email</label>
+                        <input
+                            class="form-control"
+                            id="email"
+                            name="email"
+                            type="email"
+                            required
+                            value="{{ user.email if user else '' }}"
+                        >
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="password">Password</label>
+                        <input
+                            class="form-control"
+                            id="password"
+                            name="password"
+                            type="password"
+                            {% if not user %}required{% endif %}
+                            placeholder="{{ 'Leave blank to keep current password' if user else '' }}"
+                        >
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="membership_level">Membership Level</label>
+                        <input
+                            class="form-control"
+                            id="membership_level"
+                            name="membership_level"
+                            value="{{ user.membership_level if user else 'Basic' }}"
+                        >
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input
+                                class="form-check-input"
+                                id="is_admin"
+                                name="is_admin"
+                                type="checkbox"
+                                {% if user and user.is_admin %}checked{% endif %}
+                            >
+                            <label class="form-check-label" for="is_admin">Administrator</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between mt-4">
+                    <a class="btn btn-secondary" href="{{ url_for('admin.dashboard_users') }}">Cancel</a>
+                    <button class="btn btn-primary" type="submit">{{ 'Save Changes' if user else 'Create User' }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
