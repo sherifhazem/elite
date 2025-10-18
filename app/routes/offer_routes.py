@@ -5,6 +5,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request
 
 from .. import db
+from ..auth.utils import get_user_from_token
 from ..models.company import Company
 from ..models.offer import Offer
 
@@ -12,13 +13,27 @@ from ..models.offer import Offer
 offer_routes = Blueprint("offer_routes", __name__)
 
 
-def _serialize_offer(offer: Offer) -> dict:
+def _extract_bearer_token() -> str | None:
+    """Extract a bearer token from the Authorization header if provided."""
+
+    # Split the header on the first space to support the "Bearer <token>" format.
+    authorization = request.headers.get("Authorization", "").strip()
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        return None
+    return token
+
+
+def _serialize_offer(offer: Offer, membership_level: str) -> dict:
     """Return a dictionary representation of an offer."""
 
+    # Compute the dynamic discount using the membership level passed in.
+    dynamic_discount = offer.get_discount_for_level(membership_level)
     return {
         "id": offer.id,
         "title": offer.title,
-        "discount_percent": offer.discount_percent,
+        "base_discount": offer.base_discount,
+        "discount_percent": dynamic_discount,
         "valid_until": offer.valid_until.isoformat() if offer.valid_until else None,
         "company_id": offer.company_id,
         "created_at": offer.created_at.isoformat() if offer.created_at else None,
@@ -40,8 +55,16 @@ def _parse_datetime(value):
 def list_offers():
     """Return all offers provided by registered companies."""
 
+    # Default to the Basic tier when no authenticated user is available.
+    membership_level = "Basic"
+    token = _extract_bearer_token()
+    if token:
+        user = get_user_from_token(token)
+        if user is not None:
+            membership_level = user.membership_level
+
     offers = Offer.query.order_by(Offer.id).all()
-    return jsonify([_serialize_offer(offer) for offer in offers]), 200
+    return jsonify([_serialize_offer(offer, membership_level) for offer in offers]), 200
 
 
 @offer_routes.route("/", methods=["POST"])
@@ -50,17 +73,21 @@ def create_offer():
 
     payload = request.get_json(silent=True) or {}
     title = payload.get("title")
-    discount_percent = payload.get("discount_percent")
+    base_discount = payload.get("base_discount")
     company_id = payload.get("company_id")
     valid_until_raw = payload.get("valid_until")
 
-    if title is None or discount_percent is None or company_id is None:
-        return jsonify({"error": "title, discount_percent, and company_id are required."}), 400
+    if title is None or company_id is None:
+        return jsonify({"error": "title and company_id are required."}), 400
 
-    try:
-        discount_percent = float(discount_percent)
-    except (TypeError, ValueError):
-        return jsonify({"error": "discount_percent must be a number."}), 400
+    if base_discount is None:
+        # Apply the model default when the client omits the base discount field.
+        base_discount_value = 5.0
+    else:
+        try:
+            base_discount_value = float(base_discount)
+        except (TypeError, ValueError):
+            return jsonify({"error": "base_discount must be a number."}), 400
 
     if not Company.query.get(company_id):
         return jsonify({"error": "Associated company not found."}), 404
@@ -71,13 +98,14 @@ def create_offer():
 
     offer = Offer(
         title=title,
-        discount_percent=discount_percent,
+        base_discount=base_discount_value,
         company_id=company_id,
         valid_until=valid_until,
     )
     db.session.add(offer)
     db.session.commit()
-    return jsonify(_serialize_offer(offer)), 201
+    # Return the serialized offer using the baseline Basic tier for consistency.
+    return jsonify(_serialize_offer(offer, "Basic")), 201
 
 
 @offer_routes.route("/<int:offer_id>", methods=["PUT"])
@@ -93,11 +121,11 @@ def update_offer(offer_id: int):
     if "title" in payload:
         offer.title = payload["title"]
 
-    if "discount_percent" in payload:
+    if "base_discount" in payload:
         try:
-            offer.discount_percent = float(payload["discount_percent"])
+            offer.base_discount = float(payload["base_discount"])
         except (TypeError, ValueError):
-            return jsonify({"error": "discount_percent must be a number."}), 400
+            return jsonify({"error": "base_discount must be a number."}), 400
 
     if "company_id" in payload:
         company_id = payload["company_id"]
@@ -112,7 +140,8 @@ def update_offer(offer_id: int):
         offer.valid_until = valid_until
 
     db.session.commit()
-    return jsonify(_serialize_offer(offer)), 200
+    # Respond with the updated payload using the base membership tier view.
+    return jsonify(_serialize_offer(offer, "Basic")), 200
 
 
 @offer_routes.route("/<int:offer_id>", methods=["DELETE"])

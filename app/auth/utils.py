@@ -1,10 +1,12 @@
 """Utility helpers for handling JWT creation and validation."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Optional
 from importlib import import_module
 
 from flask import current_app
+
+from ..models.user import User
 
 
 def _load_jwt_module():
@@ -63,3 +65,18 @@ def decode_token(token: str) -> int:
         return int(subject)
     except (TypeError, ValueError) as error:  # pragma: no cover - defensive runtime conversion
         raise ValueError("Token subject is not a valid integer identifier.") from error
+
+
+def get_user_from_token(token: str) -> Optional[User]:
+    """Return User object from valid JWT token."""
+
+    # Bail out quickly when no token is provided.
+    if not token:
+        return None
+    try:
+        user_id = decode_token(token)
+    except ValueError:
+        # Invalid tokens should not interrupt request handling; return None.
+        return None
+    # Fetch the database record associated with the decoded identifier.
+    return User.query.get(user_id)

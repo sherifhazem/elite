@@ -60,7 +60,7 @@ This stage connects the application to PostgreSQL through SQLAlchemy and Flask-M
 
 - - **User (`users`)**: `id`, `username`, `email`, `password_hash`, `membership_level`, `joined_at`.
 - **Company (`companies`)**: `id`, `name`, `description`, `created_at`.
-- **Offer (`offers`)**: `id`, `title`, `discount_percent`, `valid_until`, `company_id`, `created_at`.
+- **Offer (`offers`)**: `id`, `title`, `base_discount`, `valid_until`, `company_id`, `created_at`.
 
 ### Migration Workflow
 
@@ -369,7 +369,7 @@ curl -X POST http://localhost:5000/api/offers/ \
     -H "Content-Type: application/json" \
     -d '{
         "title": "New Year Discount",
-        "discount_percent": 20,
+        "base_discount": 10,
         "company_id": 3,
         "valid_until": "2025-02-01T23:59:59"
     }'
@@ -381,7 +381,8 @@ Successful response (`201 Created`):
 {
     "id": 5,
     "title": "New Year Discount",
-    "discount_percent": 20.0,
+    "base_discount": 10.0,
+    "discount_percent": 10.0,
     "valid_until": "2025-02-01T23:59:59",
     "company_id": 3,
     "created_at": "2025-01-17T10:15:00"
@@ -394,6 +395,36 @@ Possible errors:
 - `404 Not Found` when the associated company or the target offer cannot be located.
 
 > ℹ️ Use `curl` or Postman to exercise each endpoint after starting the Flask server. Ensure the content type is `application/json` for all mutation requests.
+
+## Dynamic Discount Logic
+
+Membership-aware pricing is now handled inside `app/models/offer.py` via the `Offer.get_discount_for_level()` helper. The method
+calculates the final discount percent by applying a tier-specific adjustment to the stored `base_discount` value.
+
+| Membership | Discount Adjustment |
+|-------------|--------------------|
+| Basic       | +0%                |
+| Silver      | +5%                |
+| Gold        | +10%               |
+| Premium     | +15%               |
+
+For example, assume an offer has a `base_discount` of `12.5`. When a Premium member queries `GET /api/offers/`, the response includes the dynamically adjusted discount percent:
+
+```json
+[
+    {
+        "id": 7,
+        "title": "Weekend Flash Sale",
+        "base_discount": 12.5,
+        "discount_percent": 27.5,
+        "valid_until": "2025-11-01T21:00:00",
+        "company_id": 3,
+        "created_at": "2025-10-18T14:20:00"
+    }
+]
+```
+
+The API automatically inspects the bearer token to determine the membership level. If the request is unauthenticated or the token is invalid, the system falls back to the **Basic** tier.
 
 ## Frontend Initialization
 
