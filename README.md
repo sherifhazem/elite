@@ -158,6 +158,19 @@ The member portal now allows authenticated users to elevate their membership tie
 - The upgrade API always validates the JWT token; direct requests without authentication receive `401 Unauthorized`.
 - Only the predefined membership levels (`Basic`, `Silver`, `Gold`, `Premium`) are accepted by the backend to prevent arbitrary values.
 
+## Mobile-First User Portal Design
+
+The `/portal` experience has been rebuilt with a mobile-first mindset to mirror native iOS and Android applications while keeping the `/admin` and `/company` dashboards in their desktop-oriented layout.
+
+- **App Shell:** Each portal route now renders inside a compact mobile viewport with a sticky header, animated view transitions, and a persistent bottom navigation bar for Home, Offers, Profile, and Notifications.
+- **Mobile Interactions:** Smooth in-app navigation, pull-to-refresh, modal offer previews, toast confirmations, and loading spinners are implemented through the lightweight `app/static/js/main.js` controller.
+- **Visual Identity:** The refreshed stylesheet (`app/static/css/style.css`) applies the official palette, rounded components, and Poppins/Inter typography. Core colors include deep navy `#0b1f3a` as the primary, warm gold `#f2c14e` for accents, and soft gray tints (`#f5f7fb`, `#e4e8f0`) for layered surfaces.
+
+- **Membership Card:** The profile screen showcases a full-width membership card rendered with layered CSS gradients, and the **Download My Card** action still exports a branded image on demand.
+- **Screenshots:** Capture fresh mobile frames using your preferred simulator or device before release; create `app/static/images/screenshots/` locally and drop them there only when marketing hand-offs require the assets.
+
+> **Note:** The mobile-first design applies exclusively to `/portal/*` routes. Administrative and company-facing dashboards remain optimized for desktop workflows without any layout changes.
+
 ## Admin Dashboard CRUD Features
 
 The Elite Admin Panel now delivers full create, read, update, and delete (CRUD) workflows for the platform's core entities. All operations are backed by SQLAlchemy transactions and surfaced through responsive Bootstrap-powered templates located under `app/admin/templates/dashboard/`.

@@ -1,48 +1,115 @@
-<!-- Portal homepage welcoming members with quick navigation. -->
+<!-- Home screen providing a native-like welcome for members. -->
 {% extends 'portal/base.html' %}
-{% block title %}Portal Home · ELITE{% endblock %}
+{% block title %}Home · ELITE{% endblock %}
+{% block page_heading %}Home{% endblock %}
 {% block content %}
-    <div class="row align-items-center g-5">
-        <div class="col-lg-7">
-            <h1 class="display-4 fw-bold text-gradient">مرحبا{% if user %} {{ user.username }}{% endif %}!</h1>
-            <p class="lead text-muted mt-3">
-                {% if user %}
-                    تم تفعيل عضويتك بمستوى
-                    <span class="badge portal-badge portal-badge-{{ membership_level|lower }}">
-                        {{ membership_level }}
-                    </span>
-                    يمكنك استكشاف عروض حصرية صممت خصيصًا لك.
+    <!-- Hero section summarising the logged-in member status. -->
+    <section class="screen-block screen-block--padded">
+        <div class="welcome-card" data-membership-tier="{{ membership_level|lower }}">
+            <div class="welcome-card__header">
+                <span class="welcome-card__badge">{{ membership_level }}</span>
+                <img
+                    class="welcome-card__logo"
+                    src="{{ url_for('static', filename='images/logo.png') }}"
+                    alt="ELITE logo"
+                    loading="lazy"
+                />
+            </div>
+            <div class="welcome-card__body">
+                <h1 class="welcome-card__headline">
+                    {% if user %}
+                        مرحباً {{ user.username }}
+                    {% else %}
+                        مرحباً بك في ELITE
+                    {% endif %}
+                </h1>
+                <p class="welcome-card__message">
+                    {% if user %}
+                        اكتشف مزايا مستوى <strong>{{ membership_level }}</strong> مع تحديثات لحظية للعروض.
+                    {% else %}
+                        قم بتسجيل الدخول لمزامنة بيانات عضويتك والاستفادة من الخصومات الحصرية.
+                    {% endif %}
+                </p>
+            </div>
+            <div class="welcome-card__actions">
+                <a class="cta-button" href="{{ url_for('portal.offers') }}" data-nav-link data-nav-target="offers">
+                    اكتشف العروض
+                </a>
+                <a class="ghost-button" href="{{ url_for('portal.profile') }}" data-nav-link data-nav-target="profile">
+                    ملفي الشخصي
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured offers slider mimicking a native carousel. -->
+    <section class="screen-block">
+        <header class="section-heading">
+            <h2 class="section-heading__title">عروض مختارة لك</h2>
+            <button
+                class="link-button"
+                type="button"
+                data-nav-link
+                data-nav-target="offers"
+                data-route="{{ url_for('portal.offers') }}"
+            >
+                عرض جميع العروض
+            </button>
+        </header>
+        <div class="featured-carousel" data-featured-carousel>
+            <div
+                class="featured-carousel__track"
+                data-featured-track
+                data-membership-level="{{ membership_level }}"
+            >
+                {% set featured_offers = featured_offers | default([]) %}
+                {% if featured_offers %}
+                    {% for offer in featured_offers %}
+                        <article
+                            class="offer-chip"
+                            data-offer-id="{{ offer.id }}"
+                            data-offer-title="{{ offer.title }}"
+                            data-offer-company="{{ offer.company.name if offer.company else '—' }}"
+                            data-offer-discount="{{ '%.0f'|format(offer.get_discount_for_level(membership_level)) }}"
+                            data-offer-level="{{ membership_level }}"
+                            data-offer-valid="{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'مستمر' }}"
+                        >
+                            <div class="offer-chip__level">{{ membership_level }}</div>
+                            <h3 class="offer-chip__title">{{ offer.title }}</h3>
+                            <p class="offer-chip__company">{{ offer.company.name if offer.company else 'عرض حصري' }}</p>
+                            <span class="offer-chip__discount">{{ '%.0f'|format(offer.get_discount_for_level(membership_level)) }}%</span>
+                        </article>
+                    {% endfor %}
                 {% else %}
-                    قم بتسجيل الدخول لاكتشاف العروض المصممة حسب مستوى عضويتك في ELITE.
+                    <article class="offer-chip offer-chip--placeholder" data-featured-placeholder>
+                        <h3 class="offer-chip__title">سيتم تخصيص العروض بعد تسجيل الدخول</h3>
+                        <p class="offer-chip__company">تابع تحديثاتنا اليومية.</p>
+                    </article>
                 {% endif %}
-            </p>
-            <div class="mt-4 d-flex gap-3">
-                <a class="btn portal-primary-btn" href="{{ url_for('portal.offers') }}">عرض العروض</a>
-                <a class="btn btn-outline-secondary" href="{{ url_for('portal.profile') }}">ملف العضو</a>
             </div>
         </div>
-        <div class="col-lg-5 text-center">
-            <div class="portal-highlight-card p-4 rounded-4 shadow-sm">
-                <h2 class="h4 mb-3">لمحة سريعة</h2>
-                <ul class="list-unstyled text-start small">
-                    <li class="d-flex align-items-center mb-2">
-                        <span class="badge portal-badge portal-badge-basic me-2">Basic</span>
-                        خصومات تمهيدية لجميع الأعضاء الجدد.
-                    </li>
-                    <li class="d-flex align-items-center mb-2">
-                        <span class="badge portal-badge portal-badge-silver me-2">Silver</span>
-                        مكافآت إضافية للشركاء الموثوقين.
-                    </li>
-                    <li class="d-flex align-items-center mb-2">
-                        <span class="badge portal-badge portal-badge-gold me-2">Gold</span>
-                        امتيازات ذهبية للخبراء في التوفير.
-                    </li>
-                    <li class="d-flex align-items-center">
-                        <span class="badge portal-badge portal-badge-premium me-2">Premium</span>
-                        أعلى مستويات الخصومات مع دعم شخصي.
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
+    </section>
+
+    <!-- Quick insight section showing tier benefits. -->
+    <section class="screen-block screen-block--stacked">
+        <h2 class="section-heading__title">مستويات برنامج ELITE</h2>
+        <ul class="tier-grid">
+            <li class="tier-card tier-card--basic">
+                <h3>Basic</h3>
+                <p>وصول فوري إلى خصومات تمهيدية.</p>
+            </li>
+            <li class="tier-card tier-card--silver">
+                <h3>Silver</h3>
+                <p>مكافآت أعلى مع شركائنا الدائمين.</p>
+            </li>
+            <li class="tier-card tier-card--gold">
+                <h3>Gold</h3>
+                <p>تجربة ذهبية مع دعم مخصص.</p>
+            </li>
+            <li class="tier-card tier-card--premium">
+                <h3>Premium</h3>
+                <p>أقصى خصومات مع مزايا VIP.</p>
+            </li>
+        </ul>
+    </section>
 {% endblock %}
