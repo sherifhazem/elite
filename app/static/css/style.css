@@ -134,6 +134,28 @@ h1,
     border-top: 1px solid rgba(15, 23, 42, 0.08);
 }
 
+.portal-tier-card {
+    border-left: 6px solid rgba(15, 23, 42, 0.06);
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.portal-tier-basic {
+    border-color: var(--color-soft-silver);
+}
+
+.portal-tier-silver {
+    border-color: #c0c0c0;
+}
+
+.portal-tier-gold {
+    border-color: var(--color-elite-gold);
+}
+
+.portal-tier-premium {
+    border-color: var(--color-royal-purple);
+    box-shadow: 0 10px 24px rgba(111, 66, 193, 0.18);
+}
+
 .portal-membership-legend .badge {
     margin-right: 0.35rem;
 }
