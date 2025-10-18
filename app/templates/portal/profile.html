@@ -1,100 +1,84 @@
-<!-- Portal profile page summarizing account details and actions. -->
+<!-- Profile screen highlighting the membership card and upgrade path. -->
 {% extends 'portal/base.html' %}
 {% block title %}Profile · ELITE{% endblock %}
+{% block page_heading %}Profile{% endblock %}
 {% block content %}
-    <div class="row justify-content-center">
-        <div class="col-lg-6">
-            <div class="card portal-card shadow-sm portal-tier-card portal-tier-{{ membership_level|lower }}">
-                <div class="card-header d-flex align-items-center justify-content-between">
-                    <h2 class="h5 mb-0">معلومات الحساب</h2>
-                    {% if user %}
-                        <span class="badge portal-badge portal-badge-{{ membership_level|lower }}">
-                            {{ membership_level }}
-                        </span>
-                    {% endif %}
-                </div>
-                <div class="card-body">
-                    {% if user %}
-                        <dl class="row mb-0">
-                            <dt class="col-sm-4">اسم المستخدم</dt>
-                            <dd class="col-sm-8">{{ user.username }}</dd>
+    {% set member_code = '%06d'|format(user.id) if user else '000000' %}
+    {% set joined_date = user.joined_at.strftime('%Y-%m-%d') if user and user.joined_at else '—' %}
 
-                            <dt class="col-sm-4">البريد الإلكتروني</dt>
-                            <dd class="col-sm-8">{{ user.email }}</dd>
-
-                            <dt class="col-sm-4">مستوى العضوية</dt>
-                            <dd class="col-sm-8">{{ membership_level }}</dd>
-                        </dl>
-                    {% else %}
-                        <p class="text-muted mb-0">
-                            لم يتم العثور على بيانات العضو. يرجى تسجيل الدخول باستخدام حساب ELITE الخاص بك.
-                        </p>
-                    {% endif %}
+    <!-- Visual membership card with CSS-driven gradient background. -->
+    <section class="screen-block screen-block--padded">
+        <article
+            class="membership-card"
+            id="membership-card"
+            data-membership-tier="{{ membership_level|lower }}"
+            data-member-name="{{ user.username if user else 'ELITE Member' }}"
+            data-member-level="{{ membership_level }}"
+            data-member-code="{{ member_code }}"
+            data-member-joined="{{ joined_date }}"
+        >
+            <div class="membership-card__content">
+                <div class="membership-card__header">
+                    <span class="membership-card__badge">{{ membership_level }}</span>
+                    <img
+                        class="membership-card__logo"
+                        src="{{ url_for('static', filename='images/logo.png') }}"
+                        alt="ELITE"
+                        loading="lazy"
+                    />
                 </div>
-                <div class="card-footer text-end">
-                    <button class="btn portal-primary-btn" type="button" disabled>
-                        ترقية / تجديد العضوية
-                    </button>
+                <div class="membership-card__details">
+                    <p class="membership-card__label">الاسم</p>
+                    <p class="membership-card__value">{{ user.username if user else 'ضيف' }}</p>
+                    <p class="membership-card__label">رقم العضوية</p>
+                    <p class="membership-card__value">{{ member_code }}</p>
+                    <p class="membership-card__label">تاريخ الانضمام</p>
+                    <p class="membership-card__value">{{ joined_date }}</p>
                 </div>
             </div>
+        </article>
+        <div class="card-actions">
+            <button class="cta-button" type="button" id="upgrade-entry" data-scroll-target="#upgrade-panel">Upgrade</button>
+            <button class="ghost-button" type="button" id="download-card">Download My Card</button>
         </div>
-    </div>
-    {% if user %}
-        <div class="row justify-content-center mt-4">
-            <div class="col-lg-6">
-                <div class="card portal-card shadow-sm">
-                    <div class="card-header">
-                        <h3 class="h6 mb-0">Upgrade Membership</h3>
-                    </div>
-                    <div class="card-body">
-                        <div
-                            id="upgrade-feedback"
-                            class="alert {% if upgrade_success %}alert-success{% else %}d-none{% endif %}"
-                            role="alert"
-                        >
-                            {% if upgrade_success %}
-                                Membership upgraded to {{ membership_level }} successfully.
-                            {% endif %}
-                        </div>
-                        {% if available_upgrades %}
-                            <p class="text-muted">
-                                Select a higher tier to unlock additional ELITE benefits.
-                            </p>
-                            <form
-                                id="membership-upgrade-form"
-                                class="row gy-3"
-                                onsubmit="upgradeMembership(event)"
-                                data-upgrade-inline="true"
-                            >
-                                <div class="col-12">
-                                    <label class="form-label" for="new_membership_level">Choose your new level</label>
-                                    <select
-                                        class="form-select"
-                                        name="new_level"
-                                        id="new_membership_level"
-                                        data-current-level="{{ membership_level }}"
-                                        required
-                                    >
-                                        <option value="" selected disabled>-- Select level --</option>
-                                        {% for level in available_upgrades %}
-                                            <option value="{{ level }}">{{ level }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-12 text-end">
-                                    <button class="btn portal-primary-btn" type="submit">
-                                        Upgrade
-                                    </button>
-                                </div>
-                            </form>
-                        {% else %}
-                            <p class="text-success mb-0">
-                                You already enjoy the highest ELITE tier. Thank you for being a Premium member!
-                            </p>
-                        {% endif %}
-                    </div>
-                </div>
+    </section>
+
+    <!-- Upgrade panel listing higher tiers when available. -->
+    <section class="screen-block screen-block--stacked" id="upgrade-panel">
+        <header class="section-heading section-heading--stacked">
+            <div>
+                <h2 class="section-heading__title">ترقية العضوية</h2>
+                <p class="section-heading__subtitle">اختر المستوى التالي لفتح مزايا إضافية.</p>
             </div>
-        </div>
-    {% endif %}
+        </header>
+        {% if user %}
+            {% if available_upgrades %}
+                <form id="membership-upgrade-form" class="upgrade-form" onsubmit="upgradeMembership(event)">
+                    <label class="upgrade-form__label" for="new_membership_level">اختر المستوى الجديد</label>
+                    <select
+                        class="upgrade-form__select"
+                        name="new_level"
+                        id="new_membership_level"
+                        data-current-level="{{ membership_level }}"
+                        required
+                    >
+                        <option value="" selected disabled>اختر المستوى</option>
+                        {% for level in available_upgrades %}
+                            <option value="{{ level }}">{{ level }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="cta-button" type="submit">Upgrade</button>
+                </form>
+                <div class="toast-placeholder" id="upgrade-feedback"></div>
+            {% else %}
+                <div class="empty-state">
+                    <p>أنت بالفعل في أعلى مستوى. استمتع بمزايا Premium!</p>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <p>قم بتسجيل الدخول لإدارة ملف العضوية والترقية.</p>
+            </div>
+        {% endif %}
+    </section>
 {% endblock %}

@@ -1,93 +1,122 @@
-<!-- Portal base template providing layout for member views. -->
+<!-- Mobile-first base template for the ELITE user portal. -->
 {% set active_nav = active_nav or '' %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="portal-mobile-shell">
     <head>
+        <!-- Standard metadata to ensure UTF-8 rendering and mobile viewport. -->
         <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>{% block title %}ELITE Member Portal{% endblock %}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <title>{% block title %}ELITE Mobile Portal{% endblock %}</title>
+        <!-- Webfonts supporting the visual identity (Poppins + Inter). -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap"
             rel="stylesheet"
-            integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
-            crossorigin="anonymous"
         />
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+        <!-- Unified stylesheet compiled for the mobile-first layout. -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2" />
+        <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}" type="image/png" />
     </head>
-    <body class="portal-body d-flex flex-column min-vh-100">
-        <header class="portal-header shadow-sm">
-            <nav class="navbar navbar-expand-lg navbar-light bg-white">
-                <div class="container py-2">
-                    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('portal.home') }}">
-                        <img
-                            src="{{ url_for('static', filename='images/logo.png') }}"
-                            alt="ELITE logo"
-                            class="portal-logo me-2"
-                        />
-                        <span class="fw-bold text-uppercase portal-brand">ELITE</span>
-                    </a>
-                    <button
-                        class="navbar-toggler"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#portalNavbar"
-                        aria-controls="portalNavbar"
-                        aria-expanded="false"
-                        aria-label="Toggle navigation"
-                    >
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <div class="collapse navbar-collapse" id="portalNavbar">
-                        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                            <li class="nav-item">
-                                <a class="nav-link {{ 'active' if active_nav == 'home' else '' }}" href="{{ url_for('portal.home') }}">Home</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ 'active' if active_nav == 'offers' else '' }}" href="{{ url_for('portal.offers') }}">Offers</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link position-relative {{ 'active' if active_nav == 'notifications' else '' }}" href="{{ url_for('portal.notifications') }}">
-                                    <span class="me-1" aria-hidden="true">🔔</span>
-                                    Notifications
-                                    <span
-                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                                        id="notification-count"
-                                        data-count="{{ notification_unread_count | default(0) }}"
-                                        {% if (notification_unread_count | default(0)) == 0 %}hidden{% endif %}
-                                    >
-                                        {{ notification_unread_count | default(0) }}
-                                        <span class="visually-hidden">unread notifications</span>
-                                    </span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ 'active' if active_nav == 'profile' else '' }}" href="{{ url_for('portal.profile') }}">Profile</a>
-                            </li>
-                        </ul>
-                        <div class="ms-lg-3">
-                            <button class="btn btn-outline-light text-uppercase portal-logout" type="button" disabled>
-                                Logout
-                            </button>
-                        </div>
-                    </div>
+    <body class="portal-mobile-body">
+        <!-- Application shell wrapping all portal views. -->
+        <div class="app-shell" id="app-shell" data-active-nav="{{ active_nav }}">
+            <!-- Compact header that only displays the active page title. -->
+            <header class="app-header" id="portal-header">
+                <div class="header-title" id="portal-page-title">{% block page_heading %}ELITE{% endblock %}</div>
+            </header>
+            <!-- Scrollable view stack containing the requested page content. -->
+            <main class="app-main" id="portal-main" role="main">
+                <div class="pull-indicator" id="pull-to-refresh" hidden>
+                    <span class="pull-indicator__icon" aria-hidden="true">⭮</span>
+                    <span class="pull-indicator__label">Release to refresh</span>
                 </div>
+                <section class="view-container" id="portal-view" data-current-view="{{ active_nav }}">
+                    {% block content %}{% endblock %}
+                </section>
+            </main>
+            <!-- Persistent bottom navigation following native mobile patterns. -->
+            <nav class="app-nav" aria-label="Primary navigation">
+                <a
+                    class="app-nav__item {% if active_nav == 'home' %}app-nav__item--active{% endif %}"
+                    href="{{ url_for('portal.home') }}"
+                    data-nav-link
+                    data-nav-target="home"
+                >
+                    <span class="app-nav__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 9.5 12 3l9 6.5v11a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 20.5V9.5Z" />
+                            <path d="M9.75 21v-6h4.5v6" />
+                        </svg>
+                    </span>
+                    <span class="visually-hidden">Home</span>
+                </a>
+                <a
+                    class="app-nav__item {% if active_nav == 'offers' %}app-nav__item--active{% endif %}"
+                    href="{{ url_for('portal.offers') }}"
+                    data-nav-link
+                    data-nav-target="offers"
+                >
+                    <span class="app-nav__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 7h18" />
+                            <path d="M5 3h14a2 2 0 0 1 2 2v3.6a2 2 0 0 1-.46 1.28l-6.88 8.26a2 2 0 0 1-3.12 0L3.46 9.88A2 2 0 0 1 3 8.6V5a2 2 0 0 1 2-2Z" />
+                            <path d="M12 16h.01" />
+                        </svg>
+                    </span>
+                    <span class="visually-hidden">Offers</span>
+                </a>
+                <a
+                    class="app-nav__item {% if active_nav == 'profile' %}app-nav__item--active{% endif %}"
+                    href="{{ url_for('portal.profile') }}"
+                    data-nav-link
+                    data-nav-target="profile"
+                >
+                    <span class="app-nav__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" />
+                            <path d="M20 21a8 8 0 1 0-16 0" />
+                        </svg>
+                    </span>
+                    <span class="visually-hidden">Profile</span>
+                </a>
+                <a
+                    class="app-nav__item {% if active_nav == 'notifications' %}app-nav__item--active{% endif %}"
+                    href="{{ url_for('portal.notifications') }}"
+                    data-nav-link
+                    data-nav-target="notifications"
+                >
+                    <span class="app-nav__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                        </svg>
+                    </span>
+                    <span class="app-nav__badge" id="notification-count" data-count="{{ notification_unread_count | default(0) }}">
+                        {{ notification_unread_count | default(0) }}
+                    </span>
+                    <span class="visually-hidden">Notifications</span>
+                </a>
             </nav>
-        </header>
-        <main class="flex-grow-1">
-            <div class="container py-5">
-                {% block content %}{% endblock %}
-            </div>
-        </main>
-        <footer class="portal-footer text-center py-3 mt-auto">
-            <div class="container">
-                <small>&copy; {{ current_year or 2025 }} ELITE Membership Program. All rights reserved.</small>
-            </div>
-        </footer>
-        <script
-            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
-            crossorigin="anonymous"
-        ></script>
-        <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+        </div>
+        <!-- Lightweight modal container reused across pages. -->
+        <div class="app-modal" id="portal-modal" role="dialog" aria-modal="true" hidden>
+            <div class="app-modal__backdrop" data-modal-dismiss aria-hidden="true"></div>
+            <article class="app-modal__sheet" role="document">
+                <header class="app-modal__header">
+                    <h2 class="app-modal__title" id="modal-title">Details</h2>
+                    <button class="app-modal__close" type="button" data-modal-dismiss aria-label="Close">×</button>
+                </header>
+                <div class="app-modal__body" id="modal-body"></div>
+            </article>
+        </div>
+        <!-- Toast region for transient success/error messages. -->
+        <div class="toast-stack" id="toast-container" aria-live="polite" aria-atomic="true"></div>
+        <!-- Full-screen spinner shown during async navigation or API work. -->
+        <div class="loading-indicator" id="loading-indicator" hidden>
+            <div class="loading-indicator__spinner" aria-hidden="true"></div>
+            <span class="loading-indicator__label">Loading</span>
+        </div>
+        <script src="{{ url_for('static', filename='js/main.js') }}?v=2" defer></script>
     </body>
 </html>
