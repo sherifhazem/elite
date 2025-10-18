@@ -5,7 +5,9 @@ __pycache__/
 *.pyd
 
 # Virtual environments
-.env
+.env/
+venv/
+*.env
 
 # Database files
 *.db
@@ -26,3 +28,23 @@ Thumbs.db
 *.bin
 *.dat
 *.bak
+
+# Codex temporary and analysis files
+tracked_files.txt
+untracked_files.txt
+large_files.txt
+binary_candidates.txt
+
+# Migration cache (Alembic / Flask-Migrate)
+migrations/__pycache__/
+
+# Backup or export files
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+
+# Test or local configs
+test_*.py
+local_settings.py
