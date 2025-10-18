@@ -9,6 +9,12 @@ from celery import Celery
 import redis
 
 from .config import Config
+from .routes import (
+    company_routes,
+    main as main_blueprint,
+    offer_routes,
+    user_routes,
+)
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -16,23 +22,15 @@ app.config.from_object(Config)
 CORS(app)
 
 db = SQLAlchemy(app)
+
+# Ensure models are registered with SQLAlchemy's metadata for migrations
+from app.models import *  # noqa: F401,F403
 migrate = Migrate(app, db)
 
 redis_client = redis.from_url(app.config["REDIS_URL"])
 
 celery = Celery(app.import_name, broker=app.config["CELERY_BROKER_URL"])
 celery.conf.update(app.config)
-
-# Ensure models are registered with SQLAlchemy's metadata for migrations
-from .models import Company, Offer, User  # noqa: F401
-
-# Register blueprints after extensions are initialized
-from .routes import (  # noqa: E402
-    company_routes,
-    main as main_blueprint,
-    offer_routes,
-    user_routes,
-)
 
 app.logger.info("✅ Database connection configured for %s", app.config["SQLALCHEMY_DATABASE_URI"])
 
