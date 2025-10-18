@@ -92,6 +92,46 @@ This stage connects the application to PostgreSQL through SQLAlchemy and Flask-M
 
 > **Note:** This phase represents the "التهيئة الأساسية للبيانات" (basic data initialization). The subsequent phase will introduce the CRUD API layer on top of these models.
 
+## Roles & Permissions System
+
+The ELITE platform now enforces a role-based access control layer across the API, admin dashboard, company portal, and member portal.
+
+| Role        | Access Scope                                                   |
+|-------------|----------------------------------------------------------------|
+| member      | `/portal/*` – offers, membership profile, notifications        |
+| company     | `/company/*` – manage only the company's own offers            |
+| admin       | `/admin/*` – global supervision and reporting                  |
+| superadmin  | Full control over all areas and advanced administration tools |
+
+- User accounts include the new `role`, `is_active`, and optional `company_id` fields.
+- Administrators manage roles via the **Admin → Roles** page, which provides activation toggles and role selectors with inline feedback.
+- Granular permissions are prepared through the `permissions` and `user_permissions` tables for future expansions.
+
+### Decorator Usage
+
+Protect server routes with the `require_role` decorator:
+
+```python
+from app.services.roles import require_role
+
+@blueprint.route("/admin/secure-endpoint")
+@require_role("admin")
+def secure_action():
+    ...
+```
+
+The decorator allows the target role and higher-privileged roles defined in the access matrix (e.g., `superadmin` can access all admin routes). Unauthorized requests respond with `401` or `403` as appropriate.
+
+### Migration Notes
+
+Apply the `b7d91a5f3c1a_add_role_and_is_active_fields_to_users.py` Alembic revision after configuring a reachable PostgreSQL instance:
+
+```bash
+flask db upgrade
+```
+
+> **Important:** The migration script removes the legacy `is_admin` flag, introduces the role columns, and prepares the permissions tables. Ensure the database service is running before executing the upgrade.
+
 ## Local Development
 
 1. **Create and activate a virtual environment**

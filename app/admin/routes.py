@@ -3,21 +3,27 @@
 from __future__ import annotations
 
 from datetime import datetime
-from functools import wraps
 from http import HTTPStatus
-from typing import Any, Callable, TypeVar
+from typing import Dict
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    abort,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from sqlalchemy.exc import IntegrityError
 
-from ..auth.utils import decode_token
 from .. import db
 from ..models.company import Company
 from ..models.offer import Offer
 from ..models.user import User
 from ..services.notifications import broadcast_new_offer
-
-F = TypeVar("F", bound=Callable[..., Any])
+from ..services.roles import can_access, require_role
 
 admin_bp = Blueprint(
     "admin",
@@ -27,44 +33,24 @@ admin_bp = Blueprint(
 )
 
 
-def _extract_bearer_token() -> str | None:
-    """Return a bearer token from the Authorization header if present."""
+def _parse_boolean(value: str | None) -> bool:
+    """Return True for typical truthy HTML form values."""
 
-    authorization = request.headers.get("Authorization", "").strip()
-    if not authorization:
-        return None
-
-    scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        return None
-    return token
+    if value is None:
+        return False
+    return value.lower() in {"1", "true", "on", "yes"}
 
 
-def admin_required(func: F) -> F:
-    """Decorator ensuring the current request originates from an admin user."""
+def _guard_superadmin_modification(target: User) -> None:
+    """Abort when a non-superadmin tries to manipulate a superadmin account."""
 
-    @wraps(func)
-    def wrapper(*args: Any, **kwargs: Any):
-        token = _extract_bearer_token()
-        if not token:
-            abort(HTTPStatus.UNAUTHORIZED)
-
-        try:
-            user_id = decode_token(token)
-        except ValueError:
-            abort(HTTPStatus.UNAUTHORIZED)
-
-        user = User.query.get(user_id)
-        if user is None or not getattr(user, "is_admin", False):
-            abort(HTTPStatus.FORBIDDEN)
-
-        return func(*args, **kwargs)
-
-    return wrapper  # type: ignore[return-value]
+    current_user: User | None = getattr(g, "current_user", None)
+    if target.is_superadmin and (current_user is None or not current_user.is_superadmin):
+        abort(HTTPStatus.FORBIDDEN)
 
 
 @admin_bp.route("/")
-@admin_required
+@require_role("admin")
 def dashboard_home() -> str:
     """Render the admin dashboard landing page."""
 
@@ -72,32 +58,56 @@ def dashboard_home() -> str:
 
 
 @admin_bp.route("/users")
-@admin_required
+@require_role("admin")
 def dashboard_users() -> str:
     """Render the user management interface with a table of all users."""
 
     users = User.query.order_by(User.id).all()
-    return render_template("dashboard/users.html", section_title="Users", users=users)
+    return render_template(
+        "dashboard/users.html",
+        section_title="Users",
+        users=users,
+    )
 
 
 @admin_bp.route("/users/add", methods=["GET", "POST"])
-@admin_required
+@require_role("admin")
 def add_user() -> str:
     """Handle rendering and submission of the create-user form."""
+
+    companies = Company.query.order_by(Company.name).all()
 
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         email = request.form.get("email", "").strip()
         password = request.form.get("password", "")
-        is_admin = bool(request.form.get("is_admin"))
         membership_level = request.form.get("membership_level", "Basic").strip() or "Basic"
+        is_active = _parse_boolean(request.form.get("is_active"))
+        desired_role = request.form.get("role", "member")
+        company_id_raw = request.form.get("company_id")
 
         if not username or not email or not password:
             flash("Username, email, and password are required to create a user.", "danger")
             return redirect(url_for("admin.add_user"))
 
-        user = User(username=username, email=email, is_admin=is_admin, membership_level=membership_level)
+        user = User(username=username, email=email, membership_level=membership_level)
         user.set_password(password)
+        user.is_active = is_active
+
+        if can_access(g.current_user, "manage_roles"):
+            try:
+                user.set_role(desired_role)
+            except ValueError as error:
+                flash(str(error), "danger")
+                return redirect(url_for("admin.add_user"))
+            if company_id_raw:
+                try:
+                    user.company_id = int(company_id_raw)
+                except ValueError:
+                    user.company_id = None
+        else:
+            user.set_role("member")
+            user.company_id = None
 
         db.session.add(user)
         try:
@@ -110,22 +120,33 @@ def add_user() -> str:
         flash(f"User '{username}' created successfully.", "success")
         return redirect(url_for("admin.dashboard_users"))
 
-    return render_template("dashboard/user_form.html", section_title="Add User", user=None)
+    return render_template(
+        "dashboard/user_form.html",
+        section_title="Add User",
+        user=None,
+        role_choices=User.ROLE_CHOICES,
+        companies=companies,
+    )
 
 
 @admin_bp.route("/users/edit/<int:user_id>", methods=["GET", "POST"])
-@admin_required
+@require_role("admin")
 def edit_user(user_id: int) -> str:
     """Edit an existing user's details after validating input."""
 
     user = User.query.get_or_404(user_id)
+    _guard_superadmin_modification(user)
+
+    companies = Company.query.order_by(Company.name).all()
 
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         email = request.form.get("email", "").strip()
         password = request.form.get("password", "")
-        is_admin = bool(request.form.get("is_admin"))
         membership_level = request.form.get("membership_level", "Basic").strip() or "Basic"
+        is_active = _parse_boolean(request.form.get("is_active"))
+        desired_role = request.form.get("role", user.role)
+        company_id_raw = request.form.get("company_id")
 
         if not username or not email:
             flash("Username and email are required.", "danger")
@@ -133,10 +154,25 @@ def edit_user(user_id: int) -> str:
 
         user.username = username
         user.email = email
-        user.is_admin = is_admin
         user.membership_level = membership_level
+        user.is_active = is_active
+
         if password:
             user.set_password(password)
+
+        if can_access(g.current_user, "manage_roles"):
+            try:
+                user.set_role(desired_role)
+            except ValueError as error:
+                flash(str(error), "danger")
+                return redirect(url_for("admin.edit_user", user_id=user_id))
+            if company_id_raw:
+                try:
+                    user.company_id = int(company_id_raw)
+                except ValueError:
+                    user.company_id = None
+            else:
+                user.company_id = None
 
         try:
             db.session.commit()
@@ -148,23 +184,78 @@ def edit_user(user_id: int) -> str:
         flash(f"User '{username}' updated successfully.", "success")
         return redirect(url_for("admin.dashboard_users"))
 
-    return render_template("dashboard/user_form.html", section_title="Edit User", user=user)
+    return render_template(
+        "dashboard/user_form.html",
+        section_title="Edit User",
+        user=user,
+        role_choices=User.ROLE_CHOICES,
+        companies=companies,
+    )
 
 
 @admin_bp.route("/users/delete/<int:user_id>", methods=["POST"])
-@admin_required
+@require_role("superadmin")
 def delete_user(user_id: int) -> str:
     """Delete the specified user and redirect back to the listing."""
 
     user = User.query.get_or_404(user_id)
+    if user.id == g.current_user.id:
+        flash("You cannot delete your own account while logged in.", "warning")
+        return redirect(url_for("admin.dashboard_users"))
+
+    _guard_superadmin_modification(user)
+
     db.session.delete(user)
     db.session.commit()
     flash(f"User '{user.username}' deleted successfully.", "success")
     return redirect(url_for("admin.dashboard_users"))
 
 
+@admin_bp.route("/users-roles", methods=["GET", "POST"])
+@require_role("admin")
+def manage_user_roles() -> str:
+    """Allow administrators to review and update user roles and activation state."""
+
+    if request.method == "POST":
+        if not can_access(g.current_user, "manage_roles"):
+            abort(HTTPStatus.FORBIDDEN)
+
+        user_id_raw = request.form.get("user_id", "0")
+        try:
+            user_id = int(user_id_raw)
+        except ValueError:
+            flash("Invalid user identifier provided.", "danger")
+            return redirect(url_for("admin.manage_user_roles"))
+
+        target = User.query.get_or_404(user_id)
+        _guard_superadmin_modification(target)
+
+        new_role = request.form.get("role", target.role)
+        is_active = _parse_boolean(request.form.get("is_active"))
+
+        try:
+            target.set_role(new_role)
+        except ValueError as error:
+            flash(str(error), "danger")
+            return redirect(url_for("admin.manage_user_roles"))
+
+        target.is_active = is_active
+        db.session.commit()
+        flash("User permissions updated successfully.", "success")
+        return redirect(url_for("admin.manage_user_roles"))
+
+    users = User.query.order_by(User.id).all()
+    return render_template(
+        "dashboard/users_roles.html",
+        section_title="Roles & Permissions",
+        users=users,
+        role_choices=User.ROLE_CHOICES,
+        can_manage_roles=can_access(g.current_user, "manage_roles"),
+    )
+
+
 @admin_bp.route("/companies")
-@admin_required
+@require_role("admin")
 def dashboard_companies() -> str:
     """Render the company management interface showing all companies."""
 
@@ -175,7 +266,7 @@ def dashboard_companies() -> str:
 
 
 @admin_bp.route("/companies/add", methods=["GET", "POST"])
-@admin_required
+@require_role("admin")
 def add_company() -> str:
     """Handle creation of a new company from admin input."""
 
@@ -205,7 +296,7 @@ def add_company() -> str:
 
 
 @admin_bp.route("/companies/edit/<int:company_id>", methods=["GET", "POST"])
-@admin_required
+@require_role("admin")
 def edit_company(company_id: int) -> str:
     """Edit an existing company's details and persist the changes."""
 
@@ -238,7 +329,7 @@ def edit_company(company_id: int) -> str:
 
 
 @admin_bp.route("/companies/delete/<int:company_id>", methods=["POST"])
-@admin_required
+@require_role("admin")
 def delete_company(company_id: int) -> str:
     """Remove the selected company from the database."""
 
@@ -250,12 +341,12 @@ def delete_company(company_id: int) -> str:
 
 
 @admin_bp.route("/offers")
-@admin_required
+@require_role("admin")
 def dashboard_offers() -> str:
     """Render the offer management view with dynamic membership discount previews."""
 
     offers = Offer.query.order_by(Offer.id).all()
-    tier_styles = {
+    tier_styles: Dict[str, Dict[str, str]] = {
         "Basic": {"bg": "#6c757d", "text": "text-white"},
         "Silver": {"bg": "#C0C0C0", "text": "text-dark"},
         "Gold": {"bg": "#FFD700", "text": "text-dark"},
@@ -270,7 +361,7 @@ def dashboard_offers() -> str:
 
 
 @admin_bp.route("/offers/add", methods=["GET", "POST"])
-@admin_required
+@require_role("admin")
 def add_offer() -> str:
     """Create a new offer tied to a company and persist it in the database."""
 
@@ -278,7 +369,6 @@ def add_offer() -> str:
 
     if request.method == "POST":
         title = request.form.get("title", "").strip()
-        # Read the base discount input supplied by the administrator form.
         discount_raw = request.form.get("base_discount", "0").strip()
         valid_until_raw = request.form.get("valid_until", "").strip()
         company_id_raw = request.form.get("company_id", "").strip()
@@ -305,9 +395,9 @@ def add_offer() -> str:
         if company_id and Company.query.get(company_id) is None:
             flash("Selected company does not exist.", "danger")
             return redirect(url_for("admin.add_offer"))
+
         offer = Offer(
             title=title,
-            # Store the administrator-defined base discount to drive dynamic pricing.
             base_discount=base_discount,
             valid_until=valid_until,
             company_id=company_id,
@@ -330,7 +420,7 @@ def add_offer() -> str:
 
 
 @admin_bp.route("/offers/manage/<int:offer_id>", methods=["GET", "POST"])
-@admin_required
+@require_role("admin")
 def manage_offer(offer_id: int) -> str:
     """Edit an existing offer's metadata and persist the updates."""
 
@@ -339,7 +429,6 @@ def manage_offer(offer_id: int) -> str:
 
     if request.method == "POST":
         title = request.form.get("title", "").strip()
-        # Capture the updated base discount for the offer being edited.
         discount_raw = request.form.get("base_discount", "0").strip()
         valid_until_raw = request.form.get("valid_until", "").strip()
         company_id_raw = request.form.get("company_id", "").strip()
@@ -350,7 +439,6 @@ def manage_offer(offer_id: int) -> str:
 
         original_base_discount = offer.base_discount
         try:
-            # Persist the administrator-provided base discount change.
             offer.base_discount = float(discount_raw)
         except ValueError:
             flash("Base discount must be a numeric value.", "danger")
@@ -372,10 +460,7 @@ def manage_offer(offer_id: int) -> str:
             return redirect(url_for("admin.manage_offer", offer_id=offer_id))
 
         db.session.commit()
-        if (
-            request.form.get("send_notifications")
-            and offer.base_discount != original_base_discount
-        ):
+        if request.form.get("send_notifications") and offer.base_discount != original_base_discount:
             broadcast_new_offer(offer.id)
 
         flash(f"Offer '{title}' updated successfully.", "success")
@@ -390,7 +475,7 @@ def manage_offer(offer_id: int) -> str:
 
 
 @admin_bp.route("/offers/edit/<int:offer_id>", methods=["GET", "POST"])
-@admin_required
+@require_role("admin")
 def edit_offer_discount(offer_id: int) -> str:
     """Allow administrators to adjust the base discount for a specific offer."""
 
@@ -430,7 +515,7 @@ def edit_offer_discount(offer_id: int) -> str:
 
 
 @admin_bp.route("/offers/delete/<int:offer_id>", methods=["POST"])
-@admin_required
+@require_role("admin")
 def delete_offer(offer_id: int) -> str:
     """Delete an offer and redirect back to the offers table."""
 
@@ -442,7 +527,7 @@ def delete_offer(offer_id: int) -> str:
 
 
 @admin_bp.route("/offers/<int:offer_id>/notify", methods=["POST"])
-@admin_required
+@require_role("admin")
 def trigger_offer_notification(offer_id: int) -> str:
     """Queue a broadcast notification for the specified offer."""
 
@@ -450,3 +535,6 @@ def trigger_offer_notification(offer_id: int) -> str:
     broadcast_new_offer(offer.id)
     flash(f"Notification broadcast queued for '{offer.title}'.", "success")
     return redirect(url_for("admin.dashboard_offers"))
+
+
+__all__ = ["admin_bp"]

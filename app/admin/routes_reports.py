@@ -6,8 +6,6 @@ from io import BytesIO
 from typing import Any, Dict
 
 from flask import Blueprint, jsonify, render_template, send_file
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
 
 from ..services.analytics import (
     get_company_summary,
@@ -16,7 +14,7 @@ from ..services.analytics import (
     get_recent_activity,
     get_user_summary,
 )
-from .routes import admin_required
+from ..services.roles import require_role
 
 reports_bp = Blueprint(
     "reports",
@@ -26,7 +24,7 @@ reports_bp = Blueprint(
 
 
 @reports_bp.route("/reports")
-@admin_required
+@require_role("admin")
 def reports_home() -> str:
     """Render the interactive reports dashboard."""
 
@@ -37,7 +35,7 @@ def reports_home() -> str:
 
 
 @reports_bp.route("/api/summary")
-@admin_required
+@require_role("admin")
 def summary_api() -> Any:
     """Return a JSON payload with aggregated platform statistics."""
 
@@ -56,7 +54,7 @@ def summary_api() -> Any:
 
 
 @reports_bp.route("/reports/export")
-@admin_required
+@require_role("admin")
 def export_pdf() -> Any:
     """Generate a PDF report for download using the latest analytics."""
 
@@ -69,6 +67,20 @@ def export_pdf() -> Any:
     }
 
     buffer = BytesIO()
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.pdfgen import canvas
+    except ModuleNotFoundError:
+        return (
+            jsonify(
+                {
+                    "error": "reportlab dependency is not installed.",
+                    "message": "Install reportlab to enable PDF exports.",
+                }
+            ),
+            501,
+        )
+
     pdf = canvas.Canvas(buffer, pagesize=A4)
     _, height = A4
 

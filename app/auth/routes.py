@@ -5,7 +5,7 @@ from __future__ import annotations
 from http import HTTPStatus
 from typing import Dict, Optional
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, url_for
 from sqlalchemy import or_
 
 from .. import db
@@ -72,6 +72,8 @@ def register() -> tuple:
         "id": user.id,
         "username": user.username,
         "email": user.email,
+        "role": user.role,
+        "is_active": user.is_active,
         "message": "User registered successfully.",
     }
     return jsonify(response), HTTPStatus.CREATED
@@ -98,9 +100,29 @@ def login() -> tuple:
             HTTPStatus.UNAUTHORIZED,
         )
 
+    if not user.is_active:
+        return (
+            jsonify({"error": "Account is inactive. Please contact support."}),
+            HTTPStatus.FORBIDDEN,
+        )
+
     token = create_token(user.id)
+    if user.role == "company":
+        redirect_url = url_for("company_portal.dashboard")
+    elif user.role in {"admin", "superadmin"}:
+        redirect_url = url_for("admin.dashboard_home")
+    else:
+        redirect_url = url_for("portal.home")
     return (
-        jsonify({"token": token, "token_type": "Bearer"}),
+        jsonify(
+            {
+                "token": token,
+                "token_type": "Bearer",
+                "role": user.role,
+                "is_active": user.is_active,
+                "redirect_url": redirect_url,
+            }
+        ),
         HTTPStatus.OK,
     )
 
@@ -132,6 +154,8 @@ def profile() -> tuple:
         "id": user.id,
         "username": user.username,
         "email": user.email,
+        "role": user.role,
+        "is_active": user.is_active,
         "joined_at": user.joined_at.isoformat() if user.joined_at else None,
     }
     return jsonify(response), HTTPStatus.OK
