@@ -2,9 +2,21 @@
 
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from importlib import import_module
 
-import jwt
 from flask import current_app
+
+
+def _load_jwt_module():
+    """Return the PyJWT module, raising a runtime error if unavailable."""
+
+    try:
+        return import_module("jwt")
+    except ModuleNotFoundError as error:  # pragma: no cover - environment safeguard
+        raise RuntimeError(
+            "PyJWT must be installed to generate or validate authentication tokens."
+        ) from error
+
 
 
 def create_token(user_id: int) -> str:
@@ -13,6 +25,7 @@ def create_token(user_id: int) -> str:
     secret_key = current_app.config.get("SECRET_KEY")
     if not secret_key:
         raise RuntimeError("SECRET_KEY must be configured to issue tokens.")
+    jwt = _load_jwt_module()
 
     expiration = datetime.now(tz=timezone.utc) + timedelta(hours=24)
     payload = {
@@ -33,6 +46,7 @@ def decode_token(token: str) -> int:
     secret_key = current_app.config.get("SECRET_KEY")
     if not secret_key:
         raise RuntimeError("SECRET_KEY must be configured to validate tokens.")
+    jwt = _load_jwt_module()
 
     try:
         payload: Any = jwt.decode(token, secret_key, algorithms=["HS256"])

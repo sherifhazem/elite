@@ -1,5 +1,5 @@
 # ELITE Backend – Initial Setup
-Last Updated: 2025-10-17
+Last Updated: 2025-10-18
 
 The ELITE backend provides the foundational services for managing elite offers and related business logic. This initial setup prepares the project with a clean structure, environment configuration, and basic health monitoring endpoint.
 
@@ -58,7 +58,7 @@ This stage connects the application to PostgreSQL through SQLAlchemy and Flask-M
 
 ### Core Tables
 
-- **User (`users`)**: `id`, `username`, `email`, `password_hash`, `joined_at`.
+- - **User (`users`)**: `id`, `username`, `email`, `password_hash`, `membership_level`, `joined_at`.
 - **Company (`companies`)**: `id`, `name`, `description`, `created_at`.
 - **Offer (`offers`)**: `id`, `title`, `discount_percent`, `valid_until`, `company_id`, `created_at`.
 
@@ -135,9 +135,10 @@ The CRUD API is namespaced under the `/api` prefix. All endpoints exchange JSON 
 
 The authentication layer exposes JWT-based routes under `/api/auth`. All payloads must be JSON and all responses are JSON-encoded.
 
-- `POST /api/auth/register` – Create a new user account. Returns `201 Created` with the new user's identifier and confirmation message when successful. Duplicate usernames or emails return `400 Bad Request`.
+- - `POST /api/auth/register` – Create a new user account. Returns `201 Created` with the new user's identifier, membership level (`Basic` by default), and confirmation message when successful. Duplicate usernames or emails return `400 Bad Request`.
 - `POST /api/auth/login` – Authenticate using email and password. Returns `200 OK` with a bearer token when the credentials are correct, or `401 Unauthorized` when they are not.
-- `GET /api/auth/profile` – Retrieve the authenticated user's profile. Requires a valid JWT sent in the `Authorization` header. Returns `200 OK` with user details or `401 Unauthorized` if the token is missing or invalid.
+- - `GET /api/auth/profile` – Retrieve the authenticated user's profile, including the current membership level. Requires a valid JWT sent in the `Authorization` header. Returns `200 OK` with user details or `401 Unauthorized` if the token is missing or invalid.
+- `PUT /api/auth/membership` – Update the authenticated user's membership level. Expects a JSON body with the desired tier and returns `200 OK` with the updated state when the level is valid.
 
 Send the JWT in subsequent requests using the standard bearer header:
 
@@ -149,6 +150,57 @@ Authorization: Bearer <token>
 
 - Passwords are never stored in plain text; they are hashed using `werkzeug.security` helpers before persistence.
 - Always use HTTPS in production to prevent token interception and replay attacks.
+- 
+### Membership Levels
+
+The ELITE platform now distinguishes between four membership tiers that control the promotions a user can see:
+
+- **Basic** – الوصول محدود للعروض (limited access to general offers).
+- **Silver** – عروض عامة متوسطة (standard platform-wide promotions).
+- **Gold** – عروض موسعة تشمل شراكات مميزة (extended offers with premium partners).
+- **Premium** – خصومات حصرية ومزايا خاصة (exclusive discounts and loyalty perks).
+
+Every new account starts at the **Basic** tier. Membership levels are stored in the `users.membership_level` column and surfaced in authentication responses, allowing the frontend to tailor the experience immediately after login.
+
+#### Updating a Membership Level via API
+
+Use the authenticated endpoint to change the tier:
+
+```http
+PUT /api/auth/membership
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+    "membership_level": "Gold"
+}
+```
+
+Successful response:
+
+```json
+{
+    "id": 42,
+    "membership_level": "Gold",
+    "message": "Membership level updated successfully."
+}
+```
+
+> **Admin roadmap:** requests may include a `user_id` field to target a specific account. Until role-based access control is introduced, attempting to change another user's tier returns `403 Forbidden`.
+
+#### Profile Response Example
+
+The `/api/auth/profile` payload now embeds the membership value alongside the other user attributes:
+
+```json
+{
+    "id": 42,
+    "username": "elite_user",
+    "email": "elite@example.com",
+    "membership_level": "Silver",
+    "joined_at": "2025-01-17T12:00:00"
+}
+```
 ### Users
 
 - `GET /api/users/` – Retrieve all registered users.
