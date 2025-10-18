@@ -2,12 +2,40 @@
 {% extends "dashboard/base.html" %}
 
 {% block content %}
-<div class="card">
-    <h2>Welcome, Admin!</h2>
-    <p>
-        Use the navigation menu to access management sections for users, companies, and
-        offers. Upcoming iterations will introduce full CRUD capabilities directly from
-        this panel.
-    </p>
-</div>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Users</h5>
+                    <p class="card-text">
+                        Review registered members, promote administrators, and reset credentials in a
+                        secure workspace.
+                    </p>
+                    <a class="btn btn-outline-primary" href="{{ url_for('admin.dashboard_users') }}">Manage Users</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Companies</h5>
+                    <p class="card-text">
+                        Onboard new partners or refresh descriptions to keep marketplace listings up to date.
+                    </p>
+                    <a class="btn btn-outline-primary" href="{{ url_for('admin.dashboard_companies') }}">Manage Companies</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Offers</h5>
+                    <p class="card-text">
+                        Publish timely deals, adjust discounts, and retire expired promotions with ease.
+                    </p>
+                    <a class="btn btn-outline-primary" href="{{ url_for('admin.dashboard_offers') }}">Manage Offers</a>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

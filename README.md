@@ -128,22 +128,51 @@ After starting the server, visit [`http://localhost:5000/health`](http://localho
 {"status": "ok"}
 ```
 
-## Admin Dashboard Overview
+## Admin Dashboard CRUD Features
 
-The Elite Admin Panel introduces an internal interface for managing users, companies, and offers through server-side HTML templates. Access is restricted to authenticated users whose accounts include the `is_admin` flag.
+The Elite Admin Panel now delivers full create, read, update, and delete (CRUD) workflows for the platform's core entities. All operations are backed by SQLAlchemy transactions and surfaced through responsive Bootstrap-powered templates located under `app/admin/templates/dashboard/`.
 
-- **Routes**: `/admin/`, `/admin/users`, `/admin/companies`, `/admin/offers`
-- **Authentication**: Supply a valid JWT token in the `Authorization: Bearer <token>` header. The associated user must have `is_admin=True`.
-- **Templates**: The interface is rendered from Flask templates located under `app/admin/templates/dashboard/`. Future updates will expand these placeholders into full CRUD views.
+### User Operations
 
-Run the following commands after pulling the latest changes to add the admin flag to existing databases:
+- Browse all registered accounts, their membership levels, and administrative privileges.
+- Add new members with secure password hashing directly from the dashboard.
+- Update usernames, email addresses, membership levels, and optionally reset passwords.
+- Remove inactive or duplicate users after confirmation prompts.
 
-```bash
-flask db migrate -m "Add admin flag to users"
-flask db upgrade
-```
+### Company Operations
 
-> **Note:** The dashboard is currently experimental and limited to HTML template rendering. API parity will follow in later milestones.
+- Review the partner catalogue, including creation timestamps and descriptions.
+- Register new companies with descriptive summaries.
+- Edit existing partner information to keep marketplace data accurate.
+- Delete companies that are no longer part of the program.
+
+### Offer Operations
+
+- Inspect current promotions alongside their associated companies and expiry dates.
+- Publish new offers with configurable discounts and optional expiry windows.
+- Update discounts, titles, validity ranges, or linked companies at any time.
+- Retire outdated offers instantly.
+
+### Usage Flow
+
+1. Authenticate with a JWT token tied to an account where `is_admin=True`.
+2. Navigate to `/admin/` to access the dashboard overview cards.
+3. Use the navigation bar to open the Users, Companies, or Offers tables.
+4. Launch dedicated Add or Edit forms via the action buttons, submit the changes, and monitor success messages delivered through Flask flash alerts.
+
+#### Interface Preview
+
+| Section | Primary Actions | Quick Links |
+| --- | --- | --- |
+| Users | Add, Edit, Delete accounts with membership control | `/admin/users`, `/admin/users/add` |
+| Companies | Maintain partner directory | `/admin/companies`, `/admin/companies/add` |
+| Offers | Manage promotional campaigns | `/admin/offers`, `/admin/offers/add` |
+
+### Security Notes
+
+- Dashboard access is restricted to authenticated administrators. Always validate the `is_admin` flag before issuing session tokens.
+- Perform CRUD actions over HTTPS and rotate the `SECRET_KEY` regularly to protect session integrity.
+- Audit admin usage and rotate credentials periodically to maintain compliance.
 
 ## API Endpoints
 
