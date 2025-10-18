@@ -118,7 +118,7 @@ This stage connects the application to PostgreSQL through SQLAlchemy and Flask-M
 
     ```bash
     python run.py
-    ```
+```
 
 ## Testing
 
@@ -127,6 +127,23 @@ After starting the server, visit [`http://localhost:5000/health`](http://localho
 ```json
 {"status": "ok"}
 ```
+
+## Admin Dashboard Overview
+
+The Elite Admin Panel introduces an internal interface for managing users, companies, and offers through server-side HTML templates. Access is restricted to authenticated users whose accounts include the `is_admin` flag.
+
+- **Routes**: `/admin/`, `/admin/users`, `/admin/companies`, `/admin/offers`
+- **Authentication**: Supply a valid JWT token in the `Authorization: Bearer <token>` header. The associated user must have `is_admin=True`.
+- **Templates**: The interface is rendered from Flask templates located under `app/admin/templates/dashboard/`. Future updates will expand these placeholders into full CRUD views.
+
+Run the following commands after pulling the latest changes to add the admin flag to existing databases:
+
+```bash
+flask db migrate -m "Add admin flag to users"
+flask db upgrade
+```
+
+> **Note:** The dashboard is currently experimental and limited to HTML template rendering. API parity will follow in later milestones.
 
 ## API Endpoints
 

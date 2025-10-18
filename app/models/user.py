@@ -16,6 +16,12 @@ class User(db.Model):
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
+    is_admin = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False,
+        doc="Flag indicating if the user can access the admin dashboard.",
+    )
     membership_level = db.Column(
         db.String(50),
         default="Basic",
