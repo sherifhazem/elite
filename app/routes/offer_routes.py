@@ -8,6 +8,7 @@ from .. import db
 from ..auth.utils import get_user_from_token
 from ..models.company import Company
 from ..models.offer import Offer
+from ..services.notifications import broadcast_new_offer
 
 
 offer_routes = Blueprint("offer_routes", __name__)
@@ -104,6 +105,7 @@ def create_offer():
     )
     db.session.add(offer)
     db.session.commit()
+    broadcast_new_offer(offer.id)
     # Return the serialized offer using the baseline Basic tier for consistency.
     return jsonify(_serialize_offer(offer, "Basic")), 201
 
@@ -121,11 +123,14 @@ def update_offer(offer_id: int):
     if "title" in payload:
         offer.title = payload["title"]
 
+    base_discount_updated = False
     if "base_discount" in payload:
         try:
-            offer.base_discount = float(payload["base_discount"])
+            new_base_discount = float(payload["base_discount"])
         except (TypeError, ValueError):
             return jsonify({"error": "base_discount must be a number."}), 400
+        base_discount_updated = new_base_discount != offer.base_discount
+        offer.base_discount = new_base_discount
 
     if "company_id" in payload:
         company_id = payload["company_id"]
@@ -140,6 +145,8 @@ def update_offer(offer_id: int):
         offer.valid_until = valid_until
 
     db.session.commit()
+    if base_discount_updated:
+        broadcast_new_offer(offer.id)
     # Respond with the updated payload using the base membership tier view.
     return jsonify(_serialize_offer(offer, "Basic")), 200
 

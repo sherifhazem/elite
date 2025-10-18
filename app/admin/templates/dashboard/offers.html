@@ -82,6 +82,16 @@
                                 >
                                     <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                                 </form>
+                                <form
+                                    class="d-inline"
+                                    action="{{ url_for('admin.trigger_offer_notification', offer_id=offer.id) }}"
+                                    method="post"
+                                    onsubmit="return confirm('Send notifications for {{ offer.title }}?');"
+                                >
+                                    <button class="btn btn-sm btn-outline-success" type="submit">
+                                        Notify Members
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>

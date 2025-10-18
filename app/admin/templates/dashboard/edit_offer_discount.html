@@ -52,6 +52,19 @@
                         </div>
                     </div>
                 </div>
+                <div class="form-check form-switch mb-4">
+                    <input
+                        class="form-check-input"
+                        id="send_notifications"
+                        name="send_notifications"
+                        type="checkbox"
+                        value="1"
+                        {% if request.form.get('send_notifications') %}checked{% endif %}
+                    >
+                    <label class="form-check-label" for="send_notifications">
+                        Notify members about this discount change
+                    </label>
+                </div>
                 <div class="d-flex justify-content-between">
                     <a class="btn btn-secondary" href="{{ url_for('admin.dashboard_offers') }}">Cancel</a>
                     <button class="btn btn-primary" type="submit">Save Discount</button>

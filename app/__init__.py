@@ -31,6 +31,7 @@ from .models import Company, Offer, User  # noqa: F401
 from .routes import (  # noqa: E402
     company_routes,
     main as main_blueprint,
+    notif_bp,
     offer_routes,
     user_routes,
 )
@@ -44,6 +45,7 @@ app.register_blueprint(main_blueprint)
 app.register_blueprint(user_routes, url_prefix="/api/users")
 app.register_blueprint(company_routes, url_prefix="/api/companies")
 app.register_blueprint(offer_routes, url_prefix="/api/offers")
+app.register_blueprint(notif_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(portal_bp)

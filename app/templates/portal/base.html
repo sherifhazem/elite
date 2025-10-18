@@ -46,6 +46,21 @@
                                 <a class="nav-link {{ 'active' if active_nav == 'offers' else '' }}" href="{{ url_for('portal.offers') }}">Offers</a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link position-relative {{ 'active' if active_nav == 'notifications' else '' }}" href="{{ url_for('portal.notifications') }}">
+                                    <span class="me-1" aria-hidden="true">🔔</span>
+                                    Notifications
+                                    <span
+                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                        id="notification-count"
+                                        data-count="{{ notification_unread_count | default(0) }}"
+                                        {% if (notification_unread_count | default(0)) == 0 %}hidden{% endif %}
+                                    >
+                                        {{ notification_unread_count | default(0) }}
+                                        <span class="visually-hidden">unread notifications</span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link {{ 'active' if active_nav == 'profile' else '' }}" href="{{ url_for('portal.profile') }}">Profile</a>
                             </li>
                         </ul>
