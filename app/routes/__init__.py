@@ -5,6 +5,7 @@ from flask import Blueprint, jsonify, render_template
 from .company_routes import company_routes
 from .offer_routes import offer_routes
 from .user_routes import user_routes
+from .user_portal_routes import portal_bp
 
 
 main = Blueprint("main", __name__)
@@ -39,4 +40,5 @@ __all__ = [
     "user_routes",
     "company_routes",
     "offer_routes",
+    "portal_bp",
 ]

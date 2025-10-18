@@ -34,6 +34,7 @@ from .routes import (  # noqa: E402
     offer_routes,
     user_routes,
 )
+from .routes.user_portal_routes import portal_bp  # noqa: E402
 from .auth import auth_bp  # noqa: E402
 from .admin import admin_bp  # noqa: E402
 
@@ -45,3 +46,4 @@ app.register_blueprint(company_routes, url_prefix="/api/companies")
 app.register_blueprint(offer_routes, url_prefix="/api/offers")
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(portal_bp)

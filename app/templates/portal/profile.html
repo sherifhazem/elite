@@ -1,0 +1,42 @@
+<!-- Portal profile page summarizing account details and actions. -->
+{% extends 'portal/base.html' %}
+{% block title %}Profile · ELITE{% endblock %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card portal-card shadow-sm">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h2 class="h5 mb-0">معلومات الحساب</h2>
+                    {% if user %}
+                        <span class="badge portal-badge portal-badge-{{ membership_level|lower }}">
+                            {{ membership_level }}
+                        </span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if user %}
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">اسم المستخدم</dt>
+                            <dd class="col-sm-8">{{ user.username }}</dd>
+
+                            <dt class="col-sm-4">البريد الإلكتروني</dt>
+                            <dd class="col-sm-8">{{ user.email }}</dd>
+
+                            <dt class="col-sm-4">مستوى العضوية</dt>
+                            <dd class="col-sm-8">{{ membership_level }}</dd>
+                        </dl>
+                    {% else %}
+                        <p class="text-muted mb-0">
+                            لم يتم العثور على بيانات العضو. يرجى تسجيل الدخول باستخدام حساب ELITE الخاص بك.
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-end">
+                    <button class="btn portal-primary-btn" type="button" disabled>
+                        ترقية / تجديد العضوية
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

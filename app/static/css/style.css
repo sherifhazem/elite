@@ -1,3 +1,148 @@
 h1 {
     color: #003366;
 }
+
+:root {
+    --color-midnight-navy: #0f172a;
+    --color-slate-gray: #7b8794;
+    --color-soft-silver: #c0c5d1;
+    --color-elite-gold: #d4af37;
+    --color-royal-purple: #6f42c1;
+    --color-soft-violet: #b68cf2;
+    --color-warm-white: #f6f7fb;
+    --color-deep-graphite: #1f2937;
+}
+
+body {
+    font-family: "Tajawal", "Segoe UI", sans-serif;
+    background-color: var(--color-warm-white);
+    color: var(--color-deep-graphite);
+}
+
+h1,
+.h1,
+.display-4 {
+    color: var(--color-midnight-navy);
+}
+
+.portal-header .navbar {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.portal-logo {
+    width: 42px;
+    height: 42px;
+}
+
+.portal-brand {
+    letter-spacing: 0.2rem;
+    color: var(--color-midnight-navy);
+}
+
+.portal-primary-btn {
+    background: linear-gradient(135deg, var(--color-royal-purple), var(--color-soft-violet));
+    color: #ffffff;
+    border: none;
+    padding: 0.65rem 1.75rem;
+    border-radius: 999px;
+    font-weight: 600;
+    box-shadow: 0 10px 20px rgba(111, 66, 193, 0.2);
+}
+
+.portal-primary-btn:hover,
+.portal-primary-btn:focus {
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--color-soft-violet), var(--color-royal-purple));
+}
+
+.portal-highlight-card {
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.portal-badge {
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 0.35rem 0.85rem;
+}
+
+.portal-badge-basic {
+    background-color: var(--color-soft-silver);
+    color: var(--color-deep-graphite);
+}
+
+.portal-badge-silver {
+    background-color: #c0c0c0;
+    color: var(--color-deep-graphite);
+}
+
+.portal-badge-gold {
+    background-color: var(--color-elite-gold);
+    color: #3d2d00;
+}
+
+.portal-badge-premium {
+    background-color: var(--color-royal-purple);
+    color: #ffffff;
+}
+
+.portal-table tbody tr {
+    transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.portal-table tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.membership-row-basic {
+    background: rgba(192, 197, 209, 0.12);
+}
+
+.membership-row-silver {
+    background: rgba(192, 192, 192, 0.12);
+}
+
+.membership-row-gold {
+    background: rgba(212, 175, 55, 0.12);
+}
+
+.membership-row-premium {
+    background: rgba(111, 66, 193, 0.12);
+}
+
+.portal-footer {
+    background-color: #ffffff;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    color: var(--color-slate-gray);
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, var(--color-midnight-navy), var(--color-royal-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.portal-card .card-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.portal-card .card-footer {
+    background-color: #ffffff;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.portal-membership-legend .badge {
+    margin-right: 0.35rem;
+}
+
+.portal-logout {
+    border-color: rgba(111, 66, 193, 0.4);
+    color: var(--color-royal-purple) !important;
+}
+
+.portal-logout:disabled {
+    opacity: 0.7;
+}

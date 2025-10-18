@@ -1,0 +1,62 @@
+<!-- Portal offers page presenting personalized discounts. -->
+{% extends 'portal/base.html' %}
+{% block title %}Offers · ELITE{% endblock %}
+{% block content %}
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+        <div>
+            <h1 class="h2 mb-1">عروضك الحالية</h1>
+            <p class="text-muted mb-0">
+                تم تحديث النسب بناءً على مستوى عضويتك
+                <span class="badge portal-badge portal-badge-{{ membership_level|lower }}">
+                    {{ membership_level }}
+                </span>
+            </p>
+        </div>
+        <div class="portal-membership-legend">
+            <span class="badge portal-badge portal-badge-basic">Basic</span>
+            <span class="badge portal-badge portal-badge-silver">Silver</span>
+            <span class="badge portal-badge portal-badge-gold">Gold</span>
+            <span class="badge portal-badge portal-badge-premium">Premium</span>
+        </div>
+    </div>
+
+    {% if offers %}
+        <div class="table-responsive shadow-sm rounded-4 overflow-hidden">
+            <table class="table table-hover align-middle mb-0 portal-table">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Offer Title</th>
+                        <th scope="col">Company</th>
+                        <th scope="col" class="text-center">Discount %</th>
+                        <th scope="col">Valid Until</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for offer in offers %}
+                        {% set discount = '%.2f'|format(offer.get_discount_for_level(membership_level)) %}
+                        <tr class="membership-row membership-row-{{ membership_level|lower }}">
+                            <td class="fw-semibold">{{ offer.title }}</td>
+                            <td>{{ offer.company.name if offer.company else '—' }}</td>
+                            <td class="text-center">
+                                <span class="badge rounded-pill portal-badge portal-badge-{{ membership_level|lower }}">
+                                    {{ discount }}%
+                                </span>
+                            </td>
+                            <td>
+                                {% if offer.valid_until %}
+                                    {{ offer.valid_until.strftime('%d %B %Y') }}
+                                {% else %}
+                                    <span class="text-muted">مستمر</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            لا توجد عروض متاحة حاليًا. تابعنا لمعرفة التحديثات القادمة.
+        </div>
+    {% endif %}
+{% endblock %}

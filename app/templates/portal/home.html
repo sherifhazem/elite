@@ -1,0 +1,48 @@
+<!-- Portal homepage welcoming members with quick navigation. -->
+{% extends 'portal/base.html' %}
+{% block title %}Portal Home · ELITE{% endblock %}
+{% block content %}
+    <div class="row align-items-center g-5">
+        <div class="col-lg-7">
+            <h1 class="display-4 fw-bold text-gradient">مرحبا{% if user %} {{ user.username }}{% endif %}!</h1>
+            <p class="lead text-muted mt-3">
+                {% if user %}
+                    تم تفعيل عضويتك بمستوى
+                    <span class="badge portal-badge portal-badge-{{ membership_level|lower }}">
+                        {{ membership_level }}
+                    </span>
+                    يمكنك استكشاف عروض حصرية صممت خصيصًا لك.
+                {% else %}
+                    قم بتسجيل الدخول لاكتشاف العروض المصممة حسب مستوى عضويتك في ELITE.
+                {% endif %}
+            </p>
+            <div class="mt-4 d-flex gap-3">
+                <a class="btn portal-primary-btn" href="{{ url_for('portal.offers') }}">عرض العروض</a>
+                <a class="btn btn-outline-secondary" href="{{ url_for('portal.profile') }}">ملف العضو</a>
+            </div>
+        </div>
+        <div class="col-lg-5 text-center">
+            <div class="portal-highlight-card p-4 rounded-4 shadow-sm">
+                <h2 class="h4 mb-3">لمحة سريعة</h2>
+                <ul class="list-unstyled text-start small">
+                    <li class="d-flex align-items-center mb-2">
+                        <span class="badge portal-badge portal-badge-basic me-2">Basic</span>
+                        خصومات تمهيدية لجميع الأعضاء الجدد.
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                        <span class="badge portal-badge portal-badge-silver me-2">Silver</span>
+                        مكافآت إضافية للشركاء الموثوقين.
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                        <span class="badge portal-badge portal-badge-gold me-2">Gold</span>
+                        امتيازات ذهبية للخبراء في التوفير.
+                    </li>
+                    <li class="d-flex align-items-center">
+                        <span class="badge portal-badge portal-badge-premium me-2">Premium</span>
+                        أعلى مستويات الخصومات مع دعم شخصي.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}

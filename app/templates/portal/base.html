@@ -1,0 +1,78 @@
+<!-- Portal base template providing layout for member views. -->
+{% set active_nav = active_nav or '' %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>{% block title %}ELITE Member Portal{% endblock %}</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+            crossorigin="anonymous"
+        />
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    </head>
+    <body class="portal-body d-flex flex-column min-vh-100">
+        <header class="portal-header shadow-sm">
+            <nav class="navbar navbar-expand-lg navbar-light bg-white">
+                <div class="container py-2">
+                    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('portal.home') }}">
+                        <img
+                            src="{{ url_for('static', filename='images/logo.png') }}"
+                            alt="ELITE logo"
+                            class="portal-logo me-2"
+                        />
+                        <span class="fw-bold text-uppercase portal-brand">ELITE</span>
+                    </a>
+                    <button
+                        class="navbar-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#portalNavbar"
+                        aria-controls="portalNavbar"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation"
+                    >
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="portalNavbar">
+                        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_nav == 'home' else '' }}" href="{{ url_for('portal.home') }}">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_nav == 'offers' else '' }}" href="{{ url_for('portal.offers') }}">Offers</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ 'active' if active_nav == 'profile' else '' }}" href="{{ url_for('portal.profile') }}">Profile</a>
+                            </li>
+                        </ul>
+                        <div class="ms-lg-3">
+                            <button class="btn btn-outline-light text-uppercase portal-logout" type="button" disabled>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </header>
+        <main class="flex-grow-1">
+            <div class="container py-5">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+        <footer class="portal-footer text-center py-3 mt-auto">
+            <div class="container">
+                <small>&copy; {{ current_year or 2025 }} ELITE Membership Program. All rights reserved.</small>
+            </div>
+        </footer>
+        <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+            crossorigin="anonymous"
+        ></script>
+        <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    </body>
+</html>

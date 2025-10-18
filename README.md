@@ -318,6 +318,55 @@ Successful response (`201 Created`):
 Possible errors:
 
 - `400 Bad Request` when required fields are missing or the username/email already exist.
+- 
+## User Portal Interface
+
+The member-facing portal delivers a simple dashboard where authenticated users can review their personalized discounts, browse curated offers, and confirm their account details. The feature set is implemented purely with Flask, Bootstrap, and Jinja templates.
+
+### Template & Asset Layout
+
+```text
+app/templates/portal/
+    base.html        # Layout wrapper with shared navigation, footer, and asset links
+    home.html        # Landing view with welcome banner and membership badges
+    offers.html      # Personalized offers table using dynamic discount logic
+    profile.html     # Bootstrap card summarizing the member profile
+
+app/static/
+    css/style.css    # Extended styling aligned with the ELITE palette
+    js/main.js       # Lightweight enhancements for the portal experience
+    images/logo.png  # Branding asset displayed in the navigation bar
+```
+
+All portal pages inherit from `portal/base.html`, ensuring the navigation links (Home, Offers, Profile) remain consistent while the active section is highlighted for clarity.
+
+### Dynamic Discount Rendering
+
+Each offer row in `offers.html` uses `Offer.get_discount_for_level()` to compute the correct percentage for the visitor's membership tier. The active JWT token is resolved from either the `Authorization: Bearer` header or an `elite_token` cookie before querying offers. When a valid user is identified, the membership level is injected into every rendered template so the correct discount badge and styling are displayed.
+
+### Testing the Portal
+
+1. Launch the Flask development server and authenticate to obtain a JWT token.
+2. Visit [`/portal/`](http://localhost:5000/portal/) to confirm the welcome banner shows your username and tier badge.
+3. Navigate to [`/portal/offers`](http://localhost:5000/portal/offers) and verify the discount column reflects your membership uplift across all listed offers.
+4. Open [`/portal/profile`](http://localhost:5000/portal/profile) to ensure the Bootstrap card displays username, email, and membership level. The upgrade button remains disabled until checkout flows are implemented.
+
+### Color Palette Reference
+
+The interface follows the tones captured in `Color Palette for Design Project.png`:
+
+| Purpose | Hex | Description |
+| --- | --- | --- |
+| Midnight Navy (background accents) | `#0F172A` | Deep foundation tone for headings and navigation text |
+| Slate Gray (supporting text) | `#7B8794` | Neutral copy color for descriptions |
+| Soft Silver (Basic tier) | `#C0C5D1` | Badge background for introductory members |
+| Metallic Silver (Silver tier) | `#C0C0C0` | Badge background for the Silver tier |
+| Elite Gold (Gold tier) | `#D4AF37` | Highlighted badge for Gold members |
+| Royal Purple (Premium tier) | `#6F42C1` | Primary accent gradient and Premium badge |
+| Soft Violet (gradient highlight) | `#B68CF2` | Secondary gradient color for call-to-action buttons |
+| Warm White (page background) | `#F6F7FB` | Subtle off-white background for content sections |
+
+Use these references when extending the portal to maintain visual consistency with the ELITE identity.
 - `404 Not Found` when updating or deleting a non-existent user.
 
 ### Companies
