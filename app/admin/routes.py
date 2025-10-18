@@ -272,18 +272,19 @@ def add_offer() -> str:
 
     if request.method == "POST":
         title = request.form.get("title", "").strip()
-        discount_raw = request.form.get("discount_percent", "0").strip()
+        # Read the base discount input supplied by the administrator form.
+        discount_raw = request.form.get("base_discount", "0").strip()
         valid_until_raw = request.form.get("valid_until", "").strip()
         company_id_raw = request.form.get("company_id", "").strip()
 
         if not title or not discount_raw:
-            flash("Title and discount are required.", "danger")
+            flash("Title and base discount are required.", "danger")
             return redirect(url_for("admin.add_offer"))
 
         try:
-            discount_percent = float(discount_raw)
+            base_discount = float(discount_raw)
         except ValueError:
-            flash("Discount must be a numeric value.", "danger")
+            flash("Base discount must be a numeric value.", "danger")
             return redirect(url_for("admin.add_offer"))
 
         valid_until = None
@@ -300,7 +301,8 @@ def add_offer() -> str:
             return redirect(url_for("admin.add_offer"))
         offer = Offer(
             title=title,
-            discount_percent=discount_percent,
+            # Store the administrator-defined base discount to drive dynamic pricing.
+            base_discount=base_discount,
             valid_until=valid_until,
             company_id=company_id,
         )
@@ -328,18 +330,20 @@ def edit_offer(offer_id: int) -> str:
 
     if request.method == "POST":
         title = request.form.get("title", "").strip()
-        discount_raw = request.form.get("discount_percent", "0").strip()
+        # Capture the updated base discount for the offer being edited.
+        discount_raw = request.form.get("base_discount", "0").strip()
         valid_until_raw = request.form.get("valid_until", "").strip()
         company_id_raw = request.form.get("company_id", "").strip()
 
         if not title or not discount_raw:
-            flash("Title and discount are required.", "danger")
+            flash("Title and base discount are required.", "danger")
             return redirect(url_for("admin.edit_offer", offer_id=offer_id))
 
         try:
-            offer.discount_percent = float(discount_raw)
+            # Persist the administrator-provided base discount change.
+            offer.base_discount = float(discount_raw)
         except ValueError:
-            flash("Discount must be a numeric value.", "danger")
+            flash("Base discount must be a numeric value.", "danger")
             return redirect(url_for("admin.edit_offer", offer_id=offer_id))
 
         if valid_until_raw:

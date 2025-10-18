@@ -13,7 +13,7 @@
                 <tr>
                     <th scope="col">ID</th>
                     <th scope="col">Title</th>
-                    <th scope="col">Discount %</th>
+                    <th scope="col">Base Discount %</th>
                     <th scope="col">Valid Until</th>
                     <th scope="col">Company</th>
                     <th scope="col" class="text-end">Actions</th>
@@ -24,7 +24,8 @@
                     <tr>
                         <td>{{ offer.id }}</td>
                         <td>{{ offer.title }}</td>
-                        <td>{{ '%.2f'|format(offer.discount_percent) }}</td>
+                        {# Display the stored base discount so admins know the minimum value. #}
+                        <td>{{ '%.2f'|format(offer.base_discount) }}</td>
                         <td>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else '—' }}</td>
                         <td>{{ offer.company.name if offer.company else '—' }}</td>
                         <td class="text-end">
