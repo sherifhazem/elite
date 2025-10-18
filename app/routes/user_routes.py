@@ -17,6 +17,7 @@ def _serialize_user(user: User) -> dict:
         "id": user.id,
         "username": user.username,
         "email": user.email,
+        "membership_level": user.membership_level,
         "joined_at": user.joined_at.isoformat() if user.joined_at else None,
     }
 
@@ -37,11 +38,14 @@ def create_user():
     username = payload.get("username")
     email = payload.get("email")
     password_hash = payload.get("password_hash")
+    membership_level = payload.get("membership_level")
 
     if not username or not email or not password_hash:
         return jsonify({"error": "username, email, and password_hash are required."}), 400
 
     user = User(username=username, email=email, password_hash=password_hash)
+    if membership_level:
+        user.update_membership_level(membership_level)
     db.session.add(user)
     try:
         db.session.commit()
@@ -65,6 +69,7 @@ def update_user(user_id: int):
     username = payload.get("username")
     email = payload.get("email")
     password_hash = payload.get("password_hash")
+    membership_level = payload.get("membership_level")
 
     if username is not None:
         user.username = username
@@ -72,6 +77,8 @@ def update_user(user_id: int):
         user.email = email
     if password_hash is not None:
         user.password_hash = password_hash
+    if membership_level is not None:
+        user.update_membership_level(membership_level)
 
     try:
         db.session.commit()
@@ -93,6 +100,25 @@ def delete_user(user_id: int):
     db.session.delete(user)
     db.session.commit()
     return jsonify({"status": "deleted"}), 200
+
+
+@user_routes.route("/<int:user_id>/membership", methods=["PATCH"])
+def update_membership(user_id: int):
+    """Update the membership level for a specific user."""
+
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"error": "User not found."}), 404
+
+    payload = request.get_json(silent=True) or {}
+    membership_level = payload.get("membership_level")
+    if not membership_level:
+        return jsonify({"error": "membership_level is required."}), 400
+
+    user.update_membership_level(membership_level)
+    db.session.commit()
+
+    return jsonify(_serialize_user(user)), 200
 
 
 __all__ = ["user_routes"]
