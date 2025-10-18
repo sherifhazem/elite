@@ -186,6 +186,19 @@ Successful response:
 }
 ```
 
+Administrators can also update an individual member directly through the users service when elevated privileges are in place:
+
+```http
+PATCH /api/users/<user_id>/membership
+Content-Type: application/json
+
+{
+    "membership_level": "Premium"
+}
+```
+
+The response body mirrors the standard user payload, enabling dashboards to refresh the membership tier without an additional fetch.
+
 > **Admin roadmap:** requests may include a `user_id` field to target a specific account. Until role-based access control is introduced, attempting to change another user's tier returns `403 Forbidden`.
 
 #### Profile Response Example
