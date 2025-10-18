@@ -30,7 +30,10 @@ reports_bp = Blueprint(
 def reports_home() -> str:
     """Render the interactive reports dashboard."""
 
-    return render_template("dashboard/reports.html", section_title="Reports")
+    return render_template(
+        "dashboard/reports.html",
+        section_title="التقارير والتحليلات",
+    )
 
 
 @reports_bp.route("/api/summary")

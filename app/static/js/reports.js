@@ -17,6 +17,13 @@ const chartInstances = {
     offers: null
 };
 
+function setTextContent(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = value;
+    }
+}
+
 async function fetchSummary() {
     const response = await fetch(API_ENDPOINT, {
         headers: {
@@ -37,12 +44,21 @@ function updateStatCards(summary) {
     const companyStats = summary.companies ?? {};
     const offerStats = summary.offers ?? {};
 
-    document.getElementById("totalUsers").textContent = userStats.total_users ?? 0;
-    document.getElementById("newUsers").textContent = `New last 7 days: ${userStats.new_last_7_days ?? 0}`;
-    document.getElementById("totalCompanies").textContent = companyStats.total_companies ?? 0;
-    document.getElementById("newCompanies").textContent = `New last 30 days: ${companyStats.new_last_30_days ?? 0}`;
-    document.getElementById("activeOffers").textContent = offerStats.active_offers ?? 0;
-    document.getElementById("avgDiscount").textContent = `Average discount: ${(offerStats.average_discount ?? 0).toFixed(2)}%`;
+    setTextContent("totalUsers", userStats.total_users ?? 0);
+    setTextContent(
+        "newUsers",
+        `انضم خلال ٧ أيام: ${userStats.new_last_7_days ?? 0}`
+    );
+    setTextContent("totalCompanies", companyStats.total_companies ?? 0);
+    setTextContent(
+        "newCompanies",
+        `انضمت خلال ٣٠ يوم: ${companyStats.new_last_30_days ?? 0}`
+    );
+    setTextContent("activeOffers", offerStats.active_offers ?? 0);
+    setTextContent(
+        "avgDiscount",
+        `متوسط الخصم: ${(offerStats.average_discount ?? 0).toFixed(2)}%`
+    );
 }
 
 function ensureChart(ctx, configKey, chartConfig) {
@@ -171,8 +187,12 @@ function updateRecentOffers(summary) {
 
     const rows = (summary.recent_offers ?? []).map((offer) => {
         const tr = document.createElement("tr");
-        const created = offer.created_at ? new Date(offer.created_at).toLocaleString() : "-";
-        const validUntil = offer.valid_until ? new Date(offer.valid_until).toLocaleDateString() : "-";
+        const created = offer.created_at
+            ? new Date(offer.created_at).toLocaleString("ar-EG")
+            : "-";
+        const validUntil = offer.valid_until
+            ? new Date(offer.valid_until).toLocaleDateString("ar-EG")
+            : "-";
         tr.innerHTML = `
             <td>${offer.title ?? ""}</td>
             <td>${offer.company ?? "-"}</td>
@@ -188,7 +208,7 @@ function updateRecentOffers(summary) {
 
 function createEmptyRow() {
     const tr = document.createElement("tr");
-    tr.innerHTML = '<td colspan="5" class="text-center text-muted">No offers found.</td>';
+    tr.innerHTML = '<td colspan="5" class="text-center text-muted">لا توجد عروض متاحة.</td>';
     return tr;
 }
 
