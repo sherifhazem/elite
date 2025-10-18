@@ -12,6 +12,9 @@ class User(db.Model):
 
     __tablename__ = "users"
 
+    #: Tuple defining the allowed membership levels in ascending order.
+    MEMBERSHIP_LEVELS = ("Basic", "Silver", "Gold", "Premium")
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -45,7 +48,42 @@ class User(db.Model):
 
         return check_password_hash(self.password_hash, password)
 
+    @classmethod
+    def normalize_membership_level(cls, level: str) -> str:
+        """Return a normalized membership level when valid, otherwise an empty string."""
+
+        if not level or not isinstance(level, str):
+            return ""
+        normalized = level.strip().title()
+        if normalized in cls.MEMBERSHIP_LEVELS:
+            return normalized
+        return ""
+
     def update_membership_level(self, level: str) -> None:
         """Update the user's membership level for tier-based access control."""
 
-        self.membership_level = level
+        normalized = self.normalize_membership_level(level)
+        if not normalized:
+            raise ValueError("Membership level must be one of: Basic, Silver, Gold, Premium.")
+        self.membership_level = normalized
+
+    def membership_rank(self) -> int:
+        """Return the index of the current membership level for comparison operations."""
+
+        normalized = self.normalize_membership_level(self.membership_level or "Basic")
+        try:
+            return self.MEMBERSHIP_LEVELS.index(normalized or "Basic")
+        except ValueError:
+            return 0
+
+    def can_upgrade_to(self, new_level: str) -> bool:
+        """Return True when the provided level is higher than the current membership."""
+
+        normalized = self.normalize_membership_level(new_level)
+        if not normalized:
+            return False
+        try:
+            desired_rank = self.MEMBERSHIP_LEVELS.index(normalized)
+        except ValueError:
+            return False
+        return desired_rank > self.membership_rank()

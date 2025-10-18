@@ -4,7 +4,7 @@
 {% block content %}
     <div class="row justify-content-center">
         <div class="col-lg-6">
-            <div class="card portal-card shadow-sm">
+            <div class="card portal-card shadow-sm portal-tier-card portal-tier-{{ membership_level|lower }}">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <h2 class="h5 mb-0">معلومات الحساب</h2>
                     {% if user %}
@@ -39,4 +39,62 @@
             </div>
         </div>
     </div>
+    {% if user %}
+        <div class="row justify-content-center mt-4">
+            <div class="col-lg-6">
+                <div class="card portal-card shadow-sm">
+                    <div class="card-header">
+                        <h3 class="h6 mb-0">Upgrade Membership</h3>
+                    </div>
+                    <div class="card-body">
+                        <div
+                            id="upgrade-feedback"
+                            class="alert {% if upgrade_success %}alert-success{% else %}d-none{% endif %}"
+                            role="alert"
+                        >
+                            {% if upgrade_success %}
+                                Membership upgraded to {{ membership_level }} successfully.
+                            {% endif %}
+                        </div>
+                        {% if available_upgrades %}
+                            <p class="text-muted">
+                                Select a higher tier to unlock additional ELITE benefits.
+                            </p>
+                            <form
+                                id="membership-upgrade-form"
+                                class="row gy-3"
+                                onsubmit="upgradeMembership(event)"
+                                data-upgrade-inline="true"
+                            >
+                                <div class="col-12">
+                                    <label class="form-label" for="new_membership_level">Choose your new level</label>
+                                    <select
+                                        class="form-select"
+                                        name="new_level"
+                                        id="new_membership_level"
+                                        data-current-level="{{ membership_level }}"
+                                        required
+                                    >
+                                        <option value="" selected disabled>-- Select level --</option>
+                                        {% for level in available_upgrades %}
+                                            <option value="{{ level }}">{{ level }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-12 text-end">
+                                    <button class="btn portal-primary-btn" type="submit">
+                                        Upgrade
+                                    </button>
+                                </div>
+                            </form>
+                        {% else %}
+                            <p class="text-success mb-0">
+                                You already enjoy the highest ELITE tier. Thank you for being a Premium member!
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}

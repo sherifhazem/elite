@@ -128,6 +128,36 @@ After starting the server, visit [`http://localhost:5000/health`](http://localho
 {"status": "ok"}
 ```
 
+## Membership Upgrade System
+
+The member portal now allows authenticated users to elevate their membership tier directly from the profile page.
+
+- **Endpoint:** `POST /portal/upgrade`
+- **Request Body:**
+
+  ```json
+  {"new_level": "Silver"}
+  ```
+
+  Acceptable values: `"Silver"`, `"Gold"`, or `"Premium"` (upgrades are only allowed to higher tiers).
+- **Successful Response:**
+
+  ```json
+  {"message": "Membership upgraded to Gold"}
+  ```
+
+### How to Test
+
+1. Sign in through the portal so that a valid JWT token is stored (header or cookie).
+2. Open `/portal/profile` and use the **Upgrade Membership** form to choose a higher level.
+3. Alternatively, send a `POST` request with the JSON body shown above using Postman or curl. Include the JWT as a `Bearer` token or cookie.
+4. Confirm the success alert appears and that the badge on the profile reflects the new membership tier.
+
+### Security Notes
+
+- The upgrade API always validates the JWT token; direct requests without authentication receive `401 Unauthorized`.
+- Only the predefined membership levels (`Basic`, `Silver`, `Gold`, `Premium`) are accepted by the backend to prevent arbitrary values.
+
 ## Admin Dashboard CRUD Features
 
 The Elite Admin Panel now delivers full create, read, update, and delete (CRUD) workflows for the platform's core entities. All operations are backed by SQLAlchemy transactions and surfaced through responsive Bootstrap-powered templates located under `app/admin/templates/dashboard/`.
