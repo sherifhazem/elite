@@ -13,7 +13,7 @@ from .config import Config
 app = Flask(__name__)
 app.config.from_object(Config)
 
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -33,6 +33,7 @@ from .routes import (  # noqa: E402
     offer_routes,
     user_routes,
 )
+from .auth import auth_bp  # noqa: E402
 
 app.logger.info("✅ Database connection configured for %s", app.config["SQLALCHEMY_DATABASE_URI"])
 
@@ -40,3 +41,4 @@ app.register_blueprint(main_blueprint)
 app.register_blueprint(user_routes, url_prefix="/api/users")
 app.register_blueprint(company_routes, url_prefix="/api/companies")
 app.register_blueprint(offer_routes, url_prefix="/api/offers")
+app.register_blueprint(auth_bp)

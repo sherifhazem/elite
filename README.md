@@ -131,7 +131,24 @@ After starting the server, visit [`http://localhost:5000/health`](http://localho
 ## API Endpoints
 
 The CRUD API is namespaced under the `/api` prefix. All endpoints exchange JSON payloads and return the status codes listed in each section.
+## Authentication API
 
+The authentication layer exposes JWT-based routes under `/api/auth`. All payloads must be JSON and all responses are JSON-encoded.
+
+- `POST /api/auth/register` – Create a new user account. Returns `201 Created` with the new user's identifier and confirmation message when successful. Duplicate usernames or emails return `400 Bad Request`.
+- `POST /api/auth/login` – Authenticate using email and password. Returns `200 OK` with a bearer token when the credentials are correct, or `401 Unauthorized` when they are not.
+- `GET /api/auth/profile` – Retrieve the authenticated user's profile. Requires a valid JWT sent in the `Authorization` header. Returns `200 OK` with user details or `401 Unauthorized` if the token is missing or invalid.
+
+Send the JWT in subsequent requests using the standard bearer header:
+
+```http
+Authorization: Bearer <token>
+```
+
+### Security Notes
+
+- Passwords are never stored in plain text; they are hashed using `werkzeug.security` helpers before persistence.
+- Always use HTTPS in production to prevent token interception and replay attacks.
 ### Users
 
 - `GET /api/users/` – Retrieve all registered users.
