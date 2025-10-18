@@ -29,15 +29,26 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="mainNavbar">
+                    {% set role = current_user.normalized_role if current_user else None %}
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        {% if role in ['admin', 'superadmin'] %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin.dashboard_users') }}">Users</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin.dashboard_companies') }}">Companies</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin.dashboard_offers') }}">Offers</a>
+                            </li>
+                        {% endif %}
+                        {% if role in ['company', 'superadmin'] %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('company_portal.dashboard') }}">Company Portal</a>
+                            </li>
+                        {% endif %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin.dashboard_users') }}">Users</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin.dashboard_companies') }}">Companies</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin.dashboard_offers') }}">Offers</a>
+                            <a class="nav-link" href="{{ url_for('portal.home') }}">Member Portal</a>
                         </li>
                     </ul>
                 </div>

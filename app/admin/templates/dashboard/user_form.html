@@ -49,16 +49,42 @@
                             value="{{ user.membership_level if user else 'Basic' }}"
                         >
                     </div>
-                    <div class="col-12">
-                        <div class="form-check">
+                    <div class="col-md-6">
+                        <label class="form-label" for="role">Role</label>
+                        <select class="form-select" id="role" name="role" {% if not current_user or current_user.role != 'superadmin' %}disabled{% endif %}>
+                            {% for role in role_choices %}
+                                <option value="{{ role }}" {% if user and user.role == role %}selected{% endif %}>
+                                    {{ role|capitalize }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if not current_user or current_user.role != 'superadmin' %}
+                            <div class="form-text">Only super administrators can change roles.</div>
+                        {% endif %}
+                    </div>
+                    {% if companies %}
+                        <div class="col-md-6">
+                            <label class="form-label" for="company_id">Company</label>
+                            <select class="form-select" id="company_id" name="company_id" {% if not current_user or current_user.role != 'superadmin' %}disabled{% endif %}>
+                                <option value="">No linked company</option>
+                                {% for company in companies %}
+                                    <option value="{{ company.id }}" {% if user and user.company_id == company.id %}selected{% endif %}>
+                                        {{ company.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endif %}
+                    <div class="col-md-6">
+                        <div class="form-check mt-4">
                             <input
                                 class="form-check-input"
-                                id="is_admin"
-                                name="is_admin"
+                                id="is_active"
+                                name="is_active"
                                 type="checkbox"
-                                {% if user and user.is_admin %}checked{% endif %}
+                                {% if not user or user.is_active %}checked{% endif %}
                             >
-                            <label class="form-check-label" for="is_admin">Administrator</label>
+                            <label class="form-check-label" for="is_active">Active account</label>
                         </div>
                     </div>
                 </div>

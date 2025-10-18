@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 from .. import db
 from ..models.company import Company
+from ..services.roles import require_role
 
 
 company_routes = Blueprint("company_routes", __name__)
@@ -30,6 +31,7 @@ def list_companies():
 
 
 @company_routes.route("/", methods=["POST"])
+@require_role("admin")
 def create_company():
     """Create a new company from the provided JSON payload."""
 
@@ -52,6 +54,7 @@ def create_company():
 
 
 @company_routes.route("/<int:company_id>", methods=["PUT"])
+@require_role("admin")
 def update_company(company_id: int):
     """Update the company identified by company_id."""
 
@@ -78,6 +81,7 @@ def update_company(company_id: int):
 
 
 @company_routes.route("/<int:company_id>", methods=["DELETE"])
+@require_role("admin")
 def delete_company(company_id: int):
     """Remove a company from the database."""
 

@@ -15,7 +15,8 @@
                     <th scope="col">Username</th>
                     <th scope="col">Email</th>
                     <th scope="col">Membership</th>
-                    <th scope="col">Admin</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Status</th>
                     <th scope="col" class="text-end">Actions</th>
                 </tr>
             </thead>
@@ -26,28 +27,31 @@
                         <td>{{ user.username }}</td>
                         <td>{{ user.email }}</td>
                         <td>{{ user.membership_level }}</td>
+                        <td><span class="badge text-bg-info text-uppercase">{{ user.role }}</span></td>
                         <td>
-                            {% if user.is_admin %}
-                                <span class="badge text-bg-success">Yes</span>
+                            {% if user.is_active %}
+                                <span class="badge text-bg-success">Active</span>
                             {% else %}
-                                <span class="badge text-bg-secondary">No</span>
+                                <span class="badge text-bg-secondary">Inactive</span>
                             {% endif %}
                         </td>
                         <td class="text-end">
                             <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.edit_user', user_id=user.id) }}">Edit</a>
-                            <form
-                                class="d-inline"
-                                action="{{ url_for('admin.delete_user', user_id=user.id) }}"
-                                method="post"
-                                onsubmit="return confirm('Delete user {{ user.username }}?');"
-                            >
-                                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                            </form>
+                            {% if current_user and current_user.is_superadmin and current_user.id != user.id %}
+                                <form
+                                    class="d-inline"
+                                    action="{{ url_for('admin.delete_user', user_id=user.id) }}"
+                                    method="post"
+                                    onsubmit="return confirm('Delete user {{ user.username }}?');"
+                                >
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                </form>
+                            {% endif %}
                         </td>
                     </tr>
                 {% else %}
                     <tr>
-                        <td class="text-center" colspan="6">No users found.</td>
+                        <td class="text-center" colspan="7">No users found.</td>
                     </tr>
                 {% endfor %}
             </tbody>

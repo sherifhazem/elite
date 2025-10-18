@@ -30,23 +30,46 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="adminNavbar">
+                    {% set role = current_user.normalized_role if current_user else None %}
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('admin.dashboard_home') }}">Overview</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin.dashboard_users') }}">Users</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin.dashboard_companies') }}">Companies</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin.dashboard_offers') }}">Offers</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('reports.reports_home') }}">التقارير</a>
-                        </li>
+                        {% if role in ['admin', 'superadmin'] %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin.dashboard_users') }}">Users</a>
+                            </li>
+                            {% if role == 'superadmin' %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ url_for('admin.manage_user_roles') }}">Roles</a>
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                        {% if role in ['company', 'superadmin'] %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('company_portal.dashboard') }}">Company Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('company_portal.list_offers') }}">My Offers</a>
+                            </li>
+                        {% endif %}
+                        {% if role in ['admin', 'superadmin'] %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin.dashboard_companies') }}">Companies</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin.dashboard_offers') }}">Offers</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('reports.reports_home') }}">التقارير</a>
+                            </li>
+                        {% endif %}
                     </ul>
+                    {% if current_user %}
+                        <span class="navbar-text text-white">
+                            {{ current_user.username }} • {{ current_user.role|capitalize }}
+                        </span>
+                    {% endif %}
                 </div>
             </div>
         </nav>

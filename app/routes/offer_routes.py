@@ -9,6 +9,7 @@ from ..auth.utils import get_user_from_token
 from ..models.company import Company
 from ..models.offer import Offer
 from ..services.notifications import broadcast_new_offer
+from ..services.roles import require_role
 
 
 offer_routes = Blueprint("offer_routes", __name__)
@@ -69,6 +70,7 @@ def list_offers():
 
 
 @offer_routes.route("/", methods=["POST"])
+@require_role("admin")
 def create_offer():
     """Create a new offer from the provided JSON payload."""
 
@@ -111,6 +113,7 @@ def create_offer():
 
 
 @offer_routes.route("/<int:offer_id>", methods=["PUT"])
+@require_role("admin")
 def update_offer(offer_id: int):
     """Update an existing offer identified by offer_id."""
 
@@ -152,6 +155,7 @@ def update_offer(offer_id: int):
 
 
 @offer_routes.route("/<int:offer_id>", methods=["DELETE"])
+@require_role("admin")
 def delete_offer(offer_id: int):
     """Remove an offer from the database."""
 
