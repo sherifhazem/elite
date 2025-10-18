@@ -143,6 +143,26 @@
     vertical-align: middle;
 }
 
+[dir='rtl'] .reports-sidebar,
+[dir='rtl'] .stat-card,
+[dir='rtl'] .chart-card,
+[dir='rtl'] .table-card {
+    text-align: right;
+}
+
+[dir='rtl'] .sidebar-links {
+    justify-items: stretch;
+}
+
+[dir='rtl'] .sidebar-links a {
+    text-align: right;
+}
+
+[dir='rtl'] .table thead th,
+[dir='rtl'] .table tbody td {
+    text-align: right;
+}
+
 @media (max-width: 992px) {
     .reports-layout {
         grid-template-columns: 1fr;

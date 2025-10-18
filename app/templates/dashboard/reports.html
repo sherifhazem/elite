@@ -1,0 +1,89 @@
+{% extends 'dashboard/base.html' %}
+
+{% block extra_styles %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+{% endblock %}
+
+{% block content %}
+    <div class="reports-layout" lang="ar" dir="rtl">
+        <aside class="reports-sidebar">
+            <h2 class="sidebar-title">نظرة سريعة</h2>
+            <ul class="sidebar-links">
+                <li><a class="active" href="#overview">لوحة التحكم</a></li>
+                <li><a href="#charts">الرسوم البيانية</a></li>
+                <li><a href="#recent-offers">أحدث العروض</a></li>
+            </ul>
+        </aside>
+
+        <section class="reports-main">
+            <header class="reports-header" id="overview">
+                <h1>التقارير والتحليلات</h1>
+                <button class="btn btn-primary" id="exportPdfButton" type="button">تصدير التقرير PDF</button>
+            </header>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <span class="label">إجمالي الأعضاء</span>
+                    <span class="value" id="totalUsers">0</span>
+                    <span class="subtext" id="newUsers">انضم خلال ٧ أيام: 0</span>
+                </article>
+                <article class="stat-card">
+                    <span class="label">الشركات الشريكة</span>
+                    <span class="value" id="totalCompanies">0</span>
+                    <span class="subtext" id="newCompanies">انضمت خلال ٣٠ يوم: 0</span>
+                </article>
+                <article class="stat-card">
+                    <span class="label">العروض الفعالة</span>
+                    <span class="value" id="activeOffers">0</span>
+                    <span class="subtext" id="avgDiscount">متوسط الخصم: 0.00%</span>
+                </article>
+            </div>
+
+            <div class="charts-grid" id="charts">
+                <article class="chart-card">
+                    <h3>توزيع العضويات</h3>
+                    <canvas id="membershipChart" aria-label="مخطط توزيع العضويات" role="img"></canvas>
+                </article>
+                <article class="chart-card">
+                    <h3>تسجيلات الأعضاء (٧ أيام)</h3>
+                    <canvas id="activityChart" aria-label="مخطط تسجيلات الأعضاء" role="img"></canvas>
+                </article>
+                <article class="chart-card">
+                    <h3>اتجاهات نشر العروض</h3>
+                    <canvas id="offersChart" aria-label="مخطط العروض" role="img"></canvas>
+                </article>
+            </div>
+
+            <section class="table-card" id="recent-offers">
+                <div class="table-header">
+                    <h3>أحدث العروض</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col">العرض</th>
+                                <th scope="col">الشركة</th>
+                                <th scope="col">الخصم الأساسي</th>
+                                <th scope="col">تاريخ الإضافة</th>
+                                <th scope="col">ساري حتى</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentOffersBody">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">لا توجد عروض مسجلة حالياً.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    {{ super() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-jqfyzO8Z76ZJhNiwxPdcdroEcRhoF9exYtEa1bMGOK3OcQxGcxNOzucBhZMEULC1" crossorigin="anonymous" defer></script>
+    <script src="{{ url_for('static', filename='js/reports.js') }}" defer></script>
+{% endblock %}
