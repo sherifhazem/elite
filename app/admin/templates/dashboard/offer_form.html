@@ -56,6 +56,24 @@
                             {% endfor %}
                         </select>
                     </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input
+                                class="form-check-input"
+                                id="send_notifications"
+                                name="send_notifications"
+                                type="checkbox"
+                                value="1"
+                                {% if request.form.get('send_notifications') %}checked{% endif %}
+                            >
+                            <label class="form-check-label" for="send_notifications">
+                                Send notifications to members after saving
+                            </label>
+                        </div>
+                        <div class="form-text">
+                            When enabled, a broadcast job notifies eligible users about this offer update.
+                        </div>
+                    </div>
                 </div>
                 <div class="d-flex justify-content-between mt-4">
                     <a class="btn btn-secondary" href="{{ url_for('admin.dashboard_offers') }}">Cancel</a>

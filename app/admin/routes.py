@@ -15,6 +15,7 @@ from .. import db
 from ..models.company import Company
 from ..models.offer import Offer
 from ..models.user import User
+from ..services.notifications import broadcast_new_offer
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -314,6 +315,9 @@ def add_offer() -> str:
         db.session.add(offer)
         db.session.commit()
 
+        if request.form.get("send_notifications"):
+            broadcast_new_offer(offer.id)
+
         flash(f"Offer '{title}' created successfully.", "success")
         return redirect(url_for("admin.dashboard_offers"))
 
@@ -344,6 +348,7 @@ def manage_offer(offer_id: int) -> str:
             flash("Title and base discount are required.", "danger")
             return redirect(url_for("admin.manage_offer", offer_id=offer_id))
 
+        original_base_discount = offer.base_discount
         try:
             # Persist the administrator-provided base discount change.
             offer.base_discount = float(discount_raw)
@@ -367,6 +372,12 @@ def manage_offer(offer_id: int) -> str:
             return redirect(url_for("admin.manage_offer", offer_id=offer_id))
 
         db.session.commit()
+        if (
+            request.form.get("send_notifications")
+            and offer.base_discount != original_base_discount
+        ):
+            broadcast_new_offer(offer.id)
+
         flash(f"Offer '{title}' updated successfully.", "success")
         return redirect(url_for("admin.dashboard_offers"))
 
@@ -398,8 +409,12 @@ def edit_offer_discount(offer_id: int) -> str:
             flash("Base discount cannot be negative.", "danger")
             return redirect(url_for("admin.edit_offer_discount", offer_id=offer_id))
 
+        original_base_discount = offer.base_discount
         offer.base_discount = base_discount
         db.session.commit()
+
+        if request.form.get("send_notifications") and offer.base_discount != original_base_discount:
+            broadcast_new_offer(offer.id)
 
         flash(
             f"Base discount for '{offer.title}' updated to {base_discount:.2f}%.",
@@ -423,4 +438,15 @@ def delete_offer(offer_id: int) -> str:
     db.session.delete(offer)
     db.session.commit()
     flash(f"Offer '{offer.title}' deleted successfully.", "success")
+    return redirect(url_for("admin.dashboard_offers"))
+
+
+@admin_bp.route("/offers/<int:offer_id>/notify", methods=["POST"])
+@admin_required
+def trigger_offer_notification(offer_id: int) -> str:
+    """Queue a broadcast notification for the specified offer."""
+
+    offer = Offer.query.get_or_404(offer_id)
+    broadcast_new_offer(offer.id)
+    flash(f"Notification broadcast queued for '{offer.title}'.", "success")
     return redirect(url_for("admin.dashboard_offers"))

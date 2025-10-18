@@ -561,3 +561,81 @@ app/
 - `/` – Renders the homepage template.
 - `/about` – Returns a short description of Elite Discounts.
 - `/health` – Provides the JSON health check `{"status": "ok"}`.
+
+## Notifications System
+
+The platform now delivers in-app notifications to members whenever impactful events occur.
+
+### Data Model
+
+- **Notification (`notifications`)**: `id`, `user_id`, `type`, `title`, `message`, `link_url`, `is_read`, `created_at`, `metadata_json`.
+- Notifications always belong to a single user and default to an unread state until explicitly marked as read.
+
+### Celery Tasks
+
+- `notifications.create`: persists an individual notification.
+- `notifications.broadcast_offer`: creates notifications for every user in manageable batches so the worker avoids loading the entire member base at once.
+
+Celery relies on the existing Redis broker/configuration. Start a worker with:
+
+```bash
+celery -A app.celery worker --loglevel=info
+```
+
+Run the Flask development server in a separate terminal:
+
+```bash
+flask run
+```
+
+### REST API
+
+- `GET /api/notifications/?page=1&per_page=20` – returns a paginated list of the authenticated user's notifications plus the unread total.
+  ```json
+  {
+    "notifications": [
+      {
+        "id": 101,
+        "type": "new_offer",
+        "title": "New offer: Spring Savings",
+        "message": "Spring Savings now includes at least 12.50% off.",
+        "link_url": "/portal/offers",
+        "is_read": false,
+        "created_at": "2025-01-20T10:45:00",
+        "metadata": {"offer_id": 9, "base_discount": 12.5}
+      }
+    ],
+    "page": 1,
+    "per_page": 20,
+    "total": 5,
+    "unread_count": 3
+  }
+  ```
+- `PUT /api/notifications/<id>/read` – marks a single notification as read.
+- `PUT /api/notifications/read-all` – marks every notification for the current user as read.
+- `DELETE /api/notifications/<id>` – removes a notification owned by the requester.
+
+All endpoints require a valid JWT delivered via `Authorization: Bearer <token>` or the `elite_token` cookie.
+
+### Integration Points
+
+- Membership upgrades call `notify_membership_upgrade`, queuing a personalised message for the user.
+- Offer creation and base-discount updates call `broadcast_new_offer`, queuing a background job to inform every member.
+- The admin dashboard includes opt-in checkboxes and a "Notify Members" action to trigger broadcasts directly after saving changes.
+
+### Portal Experience
+
+- `/portal/notifications` lists the newest 200 notifications with read/unread styling and quick actions.
+- The navigation bar displays a bell badge that updates automatically after marking notifications as read.
+- Buttons on the page use the new `markNotificationRead(id)` and `markAllNotificationsRead()` JavaScript helpers that call the API via `fetch`.
+
+### Security Notes
+
+- All notification APIs verify ownership: attempts to read, mark, or delete another user's notifications return `404`.
+- Authenticated requests are mandatory; anonymous users receive `401 Unauthorized` responses.
+
+## Manual Test Plan
+
+1. **Membership upgrade notification** – log in, upgrade a membership through `/portal/profile`, and confirm the queued notification appears.
+2. **Offer broadcast** – create or update an offer (enable **Send notifications**) from `/admin/offers`, then verify members receive the "new offer" notification.
+3. **Portal interaction** – visit `/portal/notifications`, mark a single notification as read, mark all as read, and confirm the navigation badge updates accordingly.

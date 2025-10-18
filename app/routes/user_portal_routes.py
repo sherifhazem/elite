@@ -9,8 +9,10 @@ from flask import Blueprint, jsonify, render_template, request, url_for
 
 from .. import db
 from ..auth.utils import get_user_from_token
+from ..models.notification import Notification
 from ..models.offer import Offer
 from ..models.user import User
+from ..services.notifications import notify_membership_upgrade
 
 portal_bp = Blueprint("portal", __name__, url_prefix="/portal")
 
@@ -43,6 +45,14 @@ def _resolve_user_context() -> Tuple[Optional[User], str]:
     return user, membership_level or "Basic"
 
 
+def _unread_notification_count(user: Optional[User]) -> int:
+    """Return the unread notification count for the given user."""
+
+    if user is None:
+        return 0
+    return Notification.query.filter_by(user_id=user.id, is_read=False).count()
+
+
 # Render the portal home view summarizing the member's benefits.
 @portal_bp.route("/", methods=["GET"])
 def home():
@@ -51,6 +61,7 @@ def home():
         "portal/home.html",
         user=user,
         membership_level=membership_level,
+        notification_unread_count=_unread_notification_count(user),
         active_nav="home",
         current_year=datetime.utcnow().year,
     )
@@ -66,6 +77,7 @@ def offers():
         user=user,
         membership_level=membership_level,
         offers=offers_data,
+        notification_unread_count=_unread_notification_count(user),
         active_nav="offers",
         current_year=datetime.utcnow().year,
     )
@@ -91,7 +103,34 @@ def profile():
         membership_level=membership_level,
         available_upgrades=available_upgrades,
         upgrade_success=upgrade_success,
+        notification_unread_count=_unread_notification_count(user),
         active_nav="profile",
+        current_year=datetime.utcnow().year,
+    )
+
+
+@portal_bp.route("/notifications", methods=["GET"])
+def notifications():
+    """Render the notifications center view for the authenticated member."""
+
+    user, membership_level = _resolve_user_context()
+    unread_count = _unread_notification_count(user)
+    notifications_list = []
+    if user is not None:
+        notifications_list = (
+            Notification.query.filter_by(user_id=user.id)
+            .order_by(Notification.created_at.desc())
+            .limit(200)
+            .all()
+        )
+    return render_template(
+        "portal/notifications.html",
+        user=user,
+        membership_level=membership_level,
+        notifications=notifications_list,
+        unread_count=unread_count,
+        notification_unread_count=unread_count,
+        active_nav="notifications",
         current_year=datetime.utcnow().year,
     )
 
@@ -125,11 +164,14 @@ def upgrade_membership():
         )
 
     try:
+        previous_level = user.membership_level
         user.update_membership_level(normalized_level)
         db.session.commit()
     except ValueError as error:
         db.session.rollback()
         return jsonify({"error": str(error)}), 400
+
+    notify_membership_upgrade(user.id, previous_level or "Basic", normalized_level)
 
     return (
         jsonify(
