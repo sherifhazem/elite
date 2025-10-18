@@ -251,15 +251,20 @@ def delete_company(company_id: int) -> str:
 @admin_bp.route("/offers")
 @admin_required
 def dashboard_offers() -> str:
-    """Render the offer management view with current offers and related companies."""
+    """Render the offer management view with dynamic membership discount previews."""
 
     offers = Offer.query.order_by(Offer.id).all()
-    companies = Company.query.order_by(Company.name).all()
+    tier_styles = {
+        "Basic": {"bg": "#6c757d", "text": "text-white"},
+        "Silver": {"bg": "#C0C0C0", "text": "text-dark"},
+        "Gold": {"bg": "#FFD700", "text": "text-dark"},
+        "Premium": {"bg": "#6f42c1", "text": "text-white"},
+    }
     return render_template(
         "dashboard/offers.html",
         section_title="Offers",
         offers=offers,
-        companies=companies,
+        tier_styles=tier_styles,
     )
 
 
@@ -320,9 +325,9 @@ def add_offer() -> str:
     )
 
 
-@admin_bp.route("/offers/edit/<int:offer_id>", methods=["GET", "POST"])
+@admin_bp.route("/offers/manage/<int:offer_id>", methods=["GET", "POST"])
 @admin_required
-def edit_offer(offer_id: int) -> str:
+def manage_offer(offer_id: int) -> str:
     """Edit an existing offer's metadata and persist the updates."""
 
     offer = Offer.query.get_or_404(offer_id)
@@ -337,21 +342,21 @@ def edit_offer(offer_id: int) -> str:
 
         if not title or not discount_raw:
             flash("Title and base discount are required.", "danger")
-            return redirect(url_for("admin.edit_offer", offer_id=offer_id))
+            return redirect(url_for("admin.manage_offer", offer_id=offer_id))
 
         try:
             # Persist the administrator-provided base discount change.
             offer.base_discount = float(discount_raw)
         except ValueError:
             flash("Base discount must be a numeric value.", "danger")
-            return redirect(url_for("admin.edit_offer", offer_id=offer_id))
+            return redirect(url_for("admin.manage_offer", offer_id=offer_id))
 
         if valid_until_raw:
             try:
                 offer.valid_until = datetime.strptime(valid_until_raw, "%Y-%m-%d")
             except ValueError:
                 flash("Valid until must follow YYYY-MM-DD format.", "danger")
-                return redirect(url_for("admin.edit_offer", offer_id=offer_id))
+                return redirect(url_for("admin.manage_offer", offer_id=offer_id))
         else:
             offer.valid_until = None
 
@@ -359,7 +364,7 @@ def edit_offer(offer_id: int) -> str:
         offer.company_id = int(company_id_raw) if company_id_raw else None
         if offer.company_id and Company.query.get(offer.company_id) is None:
             flash("Selected company does not exist.", "danger")
-            return redirect(url_for("admin.edit_offer", offer_id=offer_id))
+            return redirect(url_for("admin.manage_offer", offer_id=offer_id))
 
         db.session.commit()
         flash(f"Offer '{title}' updated successfully.", "success")
@@ -370,6 +375,42 @@ def edit_offer(offer_id: int) -> str:
         section_title="Edit Offer",
         offer=offer,
         companies=companies,
+    )
+
+
+@admin_bp.route("/offers/edit/<int:offer_id>", methods=["GET", "POST"])
+@admin_required
+def edit_offer_discount(offer_id: int) -> str:
+    """Allow administrators to adjust the base discount for a specific offer."""
+
+    offer = Offer.query.get_or_404(offer_id)
+
+    if request.method == "POST":
+        discount_raw = request.form.get("base_discount", "").strip()
+
+        try:
+            base_discount = float(discount_raw)
+        except ValueError:
+            flash("Base discount must be a numeric value.", "danger")
+            return redirect(url_for("admin.edit_offer_discount", offer_id=offer_id))
+
+        if base_discount < 0:
+            flash("Base discount cannot be negative.", "danger")
+            return redirect(url_for("admin.edit_offer_discount", offer_id=offer_id))
+
+        offer.base_discount = base_discount
+        db.session.commit()
+
+        flash(
+            f"Base discount for '{offer.title}' updated to {base_discount:.2f}%.",
+            "success",
+        )
+        return redirect(url_for("admin.dashboard_offers"))
+
+    return render_template(
+        "dashboard/edit_offer_discount.html",
+        section_title="Edit Discount",
+        offer=offer,
     )
 
 

@@ -153,6 +153,31 @@ The Elite Admin Panel now delivers full create, read, update, and delete (CRUD) 
 - Update discounts, titles, validity ranges, or linked companies at any time.
 - Retire outdated offers instantly.
 
+## Admin Discount Management
+
+Administrators can fine-tune membership incentives directly from the `/admin/offers` dashboard page.
+
+### Dashboard Overview
+
+- Each offer row now displays the base discount alongside dynamically calculated values for Silver, Gold, and Premium tiers.
+- Color-coded badges help distinguish membership levels at a glance: Basic (gray), Silver (silver), Gold (gold), and Premium (purple).
+- Action buttons provide quick access to discount editing, full offer management, or archival via deletion.
+
+### Updating Base Discounts
+
+1. Sign in as an administrator and open **Offers** from the navigation bar (URL: `/admin/offers`).
+2. Choose **Edit Discount** for the desired offer to open a focused form.
+3. Enter the new `base_discount` value in percentage form and submit.
+4. A success flash message confirms the update and returns you to the offers table.
+
+> **Tip:** The edit view summarises the resulting Basic, Silver, Gold, and Premium discounts so you can validate the membership impact before saving.
+
+### Behind the Scenes
+
+- The system stores a single `base_discount` per offer and applies predefined uplifts for Silver (+5%), Gold (+10%), and Premium (+15%) members.
+- Any change committed through the dashboard is reflected immediately in the public API responses (e.g., retrieving the offer as a Premium member now returns the recalculated discount).
+- Suggested validation workflow: adjust a discount in the admin UI, then fetch the same offer through the Premium API endpoint to ensure parity.
+
 ### Usage Flow
 
 1. Authenticate with a JWT token tied to an account where `is_admin=True`.
