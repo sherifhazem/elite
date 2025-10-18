@@ -34,6 +34,7 @@ from .routes import (  # noqa: E402
     user_routes,
 )
 from .auth import auth_bp  # noqa: E402
+from .admin import admin_bp  # noqa: E402
 
 app.logger.info("✅ Database connection configured for %s", app.config["SQLALCHEMY_DATABASE_URI"])
 
@@ -42,3 +43,4 @@ app.register_blueprint(user_routes, url_prefix="/api/users")
 app.register_blueprint(company_routes, url_prefix="/api/companies")
 app.register_blueprint(offer_routes, url_prefix="/api/offers")
 app.register_blueprint(auth_bp)
+app.register_blueprint(admin_bp)
