@@ -2,7 +2,7 @@
 {% extends "dashboard/base.html" %}
 
 {% block content %}
-    {% set form_action = url_for('admin.edit_offer', offer_id=offer.id) if offer else url_for('admin.add_offer') %}
+    {% set form_action = url_for('admin.manage_offer', offer_id=offer.id) if offer else url_for('admin.add_offer') %}
     <div class="card shadow-sm">
         <div class="card-body">
             <h2 class="card-title mb-4">{{ 'Edit Offer' if offer else 'Add Offer' }}</h2>
