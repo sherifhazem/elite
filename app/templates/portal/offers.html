@@ -1,3 +1,4 @@
+<!-- LINKED: Shared Offers & Redemptions Integration (no schema changes) -->
 <!-- FIXED: Mobile-First User Portal Design (Member-Only) -->
 {% extends 'portal/base.html' %}
 {% block title %}العروض · ELITE{% endblock %}
@@ -107,6 +108,13 @@
             font-size: 0.96rem;
         }
 
+        .offer-card__company-summary {
+            margin: 0;
+            color: var(--portal-muted, #8f8ca6);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
         .offer-card__footer {
             display: flex;
             align-items: center;
@@ -140,6 +148,22 @@
             color: #fff;
             border: none;
         }
+
+        .offer-card__meta-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .offer-card__meta-button {
+            border-radius: 14px;
+            border: 1px solid rgba(78, 43, 143, 0.12);
+            padding: 9px;
+            background: #f7f5ff;
+            color: var(--portal-primary, #4e2b8f);
+            font-weight: 600;
+            font-size: 0.82rem;
+        }
     </style>
     <section class="offers-banner">
         <div>
@@ -153,14 +177,18 @@
             <div class="offers-grid" role="list">
                 {% set level_key = membership_level|lower %}
                 {% for offer in offers %}
-                    {% set discount_value = '%.0f'|format(offer.get_discount_for_level(membership_level)) %}
+                    {% set discount_value = '%.0f'|format(offer.membership_discount) %}
                     <article
                         class="offer-card"
                         role="listitem"
                         tabindex="0"
                         data-offer-id="{{ offer.id }}"
                         data-offer-title="{{ offer.title }}"
-                        data-offer-company="{{ offer.company.name if offer.company else 'شركة شريكة' }}"
+                        data-offer-company="{{ offer.company.name }}"
+                        data-offer-company-id="{{ offer.company.id }}"
+                        data-offer-company-summary="{{ offer.company.summary|e }}"
+                        data-offer-company-description="{{ (offer.company.description or '')|e }}"
+                        data-offer-description="{{ (offer.description or '')|e }}"
                         data-offer-discount="{{ discount_value }}"
                         data-offer-level="{{ membership_level }}"
                         data-offer-base="{{ '%.0f'|format(offer.base_discount) }}"
@@ -169,13 +197,14 @@
                         <header class="offer-card__header">
                             <div>
                                 <h2 class="offer-card__title">{{ offer.title }}</h2>
-                                <p class="offer-card__company">{{ offer.company.name if offer.company else 'ELITE Partner' }}</p>
+                                <p class="offer-card__company">{{ offer.company.name }}</p>
                             </div>
                             <span class="offer-card__discount offer-card__discount--{{ level_key }}">{{ discount_value }}%</span>
                         </header>
-                        <p class="offer-card__summary">
-                            استمتع بخصم يصل إلى {{ discount_value }}% كجزء من مزايا عضوية {{ membership_level }}.
-                        </p>
+                        <p class="offer-card__summary">{{ offer.description or 'استمتع بخصم حصري ضمن مزايا عضوية ELITE.' }}</p>
+                        {% if offer.company.summary %}
+                            <p class="offer-card__company-summary">{{ offer.company.summary }}</p>
+                        {% endif %}
                         <footer class="offer-card__footer">
                             <span class="offer-card__validity">
                                 {% if offer.valid_until %}
@@ -191,6 +220,14 @@
                                 </button>
                             </div>
                         </footer>
+                        <div class="offer-card__meta-actions">
+                            <button class="offer-card__meta-button" type="button" data-offer-company>
+                                عن الشركة
+                            </button>
+                            <button class="offer-card__meta-button" type="button" data-offer-feedback data-feedback-action="like">
+                                أعجبني العرض
+                            </button>
+                        </div>
                     </article>
                 {% endfor %}
             </div>

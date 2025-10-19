@@ -1,3 +1,4 @@
+// LINKED: Shared Offers & Redemptions Integration (no schema changes)
 /* Redemption verification workflow supporting manual input and QR scanning. */
 /* UPDATED: Responsive Company Portal with Restricted Editable Fields. */
 
@@ -11,6 +12,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const scannerWrapper = document.getElementById("qr-scanner");
     const videoElement = document.getElementById("qr-video");
     const stopButton = document.getElementById("qr-stop-btn");
+    const filterForm = document.getElementById("redemption-filter");
+    const refreshButton = document.getElementById("redemption-refresh");
+    const tableBody = document.querySelector("#recent-redemptions tbody");
+    const cardsContainer = document.querySelector("[data-redemption-cards]");
 
     let lastRedemptionId = null;
     let barcodeDetector = null;
@@ -85,6 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const status = result.status || "pending";
             renderResult(status, `Code ${code} is valid.`, result.redemption_id);
             showToast("Code verified successfully.");
+            refreshRedemptionListing();
         } catch (error) {
             renderResult("error", error.message);
             showToast(error.message, "danger");
@@ -109,10 +115,88 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             renderResult(result.status, "Redemption confirmed.", lastRedemptionId);
             showToast("Redemption confirmed.");
+            refreshRedemptionListing();
         } catch (error) {
             showToast(error.message, "danger");
         } finally {
             toggleButtonLoading(button, false);
+        }
+    };
+
+    const buildParams = () => {
+        if (!filterForm) return new URLSearchParams();
+        const formData = new FormData(filterForm);
+        const params = new URLSearchParams();
+        formData.forEach((value, key) => {
+            if (value) {
+                params.append(key, value);
+            }
+        });
+        return params;
+    };
+
+    const formatDate = (value) => {
+        if (!value) return "—";
+        try {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return value;
+            return date.toLocaleString(undefined, { hour12: false });
+        } catch (error) {
+            return value;
+        }
+    };
+
+    const refreshRedemptionListing = async () => {
+        if (!tableBody) return;
+        try {
+            const params = buildParams();
+            const query = params.toString();
+            const response = await fetch(`/company/redemptions/data${query ? `?${query}` : ""}`, {
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+                credentials: "same-origin",
+            });
+            if (!response.ok) {
+                throw new Error("Unable to refresh redemptions");
+            }
+            const payload = await response.json();
+            const items = Array.isArray(payload.items) ? payload.items : [];
+            tableBody.innerHTML = "";
+            if (items.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No redemption attempts recorded.</td></tr>';
+            } else {
+                items.forEach((item) => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${item.code || "—"}</td>
+                        <td>${item.user && item.user.username ? `${item.user.username}<br><small class="text-muted">${item.user.email || ""}</small>` : "—"}</td>
+                        <td>${item.offer && item.offer.title ? item.offer.title : "—"}</td>
+                        <td>${item.status || "pending"}</td>
+                        <td>${formatDate(item.created_at)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+            if (cardsContainer) {
+                cardsContainer.innerHTML = "";
+                if (items.length === 0) {
+                    cardsContainer.innerHTML = '<p class="text-muted mb-0">No redemption attempts recorded.</p>';
+                } else {
+                    items.forEach((item) => {
+                        const card = document.createElement("article");
+                        card.className = "redemption-card-item";
+                        card.innerHTML = `
+                            <div><span class="label">Code</span><span class="value">${item.code || "—"}</span></div>
+                            <div><span class="label">Member</span><span class="value">${item.user && item.user.username ? item.user.username : "—"}</span></div>
+                            <div><span class="label">Offer</span><span class="value">${item.offer && item.offer.title ? item.offer.title : "—"}</span></div>
+                            <div><span class="label">Status</span><span class="value">${item.status || "pending"}</span></div>
+                            <div><span class="label">Created</span><span class="value">${formatDate(item.created_at)}</span></div>
+                        `;
+                        cardsContainer.appendChild(card);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Failed to refresh redemptions", error);
         }
     };
 
@@ -122,6 +206,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!code) return;
         verifyCode(code);
     });
+
+    filterForm?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        refreshRedemptionListing();
+    });
+
+    refreshButton?.addEventListener("click", (event) => {
+        event.preventDefault();
+        refreshRedemptionListing();
+    });
+
+    refreshRedemptionListing();
 
     const stopScanner = () => {
         scanning = false;

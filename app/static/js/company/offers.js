@@ -1,3 +1,4 @@
+// LINKED: Shared Offers & Redemptions Integration (no schema changes)
 /* Offer management client-side logic handling modal forms and CRUD operations. */
 /* UPDATED: Responsive Company Portal with Restricted Editable Fields. */
 

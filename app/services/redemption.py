@@ -1,15 +1,17 @@
+# LINKED: Shared Offers & Redemptions Integration (no schema changes)
 """Service helpers powering the offer redemption workflow."""
-
 from __future__ import annotations
 
 import json
 import os
 import uuid
-from typing import Iterable, Optional
+from datetime import datetime
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import qrcode
 from flask import current_app
 from qrcode.constants import ERROR_CORRECT_H
+from sqlalchemy.orm import joinedload
 
 from .. import db
 from ..models import Offer, Redemption, User
@@ -191,10 +193,96 @@ def list_user_redemptions(user_id: int) -> Iterable[Redemption]:
     return redemptions
 
 
+def list_user_redemptions_with_context(user_id: int) -> List[Dict[str, object]]:
+    """Return member redemptions enriched with offer and company data."""
+
+    query = (
+        Redemption.query.filter_by(user_id=user_id)
+        .options(
+            joinedload(Redemption.offer).joinedload(Offer.company),
+            joinedload(Redemption.company),
+        )
+        .order_by(Redemption.created_at.desc())
+    )
+    records: List[Redemption] = query.all()
+    changed = False
+    payload: List[Dict[str, object]] = []
+    for redemption in records:
+        changed = _refresh_expiration(redemption) or changed
+        offer = redemption.offer
+        company = offer.company if offer and offer.company else redemption.company
+        payload.append(
+            {
+                "id": redemption.id,
+                "status": redemption.status,
+                "redemption_code": redemption.redemption_code,
+                "created_at": redemption.created_at,
+                "redeemed_at": redemption.redeemed_at,
+                "expires_at": redemption.expires_at,
+                "offer": {
+                    "id": offer.id if offer else redemption.offer_id,
+                    "title": offer.title if offer else f"Offer #{redemption.offer_id}",
+                    "description": offer.description if offer else "",
+                },
+                "company": {
+                    "id": company.id if company else redemption.company_id,
+                    "name": company.name if company else "شريك ELITE",
+                    "summary": (company.description or "")[:140] if company else "",
+                    "description": (company.description or "") if company else "",
+                },
+            }
+        )
+    if changed:
+        db.session.commit()
+    return payload
+
+
+def list_company_redemptions(
+    company_id: int,
+    *,
+    offer_id: Optional[int] = None,
+    status: Optional[str] = None,
+    date_range: Optional[Tuple[datetime | None, datetime | None]] = None,
+    limit: Optional[int] = None,
+) -> List[Redemption]:
+    """Return company-scoped redemptions filtered by optional criteria."""
+
+    query = (
+        Redemption.query.filter_by(company_id=company_id)
+        .options(
+            joinedload(Redemption.offer),
+            joinedload(Redemption.user),
+        )
+        .order_by(Redemption.created_at.desc())
+    )
+
+    if offer_id:
+        query = query.filter(Redemption.offer_id == offer_id)
+    if status:
+        query = query.filter(Redemption.status == status)
+    if date_range:
+        start, end = date_range
+        if start:
+            query = query.filter(Redemption.created_at >= start)
+        if end:
+            query = query.filter(Redemption.created_at <= end)
+    if limit:
+        query = query.limit(limit)
+    redemptions = query.all()
+    changed = False
+    for redemption in redemptions:
+        changed = _refresh_expiration(redemption) or changed
+    if changed:
+        db.session.commit()
+    return redemptions
+
+
 __all__ = [
     "create_redemption",
     "get_redemption_status",
     "mark_redeemed",
     "generate_qr_token",
     "list_user_redemptions",
+    "list_user_redemptions_with_context",
+    "list_company_redemptions",
 ]

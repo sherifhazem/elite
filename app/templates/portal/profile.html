@@ -1,3 +1,4 @@
+<!-- LINKED: Shared Offers & Redemptions Integration (no schema changes) -->
 <!-- FIXED: Mobile-First User Portal Design (Member-Only) -->
 {% extends 'portal/base.html' %}
 {% block title %}الملف الشخصي · ELITE{% endblock %}
@@ -294,13 +295,18 @@
                         class="activation-card"
                         data-redemption-code="{{ redemption.redemption_code }}"
                         data-redemption-status="{{ status }}"
+                        data-offer-title="{{ redemption.offer.title }}"
+                        data-offer-description="{{ (redemption.offer.description or '')|e }}"
+                        data-company-id="{{ redemption.company.id }}"
+                        data-company-name="{{ redemption.company.name }}"
+                        data-company-summary="{{ redemption.company.summary|e }}"
+                        data-company-description="{{ (redemption.company.description or '')|e }}"
                         role="listitem"
                     >
                         <header class="activation-card__header">
                             <div>
-                                <h3 class="activation-card__title">
-                                    {{ redemption.offer.title if redemption.offer else 'Offer #' ~ redemption.offer_id }}
-                                </h3>
+                                <h3 class="activation-card__title">{{ redemption.offer.title }}</h3>
+                                <p class="activation-card__meta">{{ redemption.company.name }}</p>
                                 <p class="activation-card__meta">كود: <span data-activation-code>{{ redemption.redemption_code }}</span></p>
                             </div>
                             <span class="activation-card__status activation-card__status--{{ status }}">{{ status_label }}</span>
@@ -332,6 +338,14 @@
                                 data-redemption-url="{{ url_for('redemptions.get_qrcode_image', code=redemption.redemption_code) }}"
                             >
                                 عرض رمز QR
+                            </button>
+                            <button
+                                class="ghost-button"
+                                type="button"
+                                data-redemption-details
+                                data-redemption-code="{{ redemption.redemption_code }}"
+                            >
+                                فتح التفاصيل
                             </button>
                             <button class="ghost-button" type="button" data-copy-redemption data-redemption-code="{{ redemption.redemption_code }}">
                                 نسخ الكود

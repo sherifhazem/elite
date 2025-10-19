@@ -1,8 +1,11 @@
+# LINKED: Shared Offers & Redemptions Integration (no schema changes)
 """Offer CRUD blueprint providing JSON endpoints."""
 
 from datetime import datetime
 
 from flask import Blueprint, jsonify, request
+
+from sqlalchemy.orm import joinedload
 
 from .. import db
 from ..auth.utils import get_user_from_token
@@ -34,10 +37,14 @@ def _serialize_offer(offer: Offer, membership_level: str) -> dict:
     return {
         "id": offer.id,
         "title": offer.title,
+        "description": offer.description or "",
         "base_discount": offer.base_discount,
         "discount_percent": dynamic_discount,
         "valid_until": offer.valid_until.isoformat() if offer.valid_until else None,
         "company_id": offer.company_id,
+        "company": offer.company.name if offer.company else None,
+        "company_summary": (offer.company.description or "")[:140] if offer.company else "",
+        "company_description": (offer.company.description or "") if offer.company else "",
         "created_at": offer.created_at.isoformat() if offer.created_at else None,
     }
 
@@ -65,7 +72,7 @@ def list_offers():
         if user is not None:
             membership_level = user.membership_level
 
-    offers = Offer.query.order_by(Offer.id).all()
+    offers = Offer.query.options(joinedload(Offer.company)).order_by(Offer.id).all()
     return jsonify([_serialize_offer(offer, membership_level) for offer in offers]), 200
 
 

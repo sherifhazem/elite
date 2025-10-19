@@ -1,8 +1,10 @@
+# LINKED: Shared Offers & Redemptions Integration (no schema changes)
 """Blueprint exposing the offer redemption API endpoints."""
 
 from __future__ import annotations
 
 import os
+# LINKED: Shared Offers & Redemptions Integration (no schema changes)
 from http import HTTPStatus
 
 from flask import (
@@ -17,7 +19,10 @@ from flask import (
 
 from .. import db
 from ..models import Redemption, User
-from ..services.notifications import queue_notification
+from ..services.notifications import (
+    notify_offer_redemption_activity,
+    queue_notification,
+)
 from ..services.redemption import (
     create_redemption,
     generate_qr_token,
@@ -60,6 +65,17 @@ def _serialize_response(redemption: Redemption, data: dict) -> dict:
         payload.setdefault("company_id", redemption.company_id)
         payload.setdefault("offer_id", redemption.offer_id)
         payload.setdefault("user_id", redemption.user_id)
+        company = redemption.offer.company if redemption.offer and redemption.offer.company else redemption.company
+        if company is not None:
+            payload.setdefault("company_name", company.name)
+            payload.setdefault("company_summary", (company.description or "")[:160])
+        payload.setdefault("offer_description", redemption.offer.description if redemption.offer else "")
+        payload.setdefault(
+            "created_at", redemption.created_at.isoformat() if redemption.created_at else None
+        )
+        payload.setdefault(
+            "expires_at", redemption.expires_at.isoformat() if redemption.expires_at else None
+        )
     payload["qr_url"] = url_for(
         "redemptions.get_qrcode_image", code=payload.get("code") or redemption.redemption_code, _external=True
     )
@@ -100,6 +116,11 @@ def create_redemption_endpoint():
 
     status_payload = get_redemption_status(redemption.redemption_code) or {}
     response = _serialize_response(redemption, status_payload)
+    notify_offer_redemption_activity(
+        redemption=redemption,
+        event="activated",
+        timestamp=redemption.created_at,
+    )
     return jsonify(response), HTTPStatus.CREATED
 
 
