@@ -88,7 +88,8 @@
                 gap: 24px;
             }
 
-            /* FIXED: Improved text/icon contrast for bottom navigation bar (Mobile Portal) */
+            /* FIXED: Removed grey overlay from bottom navigation (portal) */
+            /* Ensures vivid color display for active and inactive icons */
             .app-nav {
                 position: sticky;
                 bottom: 0;
@@ -96,12 +97,15 @@
                 display: grid;
                 grid-template-columns: repeat(4, 1fr);
                 padding: 12px 24px 20px;
-                background: rgba(255, 255, 255, 0.92);
-                backdrop-filter: blur(16px);
-                border-top: 1px solid var(--portal-border);
-                gap: 12px;
-                --nav-item-color: #666666;
-                --nav-item-active-color: #3a237e;
+
+                /* ✅ إصلاح الطبقة الرمادية */
+                background: #ffffff;
+                border-top: 1px solid rgba(78, 43, 143, 0.1);
+                backdrop-filter: none;
+                box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.05);
+
+                --nav-item-color: #4e2b8f;
+                --nav-item-active-color: #ffffff;
                 --nav-item-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
                 color: var(--nav-item-color);
             }
@@ -122,9 +126,11 @@
             }
 
             .app-nav__item--active {
-                background: linear-gradient(135deg, rgba(78, 43, 143, 0.14), rgba(140, 91, 255, 0.12));
-                color: var(--nav-item-active-color);
-                font-weight: 600;
+                background: linear-gradient(145deg, #7a52ff, #4e2b8f);
+                color: #fff;
+                font-weight: 700;
+                transform: translateY(-3px);
+                box-shadow: 0 4px 10px rgba(78, 43, 143, 0.25);
             }
 
             .app-nav__item:focus-visible {
@@ -155,8 +161,8 @@
 
             .app-nav[data-theme="light"],
             .app-nav:not([data-theme]) {
-                --nav-item-color: #666666;
-                --nav-item-active-color: #3a237e;
+                --nav-item-color: #4e2b8f;
+                --nav-item-active-color: #ffffff;
                 --nav-item-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
             }
 
