@@ -3,6 +3,8 @@
 
 {% block content %}
     {% set form_action = url_for('admin.edit_user', user_id=user.id) if user else url_for('admin.add_user') %}
+    {% set membership_levels = membership_choices if membership_choices is defined else ('Basic', 'Silver', 'Gold', 'Premium') %}
+    {% set can_manage_roles = current_user and current_user.normalized_role in ['admin', 'superadmin'] %}
     <div class="card shadow-sm">
         <div class="card-body">
             <h2 class="card-title mb-4">{{ 'Edit User' if user else 'Add User' }}</h2>
@@ -42,26 +44,31 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="membership_level">Membership Level</label>
-                        <input
-                            class="form-control"
-                            id="membership_level"
-                            name="membership_level"
-                            value="{{ user.membership_level if user else 'Basic' }}"
-                        >
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="role">Role</label>
-                        <select class="form-select" id="role" name="role" {% if not current_user or current_user.role != 'superadmin' %}disabled{% endif %}>
-                            {% for role in role_choices %}
-                                <option value="{{ role }}" {% if user and user.role == role %}selected{% endif %}>
-                                    {{ role|capitalize }}
+                        <!-- FIX: Logout, Current User, Role Access, Membership Dropdown – Desktop Admin Context. -->
+                        <select class="form-select" id="membership_level" name="membership_level">
+                            {% for level in membership_levels %}
+                                <option value="{{ level }}" {% if (user and user.membership_level == level) or (not user and level == 'Basic') %}selected{% endif %}>
+                                    {{ level }}
                                 </option>
                             {% endfor %}
                         </select>
-                        {% if not current_user or current_user.role != 'superadmin' %}
-                            <div class="form-text">Only super administrators can change roles.</div>
-                        {% endif %}
                     </div>
+                    {% if can_manage_roles %}
+                        <div class="col-md-6">
+                            <label class="form-label" for="role">Role</label>
+                            <select class="form-select" id="role" name="role">
+                                {% for role in role_choices %}
+                                    {% set disable_option = role == 'superadmin' and (not current_user or not current_user.is_superadmin) %}
+                                    <option value="{{ role }}" {% if user and user.role == role %}selected{% endif %} {% if disable_option %}disabled{% endif %}>
+                                        {{ role|capitalize }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if current_user and not current_user.is_superadmin %}
+                                <div class="form-text">Only super administrators can assign the Superadmin role.</div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                     {% if companies %}
                         <div class="col-md-6">
                             <label class="form-label" for="company_id">Company</label>

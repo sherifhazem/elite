@@ -5,7 +5,7 @@ from __future__ import annotations
 from http import HTTPStatus
 from typing import Dict, Optional
 
-from flask import Blueprint, jsonify, render_template, request, url_for
+from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 from sqlalchemy import or_
 
 from .. import db
@@ -253,4 +253,14 @@ def reset_password(token: str):
     user.set_password(password)
     db.session.commit()
     return jsonify({"message": "Password updated successfully"}), HTTPStatus.OK
+
+
+@auth_bp.route("/logout", methods=["GET", "POST"])
+def logout():
+    """Clear stored authentication state and return to the login screen."""
+
+    response = redirect(url_for("auth.login_page"))
+    response.delete_cookie("elite_token", path="/")
+    response.headers["Clear-Site-Data"] = '"storage"'
+    return response
 

@@ -23,7 +23,7 @@ from ..models.company import Company
 from ..models.offer import Offer
 from ..models.user import User
 from ..services.notifications import broadcast_new_offer
-from ..services.roles import can_access, require_role
+from ..services.roles import require_role
 
 admin_bp = Blueprint(
     "admin",
@@ -47,6 +47,25 @@ def _guard_superadmin_modification(target: User) -> None:
     current_user: User | None = getattr(g, "current_user", None)
     if target.is_superadmin and (current_user is None or not current_user.is_superadmin):
         abort(HTTPStatus.FORBIDDEN)
+
+
+def _can_manage_user_roles(actor: User | None) -> bool:
+    """Return True when the acting user can update role assignments."""
+
+    return bool(actor and actor.normalized_role in {"admin", "superadmin"})
+
+
+def _can_assign_superadmin(actor: User | None) -> bool:
+    """Return True when the acting user can promote others to superadmin."""
+
+    return bool(actor and actor.is_superadmin)
+
+
+def _resolve_membership_level(level: str | None) -> str:
+    """Normalize the membership value from form submissions."""
+
+    normalized = User.normalize_membership_level(level or "Basic")
+    return normalized or "Basic"
 
 
 @admin_bp.route("/")
@@ -86,12 +105,17 @@ def add_user() -> str:
     """Handle rendering and submission of the create-user form."""
 
     companies = Company.query.order_by(Company.name).all()
+    actor: User | None = getattr(g, "current_user", None)
+    can_manage_roles = _can_manage_user_roles(actor)
+    can_link_company = bool(actor and actor.is_superadmin)
 
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         email = request.form.get("email", "").strip()
         password = request.form.get("password", "")
-        membership_level = request.form.get("membership_level", "Basic").strip() or "Basic"
+        membership_level = _resolve_membership_level(
+            request.form.get("membership_level", "Basic")
+        )
         is_active = _parse_boolean(request.form.get("is_active"))
         desired_role = request.form.get("role", "member")
         company_id_raw = request.form.get("company_id")
@@ -104,13 +128,20 @@ def add_user() -> str:
         user.set_password(password)
         user.is_active = is_active
 
-        if can_access(g.current_user, "manage_roles"):
+        if can_manage_roles:
+            normalized_role = (desired_role or "member").strip().lower()
+            if normalized_role == "superadmin" and not _can_assign_superadmin(actor):
+                flash(
+                    "Only super administrators can assign the Superadmin role.",
+                    "danger",
+                )
+                return redirect(url_for("admin.add_user"))
             try:
-                user.set_role(desired_role)
+                user.set_role(normalized_role)
             except ValueError as error:
                 flash(str(error), "danger")
                 return redirect(url_for("admin.add_user"))
-            if company_id_raw:
+            if can_link_company and company_id_raw:
                 try:
                     user.company_id = int(company_id_raw)
                 except ValueError:
@@ -135,6 +166,7 @@ def add_user() -> str:
         section_title="Add User",
         user=None,
         role_choices=User.ROLE_CHOICES,
+        membership_choices=User.MEMBERSHIP_LEVELS,
         companies=companies,
     )
 
@@ -148,12 +180,17 @@ def edit_user(user_id: int) -> str:
     _guard_superadmin_modification(user)
 
     companies = Company.query.order_by(Company.name).all()
+    actor: User | None = getattr(g, "current_user", None)
+    can_manage_roles = _can_manage_user_roles(actor)
+    can_link_company = bool(actor and actor.is_superadmin)
 
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         email = request.form.get("email", "").strip()
         password = request.form.get("password", "")
-        membership_level = request.form.get("membership_level", "Basic").strip() or "Basic"
+        membership_level = _resolve_membership_level(
+            request.form.get("membership_level", "Basic")
+        )
         is_active = _parse_boolean(request.form.get("is_active"))
         desired_role = request.form.get("role", user.role)
         company_id_raw = request.form.get("company_id")
@@ -170,13 +207,20 @@ def edit_user(user_id: int) -> str:
         if password:
             user.set_password(password)
 
-        if can_access(g.current_user, "manage_roles"):
+        if can_manage_roles:
+            normalized_role = (desired_role or user.role).strip().lower()
+            if normalized_role == "superadmin" and not _can_assign_superadmin(actor):
+                flash(
+                    "Only super administrators can assign the Superadmin role.",
+                    "danger",
+                )
+                return redirect(url_for("admin.edit_user", user_id=user_id))
             try:
-                user.set_role(desired_role)
+                user.set_role(normalized_role)
             except ValueError as error:
                 flash(str(error), "danger")
                 return redirect(url_for("admin.edit_user", user_id=user_id))
-            if company_id_raw:
+            if can_link_company and company_id_raw:
                 try:
                     user.company_id = int(company_id_raw)
                 except ValueError:
@@ -199,6 +243,7 @@ def edit_user(user_id: int) -> str:
         section_title="Edit User",
         user=user,
         role_choices=User.ROLE_CHOICES,
+        membership_choices=User.MEMBERSHIP_LEVELS,
         companies=companies,
     )
 
@@ -227,7 +272,8 @@ def manage_user_roles() -> str:
     """Allow administrators to review and update user roles and activation state."""
 
     if request.method == "POST":
-        if not can_access(g.current_user, "manage_roles"):
+        actor: User | None = getattr(g, "current_user", None)
+        if not _can_manage_user_roles(actor):
             abort(HTTPStatus.FORBIDDEN)
 
         user_id_raw = request.form.get("user_id", "0")
@@ -238,13 +284,22 @@ def manage_user_roles() -> str:
             return redirect(url_for("admin.manage_user_roles"))
 
         target = User.query.get_or_404(user_id)
-        _guard_superadmin_modification(target)
+        if target.is_superadmin and not _can_assign_superadmin(actor):
+            flash("Only super administrators can modify this account.", "danger")
+            return redirect(url_for("admin.manage_user_roles"))
 
         new_role = request.form.get("role", target.role)
         is_active = _parse_boolean(request.form.get("is_active"))
 
         try:
-            target.set_role(new_role)
+            normalized_role = (new_role or target.role).strip().lower()
+            if normalized_role == "superadmin" and not _can_assign_superadmin(actor):
+                flash(
+                    "Only super administrators can assign the Superadmin role.",
+                    "danger",
+                )
+                return redirect(url_for("admin.manage_user_roles"))
+            target.set_role(normalized_role)
         except ValueError as error:
             flash(str(error), "danger")
             return redirect(url_for("admin.manage_user_roles"))
@@ -260,7 +315,7 @@ def manage_user_roles() -> str:
         section_title="Roles & Permissions",
         users=users,
         role_choices=User.ROLE_CHOICES,
-        can_manage_roles=can_access(g.current_user, "manage_roles"),
+        can_manage_roles=_can_manage_user_roles(getattr(g, "current_user", None)),
     )
 
 
