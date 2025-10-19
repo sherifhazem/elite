@@ -39,8 +39,10 @@
                                 <input name="user_id" type="hidden" value="{{ user.id }}">
                                 <div class="col-sm-8">
                                     <select class="form-select form-select-sm" name="role" {% if disable_controls %}disabled{% endif %}>
+                                        <!-- FIX: Logout, Current User, Role Access, Membership Dropdown – Desktop Admin Context. -->
                                         {% for role in role_choices %}
-                                            <option value="{{ role }}" {% if user.role == role %}selected{% endif %}>{{ role|capitalize }}</option>
+                                            {% set option_disabled = role == 'superadmin' and (not current_user or not current_user.is_superadmin) %}
+                                            <option value="{{ role }}" {% if user.role == role %}selected{% endif %} {% if option_disabled %}disabled{% endif %}>{{ role|capitalize }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
