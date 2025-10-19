@@ -94,6 +94,20 @@ def register() -> tuple:
     return jsonify(response), HTTPStatus.CREATED
 
 
+@auth_bp.route("/register/select", methods=["GET"])
+def register_select_page() -> str:
+    """Render the entry screen where visitors choose their account type."""
+
+    return render_template("auth/register_select.html")
+
+
+@auth_bp.route("/register/company", methods=["GET"])
+def company_register_page() -> str:
+    """Render the dedicated registration form for company accounts."""
+
+    return render_template("auth/register_company.html")
+
+
 @auth_bp.post("/api/auth/login")
 def login() -> tuple:
     """Authenticate a user and return a signed JWT token."""
