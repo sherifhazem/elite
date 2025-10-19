@@ -12,6 +12,7 @@
             crossorigin="anonymous"
         >
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        {% block extra_head %}{% endblock %}
     </head>
     <body>
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
@@ -44,7 +45,7 @@
                         {% endif %}
                         {% if role in ['company', 'superadmin'] %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('company_portal.dashboard') }}">Company Portal</a>
+                                <a class="nav-link" href="{{ url_for('company_portal_bp.dashboard') }}">Company Portal</a>
                             </li>
                         {% endif %}
                         <li class="nav-item">
@@ -76,5 +77,6 @@
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
             crossorigin="anonymous"
         ></script>
+        {% block extra_scripts %}{% endblock %}
     </body>
 </html>

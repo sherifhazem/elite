@@ -1,0 +1,120 @@
+/* Desktop-first styling for the company portal layout and components. */
+
+.company-portal {
+    min-height: 80vh;
+    background-color: #f5f7fb;
+}
+
+.company-sidebar {
+    width: 240px;
+    background: linear-gradient(180deg, #1f3c88 0%, #162955 100%);
+    color: #fff;
+    padding: 2rem 1.5rem;
+}
+
+.company-sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.company-sidebar .nav-link:hover,
+.company-sidebar .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.company-logo {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.placeholder-logo {
+    display: grid;
+    place-items: center;
+    background-color: rgba(255, 255, 255, 0.2);
+    font-weight: 600;
+    font-size: 1.75rem;
+    color: #fff;
+}
+
+.company-topbar {
+    background-color: #fff;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e5e8ef;
+}
+
+.company-main {
+    background-color: #fff;
+    border-top-left-radius: 1.5rem;
+    border-bottom-left-radius: 1.5rem;
+    margin-left: -1rem;
+    padding-bottom: 2rem;
+    box-shadow: -8px 0 24px rgba(15, 34, 58, 0.08);
+}
+
+.company-content {
+    padding: 2rem;
+}
+
+@media (max-width: 992px) {
+    .company-portal {
+        flex-direction: column;
+    }
+
+    .company-sidebar {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 1rem;
+        overflow-x: auto;
+    }
+
+    .company-sidebar .nav {
+        flex-direction: row !important;
+        gap: 0.5rem;
+        margin-left: auto;
+    }
+
+    .company-sidebar .nav-link {
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+
+    .company-main {
+        margin-left: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .company-content {
+        padding: 1.5rem;
+    }
+}
+
+.table-responsive {
+    scrollbar-width: thin;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 999px;
+}
+
+.modal-body .spinner-border {
+    width: 2rem;
+    height: 2rem;
+}
+
+#qr-scanner video {
+    object-fit: cover;
+}

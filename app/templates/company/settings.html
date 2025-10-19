@@ -1,0 +1,48 @@
+<!-- Company settings form for updating profile and notification preferences. -->
+{% extends "company/base.html" %}
+
+{% block portal_title %}Settings{% endblock %}
+
+{% block portal_content %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Profile information</h2>
+                    <form id="company-settings-form" data-action="{{ url_for('company_portal_bp.settings') }}">
+                        <div class="mb-3">
+                            <label for="company-name" class="form-label">Company name</label>
+                            <input type="text" class="form-control" id="company-name" name="name" value="{{ company.name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="company-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="company-description" name="description" rows="4">{{ company.description or '' }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="company-logo" class="form-label">Logo URL</label>
+                            <input type="url" class="form-control" id="company-logo" name="logo_url" value="{{ company.logo_url or '' }}" placeholder="https://example.com/logo.png">
+                        </div>
+                        <h3 class="h6 mt-4">Notifications</h3>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notify-email" name="notify_email" {% if preferences.email %}checked{% endif %}>
+                            <label class="form-check-label" for="notify-email">Email updates</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notify-sms" name="notify_sms" {% if preferences.sms %}checked{% endif %}>
+                            <label class="form-check-label" for="notify-sms">SMS alerts</label>
+                        </div>
+                        <div class="mt-4 d-flex justify-content-end gap-2">
+                            <button type="reset" class="btn btn-outline-secondary">Reset</button>
+                            <button type="submit" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="settings-toast-container"></div>
+{% endblock %}
+
+{% block portal_scripts %}
+    <script src="{{ url_for('static', filename='js/company/settings.js') }}" defer></script>
+{% endblock %}
