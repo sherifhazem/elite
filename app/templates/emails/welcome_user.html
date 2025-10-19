@@ -1,0 +1,50 @@
+<!-- LINKED: Registration Flow & Welcome Notification Review (Users & Companies) -->
+<!-- Verified welcome email and internal notification triggers for new accounts. -->
+<!DOCTYPE html>
+<html lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <title>مرحبًا بك في ELITE</title>
+    <style>
+      body {
+        font-family: "Tahoma", "Arial", sans-serif;
+        direction: rtl;
+        text-align: right;
+        color: #1f2933;
+        background-color: #f7fafc;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        background-color: #ffffff;
+        margin: 0 auto;
+        padding: 24px;
+        max-width: 600px;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      }
+      h1 {
+        color: #0b7285;
+        margin-bottom: 16px;
+        font-size: 24px;
+      }
+      p {
+        line-height: 1.7;
+        margin: 12px 0;
+        white-space: pre-line;
+      }
+      .footer {
+        margin-top: 24px;
+        font-size: 14px;
+        color: #52606d;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>مرحبًا {{ recipient_name }} 👋</h1>
+      <p>{{ welcome_message }}</p>
+      <p class="footer">مع تحيات فريق ELITE</p>
+    </div>
+  </body>
+</html>

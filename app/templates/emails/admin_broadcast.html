@@ -1,0 +1,43 @@
+<!-- LINKED: Registration Flow & Welcome Notification Review (Users & Companies) -->
+<!-- Verified welcome email and internal notification triggers for new accounts. -->
+<!DOCTYPE html>
+<html lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ subject }}</title>
+    <style>
+      body {
+        font-family: "Tahoma", "Arial", sans-serif;
+        direction: rtl;
+        text-align: right;
+        color: #1f2933;
+        background-color: #f8fafc;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        background-color: #ffffff;
+        margin: 0 auto;
+        padding: 24px;
+        max-width: 640px;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+      }
+      h2 {
+        color: #0b7285;
+        margin-bottom: 16px;
+        font-size: 22px;
+      }
+      .message {
+        line-height: 1.7;
+        white-space: pre-line;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>{{ subject }}</h2>
+      <div class="message">{{ message_html|safe }}</div>
+    </div>
+  </body>
+</html>
