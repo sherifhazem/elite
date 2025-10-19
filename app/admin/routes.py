@@ -1,3 +1,5 @@
+# LINKED: Route alignment & aliasing for registration and dashboards (no schema changes)
+# Updated templates to use endpoint-based url_for; README cleaned & synced with actual routes.
 """Admin dashboard routes restricted to privileged users."""
 
 from __future__ import annotations
@@ -8,6 +10,7 @@ from typing import Dict
 
 from flask import (
     Blueprint,
+    Response,
     abort,
     flash,
     g,
@@ -85,6 +88,14 @@ def dashboard_home() -> str:
         total_companies=total_companies,
         total_offers=total_offers,
     )
+
+
+@admin_bp.route("/dashboard")
+@require_role("admin")
+def dashboard_alias() -> Response:
+    """Preserve backwards compatibility for /admin/dashboard links."""
+
+    return redirect(url_for("admin.dashboard_home"))
 
 
 @admin_bp.route("/users")
