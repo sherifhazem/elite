@@ -1,4 +1,5 @@
 {% extends 'dashboard/base.html' %}
+<!-- FIXED: Updated url_for() endpoints to match admin Blueprint -->
 {% set active_page = 'reports' %}
 {% block title %}Analytics Reports | Elite Admin Console{% endblock %}
 
@@ -13,7 +14,7 @@
                 <h1 class="display-6 fw-bold text-primary">Analytics Overview</h1>
                 <p class="text-muted mb-0">Insights on engagement, adoption, and system reliability.</p>
             </div>
-            <button class="btn btn-primary btn-lg shadow-sm"><i class="fas fa-file-export me-2"></i>Export Report</button>
+            <a href="{{ url_for('reports.export_pdf') }}" class="btn btn-primary btn-lg shadow-sm"><i class="fas fa-file-export me-2"></i>Export Report</a>
         </div>
 
         <div class="row g-4 mb-4">

@@ -1,4 +1,5 @@
 {% extends 'dashboard/base.html' %}
+<!-- FIXED: Updated url_for() endpoints to match admin Blueprint -->
 {% set active_page = 'offers' %}
 {% block title %}Offers Management | Elite Admin Console{% endblock %}
 
@@ -11,7 +12,7 @@
                     <h3 class="mb-0 fw-semibold">Offers Catalogue</h3>
                     <small class="text-light">Review rewards performance and publishing pipeline</small>
                 </div>
-                <a href="#" class="btn btn-light text-primary fw-semibold"><i class="fas fa-gift me-2"></i>Add Offer</a>
+                <a href="{{ url_for('admin.add_offer') }}" class="btn btn-light text-primary fw-semibold"><i class="fas fa-gift me-2"></i>Add Offer</a>
             </div>
             <div class="card-body bg-white">
                 <div class="row g-3 align-items-center mb-3">
