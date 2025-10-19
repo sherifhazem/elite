@@ -349,6 +349,10 @@ The `/portal` experience has been rebuilt with a mobile-first mindset to mirror 
 
 > **Note:** The mobile-first design applies exclusively to `/portal/*` routes. Administrative and company-facing dashboards remain optimized for desktop workflows without any layout changes.
 
+## Admin Interface Design
+
+تم تحسين واجهة لوحة الإدارة باستخدام Bootstrap Layout وألوان Elite الرسمية.
+
 ## Admin Dashboard CRUD Features
 
 The Elite Admin Panel now delivers full create, read, update, and delete (CRUD) workflows for the platform's core entities. All operations are backed by SQLAlchemy transactions and surfaced through responsive Bootstrap-powered templates located under `app/admin/templates/dashboard/`.
