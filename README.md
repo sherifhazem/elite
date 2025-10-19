@@ -65,12 +65,44 @@ SECRET_KEY=super-secret-key
 SQLALCHEMY_DATABASE_URI=postgresql://user:password@localhost:5432/elite
 REDIS_URL=redis://localhost:6379/0
 TIMEZONE=Asia/Riyadh
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your_email@gmail.com
+MAIL_PASSWORD=your_app_password
+MAIL_DEFAULT_SENDER="Elite Discounts <your_email@gmail.com>"
 ```
 
 - `SECRET_KEY`: Used for securing sessions and cryptographic components.
 - `SQLALCHEMY_DATABASE_URI`: PostgreSQL connection string used by SQLAlchemy.
 - `REDIS_URL`: Redis instance used by both Redis client and Celery.
 - `TIMEZONE`: Default timezone for Celery and application-level scheduling.
+- `MAIL_*`: SMTP configuration for sending verification and password reset emails.
+
+## Email System
+
+The authentication service now delivers verification and password reset emails using SMTP credentials defined in `.env`.
+
+### Required Environment Variables
+
+- `MAIL_SERVER` – SMTP host (default: `smtp.gmail.com`).
+- `MAIL_PORT` – SMTP port (default: `587`).
+- `MAIL_USERNAME` – Account used to authenticate with the SMTP server.
+- `MAIL_PASSWORD` – App-specific password or SMTP credential.
+- `MAIL_DEFAULT_SENDER` – Display name and email for outgoing messages.
+
+### Endpoints
+
+- `POST /api/auth/register` – Sends a verification email after creating a new account.
+- `GET /api/auth/verify/<token>` – Confirms the user's email address and activates the account.
+- `POST /api/auth/reset-request` – Issues a reset token and emails the reset link.
+- `POST /api/auth/reset-password/<token>` – Accepts a new password using the emailed token.
+
+### Flow Overview
+
+1. Registration triggers a verification email containing a signed tokenized link.
+2. Visiting the verification link activates the account by toggling `is_active` to `True`.
+3. Forgotten password requests send a one-time reset link to the registered email.
+4. Submitting a new password with the reset token updates the stored hash and invalidates the link by expiration (default 1 hour).
 
 ## Database Setup
 
@@ -84,9 +116,47 @@ This stage connects the application to PostgreSQL through SQLAlchemy and Flask-M
 
 ### Migration Workflow
 
-1. Ensure dependencies are installed:
+1. Ensure dependencies are installed (see the dependency list below):
    ```bash
-   pip install -r requirements.txt
+   pip install \
+       alembic==1.17.0 \
+       amqp==5.3.1 \
+       billiard==4.2.2 \
+       blinker==1.9.0 \
+       celery==5.5.3 \
+       click==8.3.0 \
+       click-didyoumean==0.3.1 \
+       click-plugins==1.1.1.2 \
+       click-repl==0.3.0 \
+       colorama==0.4.6 \
+       flask==3.1.2 \
+       flask-cors==6.0.1 \
+       Flask-Migrate==4.1.0 \
+       flask-sqlalchemy==3.1.1 \
+       greenlet==3.2.4 \
+       itsdangerous==2.2.0 \
+       jinja2==3.1.6 \
+       kombu==5.5.4 \
+       mako==1.3.10 \
+       markupsafe==3.0.3 \
+       packaging==25.0 \
+       pillow==12.0.0 \
+       prompt-toolkit==3.0.52 \
+       psycopg2-binary==2.9.11 \
+       pybald-routes==2.11 \
+       PyJWT==2.10.1 \
+       python-dateutil==2.9.0.post0 \
+       python-dotenv==1.1.1 \
+       qrcode==8.2 \
+       redis==6.4.0 \
+       repoze.lru==0.7 \
+       six==1.17.0 \
+       sqlalchemy==2.0.44 \
+       typing-extensions==4.15.0 \
+       tzdata==2025.2 \
+       vine==5.1.0 \
+       wcwidth==0.2.14 \
+       werkzeug==3.1.3
    ```
 2. Set the Flask application context:
    ```bash
@@ -164,7 +234,45 @@ flask db upgrade
 2. **Install dependencies**
 
     ```bash
-    pip install -r requirements.txt
+    pip install \
+        alembic==1.17.0 \
+        amqp==5.3.1 \
+        billiard==4.2.2 \
+        blinker==1.9.0 \
+        celery==5.5.3 \
+        click==8.3.0 \
+        click-didyoumean==0.3.1 \
+        click-plugins==1.1.1.2 \
+        click-repl==0.3.0 \
+        colorama==0.4.6 \
+        flask==3.1.2 \
+        flask-cors==6.0.1 \
+        Flask-Migrate==4.1.0 \
+        flask-sqlalchemy==3.1.1 \
+        greenlet==3.2.4 \
+        itsdangerous==2.2.0 \
+        jinja2==3.1.6 \
+        kombu==5.5.4 \
+        mako==1.3.10 \
+        markupsafe==3.0.3 \
+        packaging==25.0 \
+        pillow==12.0.0 \
+        prompt-toolkit==3.0.52 \
+        psycopg2-binary==2.9.11 \
+        pybald-routes==2.11 \
+        PyJWT==2.10.1 \
+        python-dateutil==2.9.0.post0 \
+        python-dotenv==1.1.1 \
+        qrcode==8.2 \
+        redis==6.4.0 \
+        repoze.lru==0.7 \
+        six==1.17.0 \
+        sqlalchemy==2.0.44 \
+        typing-extensions==4.15.0 \
+        tzdata==2025.2 \
+        vine==5.1.0 \
+        wcwidth==0.2.14 \
+        werkzeug==3.1.3
     ```
 
 3. **Run the application**
