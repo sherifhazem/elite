@@ -22,6 +22,7 @@ from .. import db
 from ..models.company import Company
 from ..models.offer import Offer
 from ..models.user import User
+from ..services.mailer import send_welcome_email
 from ..services.notifications import broadcast_new_offer, ensure_welcome_notification
 from ..services.roles import require_role
 
@@ -158,7 +159,20 @@ def add_user() -> str:
             flash("Username or email already exists. Please choose different values.", "danger")
             return redirect(url_for("admin.add_user"))
 
-        ensure_welcome_notification(user)
+        role_key = user.normalized_role
+        if role_key in {"admin", "superadmin"}:
+            welcome_template = "staff"
+        elif role_key == "company":
+            welcome_template = "company"
+        else:
+            welcome_template = "member"
+
+        send_welcome_email(
+            user=user,
+            template_key=welcome_template,
+            company_name=getattr(getattr(user, "company", None), "name", None),
+        )
+        ensure_welcome_notification(user, context=welcome_template)
 
         flash(f"User '{username}' created successfully.", "success")
         return redirect(url_for("admin.dashboard_users"))

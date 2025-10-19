@@ -10,7 +10,7 @@ from sqlalchemy import or_
 
 from .. import db
 from ..models.user import User
-from ..services.mailer import send_email
+from ..services.mailer import send_email, send_welcome_email
 from ..services.notifications import ensure_welcome_notification
 from .utils import confirm_token, create_token, decode_token, generate_token
 
@@ -73,23 +73,10 @@ def register() -> tuple:
     db.session.add(user)
     db.session.commit()
 
+    send_welcome_email(user=user, template_key="member")
     ensure_welcome_notification(user, context="member")
 
     token = create_token(user.id)
-
-    # Send a lightweight welcome message without blocking the onboarding flow.
-    try:
-        send_email(
-            user.email,
-            "Welcome to ELITE Membership",
-            """
-            <h3>مرحباً بك في ELITE!</h3>
-            <p>تم إنشاء حساب العضوية الخاص بك بنجاح. استكشف العروض الجديدة مباشرة من بوابة الأعضاء.</p>
-            """,
-        )
-    except Exception:  # pragma: no cover - email delivery should not block signup
-        # Failing silently keeps the registration flow responsive for members.
-        pass
 
     response = {
         "id": user.id,

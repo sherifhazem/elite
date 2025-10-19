@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from .. import db
 from ..models.company import Company
 from ..models.user import User
+from ..services.mailer import send_welcome_email
 from ..services.notifications import ensure_welcome_notification
 from ..services.roles import require_role
 
@@ -64,6 +65,11 @@ def create_company():
         return jsonify({"error": "Company with the same name already exists."}), 400
 
     if company.owner:
+        send_welcome_email(
+            user=company.owner,
+            template_key="company",
+            company_name=company.name,
+        )
         ensure_welcome_notification(company.owner, context="company")
 
     return jsonify(_serialize_company(company)), 201

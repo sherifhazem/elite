@@ -18,26 +18,35 @@ from ..models.user import User
 
 WELCOME_NOTIFICATION_TEMPLATES: Dict[str, Dict[str, Optional[str]]] = {
     "member": {
-        "title": "مرحبًا بك في ELITE!",
+        "title": "🎉 أهلاً بك في برنامج ELITE!",
         "message": (
-            "سعداء بانضمامك إلى برنامج ELITE. يمكنك الآن الاستفادة من العروض "
-            "والخصومات الحصرية. ابدأ رحلتك من صفحة العروض!"
+            "مرحبًا {username},\n"
+            "يسعدنا انضمامك إلى مجتمع ELITE المميز.\n"
+            "يمكنك الآن الاستفادة من العروض الحصرية والخصومات المتاحة عبر حسابك.\n\n"
+            "نرحب بك مجددًا،\n"
+            "فريق ELITE."
         ),
         "link_endpoint": "portal.offers",
     },
     "company": {
-        "title": "مرحبًا بشركائنا الجدد!",
+        "title": "🤝 مرحبًا بشركائنا الجدد في ELITE!",
         "message": (
-            "شكرًا لانضمامكم إلى منصة ELITE. يمكنكم الآن إضافة عروضكم الحصرية "
-            "وجذب المزيد من العملاء عبر بوابتكم الخاصة."
+            "مرحبًا {company_name},\n"
+            "شكرًا لانضمامكم إلى منصة ELITE.\n"
+            "يمكنكم الآن إضافة عروضكم الخاصة وجذب المزيد من العملاء من خلال بوابتكم المخصصة.\n\n"
+            "نتمنى لكم نجاحًا مستمرًا،\n"
+            "فريق ELITE."
         ),
         "link_endpoint": "company_portal_bp.dashboard",
     },
     "staff": {
-        "title": "مرحبًا بك في فريق ELITE!",
+        "title": "👋 مرحبًا بك في فريق ELITE الإداري!",
         "message": (
-            "تم إنشاء حسابك بنجاح ضمن فريق ELITE الإداري. يمكنك الآن تسجيل "
-            "الدخول وإدارة المهام الموكلة إليك."
+            "مرحبًا {username},\n"
+            "تم إنشاء حسابك بنجاح ضمن فريق ELITE.\n"
+            "يمكنك الآن تسجيل الدخول وبدء العمل على إدارة المهام الموكلة إليك.\n\n"
+            "بالتوفيق،\n"
+            "إدارة ELITE."
         ),
         "link_endpoint": "admin.dashboard_home",
     },
@@ -98,16 +107,36 @@ def ensure_welcome_notification(user: User, *, context: Optional[str] = None) ->
         return None
 
     normalized_role = (context or user.normalized_role).strip().lower()
-    if normalized_role in {"admin", "superadmin"}:
+    if normalized_role == "staff":
+        template_key = "staff"
+    elif normalized_role in {"admin", "superadmin"}:
         template_key = "staff"
     elif normalized_role == "company":
         template_key = "company"
     else:
         template_key = "member"
 
+    username = (getattr(user, "username", "") or "").strip() or user.email
+    company_name = ""
+    if template_key == "company":
+        company_name = getattr(getattr(user, "company", None), "name", "") or ""
+        if not company_name:
+            try:
+                owned_company = user.owned_companies.first()
+            except Exception:  # pragma: no cover - dynamic loader guard
+                owned_company = None
+            if owned_company:
+                company_name = owned_company.name
+    if not company_name:
+        company_name = username
+
+    render_context = {"username": username, "company_name": company_name}
     template = WELCOME_NOTIFICATION_TEMPLATES.get(template_key)
     if not template:
         return None
+
+    title = template["title"].format(**render_context)
+    message = template["message"].format(**render_context)
 
     existing_notifications: Sequence[Notification] = (
         Notification.query.filter_by(user_id=user.id, type="welcome_message").all()
@@ -116,10 +145,7 @@ def ensure_welcome_notification(user: User, *, context: Optional[str] = None) ->
         metadata = notification.metadata_json or {}
         if metadata.get("welcome_context") == template_key:
             return notification.id
-        if (
-            notification.title == template.get("title")
-            and notification.message == template.get("message")
-        ):
+        if notification.title == title and notification.message == message:
             return notification.id
 
     link_url: Optional[str] = None
@@ -134,8 +160,8 @@ def ensure_welcome_notification(user: User, *, context: Optional[str] = None) ->
     return queue_notification(
         user.id,
         type="welcome_message",
-        title=template["title"],
-        message=template["message"],
+        title=title,
+        message=message,
         link_url=link_url,
         metadata=metadata,
     )
