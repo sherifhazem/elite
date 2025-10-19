@@ -1,57 +1,115 @@
 <!-- Offer management listing with CRUD controls powered by fetch. -->
+<!-- UPDATED: Responsive Company Portal with Restricted Editable Fields. -->
 {% extends "company/base.html" %}
 
 {% block portal_title %}Offers{% endblock %}
 
 {% block portal_content %}
-    <div class="d-flex justify-content-between flex-wrap gap-2 align-items-center mb-3">
+    <section class="company-page-intro">
         <div>
-            <h2 class="h5 mb-0">Manage Company Offers</h2>
-            <p class="text-muted small mb-0">Create, update, or disable offers visible to members.</p>
+            <h2 class="section-title">Manage Company Offers</h2>
+            <p class="section-subtitle">Create, update, or disable offers with a responsive workspace designed for every device.</p>
         </div>
-        <div class="d-flex gap-2">
-            <input id="offer-search" type="search" class="form-control" placeholder="Search offers">
-            <button class="btn btn-primary" id="offer-add-btn">Add Offer</button>
+        <div class="intro-actions">
+            <div class="search-field">
+                <label for="offer-search" class="visually-hidden">Search offers</label>
+                <input id="offer-search" type="search" class="form-control" placeholder="Search offers">
+            </div>
+            <button class="btn btn-elite-primary" id="offer-add-btn">Add Offer</button>
         </div>
-    </div>
+    </section>
 
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-striped align-middle" id="offers-table" data-offer-count="{{ offers|length }}">
-                <thead>
-                    <tr>
-                        <th scope="col" data-sort-key="title">Title</th>
-                        <th scope="col" data-sort-key="base_discount">Base Discount</th>
-                        <th scope="col" data-sort-key="valid_until">Valid Until</th>
-                        <th scope="col">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for offer in offers %}
-                        <tr data-offer='{{ {
-                            "id": offer.id,
-                            "title": offer.title,
-                            "description": offer.description or "",
-                            "base_discount": offer.base_discount,
-                            "valid_until": offer.valid_until.strftime("%Y-%m-%d") if offer.valid_until else "",
-                        } | tojson }}'>
-                            <td class="offer-title">{{ offer.title }}</td>
-                            <td>{{ '%.2f%%'|format(offer.base_discount) }}</td>
-                            <td>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'No expiry' }}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary me-2 offer-edit" data-offer-id="{{ offer.id }}">Edit</button>
-                                <button class="btn btn-sm btn-outline-danger offer-delete" data-offer-id="{{ offer.id }}">Delete</button>
-                            </td>
-                        </tr>
-                    {% else %}
+    <section class="offer-listing">
+        <div class="offer-table-wrapper">
+            <div class="table-responsive">
+                <table class="table align-middle" id="offers-table" data-offer-count="{{ offers|length }}">
+                    <thead>
                         <tr>
-                            <td colspan="4" class="text-center text-muted py-4">No offers yet. Click "Add Offer" to create one.</td>
+                            <th scope="col" data-sort-key="title">Title</th>
+                            <th scope="col" data-sort-key="base_discount">Base Discount</th>
+                            <th scope="col" data-sort-key="valid_until">Valid Until</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Actions</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for offer in offers %}
+                            {% set offer_payload = {
+                                'id': offer.id,
+                                'title': offer.title,
+                                'description': offer.description or '',
+                                'base_discount': offer.base_discount,
+                                'valid_until': offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else ''
+                            } %}
+                            <tr data-offer='{{ offer_payload | tojson }}'>
+                                <td class="offer-title">{{ offer.title }}</td>
+                                <td>{{ '%.2f%%'|format(offer.base_discount) }}</td>
+                                <td>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'No expiry' }}</td>
+                                <td>
+                                <span class="badge bg-{{ 'success' if offer.valid_until is none or offer.valid_until >= now else 'secondary' }}">
+                                        {{ 'Active' if offer.valid_until is none or offer.valid_until >= now else 'Expired' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="table-action-group">
+                                        <button class="btn btn-sm btn-outline-secondary offer-edit" data-offer-id="{{ offer.id }}">Edit</button>
+                                        <button class="btn btn-sm btn-outline-danger offer-delete" data-offer-id="{{ offer.id }}">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No offers yet. Click "Add Offer" to create one.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+        <div class="offer-card-collection" aria-live="polite">
+            {% if offers %}
+                {% for offer in offers %}
+                    {% set offer_payload = {
+                        'id': offer.id,
+                        'title': offer.title,
+                        'description': offer.description or '',
+                        'base_discount': offer.base_discount,
+                        'valid_until': offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else ''
+                    } %}
+                    <article class="offer-card" data-offer='{{ offer_payload | tojson }}'>
+                        <header class="offer-card-header">
+                            <h3 class="offer-card-title">{{ offer.title }}</h3>
+                            <span class="badge offer-status {{ 'is-active' if offer.valid_until is none or offer.valid_until >= now else 'is-muted' }}">
+                                {{ 'Active' if offer.valid_until is none or offer.valid_until >= now else 'Expired' }}
+                            </span>
+                        </header>
+                        <dl class="offer-card-meta">
+                            <div>
+                                <dt>Discount</dt>
+                                <dd>{{ '%.2f%%'|format(offer.base_discount) }}</dd>
+                            </div>
+                            <div>
+                                <dt>Valid Until</dt>
+                                <dd>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'No expiry' }}</dd>
+                            </div>
+                            {% if offer.description %}
+                                <div class="offer-card-description">
+                                    <dt>Description</dt>
+                                    <dd>{{ offer.description }}</dd>
+                                </div>
+                            {% endif %}
+                        </dl>
+                        <div class="offer-card-actions">
+                            <button class="btn btn-sm btn-elite-outline offer-edit" data-offer-id="{{ offer.id }}">Edit</button>
+                            <button class="btn btn-sm btn-outline-danger offer-delete" data-offer-id="{{ offer.id }}">Delete</button>
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">No offers yet. Tap "Add Offer" to create one.</p>
+            {% endif %}
+        </div>
+    </section>
 
     <div id="offer-modal" class="modal fade" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
