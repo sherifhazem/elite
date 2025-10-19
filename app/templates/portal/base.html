@@ -103,6 +103,7 @@
                 --nav-item-color: #666666;
                 --nav-item-active-color: #3a237e;
                 --nav-item-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+                color: var(--nav-item-color);
             }
 
             .app-nav__item {
@@ -143,11 +144,20 @@
             .app-nav__icon {
                 font-size: 1.2rem;
                 line-height: 1;
+                color: inherit;
             }
 
             .app-nav[data-theme="dark"] {
                 --nav-item-color: rgba(255, 255, 255, 0.86);
                 --nav-item-active-color: #ffffff;
+                --nav-item-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+            }
+
+            .app-nav[data-theme="light"],
+            .app-nav:not([data-theme]) {
+                --nav-item-color: #666666;
+                --nav-item-active-color: #3a237e;
+                --nav-item-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
             }
 
             .app-nav__badge {
