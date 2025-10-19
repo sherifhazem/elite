@@ -10,7 +10,8 @@ from sqlalchemy import or_
 
 from .. import db
 from ..models.user import User
-from .utils import create_token, decode_token
+from ..services.mailer import send_email
+from .utils import confirm_token, create_token, decode_token, generate_token
 
 
 auth_bp = Blueprint("auth", __name__)
@@ -64,9 +65,25 @@ def register() -> tuple:
 
     user = User(username=username, email=email)
     user.set_password(password)
+    # Require email confirmation before allowing the user to authenticate.
+    user.is_active = False
 
     db.session.add(user)
     db.session.commit()
+
+    # Generate a signed email verification token and send the activation email.
+    token = generate_token(user.email)
+    verify_url = f"{request.host_url}api/auth/verify/{token}"
+    html = f"""
+        <h3>Welcome to Elite Discounts!</h3>
+        <p>Please confirm your email by clicking the link below:</p>
+        <a href='{verify_url}'>Confirm your account</a>
+        """
+    send_email(
+        user.email,
+        "Confirm your Elite Discounts Account",
+        html,
+    )
 
     response = {
         "id": user.id,
@@ -166,4 +183,74 @@ def login_page() -> str:
     """Render the browser-based login page."""
 
     return render_template("auth/login.html")
+
+
+@auth_bp.route("/api/auth/verify/<token>")
+def verify_email(token: str):
+    """Activate a user account when the email confirmation token is valid."""
+
+    # Decode the token to retrieve the email address embedded in the link.
+    email = confirm_token(token)
+    if not email:
+        return jsonify({"message": "Invalid or expired token"}), HTTPStatus.BAD_REQUEST
+
+    # Locate the user account associated with the confirmation email.
+    user = User.query.filter_by(email=email).first_or_404()
+    if user.is_active:
+        return jsonify({"message": "Account already verified"}), HTTPStatus.OK
+
+    # Mark the account as active so the user can sign in going forward.
+    user.is_active = True
+    db.session.commit()
+    return jsonify({"message": "Email verified successfully"}), HTTPStatus.OK
+
+
+@auth_bp.route("/api/auth/reset-request", methods=["POST"])
+def request_password_reset():
+    """Send a password reset email containing a one-time token link."""
+
+    data = request.get_json() or {}
+    email = data.get("email")
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"message": "Email not found"}), HTTPStatus.NOT_FOUND
+
+    # Issue a password reset token and deliver the reset instructions.
+    token = generate_token(user.email)
+    reset_url = f"{request.host_url}api/auth/reset-password/{token}"
+    html = f"""
+        <h3>Password Reset Request</h3>
+        <p>To reset your password, click below:</p>
+        <a href='{reset_url}'>Reset Password</a>
+        """
+    send_email(
+        user.email,
+        "Reset Your Elite Discounts Password",
+        html,
+    )
+    return jsonify({"message": "Password reset email sent"}), HTTPStatus.OK
+
+
+@auth_bp.route("/api/auth/reset-password/<token>", methods=["POST"])
+def reset_password(token: str):
+    """Persist a new password when the provided reset token is valid."""
+
+    # Validate the token to extract the associated account email.
+    email = confirm_token(token)
+    if not email:
+        return jsonify({"message": "Invalid or expired token"}), HTTPStatus.BAD_REQUEST
+
+    data = request.get_json() or {}
+    password = data.get("password")
+    if not password:
+        return (
+            jsonify({"message": "Password is required"}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    # Update the user's password with the provided credentials.
+    user = User.query.filter_by(email=email).first_or_404()
+    user.set_password(password)
+    db.session.commit()
+    return jsonify({"message": "Password updated successfully"}), HTTPStatus.OK
 

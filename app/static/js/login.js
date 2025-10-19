@@ -7,6 +7,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const passwordInput = document.getElementById("password");
   const submitButton = document.getElementById("login-button");
   const errorMessage = document.getElementById("login-error");
+  const forgotPasswordTrigger = document.getElementById(
+    "forgot-password-trigger",
+  );
+  const resetModal = document.getElementById("reset-modal");
+  const resetForm = document.getElementById("reset-form");
+  const resetEmailInput = document.getElementById("reset-email");
+  const resetFeedback = document.getElementById("reset-feedback");
+  const resetSubmitButton = document.getElementById("reset-submit");
+  const resetCancelButton = document.getElementById("reset-cancel");
 
   // عرّف دالة مساعدة لحفظ التوكن في Cookie مع تاريخ انتهاء مناسب.
   const persistTokenCookie = (token) => {
@@ -93,4 +102,70 @@ document.addEventListener("DOMContentLoaded", () => {
       submitButton.textContent = "تسجيل الدخول";
     }
   });
+
+  // Helper to toggle the password reset modal visibility for accessibility.
+  const toggleResetModal = (shouldShow) => {
+    resetModal.hidden = !shouldShow;
+    if (shouldShow) {
+      resetEmailInput.focus();
+    } else {
+      forgotPasswordTrigger.focus();
+      resetForm.reset();
+      resetFeedback.textContent = "";
+    }
+  };
+
+  if (forgotPasswordTrigger) {
+    forgotPasswordTrigger.addEventListener("click", () => {
+      toggleResetModal(true);
+    });
+  }
+
+  if (resetCancelButton) {
+    resetCancelButton.addEventListener("click", () => {
+      toggleResetModal(false);
+    });
+  }
+
+  if (resetForm) {
+    resetForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const email = (resetEmailInput.value || "").trim();
+      if (!email) {
+        resetFeedback.textContent = "يرجى إدخال البريد الإلكتروني.";
+      resetEmailInput.setAttribute("aria-invalid", "true");
+      return;
+    }
+
+    resetFeedback.textContent = "";
+    resetEmailInput.setAttribute("aria-invalid", "false");
+    resetSubmitButton.disabled = true;
+    resetSubmitButton.textContent = "جاري الإرسال...";
+
+    try {
+      const response = await fetch("/api/auth/reset-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        resetFeedback.textContent = data?.message || "تعذر إرسال البريد.";
+        resetEmailInput.setAttribute("aria-invalid", "true");
+        return;
+      }
+
+      resetFeedback.textContent = "تم إرسال رابط الاستعادة إلى بريدك الإلكتروني.";
+      setTimeout(() => toggleResetModal(false), 1800);
+    } catch (error) {
+      console.error("Password reset request failed", error);
+      resetFeedback.textContent = "حدث خطأ أثناء الإرسال، حاول مرة أخرى.";
+    } finally {
+      resetSubmitButton.disabled = false;
+      resetSubmitButton.textContent = "إرسال الرابط";
+    }
+    });
+  }
 });

@@ -5,6 +5,7 @@ from typing import Any, Optional
 from importlib import import_module
 
 from flask import current_app
+from itsdangerous import URLSafeTimedSerializer
 
 from ..models.user import User
 
@@ -80,3 +81,26 @@ def get_user_from_token(token: str) -> Optional[User]:
         return None
     # Fetch the database record associated with the decoded identifier.
     return User.query.get(user_id)
+
+
+def generate_token(email: str) -> str:
+    """Generate a time-sensitive confirmation token for the supplied email."""
+
+    # ``URLSafeTimedSerializer`` signs the email with the SECRET_KEY to prevent tampering.
+    serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+    # The salt segregates confirmation tokens from any future serializer usage.
+    return serializer.dumps(email, salt="email-confirm")
+
+
+def confirm_token(token: str, expiration: int = 3600) -> Optional[str]:
+    """Validate a confirmation token and return the original email when valid."""
+
+    serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+    try:
+        # ``max_age`` ensures the token expires after ``expiration`` seconds to
+        # mitigate replay attempts should an email link be leaked.
+        email = serializer.loads(token, salt="email-confirm", max_age=expiration)
+    except Exception:
+        # Any signature/expiration error results in ``None`` to signal invalid links.
+        return None
+    return email

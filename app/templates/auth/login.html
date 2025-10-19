@@ -38,10 +38,52 @@
           <p id="login-error" class="error-message" role="alert" aria-live="polite"></p>
           <button type="submit" id="login-button">تسجيل الدخول</button>
         </form>
+        <button
+          type="button"
+          id="forgot-password-trigger"
+          class="link-button"
+          aria-haspopup="dialog"
+        >
+          هل نسيت كلمة المرور؟
+        </button>
         <p class="register-hint">
           ليس لديك حساب؟
           <a href="/register" id="register-link">أنشئ حسابك</a>
         </p>
+      </section>
+      <section
+        id="reset-modal"
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reset-title"
+        hidden
+      >
+        <div class="modal-content">
+          <h2 id="reset-title">استعادة كلمة المرور</h2>
+          <p class="modal-description">
+            أدخل بريدك الإلكتروني لإرسال رابط استعادة كلمة المرور.
+          </p>
+          <form id="reset-form" novalidate>
+            <label class="input-group">
+              <span>البريد الإلكتروني</span>
+              <input
+                type="email"
+                id="reset-email"
+                name="reset-email"
+                required
+                autocomplete="email"
+              />
+            </label>
+            <p id="reset-feedback" class="feedback" role="alert" aria-live="polite"></p>
+            <div class="modal-actions">
+              <button type="submit" id="reset-submit">إرسال الرابط</button>
+              <button type="button" id="reset-cancel" class="secondary-button">
+                إلغاء
+              </button>
+            </div>
+          </form>
+        </div>
       </section>
     </main>
     <script src="{{ url_for('static', filename='js/login.js') }}" defer></script>
