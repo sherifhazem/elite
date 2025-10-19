@@ -5,6 +5,8 @@ from sqlalchemy.exc import IntegrityError
 
 from .. import db
 from ..models.company import Company
+from ..models.user import User
+from ..services.notifications import ensure_welcome_notification
 from ..services.roles import require_role
 
 
@@ -43,12 +45,26 @@ def create_company():
         return jsonify({"error": "name is required."}), 400
 
     company = Company(name=name, description=description)
+
+    owner_user_id = payload.get("owner_user_id")
+    if owner_user_id is not None:
+        try:
+            owner_id = int(owner_user_id)
+        except (TypeError, ValueError):
+            owner_id = None
+        if owner_id:
+            owner = User.query.get(owner_id)
+            if owner:
+                company.owner = owner
     db.session.add(company)
     try:
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
         return jsonify({"error": "Company with the same name already exists."}), 400
+
+    if company.owner:
+        ensure_welcome_notification(company.owner, context="company")
 
     return jsonify(_serialize_company(company)), 201
 
