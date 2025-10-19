@@ -1,6 +1,6 @@
 """Blueprint definitions for the ELITE backend routes."""
 
-from flask import Blueprint, jsonify, render_template
+from flask import Blueprint, jsonify, redirect, url_for
 
 from .company_routes import company_routes
 from .offer_routes import offer_routes
@@ -8,6 +8,7 @@ from .redemption_routes import redemption_bp
 from .notification_routes import notif_bp
 from .user_routes import user_routes
 from .user_portal_routes import portal_bp
+from ..services.roles import resolve_user_from_request
 
 
 main = Blueprint("main", __name__)
@@ -16,9 +17,18 @@ main = Blueprint("main", __name__)
 # Render the landing page for the Elite Discounts platform.
 @main.route("/", methods=["GET"])
 def index():
-    """Return the homepage template."""
+    """Redirect visitors to the appropriate experience based on their JWT role."""
 
-    return render_template("index.html")
+    user = resolve_user_from_request()
+    if user is None:
+        return redirect(url_for("auth.login_page"))
+
+    role = getattr(user, "role", "member").strip().lower()
+    if role == "company":
+        return redirect(url_for("company_portal_bp.dashboard"))
+    if role in {"admin", "superadmin"}:
+        return redirect(url_for("admin.dashboard_home"))
+    return redirect(url_for("portal.home"))
 
 
 # Provide a simple about page describing the platform.
