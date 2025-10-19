@@ -16,6 +16,10 @@ The ELITE backend provides the foundational services for managing elite offers a
 app/
     __init__.py          # Initializes the Flask app, extensions, and blueprints
     config.py            # Loads environment variables and centralizes configuration
+    company/             # Company portal blueprint and supporting modules
+        __init__.py
+        routes.py
+        api.py
     models/              # SQLAlchemy models
         __init__.py
         user.py
@@ -25,6 +29,22 @@ app/
         __init__.py
     services/            # Business logic and service layer implementations
         __init__.py
+    static/
+        css/
+            company.css
+        js/
+            company/
+                offers.js
+                redemptions.js
+                settings.js
+    templates/
+        company/
+            base.html
+            dashboard.html
+            offers.html
+            offer_form.html
+            redemptions.html
+            settings.html
     utils/               # Shared utilities and helper functions
         __init__.py
 migrations/              # Alembic migrations managed via Flask-Migrate
@@ -58,9 +78,9 @@ This stage connects the application to PostgreSQL through SQLAlchemy and Flask-M
 
 ### Core Tables
 
-- - **User (`users`)**: `id`, `username`, `email`, `password_hash`, `membership_level`, `joined_at`.
-- **Company (`companies`)**: `id`, `name`, `description`, `created_at`.
-- **Offer (`offers`)**: `id`, `title`, `base_discount`, `valid_until`, `company_id`, `created_at`.
+- **User (`users`)**: `id`, `username`, `email`, `password_hash`, `membership_level`, `joined_at`.
+- **Company (`companies`)**: `id`, `name`, `description`, `created_at`, `owner_user_id`, `logo_url`, `notification_preferences` (JSON).
+- **Offer (`offers`)**: `id`, `title`, `description`, `base_discount`, `valid_until`, `company_id`, `created_at`.
 
 ### Migration Workflow
 
@@ -197,6 +217,51 @@ The member portal now allows authenticated users to elevate their membership tie
 
 - The upgrade API always validates the JWT token; direct requests without authentication receive `401 Unauthorized`.
 - Only the predefined membership levels (`Basic`, `Silver`, `Gold`, `Premium`) are accepted by the backend to prevent arbitrary values.
+
+## Company Portal
+
+The `/company/*` blueprint delivers a desktop-first management console for business owners. Access is restricted to accounts with the `company` role (or `superadmin` when a company association exists).
+
+### Routes
+
+- `/company/` → redirects to the dashboard overview.
+- `/company/dashboard` → stats cards and a table of the latest 10 redemptions.
+- `/company/offers` → CRUD management of the company's own offers via fetch-powered forms.
+- `/company/redemptions` → verify redemption codes manually or by QR scanning.
+- `/company/settings` → update the public profile, logo URL, and notification preferences.
+
+### Key Workflows
+
+1. **Create or edit an offer**
+   - Launch the modal from `/company/offers`.
+   - Submit the form via AJAX to `/company/offers` or `/company/offers/<id>`.
+   - Optionally enable *Send notifications* to trigger `services.notifications.broadcast_new_offer`.
+2. **Redeem a member code**
+   - Staff enters the code (or scans it) on `/company/redemptions`.
+   - `/company/redemptions/verify` ensures the code belongs to the current company and has not expired.
+   - `/company/redemptions/confirm` finalizes the redemption with audit logging via `current_app.logger`.
+3. **Maintain company profile**
+   - `/company/settings` persists `name`, `description`, `logo_url`, and boolean notification flags.
+
+### Security Notes
+
+- All portal routes use `require_role("company")` and filter every lookup by `company_id`.
+- Attempts to load, update, or delete another company's data return `403 Forbidden`.
+- Redemption APIs reject expired codes, duplicates, or mismatched company IDs.
+
+### Screenshots
+
+Capture dashboard, offers, redemptions, and settings views from a running instance to populate documentation. Image assets are intentionally omitted from this repository per delivery constraints.
+
+### Migration Reminder
+
+The new fields (`Company.owner_user_id`, `Company.logo_url`, `Company.notification_preferences`, and `Offer.description`) require an Alembic migration. Generate it with:
+
+```bash
+flask db migrate -m "Add company portal fields"
+flask db upgrade
+```
+
 
 ## Offer Redemption System
 

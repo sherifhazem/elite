@@ -1,0 +1,78 @@
+<!-- Company dashboard view summarizing offers and redemption performance. -->
+{% extends "company/base.html" %}
+
+{% block portal_title %}Dashboard{% endblock %}
+
+{% block portal_content %}
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Active Offers</h5>
+                    <p class="display-6 mb-0">{{ active_offers }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Total Redemptions</h5>
+                    <p class="display-6 mb-0">{{ total_redeemed }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Last Redemption</h5>
+                    {% if last_redemption %}
+                        <p class="fw-semibold mb-1">{{ last_redemption.redemption_code }}</p>
+                        <p class="text-muted small mb-0">
+                            {{ (last_redemption.redeemed_at or last_redemption.created_at).strftime('%Y-%m-%d %H:%M') if last_redemption.created_at else '—' }}
+                        </p>
+                    {% else %}
+                        <p class="text-muted mb-0">No redemptions yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Recent Redemptions</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Code</th>
+                        <th scope="col">Member</th>
+                        <th scope="col">Created</th>
+                        <th scope="col">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if recent_redemptions %}
+                        {% for redemption in recent_redemptions %}
+                            <tr>
+                                <td>{{ redemption.redemption_code }}</td>
+                                <td>{{ redemption.user.username if redemption.user else '—' }}</td>
+                                <td>{{ redemption.created_at.strftime('%Y-%m-%d %H:%M') if redemption.created_at else '—' }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if redemption.status == 'redeemed' else 'secondary' }} text-uppercase">
+                                        {{ redemption.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">No redemption activity yet.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
