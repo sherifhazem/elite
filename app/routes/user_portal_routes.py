@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from flask import Blueprint, jsonify, render_template, request, url_for
 
@@ -54,14 +54,37 @@ def _unread_notification_count(user: Optional[User]) -> int:
     return Notification.query.filter_by(user_id=user.id, is_read=False).count()
 
 
+def _membership_card_payload(user: Optional[User], membership_level: str) -> Dict[str, str]:
+    """Return metadata required to paint the digital membership card."""
+
+    code = "000000"
+    joined = "—"
+    name = "ضيف ELITE"
+    if user is not None:
+        code = f"{user.id:06d}"
+        if user.joined_at:
+            joined = user.joined_at.strftime("%Y-%m-%d")
+        name = user.username or name
+
+    return {
+        "code": code,
+        "joined": joined,
+        "name": name,
+        "level": membership_level or "Basic",
+        "level_key": (membership_level or "Basic").strip().lower() or "basic",
+    }
+
+
 # Render the portal home view summarizing the member's benefits.
 @portal_bp.route("/", methods=["GET"])
 def home():
     user, membership_level = _resolve_user_context()
+    featured_offers = Offer.query.order_by(Offer.created_at.desc()).limit(6).all()
     return render_template(
         "portal/home.html",
         user=user,
         membership_level=membership_level,
+        featured_offers=featured_offers,
         notification_unread_count=_unread_notification_count(user),
         active_nav="home",
         current_year=datetime.utcnow().year,
@@ -106,6 +129,7 @@ def profile():
         "portal/profile.html",
         user=user,
         membership_level=membership_level,
+        membership_card=_membership_card_payload(user, membership_level),
         available_upgrades=available_upgrades,
         upgrade_success=upgrade_success,
         activations=activations,

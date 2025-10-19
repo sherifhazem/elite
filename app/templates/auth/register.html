@@ -1,0 +1,364 @@
+<!-- FIXED: Mobile-First User Portal Design (Member-Only) -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>ELITE | إنشاء حساب</title>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+            integrity="sha512-VlC5x7r+J1kG0VYLRNvKcJsteVEh9UpAJZciV06Pq4jG3Ejj6+UeJ8V+RaH59RUW2KIiMzH6I0X58F3R9yN9ZA=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        />
+        <style>
+            :root {
+                color-scheme: only light;
+                --brand-primary: #4e2b8f;
+                --brand-accent: #8c5bff;
+                --neutral-50: #faf9ff;
+                --neutral-200: #d8d6e5;
+                --neutral-400: #8f8fa3;
+                --neutral-900: #131226;
+                --danger: #d9376e;
+                --success: #1fb36a;
+                font-family: "Tajawal", "IBM Plex Sans Arabic", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: radial-gradient(circle at top, rgba(78, 43, 143, 0.15), transparent 55%),
+                    var(--neutral-50);
+                padding: 32px 16px 48px;
+                color: var(--neutral-900);
+            }
+
+            .register-shell {
+                width: min(428px, 100%);
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+                align-items: center;
+            }
+
+            .register-header {
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                align-items: center;
+            }
+
+            .register-header__badge {
+                width: 80px;
+                height: 80px;
+                border-radius: 28px;
+                display: grid;
+                place-items: center;
+                background: rgba(78, 43, 143, 0.12);
+                color: var(--brand-primary);
+                font-size: 34px;
+            }
+
+            .register-header__title {
+                margin: 0;
+                font-size: clamp(1.7rem, 4vw, 2.1rem);
+                font-weight: 700;
+            }
+
+            .register-header__subtitle {
+                margin: 0;
+                color: var(--neutral-400);
+                line-height: 1.6;
+                font-size: 1rem;
+                max-width: 90%;
+            }
+
+            .register-card {
+                width: 100%;
+                background: rgba(255, 255, 255, 0.92);
+                border-radius: 32px;
+                padding: 32px 24px 36px;
+                box-shadow: 0 40px 80px rgba(21, 20, 50, 0.18);
+                backdrop-filter: blur(16px);
+            }
+
+            .visually-hidden {
+                position: absolute !important;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                border: 0;
+            }
+
+            form {
+                display: flex;
+                flex-direction: column;
+                gap: 18px;
+            }
+
+            .input-field {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .input-field label {
+                font-size: 0.95rem;
+                color: var(--neutral-400);
+            }
+
+            .input-field input {
+                width: 100%;
+                border-radius: 18px;
+                border: 1px solid var(--neutral-200);
+                padding: 16px 18px;
+                font-size: 1rem;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+                background: #fff;
+            }
+
+            .input-field input:focus {
+                outline: none;
+                border-color: var(--brand-accent);
+                box-shadow: 0 0 0 3px rgba(140, 91, 255, 0.18);
+            }
+
+            .cta-button {
+                margin-top: 12px;
+                border: none;
+                border-radius: 20px;
+                padding: 16px;
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: #fff;
+                background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+                cursor: pointer;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .cta-button:active {
+                transform: translateY(1px);
+            }
+
+            .cta-button:disabled {
+                opacity: 0.6;
+                cursor: progress;
+            }
+
+            .error-message {
+                min-height: 18px;
+                color: var(--danger);
+                font-size: 0.92rem;
+                margin: -8px 0 0;
+            }
+
+            .helper-text {
+                text-align: center;
+                margin-top: 24px;
+                color: var(--neutral-400);
+                font-size: 0.95rem;
+            }
+
+            .helper-text a {
+                color: var(--brand-primary);
+                text-decoration: none;
+                font-weight: 600;
+            }
+
+            .toast-banner {
+                position: fixed;
+                inset-inline: 18px;
+                bottom: 28px;
+                border-radius: 20px;
+                padding: 16px 18px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                background: rgba(31, 179, 106, 0.95);
+                color: #fff;
+                font-size: 0.95rem;
+                box-shadow: 0 24px 60px rgba(31, 179, 106, 0.38);
+                opacity: 0;
+                transform: translateY(16px);
+                pointer-events: none;
+                transition: opacity 0.25s ease, transform 0.25s ease;
+            }
+
+            .toast-banner[data-visible="true"] {
+                opacity: 1;
+                transform: translateY(0);
+                pointer-events: auto;
+            }
+
+            .success-badge {
+                width: 44px;
+                height: 44px;
+                border-radius: 14px;
+                background: rgba(255, 255, 255, 0.16);
+                display: grid;
+                place-items: center;
+            }
+
+            @media (max-width: 360px) {
+                body {
+                    padding: 24px 12px 36px;
+                }
+
+                .register-card {
+                    padding: 28px 20px 32px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <main class="register-shell">
+            <header class="register-header">
+                <div class="register-header__badge" aria-hidden="true">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <h1 class="register-header__title">إنشاء حساب ELITE</h1>
+                <p class="register-header__subtitle">
+                    دقائق قليلة تفصلك عن الاستفادة من الخصومات والعروض المخصصة لأعضاء ELITE.
+                </p>
+            </header>
+            <section class="register-card" aria-labelledby="register-title">
+                <h2 id="register-title" class="visually-hidden">نموذج التسجيل للأعضاء</h2>
+                <form id="register-form" novalidate>
+                    <div class="input-field">
+                        <label for="username">الاسم الكامل</label>
+                        <input type="text" id="username" name="username" autocomplete="name" required placeholder="اسمك" />
+                    </div>
+                    <div class="input-field">
+                        <label for="register-email">البريد الإلكتروني</label>
+                        <input
+                            type="email"
+                            id="register-email"
+                            name="email"
+                            inputmode="email"
+                            autocomplete="email"
+                            required
+                            placeholder="name@example.com"
+                        />
+                    </div>
+                    <div class="input-field">
+                        <label for="register-password">كلمة المرور</label>
+                        <input
+                            type="password"
+                            id="register-password"
+                            name="password"
+                            autocomplete="new-password"
+                            required
+                            minlength="6"
+                            placeholder="••••••••"
+                        />
+                    </div>
+                    <p id="register-error" class="error-message" role="alert" aria-live="polite"></p>
+                    <button type="submit" id="register-submit" class="cta-button">إنشاء حساب</button>
+                </form>
+                <p class="helper-text">
+                    لديك حساب بالفعل؟
+                    <a href="{{ url_for('auth.login_page') }}">سجّل الدخول الآن</a>
+                </p>
+            </section>
+        </main>
+        <div class="toast-banner" id="register-toast" role="status" aria-live="polite">
+            <div class="success-badge" aria-hidden="true"><i class="fa-solid fa-check"></i></div>
+            <span id="register-toast-message">تم إنشاء حسابك بنجاح! جاري تحويلك...</span>
+        </div>
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const form = document.getElementById("register-form");
+                const usernameInput = document.getElementById("username");
+                const emailInput = document.getElementById("register-email");
+                const passwordInput = document.getElementById("register-password");
+                const submitButton = document.getElementById("register-submit");
+                const errorMessage = document.getElementById("register-error");
+                const toast = document.getElementById("register-toast");
+                const toastMessage = document.getElementById("register-toast-message");
+
+                if (!form) {
+                    return;
+                }
+
+                const persistTokenCookie = (token) => {
+                    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
+                    const secureFlag = window.location.protocol === "https:" ? " Secure;" : "";
+                    document.cookie = `elite_token=${token}; Path=/;${secureFlag} SameSite=Strict; Expires=${expires}`;
+                };
+
+                const showToast = (message) => {
+                    if (!toast || !toastMessage) {
+                        return;
+                    }
+                    toastMessage.textContent = message || "تم إنشاء الحساب بنجاح";
+                    toast.dataset.visible = "true";
+                    setTimeout(() => {
+                        toast.dataset.visible = "false";
+                    }, 3200);
+                };
+
+                form.addEventListener("submit", async (event) => {
+                    event.preventDefault();
+
+                    const username = (usernameInput.value || "").trim();
+                    const email = (emailInput.value || "").trim();
+                    const password = passwordInput.value || "";
+
+                    if (!username || !email || !password) {
+                        errorMessage.textContent = "يرجى تعبئة جميع الحقول المطلوبة.";
+                        return;
+                    }
+
+                    errorMessage.textContent = "";
+                    submitButton.disabled = true;
+                    submitButton.textContent = "جاري إنشاء الحساب...";
+
+                    try {
+                        const response = await fetch("/api/auth/register", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ username, email, password }),
+                        });
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            errorMessage.textContent = data?.error || "تعذر إنشاء الحساب، حاول مرة أخرى.";
+                            return;
+                        }
+
+                        if (data.token) {
+                            localStorage.setItem("elite_token", data.token);
+                            persistTokenCookie(data.token);
+                        }
+
+                        showToast("تم إنشاء حسابك بنجاح! جاري تحويلك...");
+
+                        const redirectTarget = data.redirect_url || "/portal/home";
+                        setTimeout(() => {
+                            window.location.replace(redirectTarget);
+                        }, 1200);
+                    } catch (error) {
+                        console.error("Registration failed", error);
+                        errorMessage.textContent = "حدث خطأ أثناء التسجيل. تحقق من اتصالك وحاول مجددًا.";
+                    } finally {
+                        submitButton.disabled = false;
+                        submitButton.textContent = "إنشاء حساب";
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

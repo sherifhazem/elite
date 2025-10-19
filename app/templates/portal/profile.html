@@ -1,60 +1,256 @@
-<!-- Profile screen highlighting the membership card and upgrade path. -->
+<!-- FIXED: Mobile-First User Portal Design (Member-Only) -->
 {% extends 'portal/base.html' %}
-{% block title %}Profile · ELITE{% endblock %}
-{% block page_heading %}Profile{% endblock %}
+{% block title %}الملف الشخصي · ELITE{% endblock %}
+{% block page_heading %}ملفي{% endblock %}
 {% block content %}
-    {% set member_code = '%06d'|format(user.id) if user else '000000' %}
-    {% set joined_date = user.joined_at.strftime('%Y-%m-%d') if user and user.joined_at else '—' %}
+    <style>
+        .profile-card {
+            border-radius: 28px;
+            padding: 26px 24px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            box-shadow: 0 32px 80px rgba(41, 24, 84, 0.35);
+            background: linear-gradient(140deg, rgba(78, 43, 143, 0.96), rgba(140, 91, 255, 0.9));
+        }
 
-    <!-- Visual membership card with CSS-driven gradient background. -->
-    <section class="screen-block screen-block--padded">
+        .profile-card[data-tier="silver"] {
+            background: linear-gradient(140deg, rgba(197, 206, 214, 0.94), rgba(150, 163, 173, 0.88));
+            color: #1d1f26;
+        }
+
+        .profile-card[data-tier="gold"] {
+            background: linear-gradient(140deg, rgba(255, 215, 0, 0.92), rgba(255, 193, 7, 0.88));
+            color: #3a2d0a;
+        }
+
+        .profile-card[data-tier="premium"] {
+            background: linear-gradient(140deg, rgba(111, 66, 193, 0.95), rgba(153, 102, 255, 0.92));
+        }
+
+        .profile-card__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .profile-card__badge {
+            padding: 8px 16px;
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.18);
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .profile-card[data-tier="silver"] .profile-card__badge,
+        .profile-card[data-tier="gold"] .profile-card__badge {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .profile-card__title {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .profile-card__details {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .profile-card__label {
+            margin: 0;
+            font-size: 0.78rem;
+            opacity: 0.8;
+        }
+
+        .profile-card__value {
+            margin: 2px 0 0;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .profile-actions {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .profile-actions button {
+            border-radius: 16px;
+            padding: 14px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .profile-actions .cta-button {
+            border: none;
+            background: linear-gradient(135deg, rgba(78, 43, 143, 0.95), rgba(140, 91, 255, 0.95));
+            color: #fff;
+        }
+
+        .profile-actions .ghost-button {
+            border: 1px solid rgba(78, 43, 143, 0.2);
+            background: #fff;
+            color: var(--portal-primary, #4e2b8f);
+        }
+
+        .upgrade-panel,
+        .activations-panel {
+            margin-top: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .panel-header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .panel-header__title {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .panel-header__subtitle {
+            margin: 0;
+            color: var(--portal-muted, #8f8ca6);
+            font-size: 0.92rem;
+        }
+
+        .upgrade-form {
+            display: grid;
+            gap: 12px;
+        }
+
+        .upgrade-form__select {
+            border-radius: 16px;
+            border: 1px solid rgba(78, 43, 143, 0.2);
+            padding: 12px 14px;
+            font-size: 0.95rem;
+        }
+
+        .upgrade-form button {
+            border-radius: 16px;
+            border: none;
+            background: linear-gradient(135deg, rgba(78, 43, 143, 0.95), rgba(140, 91, 255, 0.95));
+            color: #fff;
+            padding: 12px;
+            font-weight: 600;
+        }
+
+        .activation-card {
+            background: #fff;
+            border-radius: 22px;
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 20px 50px rgba(17, 14, 42, 0.08);
+        }
+
+        .activation-card__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .activation-card__title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .activation-card__status {
+            border-radius: 14px;
+            padding: 6px 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .activation-card__status--pending {
+            background: rgba(255, 193, 7, 0.16);
+            color: #b58105;
+        }
+
+        .activation-card__status--redeemed {
+            background: rgba(31, 179, 106, 0.18);
+            color: #1f9d70;
+        }
+
+        .activation-card__status--expired {
+            background: rgba(220, 53, 69, 0.14);
+            color: #b02a37;
+        }
+
+        .activation-card__details {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            font-size: 0.88rem;
+            color: var(--portal-muted, #8f8ca6);
+        }
+
+        .activation-card__actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .activation-card__actions .ghost-button {
+            border-radius: 14px;
+            border: 1px solid rgba(78, 43, 143, 0.22);
+            color: var(--portal-primary, #4e2b8f);
+        }
+    </style>
+    <section>
         <article
-            class="membership-card"
+            class="profile-card"
             id="membership-card"
-            data-membership-tier="{{ membership_level|lower }}"
-            data-member-name="{{ user.username if user else 'ELITE Member' }}"
-            data-member-level="{{ membership_level }}"
-            data-member-code="{{ member_code }}"
-            data-member-joined="{{ joined_date }}"
+            data-tier="{{ membership_card.level_key }}"
+            data-member-name="{{ membership_card.name }}"
+            data-member-level="{{ membership_card.level }}"
+            data-member-code="{{ membership_card.code }}"
+            data-member-joined="{{ membership_card.joined }}"
         >
-            <div class="membership-card__content">
-                <div class="membership-card__header">
-                    <span class="membership-card__badge">{{ membership_level }}</span>
-                    <img
-                        class="membership-card__logo"
-                        src="{{ url_for('static', filename='images/logo.png') }}"
-                        alt="ELITE"
-                        loading="lazy"
-                    />
+            <header class="profile-card__header">
+                <div>
+                    <h1 class="profile-card__title">{{ membership_card.name }}</h1>
+                    <p class="profile-card__label">عضوية رقم {{ membership_card.code }}</p>
                 </div>
-                <div class="membership-card__details">
-                    <p class="membership-card__label">الاسم</p>
-                    <p class="membership-card__value">{{ user.username if user else 'ضيف' }}</p>
-                    <p class="membership-card__label">رقم العضوية</p>
-                    <p class="membership-card__value">{{ member_code }}</p>
-                    <p class="membership-card__label">تاريخ الانضمام</p>
-                    <p class="membership-card__value">{{ joined_date }}</p>
+                <span class="profile-card__badge">{{ membership_card.level }}</span>
+            </header>
+            <div class="profile-card__details">
+                <div>
+                    <p class="profile-card__label">تاريخ الانضمام</p>
+                    <p class="profile-card__value">{{ membership_card.joined }}</p>
+                </div>
+                <div>
+                    <p class="profile-card__label">الحالة</p>
+                    <p class="profile-card__value">{{ 'مفعل' if user and user.is_active else 'غير مفعل' }}</p>
                 </div>
             </div>
         </article>
-        <div class="card-actions">
-            <button class="cta-button" type="button" id="upgrade-entry" data-scroll-target="#upgrade-panel">Upgrade</button>
+        <div class="profile-actions">
+            <button class="cta-button" type="button" id="upgrade-entry" data-scroll-target="#upgrade-panel">Upgrade Membership</button>
             <button class="ghost-button" type="button" id="download-card">Download My Card</button>
         </div>
     </section>
-
-    <!-- Upgrade panel listing higher tiers when available. -->
-    <section class="screen-block screen-block--stacked" id="upgrade-panel">
-        <header class="section-heading section-heading--stacked">
-            <div>
-                <h2 class="section-heading__title">ترقية العضوية</h2>
-                <p class="section-heading__subtitle">اختر المستوى التالي لفتح مزايا إضافية.</p>
-            </div>
+    <section class="upgrade-panel" id="upgrade-panel">
+        <header class="panel-header">
+            <h2 class="panel-header__title">ترقية المستوى</h2>
+            <p class="panel-header__subtitle">اختر المستوى التالي لفتح مزايا إضافية.</p>
         </header>
         {% if user %}
             {% if available_upgrades %}
                 <form id="membership-upgrade-form" class="upgrade-form" onsubmit="upgradeMembership(event)">
-                    <label class="upgrade-form__label" for="new_membership_level">اختر المستوى الجديد</label>
+                    <label class="profile-card__label" for="new_membership_level">اختر المستوى الجديد</label>
                     <select
                         class="upgrade-form__select"
                         name="new_level"
@@ -67,9 +263,8 @@
                             <option value="{{ level }}">{{ level }}</option>
                         {% endfor %}
                     </select>
-                    <button class="cta-button" type="submit">Upgrade</button>
+                    <button type="submit">تأكيد الترقية</button>
                 </form>
-                <div class="toast-placeholder" id="upgrade-feedback"></div>
             {% else %}
                 <div class="empty-state">
                     <p>أنت بالفعل في أعلى مستوى. استمتع بمزايا Premium!</p>
@@ -81,16 +276,10 @@
             </div>
         {% endif %}
     </section>
-
-    <!-- Activations history showing single-use redemption codes. -->
-    <section class="screen-block screen-block--stacked" id="activations-panel">
-        <header class="section-heading section-heading--stacked">
-            <div>
-                <h2 class="section-heading__title">My Activations</h2>
-                <p class="section-heading__subtitle">
-                    تتبع رموز التفعيل التي أنشأتها وحالتها الحالية.
-                </p>
-            </div>
+    <section class="activations-panel" id="activations-panel">
+        <header class="panel-header">
+            <h2 class="panel-header__title">تفعيلاتي</h2>
+            <p class="panel-header__subtitle">تتبع رموز التفعيل التي أنشأتها وحالتها الحالية.</p>
         </header>
         {% if not user %}
             <div class="empty-state">
@@ -112,9 +301,7 @@
                                 <h3 class="activation-card__title">
                                     {{ redemption.offer.title if redemption.offer else 'Offer #' ~ redemption.offer_id }}
                                 </h3>
-                                <p class="activation-card__meta">
-                                    كود: <span data-activation-code>{{ redemption.redemption_code }}</span>
-                                </p>
+                                <p class="activation-card__meta">كود: <span data-activation-code>{{ redemption.redemption_code }}</span></p>
                             </div>
                             <span class="activation-card__status activation-card__status--{{ status }}">{{ status_label }}</span>
                         </header>
@@ -146,12 +333,7 @@
                             >
                                 عرض رمز QR
                             </button>
-                            <button
-                                class="ghost-button"
-                                type="button"
-                                data-copy-redemption
-                                data-redemption-code="{{ redemption.redemption_code }}"
-                            >
+                            <button class="ghost-button" type="button" data-copy-redemption data-redemption-code="{{ redemption.redemption_code }}">
                                 نسخ الكود
                             </button>
                         </footer>
@@ -160,7 +342,7 @@
             </div>
         {% else %}
             <div class="empty-state">
-                <p>لم تقم بتفعيل أي عروض حتى الآن. استخدم زر “Activate Offer” من قائمة العروض للبدء.</p>
+                <p>لم تقم بتفعيل أي عروض حتى الآن. استخدم زر “تفعيل العرض” من قائمة العروض للبدء.</p>
             </div>
         {% endif %}
     </section>

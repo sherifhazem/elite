@@ -41,7 +41,7 @@ def _extract_bearer_token() -> Optional[str]:
 
 @auth_bp.post("/api/auth/register")
 def register() -> tuple:
-    """Register a new user and return a confirmation message."""
+    """Register a new member account tailored for the mobile portal."""
 
     payload = _extract_json()
     username = (payload.get("username") or "").strip()
@@ -65,25 +65,28 @@ def register() -> tuple:
 
     user = User(username=username, email=email)
     user.set_password(password)
-    # Require email confirmation before allowing the user to authenticate.
-    user.is_active = False
+    user.role = "member"
+    user.membership_level = "Basic"
+    user.is_active = True
 
     db.session.add(user)
     db.session.commit()
 
-    # Generate a signed email verification token and send the activation email.
-    token = generate_token(user.email)
-    verify_url = f"{request.host_url}api/auth/verify/{token}"
-    html = f"""
-        <h3>Welcome to Elite Discounts!</h3>
-        <p>Please confirm your email by clicking the link below:</p>
-        <a href='{verify_url}'>Confirm your account</a>
-        """
-    send_email(
-        user.email,
-        "Confirm your Elite Discounts Account",
-        html,
-    )
+    token = create_token(user.id)
+
+    # Send a lightweight welcome message without blocking the onboarding flow.
+    try:
+        send_email(
+            user.email,
+            "Welcome to ELITE Membership",
+            """
+            <h3>مرحباً بك في ELITE!</h3>
+            <p>تم إنشاء حساب العضوية الخاص بك بنجاح. استكشف العروض الجديدة مباشرة من بوابة الأعضاء.</p>
+            """,
+        )
+    except Exception:  # pragma: no cover - email delivery should not block signup
+        # Failing silently keeps the registration flow responsive for members.
+        pass
 
     response = {
         "id": user.id,
@@ -91,6 +94,9 @@ def register() -> tuple:
         "email": user.email,
         "role": user.role,
         "is_active": user.is_active,
+        "membership_level": user.membership_level,
+        "token": token,
+        "redirect_url": url_for("portal.home"),
         "message": "User registered successfully.",
     }
     return jsonify(response), HTTPStatus.CREATED
@@ -183,6 +189,13 @@ def login_page() -> str:
     """Render the browser-based login page."""
 
     return render_template("auth/login.html")
+
+
+@auth_bp.route("/register", methods=["GET"])
+def register_page() -> str:
+    """Render the dedicated mobile-first registration screen for members."""
+
+    return render_template("auth/register.html")
 
 
 @auth_bp.route("/api/auth/verify/<token>")
