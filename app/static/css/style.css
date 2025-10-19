@@ -123,38 +123,72 @@ img {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     align-items: center;
-    background: rgba(15, 23, 42, 0.94);
+    background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(20px);
     padding: 0.35rem 0.75rem;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     box-shadow: 0 -12px 24px rgba(15, 23, 42, 0.18);
+    --nav-item-color: #2d2250;
+    --nav-item-active-color: #4e2b8f;
 }
 
+/* FIXED: Enhanced text/icon visibility for mobile bottom navigation (Portal) */
+/* Ensures consistent contrast across light/transparent backgrounds on Android & iOS */
 .app-nav__item {
     position: relative;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    padding: 0.65rem 0;
-    color: rgba(255, 255, 255, 0.6);
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 6px;
+    border-radius: 16px;
     text-decoration: none;
-    transition: color 0.3s ease, transform 0.3s ease;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: background 0.25s ease, color 0.25s ease, opacity 0.25s ease-in-out;
+    color: var(--nav-item-color, #2d2250);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
 }
 
 .app-nav__item--active,
 .app-nav__item:focus-visible {
-    color: var(--color-accent);
+    background: linear-gradient(135deg, rgba(78, 43, 143, 0.18), rgba(140, 91, 255, 0.15));
+    color: var(--nav-item-active-color, #4e2b8f);
+    font-weight: 700;
+    border-top: 3px solid rgba(140, 91, 255, 0.6);
     transform: translateY(-2px);
 }
 
 .app-nav__icon {
-    width: 1.6rem;
-    height: 1.6rem;
+    font-size: 1.35rem;
+    line-height: 1;
+    color: currentColor !important;
+    opacity: 0.92;
+}
+
+.app-nav__item:hover .app-nav__icon {
+    opacity: 1;
+    color: #4e2b8f !important;
+}
+
+.app-nav__item:active {
+    opacity: 0.8;
+    transform: scale(0.96);
+    transition: transform 0.1s ease;
 }
 
 .app-nav__icon svg {
     width: 100%;
     height: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+    .app-nav {
+        background: rgba(22, 18, 36, 0.9);
+        --nav-item-color: rgba(255, 255, 255, 0.85);
+        --nav-item-active-color: #ffffff;
+    }
 }
 
 .app-nav__badge {
