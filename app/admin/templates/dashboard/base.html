@@ -52,6 +52,9 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ url_for('company_portal.list_offers') }}">My Offers</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('company_portal.redemptions') }}">Redemptions</a>
+                            </li>
                         {% endif %}
                         {% if role in ['admin', 'superadmin'] %}
                             <li class="nav-item">

@@ -17,6 +17,50 @@
     let pullStartY = null;
     let isPulling = false;
 
+    /** Format a datetime string in a localized human-readable way. */
+    function formatDateTime(value) {
+        if (!value) {
+            return "—";
+        }
+        try {
+            const date = value instanceof Date ? value : new Date(value);
+            if (Number.isNaN(date.getTime())) {
+                return typeof value === "string" ? value : "—";
+            }
+            return date.toLocaleString("ar-SA", { hour12: false });
+        } catch (error) {
+            console.error("Failed to format date", error);
+            return typeof value === "string" ? value : "—";
+        }
+    }
+
+    /** Copy text to the clipboard with graceful fallbacks. */
+    async function copyToClipboard(text, successMessage = "تم نسخ الكود") {
+        if (!text) {
+            showToast("لا يوجد كود لنسخه.", "error");
+            return;
+        }
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const textarea = document.createElement("textarea");
+                textarea.value = text;
+                textarea.setAttribute("readonly", "readonly");
+                textarea.style.position = "absolute";
+                textarea.style.left = "-9999px";
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand("copy");
+                textarea.remove();
+            }
+            showToast(successMessage, "success", 2400);
+        } catch (error) {
+            console.error("Clipboard copy failed", error);
+            showToast("تعذر نسخ الكود.", "error");
+        }
+    }
+
     /** Show the full-screen spinner while asynchronous work occurs. */
     function showSpinner() {
         if (loadingOverlay) {
@@ -230,6 +274,80 @@
         document.body.style.overflow = "hidden";
     }
 
+    /** Present a redemption code modal with QR support. */
+    function showRedemptionModal(payload) {
+        if (!modal || !modalBody || !modalTitle) {
+            return;
+        }
+        const status = (payload.status || "pending").toLowerCase();
+        const statusMap = {
+            pending: "قيد التفعيل",
+            redeemed: "تم الاستخدام",
+            expired: "منتهي",
+        };
+        const code = payload.code || payload.redemption_code || "";
+        const qrUrl = payload.qr_url || payload.qrUrl || "";
+        const expiresLabel = formatDateTime(payload.expires_at || payload.expiresAt);
+        const redeemedLabel = formatDateTime(payload.redeemed_at || payload.redeemedAt);
+        const offerTitle = payload.offer_title || payload.offerTitle || "تم إنشاء رمز التفعيل";
+
+        modalTitle.textContent = offerTitle;
+        modalBody.innerHTML = `
+            <div class="redemption-modal">
+                <p class="redemption-modal__status redemption-modal__status--${status}">
+                    ${statusMap[status] || status}
+                </p>
+                <div class="redemption-modal__code-block">
+                    <span class="redemption-modal__code-label">رمز التفعيل</span>
+                    <span class="redemption-modal__code-value" data-modal-code="${code}">${code}</span>
+                </div>
+                <dl class="redemption-modal__details">
+                    <div>
+                        <dt>الصلاحية</dt>
+                        <dd>${expiresLabel}</dd>
+                    </div>
+                    <div>
+                        <dt>تاريخ الاستخدام</dt>
+                        <dd>${redeemedLabel}</dd>
+                    </div>
+                </dl>
+                ${
+                    qrUrl
+                        ? `<img class="redemption-modal__qr" src="${qrUrl}?t=${Date.now()}" alt="Offer QR Code" loading="lazy">`
+                        : ""
+                }
+                <div class="redemption-modal__actions">
+                    <button class="cta-button" type="button" data-copy-code>Copy Code</button>
+                    ${
+                        qrUrl
+                            ? `<button class="ghost-button" type="button" data-download-qr>Download QR</button>`
+                            : ""
+                    }
+                    ${
+                        qrUrl
+                            ? `<a class="ghost-button" href="${qrUrl}" target="_blank" rel="noopener" data-open-qr>Open QR</a>`
+                            : ""
+                    }
+                </div>
+            </div>
+        `;
+
+        const copyButton = modalBody.querySelector("[data-copy-code]");
+        if (copyButton) {
+            copyButton.addEventListener("click", () => copyToClipboard(code));
+        }
+        const downloadButton = modalBody.querySelector("[data-download-qr]");
+        if (downloadButton && qrUrl) {
+            downloadButton.addEventListener("click", (event) => {
+                event.preventDefault();
+                downloadQrImage(qrUrl, code || "elite-redemption");
+            });
+        }
+
+        modal.removeAttribute("hidden");
+        document.body.style.overflow = "hidden";
+    }
+
     /** Close the shared modal. */
     function closeModal() {
         if (!modal) {
@@ -259,6 +377,108 @@
         viewContainer.querySelectorAll(".offer-chip").forEach((chip) => {
             chip.addEventListener("click", () => openOfferModal(chip));
         });
+    }
+
+    /** Bind actions for activating offers and managing redemption utilities. */
+    function bindActivationButtons() {
+        viewContainer.querySelectorAll("[data-offer-activate]").forEach((button) => {
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                requestOfferActivation(button);
+            });
+        });
+
+        viewContainer.querySelectorAll("[data-open-redemption]").forEach((button) => {
+            button.addEventListener("click", async (event) => {
+                event.preventDefault();
+                const code = button.dataset.redemptionCode;
+                if (!code) {
+                    showToast("لا يمكن تحميل هذا التفعيل الآن.", "error");
+                    return;
+                }
+                showSpinner();
+                try {
+                    const payload = await fetchRedemptionStatus(code);
+                    showRedemptionModal(payload);
+                } catch (error) {
+                    console.error("Failed to load redemption", error);
+                    showToast(error.message || "تعذر تحميل بيانات التفعيل.", "error");
+                } finally {
+                    hideSpinner();
+                }
+            });
+        });
+
+        viewContainer.querySelectorAll("[data-copy-redemption]").forEach((button) => {
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
+                const code = button.dataset.redemptionCode;
+                copyToClipboard(code);
+            });
+        });
+    }
+
+    /** Download the QR image by triggering a hidden anchor element. */
+    function downloadQrImage(url, code) {
+        if (!url) {
+            showToast("لا يوجد رمز QR متاح.", "error");
+            return;
+        }
+        const anchor = document.createElement("a");
+        anchor.href = `${url}?t=${Date.now()}`;
+        anchor.download = `${code || "elite-qr"}.png`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        showToast("تم تحميل رمز QR.");
+    }
+
+    /** Call the redemption API to create a new activation. */
+    async function requestOfferActivation(button) {
+        const card = button.closest(".offer-card") || button.closest("[data-offer-id]");
+        const offerId = (card && card.dataset.offerId) || button.dataset.offerId;
+        if (!offerId) {
+            showToast("تعذر تحديد العرض المحدد.", "error");
+            return;
+        }
+        showSpinner();
+        try {
+            const response = await fetch("/api/redemptions/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                credentials: "include",
+                body: JSON.stringify({ offer_id: Number.parseInt(offerId, 10) || offerId }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                showToast(payload.error || payload.message || "تعذر إنشاء كود التفعيل.", "error", 3600);
+                return;
+            }
+            showRedemptionModal(payload);
+        } catch (error) {
+            console.error("Activation request failed", error);
+            showToast("حدث خطأ أثناء إنشاء الكود.", "error");
+        } finally {
+            hideSpinner();
+        }
+    }
+
+    /** Fetch redemption status details for a given code. */
+    async function fetchRedemptionStatus(code) {
+        const response = await fetch(`/api/redemptions/${encodeURIComponent(code)}`, {
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+            credentials: "include",
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            const message = error.error || error.message || "تعذر تحميل بيانات التفعيل.";
+            throw new Error(message);
+        }
+        return response.json();
     }
 
     /** Bind handlers for modal dismissal. */
@@ -562,6 +782,7 @@
     function initializeView() {
         bindInlineNavigation();
         bindOfferCards();
+        bindActivationButtons();
         bindProfileActions();
         bindNotificationActions();
         hydrateFeaturedCarousel();

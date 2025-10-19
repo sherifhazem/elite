@@ -198,6 +198,44 @@ The member portal now allows authenticated users to elevate their membership tie
 - The upgrade API always validates the JWT token; direct requests without authentication receive `401 Unauthorized`.
 - Only the predefined membership levels (`Basic`, `Silver`, `Gold`, `Premium`) are accepted by the backend to prevent arbitrary values.
 
+## Offer Redemption System
+
+The redemption workflow allows members to generate single-use codes (and QR images) that participating companies can validate instantly through their dedicated portal page.
+
+### Lifecycle
+
+1. **Member activation** – The member calls `POST /api/redemptions/` with the target `offer_id`. A 12-character code and high-resolution QR image are generated and stored under `app/static/qrcodes/`.
+2. **Company confirmation** – Company staff visits `/company/redemptions`, enters the code or scans the QR token, and the system issues `PUT /api/redemptions/<code>/confirm`.
+3. **Audit trail** – Each confirmation updates the `offer_redemptions` table, stamps `redeemed_at`, and queues notifications for the member and administrators.
+
+### API Examples
+
+```http
+POST /api/redemptions/
+Content-Type: application/json
+
+{"offer_id": 42}
+```
+
+```http
+GET /api/redemptions/AB12CD34EF56
+Authorization: Bearer <token>
+```
+
+```http
+PUT /api/redemptions/AB12CD34EF56/confirm
+Content-Type: application/json
+
+{"qr_token": "5d2d4d78-2a5f-4e3c-9ab5-0f2e8c67c123"}
+```
+
+### Security Notes
+
+- Codes expire automatically 48 hours after creation; expired codes return `410 Gone` from the QR endpoint.
+- Each offer can only be activated once per member while the previous code remains valid.
+- Confirmation is limited to the company that owns the offer, preventing cross-company redemption.
+- QR tokens include a UUID payload encoded in the image, providing an additional factor for scanning-based confirmations.
+
 ## Mobile-First User Portal Design
 
 The `/portal` experience has been rebuilt with a mobile-first mindset to mirror native iOS and Android applications while keeping the `/admin` and `/company` dashboards in their desktop-oriented layout.

@@ -9,6 +9,7 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 
 from .. import db
 from ..models.offer import Offer
+from ..models.redemption import Redemption
 from ..models.user import User
 from ..services.roles import require_role
 
@@ -172,6 +173,28 @@ def edit_offer(offer_id: int):
         section_title="Edit Offer",
         company=company,
         offer=offer,
+    )
+
+
+@company_portal.route("/redemptions", methods=["GET"])
+@require_role("company")
+def redemptions():
+    """Render the redemption management workspace for company staff."""
+
+    company = _current_company()
+    recent = []
+    if company is not None:
+        recent = (
+            Redemption.query.filter_by(company_id=company.id)
+            .order_by(Redemption.created_at.desc())
+            .limit(10)
+            .all()
+        )
+    return render_template(
+        "company_portal_redemptions.html",
+        section_title="Offer Redemptions",
+        company=company,
+        recent_redemptions=recent,
     )
 
 

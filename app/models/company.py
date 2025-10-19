@@ -15,6 +15,13 @@ class Company(db.Model):
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    redemptions = db.relationship(
+        "Redemption",
+        back_populates="company",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+
     def __repr__(self) -> str:
         """Return a string representation for debugging."""
 

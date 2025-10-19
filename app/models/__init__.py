@@ -7,5 +7,14 @@ from .user import User
 from .company import Company
 from .offer import Offer
 from .notification import Notification
+from .redemption import Redemption
 
-__all__ = ["db", "User", "Company", "Offer", "Notification", "Permission"]
+__all__ = [
+    "db",
+    "User",
+    "Company",
+    "Offer",
+    "Notification",
+    "Redemption",
+    "Permission",
+]

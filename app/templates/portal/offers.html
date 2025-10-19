@@ -29,6 +29,7 @@
                         data-offer-id="{{ offer.id }}"
                         data-offer-title="{{ offer.title }}"
                         data-offer-company="{{ offer.company.name if offer.company else 'شركة شريكة' }}"
+                        data-offer-company-id="{{ offer.company.id if offer.company else '' }}"
                         data-offer-discount="{{ discount_value }}"
                         data-offer-level="{{ membership_level }}"
                         data-offer-base="{{ '%.0f'|format(offer.base_discount) }}"
@@ -53,7 +54,16 @@
                                     عرض مستمر
                                 {% endif %}
                             </span>
-                            <button class="offer-card__action" type="button" data-offer-action>التفاصيل</button>
+                            <div class="offer-card__buttons">
+                                <button class="offer-card__action" type="button" data-offer-action>التفاصيل</button>
+                                <button
+                                    class="offer-card__action offer-card__action--primary"
+                                    type="button"
+                                    data-offer-activate
+                                >
+                                    Activate Offer
+                                </button>
+                            </div>
                         </footer>
                     </article>
                 {% endfor %}
