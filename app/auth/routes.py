@@ -1,3 +1,5 @@
+# LINKED: Registration Flow & Welcome Notification Review (Users & Companies)
+# Verified welcome email and internal notification triggers for new accounts.
 """Authentication blueprint routes for registration, login, and profile retrieval."""
 
 from __future__ import annotations
@@ -10,8 +12,8 @@ from sqlalchemy import or_
 
 from .. import db
 from ..models.user import User
-from ..services.mailer import send_email, send_welcome_email
-from ..services.notifications import ensure_welcome_notification
+from ..services.mailer import send_email, send_member_welcome_email
+from ..services.notifications import send_welcome_notification
 from .utils import confirm_token, create_token, decode_token, generate_token
 
 
@@ -73,8 +75,8 @@ def register() -> tuple:
     db.session.add(user)
     db.session.commit()
 
-    send_welcome_email(user=user, template_key="member")
-    ensure_welcome_notification(user, context="member")
+    send_member_welcome_email(user=user)
+    send_welcome_notification(user)
 
     token = create_token(user.id)
 
@@ -221,15 +223,11 @@ def request_password_reset():
     # Issue a password reset token and deliver the reset instructions.
     token = generate_token(user.email)
     reset_url = f"{request.host_url}api/auth/reset-password/{token}"
-    html = f"""
-        <h3>Password Reset Request</h3>
-        <p>To reset your password, click below:</p>
-        <a href='{reset_url}'>Reset Password</a>
-        """
     send_email(
         user.email,
         "Reset Your Elite Discounts Password",
-        html,
+        "emails/password_reset.html",
+        {"reset_url": reset_url, "recipient_name": user.username or user.email},
     )
     return jsonify({"message": "Password reset email sent"}), HTTPStatus.OK
 

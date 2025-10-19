@@ -1,4 +1,8 @@
+# LINKED: Registration Flow & Welcome Notification Review (Users & Companies)
+# Verified welcome email and internal notification triggers for new accounts.
 """Company CRUD blueprint providing JSON endpoints."""
+
+from http import HTTPStatus
 
 from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import IntegrityError
@@ -6,8 +10,8 @@ from sqlalchemy.exc import IntegrityError
 from .. import db
 from ..models.company import Company
 from ..models.user import User
-from ..services.mailer import send_welcome_email
-from ..services.notifications import ensure_welcome_notification
+from ..services.mailer import send_company_welcome_email
+from ..services.notifications import send_welcome_notification
 from ..services.roles import require_role
 
 
@@ -23,6 +27,88 @@ def _serialize_company(company: Company) -> dict:
         "description": company.description,
         "created_at": company.created_at.isoformat() if company.created_at else None,
     }
+
+
+def _serialize_owner(user: User) -> dict:
+    """Return a minimal representation of the company owner."""
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "is_active": user.is_active,
+    }
+
+
+@company_routes.route("/register", methods=["POST"])
+def register_company():
+    """Public endpoint allowing a business to create its company account."""
+
+    payload = request.get_json(silent=True) or {}
+    username = (payload.get("username") or "").strip()
+    email = (payload.get("email") or "").strip().lower()
+    password = payload.get("password")
+    company_name = (payload.get("company_name") or "").strip()
+    description = payload.get("description")
+
+    if not username or not email or not password or not company_name:
+        return (
+            jsonify(
+                {
+                    "error": "username, email, password, and company_name are required.",
+                }
+            ),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    existing_user = (
+        User.query.filter((User.username == username) | (User.email == email)).first()
+    )
+    if existing_user:
+        return (
+            jsonify({"error": "A user with the provided username or email already exists."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    if Company.query.filter_by(name=company_name).first():
+        return (
+            jsonify({"error": "A company with the provided name already exists."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    owner = User(username=username, email=email)
+    owner.set_password(password)
+    owner.role = "company"
+    owner.membership_level = "Basic"
+    owner.is_active = True
+
+    company = Company(name=company_name, description=description)
+    company.owner = owner
+    owner.company = company
+    company.notification_preferences = {}
+
+    db.session.add(owner)
+    db.session.add(company)
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return (
+            jsonify({"error": "Unable to register company with the provided details."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    send_company_welcome_email(owner=owner, company_name=company.name)
+    send_welcome_notification(company)
+
+    response = {
+        "company": _serialize_company(company),
+        "owner": _serialize_owner(owner),
+        "message": "Company registered successfully.",
+    }
+    return jsonify(response), HTTPStatus.CREATED
 
 
 @company_routes.route("/", methods=["GET"])
@@ -57,6 +143,7 @@ def create_company():
             owner = User.query.get(owner_id)
             if owner:
                 company.owner = owner
+                owner.company = company
     db.session.add(company)
     try:
         db.session.commit()
@@ -65,12 +152,8 @@ def create_company():
         return jsonify({"error": "Company with the same name already exists."}), 400
 
     if company.owner:
-        send_welcome_email(
-            user=company.owner,
-            template_key="company",
-            company_name=company.name,
-        )
-        ensure_welcome_notification(company.owner, context="company")
+        send_company_welcome_email(owner=company.owner, company_name=company.name)
+        send_welcome_notification(company)
 
     return jsonify(_serialize_company(company)), 201
 

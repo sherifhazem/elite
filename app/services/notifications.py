@@ -1,3 +1,5 @@
+# LINKED: Registration Flow & Welcome Notification Review (Users & Companies)
+# Verified welcome email and internal notification triggers for new accounts.
 # ADDED: Admin Communication Center – bulk/group message system (no DB schema change).
 # LINKED: Shared Offers & Redemptions Integration (no schema changes)
 # ADDED: Auto welcome notifications for new members, companies, and staff (no DB schema change).
@@ -19,25 +21,21 @@ from ..models.user import User
 
 WELCOME_NOTIFICATION_TEMPLATES: Dict[str, Dict[str, Optional[str]]] = {
     "member": {
-        "title": "🎉 أهلاً بك في برنامج ELITE!",
+        "title": "مرحبًا بك في ELITE",
         "message": (
-            "مرحبًا {username},\n"
-            "يسعدنا انضمامك إلى مجتمع ELITE المميز.\n"
-            "يمكنك الآن الاستفادة من العروض الحصرية والخصومات المتاحة عبر حسابك.\n\n"
-            "نرحب بك مجددًا،\n"
-            "فريق ELITE."
+            "مرحبًا بكم في عائلة ELITE!\n"
+            "استمتع بالعروض المميزة والخصومات المخصصة لمستواك منذ لحظة تسجيلك."
         ),
+        "type": "welcome_user",
         "link_endpoint": "portal.offers",
     },
     "company": {
-        "title": "🤝 مرحبًا بشركائنا الجدد في ELITE!",
+        "title": "مرحبًا بكم في ELITE للشركات",
         "message": (
-            "مرحبًا {company_name},\n"
-            "شكرًا لانضمامكم إلى منصة ELITE.\n"
-            "يمكنكم الآن إضافة عروضكم الخاصة وجذب المزيد من العملاء من خلال بوابتكم المخصصة.\n\n"
-            "نتمنى لكم نجاحًا مستمرًا،\n"
-            "فريق ELITE."
+            "مرحبًا بكم في منصة ELITE للشركات!\n"
+            "يمكنكم الآن إدارة عروضكم ومتابعة تفاعلات الأعضاء بسهولة من لوحة التحكم الخاصة بكم."
         ),
+        "type": "welcome_company",
         "link_endpoint": "company_portal_bp.dashboard",
     },
     "staff": {
@@ -49,9 +47,123 @@ WELCOME_NOTIFICATION_TEMPLATES: Dict[str, Dict[str, Optional[str]]] = {
             "بالتوفيق،\n"
             "إدارة ELITE."
         ),
+        "type": "welcome_staff",
         "link_endpoint": "admin.dashboard_home",
     },
 }
+
+
+def send_welcome_notification(
+    user_or_company,
+    *,
+    context: Optional[str] = None,
+) -> Optional[int]:
+    """Persist a welcome notification for a new member or company account."""
+
+    if user_or_company is None:
+        return None
+
+    template_key = (context or "").strip().lower()
+    target_user: Optional[User] = None
+    company_name = ""
+
+    if isinstance(user_or_company, User):
+        target_user = user_or_company
+        normalized_role = target_user.normalized_role
+        if template_key:
+            normalized_role = template_key
+        if normalized_role in {"admin", "superadmin", "staff"}:
+            template_key = "staff"
+        elif normalized_role == "company":
+            template_key = "company"
+            company_name = getattr(getattr(target_user, "company", None), "name", "")
+            if not company_name:
+                try:
+                    owned = target_user.owned_companies.first()
+                except Exception:  # pragma: no cover - dynamic loader guard
+                    owned = None
+                if owned:
+                    company_name = owned.name
+        else:
+            template_key = "member"
+    else:
+        CompanyModel = None
+        try:
+            from ..models.company import Company as CompanyModel  # type: ignore
+        except Exception:  # pragma: no cover - import guard
+            CompanyModel = None  # type: ignore
+
+        if CompanyModel and isinstance(user_or_company, CompanyModel):
+            company = user_or_company
+            template_key = "company"
+            company_name = getattr(company, "name", "")
+            target_user = getattr(company, "owner", None)
+            if target_user is None and getattr(company, "owner_user_id", None):
+                target_user = User.query.get(company.owner_user_id)
+        else:
+            return None
+
+    template = WELCOME_NOTIFICATION_TEMPLATES.get(template_key or "member")
+    if not template or target_user is None:
+        return None
+
+    recipient_name = (
+        company_name.strip()
+        if template_key == "company" and company_name
+        else (getattr(target_user, "username", "") or target_user.email).strip()
+    )
+    render_context = {
+        "username": getattr(target_user, "username", ""),
+        "company_name": company_name or recipient_name,
+        "recipient_name": recipient_name,
+    }
+
+    title = template["title"].format(**render_context)
+    message = template["message"].format(**render_context)
+    notification_type = template.get("type") or (
+        "welcome_company" if template_key == "company" else "welcome_user"
+    )
+
+    existing = (
+        Notification.query.filter_by(user_id=target_user.id, type=notification_type)
+        .order_by(Notification.id.desc())
+        .first()
+    )
+    if existing:
+        metadata = existing.metadata_json or {}
+        if metadata.get("message") == message:
+            return existing.id
+
+    link_url: Optional[str] = None
+    endpoint = template.get("link_endpoint")
+    if endpoint:
+        try:
+            link_url = url_for(endpoint)
+        except RuntimeError:
+            link_url = None
+
+    metadata = {
+        "recipient_name": recipient_name,
+        "timestamp": datetime.utcnow().isoformat(),
+        "message": message,
+    }
+
+    notification = Notification(
+        user_id=target_user.id,
+        type=notification_type,
+        title=title,
+        message=message,
+        link_url=link_url,
+        metadata_json=metadata,
+    )
+    db.session.add(notification)
+    db.session.commit()
+
+    current_app.logger.info(
+        "Welcome notification created",
+        extra={"user_id": target_user.id, "type": notification_type},
+    )
+    return notification.id
 
 
 def queue_notification(
@@ -135,74 +247,12 @@ def notify_membership_upgrade(user_id: int, old_level: str, new_level: str):
 
 
 def ensure_welcome_notification(user: User, *, context: Optional[str] = None) -> Optional[int]:
-    """Create a one-time welcome notification tailored to the user's role.
-
-    The helper checks for an existing notification tagged with the same welcome
-    context before queueing a new one to avoid duplicate greetings.
-    """
+    """Compatibility wrapper that delegates to :func:`send_welcome_notification`."""
 
     if user is None or not getattr(user, "id", None):
         return None
 
-    normalized_role = (context or user.normalized_role).strip().lower()
-    if normalized_role == "staff":
-        template_key = "staff"
-    elif normalized_role in {"admin", "superadmin"}:
-        template_key = "staff"
-    elif normalized_role == "company":
-        template_key = "company"
-    else:
-        template_key = "member"
-
-    username = (getattr(user, "username", "") or "").strip() or user.email
-    company_name = ""
-    if template_key == "company":
-        company_name = getattr(getattr(user, "company", None), "name", "") or ""
-        if not company_name:
-            try:
-                owned_company = user.owned_companies.first()
-            except Exception:  # pragma: no cover - dynamic loader guard
-                owned_company = None
-            if owned_company:
-                company_name = owned_company.name
-    if not company_name:
-        company_name = username
-
-    render_context = {"username": username, "company_name": company_name}
-    template = WELCOME_NOTIFICATION_TEMPLATES.get(template_key)
-    if not template:
-        return None
-
-    title = template["title"].format(**render_context)
-    message = template["message"].format(**render_context)
-
-    existing_notifications: Sequence[Notification] = (
-        Notification.query.filter_by(user_id=user.id, type="welcome_message").all()
-    )
-    for notification in existing_notifications:
-        metadata = notification.metadata_json or {}
-        if metadata.get("welcome_context") == template_key:
-            return notification.id
-        if notification.title == title and notification.message == message:
-            return notification.id
-
-    link_url: Optional[str] = None
-    endpoint = template.get("link_endpoint")
-    if endpoint:
-        try:
-            link_url = url_for(endpoint)
-        except RuntimeError:
-            link_url = None
-
-    metadata = {"welcome_context": template_key}
-    return queue_notification(
-        user.id,
-        type="welcome_message",
-        title=title,
-        message=message,
-        link_url=link_url,
-        metadata=metadata,
-    )
+    return send_welcome_notification(user, context=context)
 
 
 def _company_recipient_ids(company_id: int) -> List[int]:
@@ -419,6 +469,7 @@ __all__ = [
     "queue_notification",
     "broadcast_new_offer",
     "send_admin_broadcast_notifications",
+    "send_welcome_notification",
     "ensure_welcome_notification",
     "notify_membership_upgrade",
     "notify_offer_redemption_activity",
