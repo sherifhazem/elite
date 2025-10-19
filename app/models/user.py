@@ -59,10 +59,14 @@ class User(db.Model):
         nullable=True,
         doc="Optional link to the company represented by the account.",
     )
+    # FIX: specify foreign_keys to resolve AmbiguousForeignKeysError
     company = db.relationship(
         "Company",
-        backref=db.backref("users", lazy="dynamic"),
+        backref=db.backref(
+            "users", lazy="dynamic", foreign_keys="User.company_id"
+        ),
         lazy="joined",
+        foreign_keys=[company_id],
         doc="Company entity associated with the user when acting as a business account.",
     )
 

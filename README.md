@@ -188,6 +188,10 @@ After starting the server, visit [`http://localhost:5000/health`](http://localho
 {"status": "ok"}
 ```
 
+## Known Fixes
+
+- تم تصحيح العلاقة بين User و Company بإضافة `foreign_keys=[company_id]` لمنع الغموض في ORM.
+
 ## Membership Upgrade System
 
 The member portal now allows authenticated users to elevate their membership tier directly from the profile page.
