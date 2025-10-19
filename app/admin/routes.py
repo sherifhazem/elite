@@ -22,7 +22,7 @@ from .. import db
 from ..models.company import Company
 from ..models.offer import Offer
 from ..models.user import User
-from ..services.notifications import broadcast_new_offer
+from ..services.notifications import broadcast_new_offer, ensure_welcome_notification
 from ..services.roles import require_role
 
 admin_bp = Blueprint(
@@ -157,6 +157,8 @@ def add_user() -> str:
             db.session.rollback()
             flash("Username or email already exists. Please choose different values.", "danger")
             return redirect(url_for("admin.add_user"))
+
+        ensure_welcome_notification(user)
 
         flash(f"User '{username}' created successfully.", "success")
         return redirect(url_for("admin.dashboard_users"))
@@ -351,6 +353,9 @@ def add_company() -> str:
             db.session.rollback()
             flash("Company name must be unique.", "danger")
             return redirect(url_for("admin.add_company"))
+
+        if company.owner:
+            ensure_welcome_notification(company.owner, context="company")
 
         flash(f"Company '{name}' created successfully.", "success")
         return redirect(url_for("admin.dashboard_companies"))

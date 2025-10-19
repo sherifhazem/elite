@@ -1,4 +1,5 @@
 # LINKED: Shared Offers & Redemptions Integration (no schema changes)
+# ADDED: Auto welcome notifications for new members, companies, and staff (no DB schema change).
 """Notification service helpers and Celery tasks for asynchronous delivery."""
 
 from __future__ import annotations
@@ -13,6 +14,34 @@ from .. import app, celery, db
 from ..models.notification import Notification
 from ..models.offer import Offer
 from ..models.user import User
+
+
+WELCOME_NOTIFICATION_TEMPLATES: Dict[str, Dict[str, Optional[str]]] = {
+    "member": {
+        "title": "مرحبًا بك في ELITE!",
+        "message": (
+            "سعداء بانضمامك إلى برنامج ELITE. يمكنك الآن الاستفادة من العروض "
+            "والخصومات الحصرية. ابدأ رحلتك من صفحة العروض!"
+        ),
+        "link_endpoint": "portal.offers",
+    },
+    "company": {
+        "title": "مرحبًا بشركائنا الجدد!",
+        "message": (
+            "شكرًا لانضمامكم إلى منصة ELITE. يمكنكم الآن إضافة عروضكم الحصرية "
+            "وجذب المزيد من العملاء عبر بوابتكم الخاصة."
+        ),
+        "link_endpoint": "company_portal_bp.dashboard",
+    },
+    "staff": {
+        "title": "مرحبًا بك في فريق ELITE!",
+        "message": (
+            "تم إنشاء حسابك بنجاح ضمن فريق ELITE الإداري. يمكنك الآن تسجيل "
+            "الدخول وإدارة المهام الموكلة إليك."
+        ),
+        "link_endpoint": "admin.dashboard_home",
+    },
+}
 
 
 def queue_notification(
@@ -54,6 +83,60 @@ def notify_membership_upgrade(user_id: int, old_level: str, new_level: str):
         title=title,
         message=message,
         link_url=url_for("portal.profile"),
+        metadata=metadata,
+    )
+
+
+def ensure_welcome_notification(user: User, *, context: Optional[str] = None) -> Optional[int]:
+    """Create a one-time welcome notification tailored to the user's role.
+
+    The helper checks for an existing notification tagged with the same welcome
+    context before queueing a new one to avoid duplicate greetings.
+    """
+
+    if user is None or not getattr(user, "id", None):
+        return None
+
+    normalized_role = (context or user.normalized_role).strip().lower()
+    if normalized_role in {"admin", "superadmin"}:
+        template_key = "staff"
+    elif normalized_role == "company":
+        template_key = "company"
+    else:
+        template_key = "member"
+
+    template = WELCOME_NOTIFICATION_TEMPLATES.get(template_key)
+    if not template:
+        return None
+
+    existing_notifications: Sequence[Notification] = (
+        Notification.query.filter_by(user_id=user.id, type="welcome_message").all()
+    )
+    for notification in existing_notifications:
+        metadata = notification.metadata_json or {}
+        if metadata.get("welcome_context") == template_key:
+            return notification.id
+        if (
+            notification.title == template.get("title")
+            and notification.message == template.get("message")
+        ):
+            return notification.id
+
+    link_url: Optional[str] = None
+    endpoint = template.get("link_endpoint")
+    if endpoint:
+        try:
+            link_url = url_for(endpoint)
+        except RuntimeError:
+            link_url = None
+
+    metadata = {"welcome_context": template_key}
+    return queue_notification(
+        user.id,
+        type="welcome_message",
+        title=template["title"],
+        message=template["message"],
+        link_url=link_url,
         metadata=metadata,
     )
 
@@ -271,6 +354,7 @@ def broadcast_offer_task(offer_id: int, batch_size: int = 100):
 __all__ = [
     "queue_notification",
     "broadcast_new_offer",
+    "ensure_welcome_notification",
     "notify_membership_upgrade",
     "notify_offer_redemption_activity",
     "notify_offer_feedback",

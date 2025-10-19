@@ -11,6 +11,7 @@ from sqlalchemy import or_
 from .. import db
 from ..models.user import User
 from ..services.mailer import send_email
+from ..services.notifications import ensure_welcome_notification
 from .utils import confirm_token, create_token, decode_token, generate_token
 
 
@@ -71,6 +72,8 @@ def register() -> tuple:
 
     db.session.add(user)
     db.session.commit()
+
+    ensure_welcome_notification(user, context="member")
 
     token = create_token(user.id)
 
