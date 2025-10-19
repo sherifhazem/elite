@@ -1,3 +1,4 @@
+<!-- CLEANUP: Removed hardcoded sample data, preserved layout -->
 {% extends 'dashboard/base.html' %}
 <!-- FIXED: Updated url_for() endpoints to match admin Blueprint -->
 {% set active_page = 'users' %}
@@ -43,63 +44,54 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="avatar-circle bg-primary text-white me-3">SJ</span>
-                                        <div>
-                                            <span class="fw-semibold">Sarah Johnson</span><br>
-                                            <small class="text-muted">Joined Jan 15, 2024</small>
+                            {% for user in users %}
+                                {% set initials = user.username[:2] if user.username else 'NA' %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="avatar-circle bg-primary text-white me-3">{{ initials | upper }}</span>
+                                            <div>
+                                                <span class="fw-semibold">{{ user.username | default('Unknown User', true) }}</span><br>
+                                                <small class="text-muted">
+                                                    {% if user.joined_at %}
+                                                        Joined {{ user.joined_at.strftime('%b %d, %Y') }}
+                                                    {% else %}
+                                                        Join date unavailable
+                                                    {% endif %}
+                                                </small>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>sjohnson@elite.com</td>
-                                <td><span class="badge rounded-pill bg-soft-primary text-primary">Administrator</span></td>
-                                <td><span class="badge bg-success">Active</span></td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></button>
-                                    <button class="btn btn-sm btn-outline-secondary me-1" title="Edit"><i class="fas fa-pen"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="avatar-circle bg-gold text-dark me-3">MB</span>
-                                        <div>
-                                            <span class="fw-semibold">Martin Blake</span><br>
-                                            <small class="text-muted">Joined Feb 02, 2024</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>mblake@elite.com</td>
-                                <td><span class="badge rounded-pill bg-soft-primary text-primary">Staff</span></td>
-                                <td><span class="badge bg-warning text-dark">Pending</span></td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></button>
-                                    <button class="btn btn-sm btn-outline-secondary me-1" title="Edit"><i class="fas fa-pen"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="avatar-circle bg-secondary text-white me-3">LC</span>
-                                        <div>
-                                            <span class="fw-semibold">Laura Chen</span><br>
-                                            <small class="text-muted">Joined Mar 21, 2024</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>lchen@elite.com</td>
-                                <td><span class="badge rounded-pill bg-soft-primary text-primary">Staff</span></td>
-                                <td><span class="badge bg-danger">Suspended</span></td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></button>
-                                    <button class="btn btn-sm btn-outline-secondary me-1" title="Edit"><i class="fas fa-pen"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
+                                    </td>
+                                    <td>{{ user.email | default('No email provided', true) }}</td>
+                                    <td>
+                                        <span class="badge rounded-pill bg-soft-primary text-primary">
+                                            {{ user.role | default('Member', true) | title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary me-1" title="View" data-user-id="{{ user.id }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary me-1" title="Edit" data-user-id="{{ user.id }}">
+                                            <i class="fas fa-pen"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete" data-user-id="{{ user.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td class="text-center text-muted" colspan="5">No users available.</td>
+                                </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
