@@ -1,3 +1,4 @@
+# ADDED: Admin Communication Center – bulk/group message system (no DB schema change).
 # LINKED: Shared Offers & Redemptions Integration (no schema changes)
 # ADDED: Auto welcome notifications for new members, companies, and staff (no DB schema change).
 """Notification service helpers and Celery tasks for asynchronous delivery."""
@@ -5,7 +6,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
 
 from flask import current_app, url_for
 from sqlalchemy.orm import joinedload
@@ -78,6 +79,43 @@ def broadcast_new_offer(offer_id: int):
     """Queue a background job to broadcast a new offer notification."""
 
     return broadcast_offer_task.delay(offer_id=offer_id)
+
+
+def send_admin_broadcast_notifications(
+    user_ids: Sequence[int],
+    *,
+    subject: str,
+    message: str,
+    sent_by: Optional[int] = None,
+) -> int:
+    """Send admin broadcast notifications to the provided user identifiers."""
+
+    unique_ids: Set[int] = {int(user_id) for user_id in user_ids if user_id}
+    if not unique_ids:
+        return 0
+
+    metadata = {
+        "subject": subject,
+        "message": message,
+        "sent_by": sent_by,
+        "sent_at": datetime.utcnow().isoformat() + "Z",
+    }
+
+    created = 0
+    for user_id in sorted(unique_ids):
+        queue_notification(
+            user_id,
+            type="admin_broadcast",
+            title=subject,
+            message=message,
+            metadata=metadata,
+        )
+        created += 1
+
+    current_app.logger.info(
+        "Admin broadcast notifications queued for %s recipients", created
+    )
+    return created
 
 
 def notify_membership_upgrade(user_id: int, old_level: str, new_level: str):
@@ -380,6 +418,7 @@ def broadcast_offer_task(offer_id: int, batch_size: int = 100):
 __all__ = [
     "queue_notification",
     "broadcast_new_offer",
+    "send_admin_broadcast_notifications",
     "ensure_welcome_notification",
     "notify_membership_upgrade",
     "notify_offer_redemption_activity",
