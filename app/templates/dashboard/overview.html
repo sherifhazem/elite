@@ -1,3 +1,4 @@
+<!-- CLEANUP: Removed hardcoded sample data, preserved layout -->
 {% extends 'dashboard/base.html' %}
 <!-- FIXED: Updated url_for() endpoints to match admin Blueprint -->
 {% set active_page = 'dashboard' %}
@@ -5,6 +6,74 @@
 
 {% block content %}
     <div class="py-4">
+        {% if stats is defined and stats %}
+            {% set stats_context = stats %}
+        {% else %}
+            {% set stats_context = {} %}
+        {% endif %}
+        {% if activity_feed is defined %}
+            {% set activity_items = activity_feed %}
+        {% elif recent_activity is defined %}
+            {% set activity_items = recent_activity %}
+        {% elif stats_context.recent_activity is defined %}
+            {% set activity_items = stats_context.recent_activity %}
+        {% else %}
+            {% set activity_items = [] %}
+        {% endif %}
+        {% if activity_items.timeline is defined %}
+            {% set activity_items = activity_items.timeline %}
+        {% endif %}
+        {% if system_stats is defined %}
+            {% set system_stats_list = system_stats %}
+        {% elif stats_context.system_stats is defined %}
+            {% set system_stats_list = stats_context.system_stats %}
+        {% else %}
+            {% set system_stats_list = [] %}
+        {% endif %}
+        {% if stats_context.users is defined %}
+            {% set user_stats = stats_context.users %}
+        {% elif stats_context.user_stats is defined %}
+            {% set user_stats = stats_context.user_stats %}
+        {% else %}
+            {% set user_stats = {} %}
+        {% endif %}
+        {% if stats_context.companies is defined %}
+            {% set company_stats = stats_context.companies %}
+        {% else %}
+            {% set company_stats = {} %}
+        {% endif %}
+        {% if stats_context.offers is defined %}
+            {% set offer_stats = stats_context.offers %}
+        {% else %}
+            {% set offer_stats = {} %}
+        {% endif %}
+        {% if total_users is defined %}
+            {% set total_users_value = total_users %}
+        {% elif user_stats.total_users is defined %}
+            {% set total_users_value = user_stats.total_users %}
+        {% elif stats_context.total_users is defined %}
+            {% set total_users_value = stats_context.total_users %}
+        {% else %}
+            {% set total_users_value = none %}
+        {% endif %}
+        {% if total_companies is defined %}
+            {% set total_companies_value = total_companies %}
+        {% elif company_stats.total_companies is defined %}
+            {% set total_companies_value = company_stats.total_companies %}
+        {% elif stats_context.total_companies is defined %}
+            {% set total_companies_value = stats_context.total_companies %}
+        {% else %}
+            {% set total_companies_value = none %}
+        {% endif %}
+        {% if total_offers is defined %}
+            {% set total_offers_value = total_offers %}
+        {% elif offer_stats.active_offers is defined %}
+            {% set total_offers_value = offer_stats.active_offers %}
+        {% elif stats_context.total_offers is defined %}
+            {% set total_offers_value = stats_context.total_offers %}
+        {% else %}
+            {% set total_offers_value = none %}
+        {% endif %}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1 class="display-6 fw-bold text-primary">Administrative Dashboard</h1>
@@ -23,8 +92,8 @@
                         </div>
                         <div>
                             <h5 class="card-title">Registered Users</h5>
-                            <h2 class="fw-semibold mb-0">12,480</h2>
-                            <small class="text-light">+5% growth this month</small>
+                            <h2 class="fw-semibold mb-0">{{ total_users_value | default('—', true) }}</h2>
+                            <small class="text-light">{{ user_stats.growth_label | default('No recent trend data', true) }}</small>
                         </div>
                     </div>
                 </div>
@@ -37,8 +106,8 @@
                         </div>
                         <div>
                             <h5 class="card-title">Active Companies</h5>
-                            <h2 class="fw-semibold mb-0">328</h2>
-                            <small class="text-dark">12 new partners onboarded</small>
+                            <h2 class="fw-semibold mb-0">{{ total_companies_value | default('—', true) }}</h2>
+                            <small class="text-dark">{{ company_stats.recent_activity | default('No onboarding updates available', true) }}</small>
                         </div>
                     </div>
                 </div>
@@ -51,8 +120,8 @@
                         </div>
                         <div>
                             <h5 class="card-title">Published Offers</h5>
-                            <h2 class="fw-semibold mb-0">1,254</h2>
-                            <small class="text-light">78 expiring this week</small>
+                            <h2 class="fw-semibold mb-0">{{ total_offers_value | default('—', true) }}</h2>
+                            <small class="text-light">{{ offer_stats.pipeline_note | default('No expiring offers to highlight', true) }}</small>
                         </div>
                     </div>
                 </div>
@@ -69,22 +138,24 @@
                     </div>
                     <div class="card-body">
                         <div class="list-group list-group-flush">
-                            <a href="#" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between">
-                                <span><strong>Sarah Johnson</strong> registered a new corporate account</span>
-                                <span class="badge rounded-pill bg-soft-primary text-primary">2m ago</span>
-                            </a>
-                            <a href="#" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between">
-                                <span><strong>Elite Fitness</strong> published a wellness offer</span>
-                                <span class="badge rounded-pill bg-soft-primary text-primary">15m ago</span>
-                            </a>
-                            <a href="#" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between">
-                                <span><strong>Michael Chen</strong> redeemed “Premium Dining” reward</span>
-                                <span class="badge rounded-pill bg-soft-primary text-primary">1h ago</span>
-                            </a>
-                            <a href="#" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between">
-                                <span><strong>Bright Co.</strong> requested offer approval update</span>
-                                <span class="badge rounded-pill bg-soft-primary text-primary">3h ago</span>
-                            </a>
+                            {% for item in activity_items %}
+                                {% set actor = item.actor | default(item.user | default(item.company | default('', true), true), true) %}
+                                {% set message = item.message | default(item.description | default(item.title | default('', true), true), true) %}
+                                {% set timestamp = item.time_ago | default(item.timestamp_label | default(item.relative_time | default(item.created_at | default('', true), true), true), true) %}
+                                <a href="{{ item.url | default('#', true) }}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between">
+                                    <span>
+                                        {% if actor %}
+                                            <strong>{{ actor }}</strong>
+                                        {% endif %}
+                                        {{ message or 'Activity update recorded' }}
+                                    </span>
+                                    <span class="badge rounded-pill bg-soft-primary text-primary">{{ timestamp or 'Just now' }}</span>
+                                </a>
+                            {% else %}
+                                <div class="list-group-item text-center text-muted">
+                                    No recent activity available.
+                                </div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -97,22 +168,17 @@
                     </div>
                     <div class="card-body">
                         <ul class="list-unstyled mb-0">
-                            <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                <span><i class="fas fa-server text-primary me-2"></i>API uptime</span>
-                                <span class="fw-semibold">99.98%</span>
-                            </li>
-                            <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                <span><i class="fas fa-shield-halved text-primary me-2"></i>Security audits passed</span>
-                                <span class="fw-semibold">14</span>
-                            </li>
-                            <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                <span><i class="fas fa-arrow-trend-up text-primary me-2"></i>Monthly active users</span>
-                                <span class="fw-semibold">+18%</span>
-                            </li>
-                            <li class="d-flex justify-content-between align-items-center py-2">
-                                <span><i class="fas fa-life-ring text-primary me-2"></i>Support tickets resolved</span>
-                                <span class="fw-semibold">243</span>
-                            </li>
+                            {% for metric in system_stats_list %}
+                                {% set icon_class = metric.icon_class | default('fas fa-circle', true) %}
+                                {% set label = metric.label | default(metric.name | default('Metric', true), true) %}
+                                {% set value = metric.value | default(metric.display_value | default('—', true), true) %}
+                                <li class="d-flex justify-content-between align-items-center py-2{% if not loop.last %} border-bottom{% endif %}">
+                                    <span><i class="{{ icon_class }} text-primary me-2"></i>{{ label }}</span>
+                                    <span class="fw-semibold">{{ value }}</span>
+                                </li>
+                            {% else %}
+                                <li class="py-2 text-center text-muted">No system metrics available.</li>
+                            {% endfor %}
                         </ul>
                     </div>
                 </div>
