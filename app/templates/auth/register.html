@@ -346,7 +346,7 @@
 
                         showToast("تم إنشاء حسابك بنجاح! جاري تحويلك...");
 
-                        const redirectTarget = data.redirect_url || "/portal/home";
+                        const redirectTarget = data.redirect_url || "{{ url_for('portal.home') }}";
                         setTimeout(() => {
                             window.location.replace(redirectTarget);
                         }, 1200);

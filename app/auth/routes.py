@@ -1,18 +1,24 @@
-# LINKED: Registration Flow & Welcome Notification Review (Users & Companies)
-# Verified welcome email and internal notification triggers for new accounts.
+# LINKED: Route alignment & aliasing for registration and dashboards (no schema changes)
+# Updated templates to use endpoint-based url_for; README cleaned & synced with actual routes.
 """Authentication blueprint routes for registration, login, and profile retrieval."""
 
 from __future__ import annotations
 
 from http import HTTPStatus
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
-from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, Response, jsonify, redirect, render_template, request, url_for
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 
 from .. import db
+from ..models.company import Company
 from ..models.user import User
-from ..services.mailer import send_email, send_member_welcome_email
+from ..services.mailer import (
+    send_company_welcome_email,
+    send_email,
+    send_member_welcome_email,
+)
 from ..services.notifications import send_welcome_notification
 from .utils import confirm_token, create_token, decode_token, generate_token
 
@@ -42,11 +48,9 @@ def _extract_bearer_token() -> Optional[str]:
     return token
 
 
-@auth_bp.post("/api/auth/register")
-def register() -> tuple:
-    """Register a new member account tailored for the mobile portal."""
+def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, int]:
+    """Create a member account using the supplied payload values."""
 
-    payload = _extract_json()
     username = (payload.get("username") or "").strip()
     email = (payload.get("email") or "").strip().lower()
     password = payload.get("password")
@@ -94,18 +98,180 @@ def register() -> tuple:
     return jsonify(response), HTTPStatus.CREATED
 
 
-@auth_bp.route("/register/select", methods=["GET"])
+@auth_bp.post("/api/auth/register")
+def register() -> tuple:
+    """Register a new member account tailored for the mobile portal."""
+
+    payload = _extract_json()
+    return _register_member_from_payload(payload)
+
+
+@auth_bp.route("/register/select", methods=["GET"], endpoint="register_select")
 def register_select_page() -> str:
     """Render the entry screen where visitors choose their account type."""
 
     return render_template("auth/register_select.html")
 
 
-@auth_bp.route("/register/company", methods=["GET"])
-def company_register_page() -> str:
-    """Render the dedicated registration form for company accounts."""
+def _register_company_from_form() -> Dict[str, str]:
+    """Normalize HTML form submissions for company registration."""
 
-    return render_template("auth/register_company.html")
+    return {
+        "company_name": (request.form.get("company_name") or "").strip(),
+        "description": request.form.get("description"),
+        "email": (request.form.get("email") or "").strip().lower(),
+        "password": request.form.get("password"),
+        "username": (request.form.get("username") or "").strip(),
+    }
+
+
+def _register_company_from_payload(payload: Dict[str, str]) -> Tuple[Response, int]:
+    """Create a company account alongside its owner using the payload."""
+
+    requested_username = (payload.get("username") or "").strip()
+    email = (payload.get("email") or "").strip().lower()
+    password = payload.get("password")
+    company_name = (payload.get("company_name") or "").strip()
+    description = payload.get("description")
+
+    if not email or not password or not company_name:
+        return (
+            jsonify(
+                {
+                    "error": "email, password, and company_name are required.",
+                }
+            ),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    if User.query.filter_by(email=email).first():
+        return (
+            jsonify({"error": "A user with the provided email already exists."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    if Company.query.filter_by(name=company_name).first():
+        return (
+            jsonify({"error": "A company with the provided name already exists."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    def _generate_username() -> str:
+        """Derive a unique username for the company owner when not provided."""
+
+        import re
+
+        base_source = requested_username or company_name or email.split("@")[0]
+        cleaned = re.sub(r"[^\w\u0621-\u064A]+", "", base_source, flags=re.UNICODE)
+        cleaned = cleaned or "company"
+        candidate = cleaned
+        suffix = 1
+        while User.query.filter_by(username=candidate).first():
+            candidate = f"{cleaned}{suffix}"
+            suffix += 1
+        return candidate
+
+    username = requested_username or _generate_username()
+
+    if requested_username and User.query.filter_by(username=username).first():
+        return (
+            jsonify({"error": "A user with the provided username already exists."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    company = Company(name=company_name, description=description)
+
+    owner = User(username=username, email=email)
+    owner.set_password(password)
+    owner.role = "company"
+    owner.membership_level = "Basic"
+    owner.is_active = True
+
+    company.owner = owner
+    owner.company = company
+    company.notification_preferences = {}
+
+    db.session.add(owner)
+    db.session.add(company)
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return (
+            jsonify({"error": "Unable to register company with the provided details."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    send_company_welcome_email(owner=owner, company_name=company.name)
+    send_welcome_notification(company)
+
+    response = {
+        "company": {
+            "id": company.id,
+            "name": company.name,
+            "description": company.description,
+            "created_at": company.created_at.isoformat() if company.created_at else None,
+        },
+        "owner": {
+            "id": owner.id,
+            "username": owner.username,
+            "email": owner.email,
+            "role": owner.role,
+            "is_active": owner.is_active,
+        },
+        "message": "Company registered successfully.",
+        "redirect_url": url_for("auth.login_page"),
+    }
+    return jsonify(response), HTTPStatus.CREATED
+
+
+@auth_bp.route("/register/member", methods=["GET", "POST"])
+def register_member():
+    """Render or process the member registration form for browser visitors."""
+
+    if request.method == "GET":
+        return render_template("auth/register.html")
+
+    payload = request.get_json(silent=True) or {
+        "username": (request.form.get("username") or "").strip(),
+        "email": (request.form.get("email") or "").strip().lower(),
+        "password": request.form.get("password"),
+    }
+    response, status = _register_member_from_payload(payload)
+
+    if request.accept_mimetypes.accept_html and not request.is_json:
+        if status == HTTPStatus.CREATED:
+            data = response.get_json() if hasattr(response, "get_json") else None
+            target = (data or {}).get("redirect_url") or url_for("portal.home")
+            return redirect(target)
+        return redirect(url_for("auth.register_member"))
+
+    return response, status
+
+
+@auth_bp.route(
+    "/register/company",
+    methods=["GET", "POST"],
+    endpoint="register_company",
+)
+def company_register_page():
+    """Render or process the company registration form."""
+
+    if request.method == "GET":
+        return render_template("auth/register_company.html")
+
+    payload = request.get_json(silent=True) or _register_company_from_form()
+    response, status = _register_company_from_payload(payload)
+
+    if request.accept_mimetypes.accept_html and not request.is_json:
+        if status == HTTPStatus.CREATED:
+            data = response.get_json() if hasattr(response, "get_json") else None
+            target = (data or {}).get("redirect_url") or url_for("auth.login_page")
+            return redirect(target)
+        return redirect(url_for("auth.register_company"))
+
+    return response, status
 
 
 @auth_bp.post("/api/auth/login")
@@ -197,11 +363,13 @@ def login_page() -> str:
     return render_template("auth/login.html")
 
 
-@auth_bp.route("/register", methods=["GET"])
-def register_page() -> str:
-    """Render the dedicated mobile-first registration screen for members."""
+@auth_bp.route("/register", methods=["GET", "POST"])
+def register_page():
+    """Legacy alias preserved for older registration bookmarks."""
 
-    return render_template("auth/register.html")
+    if request.method == "POST":
+        return register_member()
+    return redirect(url_for("auth.register_member"))
 
 
 @auth_bp.route("/api/auth/verify/<token>")

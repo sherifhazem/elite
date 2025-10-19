@@ -1,4 +1,5 @@
-# LINKED: Shared Offers & Redemptions Integration (no schema changes)
+# LINKED: Route alignment & aliasing for registration and dashboards (no schema changes)
+# Updated templates to use endpoint-based url_for; README cleaned & synced with actual routes.
 """User portal blueprint exposing membership-aware pages."""
 
 from __future__ import annotations
@@ -6,7 +7,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, Optional, Tuple
 
-from flask import Blueprint, jsonify, render_template, request, url_for
+from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 
 from .. import db
 from ..auth.utils import get_user_from_token
@@ -94,6 +95,13 @@ def home():
         active_nav="home",
         current_year=datetime.utcnow().year,
     )
+
+
+@portal_bp.route("/home", methods=["GET"])
+def home_alias():
+    """Legacy alias to keep historic /portal/home links operational."""
+
+    return redirect(url_for("portal.home"))
 
 
 # Display the personalized offers list calculated for the user's tier.

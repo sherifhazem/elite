@@ -957,6 +957,19 @@ The administrative analytics suite at `/admin/reports` surfaces near-real-time i
 
 ### Routes & Data Sources
 
+#### Registration & Onboarding
+
+- `GET /register/select` – presents the visitor with member or company registration choices.
+- `GET/POST /register/member` – serves the member signup form and processes direct submissions.
+- `GET/POST /register/company` – serves the company signup form and processes direct submissions.
+
+#### Legacy Aliases
+
+- `/portal/home` → `/portal/` (maps to `url_for('portal.home')`).
+- `/admin/dashboard` → `/admin/` (maps to `url_for('admin.dashboard_home')`).
+
+#### Admin Analytics
+
 - `GET /admin/reports` – renders the interactive dashboard layout.
 - `GET /admin/api/summary` – provides the JSON snapshot consumed by the JavaScript charts.
 - `GET /admin/reports/export` – streams a generated PDF summarizing the latest metrics.
@@ -975,3 +988,20 @@ The summary payload combines the following datasets:
 - All administrative routes continue to enforce `is_admin=True` validation through the existing `admin_required` decorator.
 - Chart rendering relies exclusively on Chart.js delivered via CDN, with custom styling in `app/static/css/reports.css`.
 - PDF exports are produced through ReportLab with on-demand generation—no historical snapshots are persisted.
+
+## Known Limitations / Redirects
+
+- Historic links to `/portal/home` and `/admin/dashboard` now redirect to their canonical destinations to prevent `404` responses.
+- Registration flows continue to depend on the JSON APIs for account creation; browser forms fall back to the same logic to avoid drift.
+- This refresh did not change the database schema or SQLAlchemy models.
+
+## Manual Quick Tests
+
+Run these smoke checks after deploying or touching the registration flows:
+
+1. Visit `/register/select` and confirm the member/company options point to the correct endpoints.
+2. Complete `/register/member` and verify the welcome email + notification triggers run.
+3. Complete `/register/company` and verify the owner account + welcome flows run.
+4. Open `/portal/home` and confirm it redirects to the live portal home view without errors.
+5. Open `/admin/dashboard` and confirm it redirects to the admin landing page without errors.
+6. Traverse the main navigation templates and confirm `url_for` is used for dynamic links.
