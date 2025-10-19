@@ -1,3 +1,4 @@
+<!-- FIXED: Updated url_for() endpoints to match admin Blueprint -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,10 +23,10 @@
             </button>
             <div class="collapse navbar-collapse justify-content-end">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Users</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Offers</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Reports</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard_home') }}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard_users') }}">Users</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard_offers') }}">Offers</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('reports.reports_home') }}">Reports</a></li>
                     <li class="nav-item"><a class="nav-link" href="#">Logout</a></li>
                 </ul>
             </div>
@@ -38,31 +39,31 @@
             <div class="sidebar-inner py-4">
                 <ul class="nav flex-column" id="sidebarNav" data-bs-toggle="tooltip" data-bs-placement="right">
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if current_page == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard.overview') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Dashboard">
+                        <a class="nav-link d-flex align-items-center {% if current_page == 'dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard_home') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Dashboard">
                             <i class="fas fa-gauge-high me-3"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if current_page == 'users' %}active{% endif %}" href="{{ url_for('dashboard.users') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Users">
+                        <a class="nav-link d-flex align-items-center {% if current_page == 'users' %}active{% endif %}" href="{{ url_for('admin.dashboard_users') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Users">
                             <i class="fas fa-users me-3"></i>
                             <span>Users</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if current_page == 'companies' %}active{% endif %}" href="{{ url_for('dashboard.companies') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Companies">
+                        <a class="nav-link d-flex align-items-center {% if current_page == 'companies' %}active{% endif %}" href="{{ url_for('admin.dashboard_companies') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Companies">
                             <i class="fas fa-building me-3"></i>
                             <span>Companies</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if current_page == 'offers' %}active{% endif %}" href="{{ url_for('dashboard.offers') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Offers">
+                        <a class="nav-link d-flex align-items-center {% if current_page == 'offers' %}active{% endif %}" href="{{ url_for('admin.dashboard_offers') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Offers">
                             <i class="fas fa-gift me-3"></i>
                             <span>Offers</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if current_page == 'reports' %}active{% endif %}" href="{{ url_for('dashboard.reports') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Reports">
+                        <a class="nav-link d-flex align-items-center {% if current_page == 'reports' %}active{% endif %}" href="{{ url_for('reports.reports_home') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Reports">
                             <i class="fas fa-chart-line me-3"></i>
                             <span>Reports</span>
                         </a>
