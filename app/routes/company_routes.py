@@ -2,9 +2,10 @@
 # Verified welcome email and internal notification triggers for new accounts.
 """Company CRUD blueprint providing JSON endpoints."""
 
+import re
 from http import HTTPStatus
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, url_for
 from sqlalchemy.exc import IntegrityError
 
 from .. import db
@@ -46,34 +47,52 @@ def register_company():
     """Public endpoint allowing a business to create its company account."""
 
     payload = request.get_json(silent=True) or {}
-    username = (payload.get("username") or "").strip()
+    requested_username = (payload.get("username") or "").strip()
     email = (payload.get("email") or "").strip().lower()
     password = payload.get("password")
     company_name = (payload.get("company_name") or "").strip()
     description = payload.get("description")
 
-    if not username or not email or not password or not company_name:
+    if not email or not password or not company_name:
         return (
             jsonify(
                 {
-                    "error": "username, email, password, and company_name are required.",
+                    "error": "email, password, and company_name are required.",
                 }
             ),
             HTTPStatus.BAD_REQUEST,
         )
 
-    existing_user = (
-        User.query.filter((User.username == username) | (User.email == email)).first()
-    )
-    if existing_user:
+    if User.query.filter_by(email=email).first():
         return (
-            jsonify({"error": "A user with the provided username or email already exists."}),
+            jsonify({"error": "A user with the provided email already exists."}),
             HTTPStatus.BAD_REQUEST,
         )
 
     if Company.query.filter_by(name=company_name).first():
         return (
             jsonify({"error": "A company with the provided name already exists."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    def _generate_username() -> str:
+        """Derive a unique username for the company owner when not provided."""
+
+        base_source = requested_username or company_name or email.split("@")[0]
+        cleaned = re.sub(r"[^\w\u0621-\u064A]+", "", base_source, flags=re.UNICODE)
+        cleaned = cleaned or "company"
+        candidate = cleaned
+        suffix = 1
+        while User.query.filter_by(username=candidate).first():
+            candidate = f"{cleaned}{suffix}"
+            suffix += 1
+        return candidate
+
+    username = requested_username or _generate_username()
+
+    if requested_username and User.query.filter_by(username=username).first():
+        return (
+            jsonify({"error": "A user with the provided username already exists."}),
             HTTPStatus.BAD_REQUEST,
         )
 
@@ -107,6 +126,7 @@ def register_company():
         "company": _serialize_company(company),
         "owner": _serialize_owner(owner),
         "message": "Company registered successfully.",
+        "redirect_url": url_for("auth.login_page"),
     }
     return jsonify(response), HTTPStatus.CREATED
 
