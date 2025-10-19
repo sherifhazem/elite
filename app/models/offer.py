@@ -21,6 +21,13 @@ class Offer(db.Model):
     # Establish relationship with Company for easy access to related offers
     company = db.relationship("Company", backref="offers")
 
+    redemptions = db.relationship(
+        "Redemption",
+        back_populates="offer",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+
     def __repr__(self) -> str:
         """Return a string representation for debugging."""
 

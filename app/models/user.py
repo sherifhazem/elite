@@ -75,6 +75,14 @@ class User(db.Model):
         doc="Optional fine-grained permissions granted in addition to the primary role.",
     )
 
+    redemptions = db.relationship(
+        "Redemption",
+        back_populates="user",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+        doc="Offer redemption activations created by the member.",
+    )
+
     # ------------------------------------------------------------------
     # Representations & authentication helpers
     # ------------------------------------------------------------------

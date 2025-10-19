@@ -1,0 +1,292 @@
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h1 class="h4 mb-3">Offer Redemption Verification</h1>
+            <p class="text-muted mb-4">
+                أدخل كود التفعيل أو امسح رمز QR للتأكد من صلاحية العرض وتأكيد استخدامه فوراً.
+            </p>
+            {% if not company %}
+                <div class="alert alert-warning mb-0">
+                    لا يوجد شركة مرتبطة بهذا الحساب. يرجى التواصل مع الإدارة لإكمال الإعداد.
+                </div>
+            {% else %}
+                <form id="code-lookup-form" class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label" for="redemption-code-input">Activation Code</label>
+                        <input
+                            class="form-control"
+                            id="redemption-code-input"
+                            name="code"
+                            type="text"
+                            maxlength="12"
+                            placeholder="مثال: AB12CD34EF56"
+                            required
+                        >
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" type="submit">Verify &amp; Confirm</button>
+                    </div>
+                </form>
+                <div class="d-flex align-items-center gap-2 mt-3">
+                    <button class="btn btn-outline-secondary" type="button" id="start-qr-scan">
+                        Scan QR
+                    </button>
+                    <button class="btn btn-outline-danger d-none" type="button" id="stop-qr-scan">
+                        Stop Scan
+                    </button>
+                    <small class="text-muted">يتطلب متصفح يدعم <code>getUserMedia</code> و <code>BarcodeDetector</code>.</small>
+                </div>
+                <div class="mt-4" id="qr-preview" hidden>
+                    <video id="qr-video" class="w-100 border rounded" playsinline></video>
+                </div>
+                <div class="mt-4" id="redemption-result" role="status"></div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if company and recent_redemptions %}
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Recent Confirmations</h2>
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Code</th>
+                                <th scope="col">Offer</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Created</th>
+                                <th scope="col">Redeemed At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for redemption in recent_redemptions %}
+                                <tr>
+                                    <td><code>{{ redemption.redemption_code }}</code></td>
+                                    <td>{{ redemption.offer.title if redemption.offer else 'Offer #' ~ redemption.offer_id }}</td>
+                                    <td class="text-capitalize">{{ redemption.status }}</td>
+                                    <td>{{ redemption.created_at.strftime('%Y-%m-%d %H:%M') if redemption.created_at else '—' }}</td>
+                                    <td>{{ redemption.redeemed_at.strftime('%Y-%m-%d %H:%M') if redemption.redeemed_at else '—' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+    {{ super() }}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.getElementById("code-lookup-form");
+            const input = document.getElementById("redemption-code-input");
+            const result = document.getElementById("redemption-result");
+            const startScanButton = document.getElementById("start-qr-scan");
+            const stopScanButton = document.getElementById("stop-qr-scan");
+            const video = document.getElementById("qr-video");
+            const preview = document.getElementById("qr-preview");
+
+            let scanStream = null;
+            let detectionFrame = null;
+            let detector = null;
+            let scanningActive = false;
+
+            const renderAlert = (message, variant = "success") => {
+                if (!result) {
+                    return;
+                }
+                result.innerHTML = `
+                    <div class="alert alert-${variant}" role="alert">
+                        ${message}
+                    </div>
+                `;
+            };
+
+            const clearAlert = () => {
+                if (result) {
+                    result.innerHTML = "";
+                }
+            };
+
+            const normalizeCode = (value) => (value || "").trim().toUpperCase();
+
+            const processRedemption = async (code, token) => {
+                const normalized = normalizeCode(code);
+                if (!normalized) {
+                    renderAlert("يرجى إدخال كود صالح.", "danger");
+                    return;
+                }
+                renderAlert("جار التحقق من الكود...", "info");
+                try {
+                    const statusResponse = await fetch(`/api/redemptions/${encodeURIComponent(normalized)}`, {
+                        headers: { "X-Requested-With": "XMLHttpRequest" },
+                        credentials: "include",
+                    });
+                    const statusPayload = await statusResponse.json().catch(() => ({}));
+                    if (!statusResponse.ok) {
+                        throw new Error(statusPayload.error || statusPayload.message || "تعذر العثور على الكود.");
+                    }
+                    if (statusPayload.status === "expired") {
+                        renderAlert("انتهت صلاحية هذا الكود.", "danger");
+                        return;
+                    }
+                    if (statusPayload.status === "redeemed" && !token) {
+                        renderAlert("تم استخدام هذا الكود مسبقاً.", "warning");
+                        return;
+                    }
+
+                    const confirmResponse = await fetch(`/api/redemptions/${encodeURIComponent(normalized)}/confirm`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        credentials: "include",
+                        body: JSON.stringify(token ? { qr_token: token } : {}),
+                    });
+                    const confirmPayload = await confirmResponse.json().catch(() => ({}));
+                    if (!confirmResponse.ok) {
+                        throw new Error(confirmPayload.error || confirmPayload.message || "تعذر تأكيد الكود.");
+                    }
+                    renderAlert(confirmPayload.message || "Offer Redeemed Successfully", "success");
+                } catch (error) {
+                    console.error("Redemption processing error", error);
+                    renderAlert(error.message || "تعذر معالجة الكود.", "danger");
+                }
+            };
+
+            if (form) {
+                form.addEventListener("submit", (event) => {
+                    event.preventDefault();
+                    clearAlert();
+                    processRedemption(input && input.value);
+                });
+            }
+
+            const stopScan = () => {
+                scanningActive = false;
+                if (detectionFrame) {
+                    cancelAnimationFrame(detectionFrame);
+                    detectionFrame = null;
+                }
+                if (scanStream) {
+                    scanStream.getTracks().forEach((track) => track.stop());
+                    scanStream = null;
+                }
+                if (video) {
+                    video.srcObject = null;
+                }
+                if (preview) {
+                    preview.hidden = true;
+                }
+                if (startScanButton) {
+                    startScanButton.classList.remove("d-none");
+                }
+                if (stopScanButton) {
+                    stopScanButton.classList.add("d-none");
+                }
+            };
+
+            const parseQrPayload = (rawValue) => {
+                if (!rawValue) {
+                    return { code: rawValue, token: null };
+                }
+                try {
+                    const parsed = JSON.parse(rawValue);
+                    return {
+                        code: parsed.code || parsed.redemption_code || rawValue,
+                        token: parsed.token || null,
+                    };
+                } catch (error) {
+                    try {
+                        const url = new URL(rawValue, window.location.origin);
+                        return {
+                            code: url.searchParams.get("code") || rawValue,
+                            token: url.searchParams.get("token"),
+                        };
+                    } catch (parseError) {
+                        return { code: rawValue, token: null };
+                    }
+                }
+            };
+
+            const startScan = async () => {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    renderAlert("الكاميرا غير متاحة على هذا الجهاز.", "danger");
+                    return;
+                }
+                if (!("BarcodeDetector" in window)) {
+                    renderAlert("المتصفح لا يدعم قراءة رموز QR مباشرة.", "warning");
+                    return;
+                }
+                try {
+                    detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+                    scanStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: "environment" },
+                    });
+                    if (video) {
+                        video.srcObject = scanStream;
+                        await video.play();
+                    }
+                    if (preview) {
+                        preview.hidden = false;
+                    }
+                    if (startScanButton) {
+                        startScanButton.classList.add("d-none");
+                    }
+                    if (stopScanButton) {
+                        stopScanButton.classList.remove("d-none");
+                    }
+                    scanningActive = true;
+
+                    const detect = async () => {
+                        if (!scanningActive || !detector || !video) {
+                            return;
+                        }
+                        try {
+                            const barcodes = await detector.detect(video);
+                            if (Array.isArray(barcodes) && barcodes.length) {
+                                const value = barcodes[0].rawValue || "";
+                                stopScan();
+                                const { code, token } = parseQrPayload(value);
+                                processRedemption(code, token);
+                                return;
+                            }
+                        } catch (error) {
+                            console.error("QR detection error", error);
+                        }
+                        detectionFrame = requestAnimationFrame(detect);
+                    };
+
+                    detectionFrame = requestAnimationFrame(detect);
+                } catch (error) {
+                    console.error("Unable to start QR scan", error);
+                    renderAlert("تعذر تشغيل الكاميرا. يرجى السماح بالأذونات أو المحاولة مرة أخرى.", "danger");
+                    stopScan();
+                }
+            };
+
+            if (startScanButton) {
+                startScanButton.addEventListener("click", () => {
+                    clearAlert();
+                    startScan();
+                });
+            }
+
+            if (stopScanButton) {
+                stopScanButton.addEventListener("click", () => {
+                    stopScan();
+                });
+            }
+
+            window.addEventListener("beforeunload", () => {
+                stopScan();
+            });
+        });
+    </script>
+{% endblock %}

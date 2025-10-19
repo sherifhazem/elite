@@ -13,6 +13,7 @@ from ..models.notification import Notification
 from ..models.offer import Offer
 from ..models.user import User
 from ..services.notifications import notify_membership_upgrade
+from ..services.redemption import list_user_redemptions
 
 portal_bp = Blueprint("portal", __name__, url_prefix="/portal")
 
@@ -88,6 +89,7 @@ def offers():
 def profile():
     user, membership_level = _resolve_user_context()
     available_upgrades = []
+    activations = []
     upgrade_success = request.args.get("upgraded") == "1"
     if user is not None:
         # Present only the membership tiers that are higher than the current one.
@@ -97,12 +99,16 @@ def profile():
             for index, level in enumerate(User.MEMBERSHIP_LEVELS)
             if index > current_rank
         ]
+    if user is not None:
+        activations = list_user_redemptions(user.id)
+
     return render_template(
         "portal/profile.html",
         user=user,
         membership_level=membership_level,
         available_upgrades=available_upgrades,
         upgrade_success=upgrade_success,
+        activations=activations,
         notification_unread_count=_unread_notification_count(user),
         active_nav="profile",
         current_year=datetime.utcnow().year,

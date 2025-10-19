@@ -27,7 +27,7 @@ celery = Celery(app.import_name, broker=app.config["CELERY_BROKER_URL"])
 celery.conf.update(app.config)
 
 # Ensure models are registered with SQLAlchemy's metadata for migrations
-from .models import Company, Offer, Permission, User  # noqa: F401
+from .models import Company, Offer, Permission, Redemption, User  # noqa: F401
 
 # Register blueprints after extensions are initialized
 from .routes import (  # noqa: E402
@@ -35,6 +35,7 @@ from .routes import (  # noqa: E402
     main as main_blueprint,
     notif_bp,
     offer_routes,
+    redemption_bp,
     user_routes,
 )
 from .routes.user_portal_routes import portal_bp  # noqa: E402
@@ -74,6 +75,7 @@ app.register_blueprint(user_routes, url_prefix="/api/users")
 app.register_blueprint(company_routes, url_prefix="/api/companies")
 app.register_blueprint(offer_routes, url_prefix="/api/offers")
 app.register_blueprint(notif_bp)
+app.register_blueprint(redemption_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(reports_bp)
