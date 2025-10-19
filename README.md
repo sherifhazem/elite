@@ -199,6 +199,37 @@ The member portal now allows authenticated users to elevate their membership tie
   {"new_level": "Silver"}
   ```
 
+## Login & Redirect System
+
+المستخدمون يمكنهم الآن تسجيل الدخول عبر واجهة ويب مخصصة يتم تحميلها من المسار `/login-page`.
+
+1. يفتح المستخدم الرابط `/login-page` ويُدخل البريد الإلكتروني وكلمة المرور.
+2. يرسل المتصفح طلب `POST` إلى `/api/auth/login` ويتلقى JSON يحتوي على الـ JWT والدور.
+3. يتم تخزين التوكن في `localStorage` وCookie آمنة ثم يتم توجيه المستخدم تلقائيًا إلى الواجهة المناسبة بناءً على دوره.
+
+- **توجيه الأدوار:**
+  - `member` → `/portal/`
+  - `company` → `/company/`
+  - `admin` أو `superadmin` → `/admin/`
+
+- **مثال استجابة ناجحة:**
+
+  ```json
+  {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "token_type": "Bearer",
+    "role": "member",
+    "is_active": true,
+    "redirect_url": "/portal/"
+  }
+  ```
+
+- **مثال استجابة فاشلة:**
+
+  ```json
+  {"error": "Invalid credentials."}
+  ```
+
   Acceptable values: `"Silver"`, `"Gold"`, or `"Premium"` (upgrades are only allowed to higher tiers).
 - **Successful Response:**
 

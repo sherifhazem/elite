@@ -5,7 +5,7 @@ from __future__ import annotations
 from http import HTTPStatus
 from typing import Dict, Optional
 
-from flask import Blueprint, jsonify, request, url_for
+from flask import Blueprint, jsonify, render_template, request, url_for
 from sqlalchemy import or_
 
 from .. import db
@@ -13,7 +13,7 @@ from ..models.user import User
 from .utils import create_token, decode_token
 
 
-auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
+auth_bp = Blueprint("auth", __name__)
 
 
 def _extract_json() -> Dict[str, str]:
@@ -38,7 +38,7 @@ def _extract_bearer_token() -> Optional[str]:
     return token
 
 
-@auth_bp.post("/register")
+@auth_bp.post("/api/auth/register")
 def register() -> tuple:
     """Register a new user and return a confirmation message."""
 
@@ -79,7 +79,7 @@ def register() -> tuple:
     return jsonify(response), HTTPStatus.CREATED
 
 
-@auth_bp.post("/login")
+@auth_bp.post("/api/auth/login")
 def login() -> tuple:
     """Authenticate a user and return a signed JWT token."""
 
@@ -127,7 +127,7 @@ def login() -> tuple:
     )
 
 
-@auth_bp.get("/profile")
+@auth_bp.get("/api/auth/profile")
 def profile() -> tuple:
     """Return the authenticated user's profile details."""
 
@@ -159,4 +159,11 @@ def profile() -> tuple:
         "joined_at": user.joined_at.isoformat() if user.joined_at else None,
     }
     return jsonify(response), HTTPStatus.OK
+
+
+@auth_bp.route("/login-page")
+def login_page() -> str:
+    """Render the browser-based login page."""
+
+    return render_template("auth/login.html")
 

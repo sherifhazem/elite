@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ELITE | تسجيل الدخول</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}" />
+  </head>
+  <body>
+    <main class="login-container">
+      <section class="login-card" aria-labelledby="login-title">
+        <h1 id="login-title">مرحبًا بك في ELITE</h1>
+        <p class="login-subtitle">سجّل دخولك لمتابعة رحلتك مع الخصومات الحصرية.</p>
+        <form id="login-form" novalidate>
+          <label class="input-group">
+            <span>البريد الإلكتروني</span>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              inputmode="email"
+              autocomplete="email"
+              required
+              placeholder="your@email.com"
+            />
+          </label>
+          <label class="input-group">
+            <span>كلمة المرور</span>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              autocomplete="current-password"
+              required
+              placeholder="••••••••"
+            />
+          </label>
+          <p id="login-error" class="error-message" role="alert" aria-live="polite"></p>
+          <button type="submit" id="login-button">تسجيل الدخول</button>
+        </form>
+        <p class="register-hint">
+          ليس لديك حساب؟
+          <a href="/register" id="register-link">أنشئ حسابك</a>
+        </p>
+      </section>
+    </main>
+    <script src="{{ url_for('static', filename='js/login.js') }}" defer></script>
+  </body>
+</html>
