@@ -54,7 +54,17 @@ def _guard_superadmin_modification(target: User) -> None:
 def dashboard_home() -> str:
     """Render the admin dashboard landing page."""
 
-    return render_template("dashboard/index.html", section_title="Overview")
+    total_users = User.query.count()
+    total_companies = Company.query.count()
+    total_offers = Offer.query.count()
+
+    return render_template(
+        "dashboard/index.html",
+        section_title="Overview",
+        total_users=total_users,
+        total_companies=total_companies,
+        total_offers=total_offers,
+    )
 
 
 @admin_bp.route("/users")
@@ -357,6 +367,7 @@ def dashboard_offers() -> str:
         section_title="Offers",
         offers=offers,
         tier_styles=tier_styles,
+        current_time=datetime.utcnow(),
     )
 
 
