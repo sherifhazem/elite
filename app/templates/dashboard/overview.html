@@ -1,0 +1,121 @@
+{% extends 'dashboard/base.html' %}
+{% set active_page = 'dashboard' %}
+{% block title %}Dashboard Overview | Elite Admin Console{% endblock %}
+
+{% block content %}
+    <div class="py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="display-6 fw-bold text-primary">Administrative Dashboard</h1>
+                <p class="text-muted mb-0">A consolidated view of platform performance metrics.</p>
+            </div>
+            <button class="btn btn-primary btn-lg shadow-sm"><i class="fas fa-rotate me-2"></i>Refresh</button>
+        </div>
+
+        <!-- Main Dashboard Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-4 col-lg-6">
+                <div class="card stat-card gradient-blue">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="icon-circle me-3">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title">Registered Users</h5>
+                            <h2 class="fw-semibold mb-0">12,480</h2>
+                            <small class="text-light">+5% growth this month</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-lg-6">
+                <div class="card stat-card gradient-gold">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="icon-circle me-3">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title">Active Companies</h5>
+                            <h2 class="fw-semibold mb-0">328</h2>
+                            <small class="text-dark">12 new partners onboarded</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-lg-6">
+                <div class="card stat-card gradient-slate">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="icon-circle me-3">
+                            <i class="fas fa-gift"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title">Published Offers</h5>
+                            <h2 class="fw-semibold mb-0">1,254</h2>
+                            <small class="text-light">78 expiring this week</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Secondary Dashboard Cards -->
+        <div class="row g-4">
+            <div class="col-xl-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-white border-0 pb-0">
+                        <h4 class="fw-semibold text-primary mb-1"><i class="fas fa-clock me-2"></i>Recent Activity</h4>
+                        <p class="text-muted small mb-0">Latest user sign-ups and offer submissions</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <a href="#" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between">
+                                <span><strong>Sarah Johnson</strong> registered a new corporate account</span>
+                                <span class="badge rounded-pill bg-soft-primary text-primary">2m ago</span>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between">
+                                <span><strong>Elite Fitness</strong> published a wellness offer</span>
+                                <span class="badge rounded-pill bg-soft-primary text-primary">15m ago</span>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between">
+                                <span><strong>Michael Chen</strong> redeemed “Premium Dining” reward</span>
+                                <span class="badge rounded-pill bg-soft-primary text-primary">1h ago</span>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between">
+                                <span><strong>Bright Co.</strong> requested offer approval update</span>
+                                <span class="badge rounded-pill bg-soft-primary text-primary">3h ago</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-white border-0 pb-0">
+                        <h4 class="fw-semibold text-primary mb-1"><i class="fas fa-sliders-up me-2"></i>System Stats</h4>
+                        <p class="text-muted small mb-0">Summary of infrastructure and compliance metrics</p>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <span><i class="fas fa-server text-primary me-2"></i>API uptime</span>
+                                <span class="fw-semibold">99.98%</span>
+                            </li>
+                            <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <span><i class="fas fa-shield-halved text-primary me-2"></i>Security audits passed</span>
+                                <span class="fw-semibold">14</span>
+                            </li>
+                            <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <span><i class="fas fa-arrow-trend-up text-primary me-2"></i>Monthly active users</span>
+                                <span class="fw-semibold">+18%</span>
+                            </li>
+                            <li class="d-flex justify-content-between align-items-center py-2">
+                                <span><i class="fas fa-life-ring text-primary me-2"></i>Support tickets resolved</span>
+                                <span class="fw-semibold">243</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
