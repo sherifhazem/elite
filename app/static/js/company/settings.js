@@ -1,4 +1,5 @@
 /* Company settings client script submitting profile updates over fetch. */
+/* UPDATED: Responsive Company Portal with Restricted Editable Fields. */
 
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("company-settings-form");
@@ -21,10 +22,33 @@ document.addEventListener("DOMContentLoaded", () => {
         toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
     };
 
+    const toggleButtonLoading = (button, loading) => {
+        if (!button) return;
+        if (loading) {
+            button.dataset.originalContent = button.innerHTML;
+            button.innerHTML =
+                "<span class='spinner-border spinner-border-sm me-2' role='status' aria-hidden='true'></span>Saving";
+            button.disabled = true;
+        } else if (button.dataset.originalContent) {
+            button.innerHTML = button.dataset.originalContent;
+            delete button.dataset.originalContent;
+            button.disabled = false;
+        }
+    };
+
+    const restrictedFields = form?.querySelectorAll("[data-restricted-field]");
+    const notifyRestriction = () => {
+        showToast("هذا الحقل لا يمكن تعديله إلا بموافقة الإدارة.", "warning");
+    };
+    restrictedFields?.forEach((field) => {
+        field.addEventListener("focus", notifyRestriction);
+        field.addEventListener("click", notifyRestriction);
+    });
+
     form?.addEventListener("submit", async (event) => {
         event.preventDefault();
         const submitButton = form.querySelector("[type='submit']");
-        submitButton.disabled = true;
+        toggleButtonLoading(submitButton, true);
         const formData = new FormData(form);
         const payload = Object.fromEntries(formData.entries());
         payload.notify_email = formData.has("notify_email");
@@ -38,14 +62,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify(payload),
             });
             const result = await response.json();
-            if (!response.ok || !result.ok) {
+            if (!response.ok) {
                 throw new Error(result.message || "Unable to save settings");
             }
-            showToast("Settings saved successfully.");
+            if (!result.ok) {
+                showToast(result.message || "يتطلب موافقة الإدارة.", result.level || "warning");
+                return;
+            }
+            showToast(result.message || "تم حفظ التغييرات بنجاح.");
         } catch (error) {
             showToast(error.message, "danger");
         } finally {
-            submitButton.disabled = false;
+            toggleButtonLoading(submitButton, false);
         }
     });
 });

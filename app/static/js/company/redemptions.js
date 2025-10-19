@@ -1,4 +1,5 @@
 /* Redemption verification workflow supporting manual input and QR scanning. */
+/* UPDATED: Responsive Company Portal with Restricted Editable Fields. */
 
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("redemption-verify-form");
@@ -6,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultContainer = document.getElementById("redemption-result");
     const toastContainer = document.getElementById("redemption-toast-container");
     const scanButton = document.getElementById("redemption-scan-btn");
+    const verifyButton = document.getElementById("redemption-verify-btn");
     const scannerWrapper = document.getElementById("qr-scanner");
     const videoElement = document.getElementById("qr-video");
     const stopButton = document.getElementById("qr-stop-btn");
@@ -32,27 +34,43 @@ document.addEventListener("DOMContentLoaded", () => {
         toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
     };
 
+    const toggleButtonLoading = (button, loading, label = "Processing") => {
+        if (!button) return;
+        if (loading) {
+            button.dataset.originalContent = button.innerHTML;
+            button.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${label}`;
+            button.disabled = true;
+        } else if (button.dataset.originalContent) {
+            button.innerHTML = button.dataset.originalContent;
+            button.disabled = false;
+            delete button.dataset.originalContent;
+        }
+    };
+
     const renderResult = (status, message, redemptionId = null) => {
         lastRedemptionId = redemptionId;
         const isSuccess = status === "pending" || status === "redeemed";
         const badgeClass = status === "redeemed" ? "bg-success" : status === "pending" ? "bg-warning" : "bg-secondary";
         const confirmButton = status === "pending" && redemptionId
-            ? `<button class="btn btn-success mt-3" id="redemption-confirm-btn">Confirm redemption</button>`
+            ? `<button class="btn btn-elite-primary mt-3" id="redemption-confirm-btn">Redeem now</button>`
             : "";
         resultContainer.innerHTML = `
             <div class="alert ${isSuccess ? "alert-success" : "alert-danger"}" role="alert">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
                     <span>${message}</span>
                     <span class="badge ${badgeClass} text-uppercase">${status || "unknown"}</span>
                 </div>
                 ${confirmButton}
             </div>`;
         if (confirmButton) {
-            document.getElementById("redemption-confirm-btn").addEventListener("click", confirmRedemption);
+            const confirmAction = document.getElementById("redemption-confirm-btn");
+            confirmAction.addEventListener("click", () => confirmRedemption(confirmAction));
         }
     };
 
     const verifyCode = async (code) => {
+        toggleButtonLoading(verifyButton, true, "Verifying");
         try {
             const response = await fetch("/company/redemptions/verify", {
                 method: "POST",
@@ -70,11 +88,14 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             renderResult("error", error.message);
             showToast(error.message, "danger");
+        } finally {
+            toggleButtonLoading(verifyButton, false);
         }
     };
 
-    const confirmRedemption = async () => {
+    const confirmRedemption = async (button) => {
         if (!lastRedemptionId && !codeInput.value) return;
+        toggleButtonLoading(button, true, "Confirming");
         try {
             const response = await fetch("/company/redemptions/confirm", {
                 method: "POST",
@@ -90,6 +111,8 @@ document.addEventListener("DOMContentLoaded", () => {
             showToast("Redemption confirmed.");
         } catch (error) {
             showToast(error.message, "danger");
+        } finally {
+            toggleButtonLoading(button, false);
         }
     };
 

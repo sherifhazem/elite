@@ -1,4 +1,5 @@
 """Blueprint implementing the company portal dashboard and management features."""
+# UPDATED: Responsive Company Portal with Restricted Editable Fields.
 
 from __future__ import annotations
 
@@ -134,6 +135,11 @@ def dashboard() -> str:
         .with_entities(func.count(Redemption.id))
         .scalar()
     )
+    unique_customers = (
+        Redemption.query.filter_by(company_id=company.id)
+        .with_entities(func.count(func.distinct(Redemption.user_id)))
+        .scalar()
+    )
     last_redemption = (
         Redemption.query.filter_by(company_id=company.id)
         .order_by(Redemption.redeemed_at.desc(), Redemption.created_at.desc())
@@ -151,6 +157,7 @@ def dashboard() -> str:
         company=company,
         active_offers=active_offers,
         total_redeemed=total_redeemed,
+        unique_customers=unique_customers,
         last_redemption=last_redemption,
         recent_redemptions=recent_redemptions,
     )
@@ -167,7 +174,12 @@ def offers() -> str:
         .order_by(Offer.created_at.desc())
         .all()
     )
-    return render_template("company/offers.html", company=company, offers=offers)
+    return render_template(
+        "company/offers.html",
+        company=company,
+        offers=offers,
+        now=datetime.utcnow(),
+    )
 
 
 @company_portal_bp.route("/offers/new")
@@ -386,21 +398,55 @@ def settings():
     company = _current_company()
 
     if request.method == "POST":
-        data = request.form if not request.is_json else request.get_json()
-        name = (data.get("name") or "").strip()
+        data = request.get_json() if request.is_json else request.form
+
+        def _as_bool(raw_value) -> bool:
+            if isinstance(raw_value, bool):
+                return raw_value
+            return str(raw_value).lower() in {"1", "true", "on", "yes"}
+
+        proposed_name = (data.get("name") or "").strip()
+        proposed_email = (data.get("account_email") or "").strip()
+        proposed_registration = (data.get("registration_number") or "").strip()
         description = (data.get("description") or "").strip()
         logo_url = (data.get("logo_url") or "").strip()
-        notifications_email = bool(data.get("notify_email"))
-        notifications_sms = bool(data.get("notify_sms"))
+        notifications_email = _as_bool(data.get("notify_email"))
+        notifications_sms = _as_bool(data.get("notify_sms"))
 
-        if not name:
-            message = "Company name is required."
+        restricted_attempts = []
+        if proposed_name and proposed_name != company.name:
+            restricted_attempts.append("name")
+
+        owner_email = ""
+        if company.owner and getattr(company.owner, "email", None):
+            owner_email = company.owner.email
+        elif getattr(g, "current_user", None) and getattr(g.current_user, "email", None):
+            owner_email = g.current_user.email
+        if proposed_email and owner_email and proposed_email != owner_email:
+            restricted_attempts.append("account_email")
+
+        if hasattr(company, "registration_number"):
+            current_registration = getattr(company, "registration_number") or ""
+            if proposed_registration and proposed_registration != current_registration:
+                restricted_attempts.append("registration_number")
+            if not proposed_registration and current_registration:
+                restricted_attempts.append("registration_number")
+
+        if restricted_attempts:
+            message = "هذا الحقل لا يمكن تعديله إلا بموافقة الإدارة."
             if request.is_json:
-                return jsonify({"ok": False, "message": message}), HTTPStatus.BAD_REQUEST
-            flash(message, "danger")
+                return (
+                    jsonify({
+                        "ok": False,
+                        "message": message,
+                        "level": "warning",
+                        "restricted": restricted_attempts,
+                    }),
+                    HTTPStatus.OK,
+                )
+            flash(message, "warning")
             return redirect(url_for("company_portal_bp.settings"))
 
-        company.name = name
         company.description = description or None
         company.logo_url = logo_url or None
         company.notification_preferences = {
@@ -409,9 +455,10 @@ def settings():
         }
         db.session.commit()
 
+        success_message = "تم حفظ التغييرات بنجاح."
         if request.is_json:
-            return jsonify({"ok": True})
-        flash("Company settings updated.", "success")
+            return jsonify({"ok": True, "message": success_message})
+        flash(success_message, "success")
         return redirect(url_for("company_portal_bp.settings"))
 
     return render_template(

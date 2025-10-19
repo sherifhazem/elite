@@ -1,4 +1,5 @@
 /* Offer management client-side logic handling modal forms and CRUD operations. */
+/* UPDATED: Responsive Company Portal with Restricted Editable Fields. */
 
 document.addEventListener("DOMContentLoaded", () => {
     const modalElement = document.getElementById("offer-modal");
@@ -7,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const toastContainer = document.getElementById("offers-toast-container");
     const searchInput = document.getElementById("offer-search");
     const table = document.getElementById("offers-table");
+    const addButton = document.getElementById("offer-add-btn");
 
     const showToast = (message, type = "success") => {
         if (!toastContainer) return;
@@ -23,6 +25,20 @@ document.addEventListener("DOMContentLoaded", () => {
         const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
         toast.show();
         toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
+    };
+
+    const toggleButtonLoading = (button, loading) => {
+        if (!button) return;
+        if (loading) {
+            button.dataset.originalContent = button.innerHTML;
+            button.innerHTML =
+                "<span class='spinner-border spinner-border-sm me-2' role='status' aria-hidden='true'></span>Processing";
+            button.disabled = true;
+        } else if (button.dataset.originalContent) {
+            button.innerHTML = button.dataset.originalContent;
+            delete button.dataset.originalContent;
+            button.disabled = false;
+        }
     };
 
     const loadForm = async (url) => {
@@ -46,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
         event.preventDefault();
         const form = event.target;
         const submitButton = form.querySelector("[type='submit']");
-        submitButton.disabled = true;
+        toggleButtonLoading(submitButton, true);
         const formData = new FormData(form);
         const payload = Object.fromEntries(formData.entries());
         payload.send_notifications = formData.has("send_notifications");
@@ -68,12 +84,13 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             showToast(error.message, "danger");
         } finally {
-            submitButton.disabled = false;
+            toggleButtonLoading(submitButton, false);
         }
     };
 
-    const handleDelete = async (offerId) => {
+    const handleDelete = async (offerId, triggerButton) => {
         if (!confirm("Delete this offer?")) return;
+        toggleButtonLoading(triggerButton, true);
         try {
             const response = await fetch(`/company/offers/${offerId}/delete`, {
                 method: "DELETE",
@@ -89,19 +106,24 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.reload();
         } catch (error) {
             showToast(error.message, "danger");
+        } finally {
+            toggleButtonLoading(triggerButton, false);
         }
     };
 
-    const attachRowHandlers = () => {
-        if (!table) return;
-        table.querySelectorAll(".offer-edit").forEach((button) => {
+    const attachActionHandlers = () => {
+        document.querySelectorAll(".offer-edit").forEach((button) => {
+            if (button.dataset.enhanced) return;
+            button.dataset.enhanced = "true";
             button.addEventListener("click", () => {
                 const offerId = button.dataset.offerId;
                 loadForm(`/company/offers/${offerId}/edit`);
             });
         });
-        table.querySelectorAll(".offer-delete").forEach((button) => {
-            button.addEventListener("click", () => handleDelete(button.dataset.offerId));
+        document.querySelectorAll(".offer-delete").forEach((button) => {
+            if (button.dataset.enhanced) return;
+            button.dataset.enhanced = "true";
+            button.addEventListener("click", () => handleDelete(button.dataset.offerId, button));
         });
     };
 
@@ -122,18 +144,27 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const filterRows = (query) => {
-        if (!table) return;
         const lowerQuery = query.toLowerCase();
-        table.querySelectorAll("tbody tr").forEach((row) => {
-            const titleCell = row.querySelector(".offer-title");
-            if (!titleCell) return;
-            const matches = titleCell.textContent.toLowerCase().includes(lowerQuery);
-            row.hidden = !matches;
+        if (table) {
+            table.querySelectorAll("tbody tr").forEach((row) => {
+                const titleCell = row.querySelector(".offer-title");
+                if (!titleCell) return;
+                const matches = titleCell.textContent.toLowerCase().includes(lowerQuery);
+                row.hidden = !matches;
+            });
+        }
+        document.querySelectorAll(".offer-card").forEach((card) => {
+            const title = card.querySelector(".offer-card-title");
+            if (!title) return;
+            const matches = title.textContent.toLowerCase().includes(lowerQuery);
+            card.hidden = !matches;
         });
     };
 
-    document.getElementById("offer-add-btn")?.addEventListener("click", () => {
+    addButton?.addEventListener("click", (event) => {
+        toggleButtonLoading(event.currentTarget, true);
         loadForm("/company/offers/new");
+        setTimeout(() => toggleButtonLoading(event.currentTarget, false), 400);
     });
 
     searchInput?.addEventListener("input", (event) => {
@@ -149,5 +180,5 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    attachRowHandlers();
+    attachActionHandlers();
 });
