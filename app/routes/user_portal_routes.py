@@ -1,3 +1,4 @@
+# LINKED: Shared Offers & Redemptions Integration (no schema changes)
 """User portal blueprint exposing membership-aware pages."""
 
 from __future__ import annotations
@@ -12,8 +13,12 @@ from ..auth.utils import get_user_from_token
 from ..models.notification import Notification
 from ..models.offer import Offer
 from ..models.user import User
-from ..services.notifications import notify_membership_upgrade
-from ..services.redemption import list_user_redemptions
+from ..services.notifications import (
+    notify_membership_upgrade,
+    notify_offer_feedback,
+)
+from ..services.offers import get_company_brief, get_portal_offers_with_company
+from ..services.redemption import list_user_redemptions_with_context
 
 portal_bp = Blueprint("portal", __name__, url_prefix="/portal")
 
@@ -95,7 +100,7 @@ def home():
 @portal_bp.route("/offers", methods=["GET"])
 def offers():
     user, membership_level = _resolve_user_context()
-    offers_data = Offer.query.order_by(Offer.valid_until).all()
+    offers_data = get_portal_offers_with_company(membership_level)
     return render_template(
         "portal/offers.html",
         user=user,
@@ -123,7 +128,7 @@ def profile():
             if index > current_rank
         ]
     if user is not None:
-        activations = list_user_redemptions(user.id)
+        activations = list_user_redemptions_with_context(user.id)
 
     return render_template(
         "portal/profile.html",
@@ -137,6 +142,67 @@ def profile():
         active_nav="profile",
         current_year=datetime.utcnow().year,
     )
+
+
+@portal_bp.route("/activations", methods=["GET"])
+def user_activations():
+    """Return the authenticated member's activations as JSON payload."""
+
+    user, _ = _resolve_user_context()
+    if user is None:
+        return jsonify({"error": "Unauthorized"}), 401
+    activations = list_user_redemptions_with_context(user.id)
+    normalized = []
+    for item in activations:
+        normalized.append(
+            {
+                "id": item["id"],
+                "status": item["status"],
+                "redemption_code": item["redemption_code"],
+                "created_at": item["created_at"].isoformat() if item["created_at"] else None,
+                "redeemed_at": item["redeemed_at"].isoformat() if item["redeemed_at"] else None,
+                "expires_at": item["expires_at"].isoformat() if item["expires_at"] else None,
+                "offer": item["offer"],
+                "company": item["company"],
+            }
+        )
+    return jsonify({"items": normalized})
+
+
+@portal_bp.route("/offers/<int:offer_id>/feedback", methods=["POST"])
+def offer_feedback(offer_id: int):
+    """Handle lightweight feedback interactions for the given offer."""
+
+    user, _ = _resolve_user_context()
+    if user is None:
+        return jsonify({"error": "Unauthorized"}), 401
+    offer = Offer.query.get_or_404(offer_id)
+    if offer.company_id is None:
+        return jsonify({"error": "Offer is not linked to a company."}), 400
+    payload = request.get_json(silent=True) or {}
+    action = (payload.get("action") or "like").strip().lower() or "like"
+    note = (payload.get("note") or "").strip() or None
+    notify_offer_feedback(
+        company_id=offer.company_id,
+        offer_id=offer.id,
+        user_id=user.id,
+        action=action,
+        note=note,
+    )
+    return jsonify({"ok": True, "action": action})
+
+
+@portal_bp.route("/companies/<int:company_id>", methods=["GET"])
+def company_brief(company_id: int):
+    """Return a lightweight company profile for the portal modal."""
+
+    user, _ = _resolve_user_context()
+    if user is None:
+        return jsonify({"error": "Unauthorized"}), 401
+    company = get_company_brief(company_id)
+    if company is None:
+        return jsonify({"error": "Company not found"}), 404
+    return jsonify(company)
 
 
 @portal_bp.route("/notifications", methods=["GET"])

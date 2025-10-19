@@ -1,11 +1,13 @@
+# LINKED: Shared Offers & Redemptions Integration (no schema changes)
 """Blueprint implementing the company portal dashboard and management features."""
 # UPDATED: Responsive Company Portal with Restricted Editable Fields.
 
 from __future__ import annotations
 
+# LINKED: Shared Offers & Redemptions Integration (no schema changes)
 from datetime import datetime
 from http import HTTPStatus
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from flask import (
     Blueprint,
@@ -23,7 +25,12 @@ from sqlalchemy import func
 
 from .. import db
 from ..models import Company, Offer, Redemption
-from ..services.notifications import broadcast_new_offer
+from ..services.notifications import (
+    broadcast_new_offer,
+    fetch_offer_feedback_counts,
+)
+from ..services.offers import list_company_offers
+from ..services.redemption import list_company_redemptions
 from ..services.roles import require_role
 
 company_portal_bp = Blueprint(
@@ -174,11 +181,13 @@ def offers() -> str:
         .order_by(Offer.created_at.desc())
         .all()
     )
+    feedback_totals = fetch_offer_feedback_counts(company.id)
     return render_template(
         "company/offers.html",
         company=company,
         offers=offers,
         now=datetime.utcnow(),
+        feedback_totals=feedback_totals,
     )
 
 
@@ -296,20 +305,109 @@ def offer_delete(offer_id: int):
 @company_portal_bp.route("/redemptions")
 @require_role("company")
 def redemptions() -> str:
-    """Render the code verification workspace with recent attempts."""
+    """Render the redemption history with contextual filters."""
 
     company = _current_company()
-    recent_redemptions = (
-        Redemption.query.filter_by(company_id=company.id)
-        .order_by(Redemption.created_at.desc())
-        .limit(10)
-        .all()
+    offer_id = request.args.get("offer_id", type=int)
+    status = request.args.get("status", type=str)
+    if status not in {None, "pending", "redeemed", "expired"}:
+        status = None
+    start_date_raw = request.args.get("start_date", type=str)
+    end_date_raw = request.args.get("end_date", type=str)
+
+    def _normalize_date(value: Optional[str], *, end: bool = False) -> Optional[datetime]:
+        if not value:
+            return None
+        try:
+            parsed = datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            return None
+        if end:
+            return parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
+        return parsed
+
+    start_date = _normalize_date(start_date_raw)
+    end_date = _normalize_date(end_date_raw, end=True)
+
+    filters = {
+        "offer_id": offer_id,
+        "status": status,
+        "start_date": start_date_raw or "",
+        "end_date": end_date_raw or "",
+    }
+
+    recent_redemptions = list_company_redemptions(
+        company.id,
+        offer_id=offer_id,
+        status=status,
+        date_range=(start_date, end_date),
+        limit=200,
     )
+    available_offers = list_company_offers(company.id)
     return render_template(
         "company/redemptions.html",
         company=company,
+        filters=filters,
+        available_offers=available_offers,
         recent_redemptions=recent_redemptions,
     )
+
+
+@company_portal_bp.route("/redemptions/data")
+@require_role("company")
+def redemptions_data():
+    """Return company redemption history as JSON for live refreshing."""
+
+    company = _current_company()
+    offer_id = request.args.get("offer_id", type=int)
+    status = request.args.get("status", type=str)
+    if status not in {None, "pending", "redeemed", "expired"}:
+        status = None
+    start_date_raw = request.args.get("start_date", type=str)
+    end_date_raw = request.args.get("end_date", type=str)
+
+    def _normalize(value: Optional[str], *, end: bool = False) -> Optional[datetime]:
+        if not value:
+            return None
+        try:
+            parsed = datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            return None
+        if end:
+            return parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
+        return parsed
+
+    start_date = _normalize(start_date_raw)
+    end_date = _normalize(end_date_raw, end=True)
+
+    redemptions = list_company_redemptions(
+        company.id,
+        offer_id=offer_id,
+        status=status,
+        date_range=(start_date, end_date),
+        limit=300,
+    )
+    items = []
+    for redemption in redemptions:
+        items.append(
+            {
+                "id": redemption.id,
+                "code": redemption.redemption_code,
+                "status": redemption.status,
+                "created_at": redemption.created_at.isoformat() if redemption.created_at else None,
+                "redeemed_at": redemption.redeemed_at.isoformat() if redemption.redeemed_at else None,
+                "offer": {
+                    "id": redemption.offer_id,
+                    "title": redemption.offer.title if redemption.offer else f"Offer #{redemption.offer_id}",
+                },
+                "user": {
+                    "id": redemption.user_id,
+                    "username": redemption.user.username if redemption.user else None,
+                    "email": redemption.user.email if redemption.user else None,
+                },
+            }
+        )
+    return jsonify({"items": items})
 
 
 @company_portal_bp.route("/redemptions/verify", methods=["POST"])

@@ -1,3 +1,4 @@
+# LINKED: Shared Offers & Redemptions Integration (no schema changes)
 """Analytics aggregation helpers for the admin reports dashboard."""
 
 from __future__ import annotations

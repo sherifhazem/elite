@@ -1,3 +1,4 @@
+<!-- LINKED: Shared Offers & Redemptions Integration (no schema changes) -->
 <!-- Offer management listing with CRUD controls powered by fetch. -->
 <!-- UPDATED: Responsive Company Portal with Restricted Editable Fields. -->
 {% extends "company/base.html" %}
@@ -29,6 +30,7 @@
                             <th scope="col" data-sort-key="base_discount">Base Discount</th>
                             <th scope="col" data-sort-key="valid_until">Valid Until</th>
                             <th scope="col">Status</th>
+                            <th scope="col">Feedback</th>
                             <th scope="col">Actions</th>
                         </tr>
                     </thead>
@@ -49,6 +51,9 @@
                                 <span class="badge bg-{{ 'success' if offer.valid_until is none or offer.valid_until >= now else 'secondary' }}">
                                         {{ 'Active' if offer.valid_until is none or offer.valid_until >= now else 'Expired' }}
                                     </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark">{{ feedback_totals.get(offer.id, 0) }}</span>
                                 </td>
                                 <td>
                                     <div class="table-action-group">
@@ -91,6 +96,10 @@
                             <div>
                                 <dt>Valid Until</dt>
                                 <dd>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'No expiry' }}</dd>
+                            </div>
+                            <div>
+                                <dt>Feedback</dt>
+                                <dd>{{ feedback_totals.get(offer.id, 0) }}</dd>
                             </div>
                             {% if offer.description %}
                                 <div class="offer-card-description">

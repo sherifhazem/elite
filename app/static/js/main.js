@@ -1,3 +1,4 @@
+// LINKED: Shared Offers & Redemptions Integration (no schema changes)
 // Mobile-first interactions for the ELITE portal experience.
 (function () {
     "use strict";
@@ -235,7 +236,11 @@
                 chip.className = "offer-chip";
                 chip.dataset.offerId = offer.id;
                 chip.dataset.offerTitle = offer.title;
-                chip.dataset.offerCompany = offer.company_id ? `شريك رقم ${offer.company_id}` : "شريك ELITE";
+                chip.dataset.offerCompany = offer.company || (offer.company_id ? `شريك رقم ${offer.company_id}` : "شريك ELITE");
+                chip.dataset.offerCompanyId = offer.company_id || "";
+                chip.dataset.offerCompanySummary = offer.company_summary || "";
+                chip.dataset.offerCompanyDescription = offer.company_description || "";
+                chip.dataset.offerDescription = offer.description || "";
                 chip.dataset.offerDiscount = Math.round(offer.discount_percent || offer.base_discount || 0);
                 chip.dataset.offerLevel = membershipLevel;
                 chip.dataset.offerValid = offer.valid_until ? offer.valid_until.split("T")[0] : "مستمر";
@@ -253,6 +258,49 @@
         }
     }
 
+    /** Display a company information modal using cached data or live fetch. */
+    async function openCompanyDetails(companyId, fallbackName, fallbackSummary, fallbackDescription) {
+        if (!modal || !modalBody || !modalTitle) {
+            return;
+        }
+        const name = fallbackName || "الشركة الشريكة";
+        const summary = fallbackSummary || "";
+        const description = fallbackDescription || "";
+        modalTitle.textContent = name;
+        modalBody.innerHTML = `
+            <article class="company-modal">
+                ${summary ? `<p class="text-muted">${summary}</p>` : ""}
+                <p>${description || "لا تتوفر تفاصيل إضافية لهذه الشركة حالياً."}</p>
+            </article>
+        `;
+        modal.removeAttribute("hidden");
+        document.body.style.overflow = "hidden";
+        if (!companyId) {
+            return;
+        }
+        try {
+            const response = await fetch(`/portal/companies/${companyId}`, {
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+                credentials: "include",
+            });
+            if (!response.ok) {
+                return;
+            }
+            const payload = await response.json();
+            modalTitle.textContent = payload.name || name;
+            const modalSummary = payload.summary || summary;
+            const modalDescription = payload.description || description;
+            modalBody.innerHTML = `
+                <article class="company-modal">
+                    ${modalSummary ? `<p class="text-muted">${modalSummary}</p>` : ""}
+                    <p>${modalDescription || "لا تتوفر تفاصيل إضافية لهذه الشركة."}</p>
+                </article>
+            `;
+        } catch (error) {
+            console.error("Failed to load company details", error);
+        }
+    }
+
     /** Open the shared modal with details derived from the dataset. */
     function openOfferModal(source) {
         if (!modal || !modalBody || !modalTitle || !source) {
@@ -262,14 +310,36 @@
         const level = source.dataset.offerLevel || "Basic";
         const discount = source.dataset.offerDiscount || "0";
         const company = source.dataset.offerCompany || "ELITE Partner";
+        const companyId = source.dataset.offerCompanyId || "";
+        const summary = source.dataset.offerCompanySummary || "";
+        const description = source.dataset.offerDescription || "";
         const valid = source.dataset.offerValid || "مستمر";
         modalBody.innerHTML = `
-            <p><strong>الشركة:</strong> ${company}</p>
-            <p><strong>مستوى العضوية:</strong> ${level}</p>
-            <p><strong>نسبة الخصم:</strong> ${discount}%</p>
-            <p><strong>صالح حتى:</strong> ${valid}</p>
-            <p>للاستفادة من العرض، قم بعرض بطاقة عضويتك لممثل الشركة.</p>
+            <article class="offer-modal">
+                <p><strong>الشركة:</strong> ${company}</p>
+                <p><strong>مستوى العضوية:</strong> ${level}</p>
+                <p><strong>نسبة الخصم:</strong> ${discount}%</p>
+                <p><strong>صالح حتى:</strong> ${valid}</p>
+                ${description ? `<p>${description}</p>` : ""}
+                ${summary ? `<p class="text-muted">${summary}</p>` : ""}
+                ${
+                    companyId
+                        ? `<button class="ghost-button" type="button" data-modal-company data-company-id="${companyId}" data-company-name="${company}" data-company-summary="${summary}" data-company-description="${source.dataset.offerCompanyDescription || ""}">عن الشركة</button>`
+                        : ""
+                }
+            </article>
         `;
+        const companyButton = modalBody.querySelector("[data-modal-company]");
+        if (companyButton) {
+            companyButton.addEventListener("click", () => {
+                openCompanyDetails(
+                    companyButton.dataset.companyId,
+                    companyButton.dataset.companyName,
+                    companyButton.dataset.companySummary,
+                    companyButton.dataset.companyDescription
+                );
+            });
+        }
         modal.removeAttribute("hidden");
         document.body.style.overflow = "hidden";
     }
@@ -357,9 +427,96 @@
         document.body.style.overflow = "";
     }
 
+    function showRedemptionDetails(button) {
+        if (!modal || !modalBody || !modalTitle) {
+            return;
+        }
+        const card = button.closest(".activation-card");
+        if (!card) {
+            return;
+        }
+        const offerTitle = card.dataset.offerTitle || "تفاصيل العرض";
+        const offerDescription = card.dataset.offerDescription || "لا تتوفر تفاصيل إضافية لهذا العرض.";
+        const companyName = card.dataset.companyName || "شريك ELITE";
+        const companySummary = card.dataset.companySummary || "";
+        modalTitle.textContent = offerTitle;
+        modalBody.innerHTML = `
+            <article class="activation-details">
+                <p><strong>الشركة:</strong> ${companyName}</p>
+                <p>${offerDescription}</p>
+                ${companySummary ? `<p class="text-muted">${companySummary}</p>` : ""}
+                <div class="activation-details__actions">
+                    <button class="ghost-button" type="button" data-company-details>عن الشركة</button>
+                </div>
+            </article>
+        `;
+        const companyButton = modalBody.querySelector("[data-company-details]");
+        if (companyButton) {
+            companyButton.addEventListener("click", () => openCompanyDetailsFromElement(card));
+        }
+        modal.removeAttribute("hidden");
+        document.body.style.overflow = "hidden";
+    }
+
     /** Wire offer cards inside the offers view. */
+    function openCompanyDetailsFromElement(element) {
+        if (!element) {
+            return;
+        }
+        const host = element.closest(".offer-card") || element.closest(".activation-card");
+        if (!host) {
+            return;
+        }
+        const companyId = host.dataset.offerCompanyId || host.dataset.companyId || "";
+        const companyName = host.dataset.offerCompany || host.dataset.companyName || element.dataset.companyName || "الشركة الشريكة";
+        const companySummary = host.dataset.offerCompanySummary || host.dataset.companySummary || element.dataset.companySummary || "";
+        const companyDescription = host.dataset.offerCompanyDescription || element.dataset.companyDescription || "";
+        openCompanyDetails(companyId, companyName, companySummary, companyDescription);
+    }
+
+    async function submitOfferFeedback(button) {
+        const card = button.closest(".offer-card");
+        if (!card) {
+            showToast("تعذر تحديد العرض المحدد.", "error");
+            return;
+        }
+        const offerId = card.dataset.offerId;
+        if (!offerId) {
+            showToast("تعذر تحديد العرض المحدد.", "error");
+            return;
+        }
+        const action = button.dataset.feedbackAction || "like";
+        const note = button.dataset.feedbackNote || "";
+        button.disabled = true;
+        try {
+            const response = await fetch(`/portal/offers/${offerId}/feedback`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                credentials: "include",
+                body: JSON.stringify({ action, note }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.ok === false) {
+                throw new Error(payload.error || payload.message || "تعذر إرسال التفاعل.");
+            }
+            showToast("تم إرسال تفاعلك إلى الشركة.");
+        } catch (error) {
+            console.error("Feedback submission failed", error);
+            showToast(error.message || "تعذر إرسال التفاعل.", "error");
+        } finally {
+            button.disabled = false;
+        }
+    }
+
     function bindOfferCards() {
         viewContainer.querySelectorAll(".offer-card").forEach((card) => {
+            if (card.dataset.enhanced === "true") {
+                return;
+            }
+            card.dataset.enhanced = "true";
             card.addEventListener("click", () => openOfferModal(card));
             card.addEventListener("keydown", (event) => {
                 if (event.key === "Enter") {
@@ -368,6 +525,10 @@
             });
         });
         viewContainer.querySelectorAll("[data-offer-action]").forEach((button) => {
+            if (button.dataset.enhanced === "true") {
+                return;
+            }
+            button.dataset.enhanced = "true";
             button.addEventListener("click", (event) => {
                 event.stopPropagation();
                 const card = button.closest(".offer-card") || button.closest(".offer-chip");
@@ -377,11 +538,37 @@
         viewContainer.querySelectorAll(".offer-chip").forEach((chip) => {
             chip.addEventListener("click", () => openOfferModal(chip));
         });
+        viewContainer.querySelectorAll("[data-offer-company]").forEach((button) => {
+            if (button.dataset.enhanced === "true") {
+                return;
+            }
+            button.dataset.enhanced = "true";
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                openCompanyDetailsFromElement(button);
+            });
+        });
+        viewContainer.querySelectorAll("[data-offer-feedback]").forEach((button) => {
+            if (button.dataset.enhanced === "true") {
+                return;
+            }
+            button.dataset.enhanced = "true";
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                submitOfferFeedback(button);
+            });
+        });
     }
 
     /** Bind actions for activating offers and managing redemption utilities. */
     function bindActivationButtons() {
         viewContainer.querySelectorAll("[data-offer-activate]").forEach((button) => {
+            if (button.dataset.enhanced === "true") {
+                return;
+            }
+            button.dataset.enhanced = "true";
             button.addEventListener("click", (event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -390,6 +577,10 @@
         });
 
         viewContainer.querySelectorAll("[data-open-redemption]").forEach((button) => {
+            if (button.dataset.enhanced === "true") {
+                return;
+            }
+            button.dataset.enhanced = "true";
             button.addEventListener("click", async (event) => {
                 event.preventDefault();
                 const code = button.dataset.redemptionCode;
@@ -410,7 +601,22 @@
             });
         });
 
+        viewContainer.querySelectorAll("[data-redemption-details]").forEach((button) => {
+            if (button.dataset.enhanced === "true") {
+                return;
+            }
+            button.dataset.enhanced = "true";
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
+                showRedemptionDetails(button);
+            });
+        });
+
         viewContainer.querySelectorAll("[data-copy-redemption]").forEach((button) => {
+            if (button.dataset.enhanced === "true") {
+                return;
+            }
+            button.dataset.enhanced = "true";
             button.addEventListener("click", (event) => {
                 event.preventDefault();
                 const code = button.dataset.redemptionCode;
@@ -459,6 +665,9 @@
                 return;
             }
             showRedemptionModal(payload);
+            if (viewContainer && viewContainer.dataset.currentView === "profile") {
+                refreshCurrentView(false);
+            }
         } catch (error) {
             console.error("Activation request failed", error);
             showToast("حدث خطأ أثناء إنشاء الكود.", "error");

@@ -1,10 +1,13 @@
+# LINKED: Shared Offers & Redemptions Integration (no schema changes)
 """Notification service helpers and Celery tasks for asynchronous delivery."""
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from datetime import datetime
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from flask import current_app, url_for
+from sqlalchemy.orm import joinedload
 
 from .. import app, celery, db
 from ..models.notification import Notification
@@ -53,6 +56,145 @@ def notify_membership_upgrade(user_id: int, old_level: str, new_level: str):
         link_url=url_for("portal.profile"),
         metadata=metadata,
     )
+
+
+def _company_recipient_ids(company_id: int) -> List[int]:
+    """Return company-associated user identifiers for notification delivery."""
+
+    if not company_id:
+        return []
+    recipients: List[int] = []
+    company_users: Iterable[User] = (
+        User.query.filter_by(company_id=company_id, is_active=True).all()
+    )
+    recipients.extend(user.id for user in company_users if user.id not in recipients)
+
+    owner_ids = (
+        db.session.query(User.id)
+        .filter(User.is_active.is_(True), User.owned_companies.any(id=company_id))
+        .all()
+    )
+    for (user_id,) in owner_ids:
+        if user_id not in recipients:
+            recipients.append(user_id)
+    return recipients
+
+
+def notify_offer_redemption_activity(
+    *,
+    redemption,
+    event: str = "activated",
+    timestamp: Optional[datetime] = None,
+) -> None:
+    """Send offer redemption notifications to both the member and company."""
+
+    if redemption is None:
+        return
+
+    resolved_timestamp = timestamp or redemption.redeemed_at or redemption.created_at
+    metadata = {
+        "offer_id": redemption.offer_id,
+        "company_id": redemption.company_id,
+        "user_id": redemption.user_id,
+        "redemption_code": redemption.redemption_code,
+        "event": event,
+        "redeemed_at": resolved_timestamp.isoformat() if resolved_timestamp else None,
+    }
+
+    try:
+        queue_notification(
+            redemption.user_id,
+            type="offer_redeemed",
+            title="تم تفعيل العرض",
+            message=f"تم إنشاء رمز {redemption.redemption_code} لعرضك.",
+            link_url=url_for("portal.profile"),
+            metadata=metadata,
+        )
+    except Exception:  # pragma: no cover - defensive notification guard
+        current_app.logger.exception(
+            "Failed to queue redemption notification for member", exc_info=True
+        )
+
+    for recipient_id in _company_recipient_ids(redemption.company_id):
+        try:
+            queue_notification(
+                recipient_id,
+                type="offer_redeemed",
+                title="تم إنشاء تفعيل جديد",
+                message=(
+                    f"العضو #{redemption.user_id} أنشأ كود {redemption.redemption_code} للعرض"
+                ),
+                link_url=url_for("company_portal_bp.redemptions"),
+                metadata=metadata,
+            )
+        except Exception:  # pragma: no cover - defensive notification guard
+            current_app.logger.exception(
+                "Failed to queue redemption notification for company", exc_info=True
+            )
+
+
+def notify_offer_feedback(
+    *,
+    company_id: int,
+    offer_id: int,
+    user_id: int,
+    action: str,
+    note: Optional[str] = None,
+) -> None:
+    """Send a lightweight feedback notification to company recipients."""
+
+    metadata = {
+        "offer_id": offer_id,
+        "user_id": user_id,
+        "company_id": company_id,
+        "action": action,
+    }
+    if note:
+        metadata["note"] = note
+
+    for recipient_id in _company_recipient_ids(company_id):
+        try:
+            queue_notification(
+                recipient_id,
+                type="offer_feedback",
+                title="تفاعل جديد مع العرض",
+                message="أحد الأعضاء تفاعل مع أحد عروضك.",
+                link_url=url_for("company_portal_bp.offers"),
+                metadata=metadata,
+            )
+        except Exception:  # pragma: no cover - defensive notification guard
+            current_app.logger.exception(
+                "Failed to queue offer feedback notification", exc_info=True
+            )
+
+
+def fetch_offer_feedback_counts(company_id: int) -> Dict[int, int]:
+    """Return aggregated feedback counts per offer for the company."""
+
+    if not company_id:
+        return {}
+
+    notifications: Sequence[Notification] = (
+        Notification.query.options(joinedload(Notification.user))
+        .join(User, User.id == Notification.user_id)
+        .filter(
+            Notification.type == "offer_feedback",
+            User.is_active.is_(True),
+            (User.company_id == company_id)
+            | (User.owned_companies.any(id=company_id)),
+        )
+        .order_by(Notification.created_at.desc())
+        .all()
+    )
+
+    counts: Dict[int, int] = {}
+    for notification in notifications:
+        metadata = notification.metadata_json or {}
+        offer_id = metadata.get("offer_id")
+        if not offer_id:
+            continue
+        counts[offer_id] = counts.get(offer_id, 0) + 1
+    return counts
 
 
 @celery.task(name="notifications.create")
@@ -130,6 +272,9 @@ __all__ = [
     "queue_notification",
     "broadcast_new_offer",
     "notify_membership_upgrade",
+    "notify_offer_redemption_activity",
+    "notify_offer_feedback",
+    "fetch_offer_feedback_counts",
     "create_notification_task",
     "broadcast_offer_task",
 ]
