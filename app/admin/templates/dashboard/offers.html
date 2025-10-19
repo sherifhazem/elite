@@ -1,106 +1,135 @@
 <!-- Offer management table and action controls. -->
+{% set active_page = 'offers' %}
 {% extends "dashboard/base.html" %}
 
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Offer Management</h2>
-        <a class="btn btn-primary" href="{{ url_for('admin.add_offer') }}">Add Offer</a>
-    </div>
+    <div class="container-fluid py-4">
+        <!-- Page heading -->
+        <div class="card shadow-sm admin-card mb-4">
+            <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <h1 class="h4 mb-1">Offer Management</h1>
+                    <p class="text-muted mb-0">Shape elite campaigns with tier-specific pricing and timely refreshes.</p>
+                </div>
+                <a class="btn btn-primary" href="{{ url_for('admin.add_offer') }}">Add Offer</a>
+            </div>
+        </div>
 
-    <div class="table-responsive bg-white shadow-sm rounded">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th scope="col">Offer Title</th>
-                    <th scope="col" class="text-center">Base Discount</th>
-                    <th scope="col" class="text-center">Silver</th>
-                    <th scope="col" class="text-center">Gold</th>
-                    <th scope="col" class="text-center">Premium</th>
-                    <th scope="col" class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for offer in offers %}
-                    <tr>
-                        <td>
-                            <div class="fw-semibold">{{ offer.title }}</div>
-                            <div class="text-muted small">
-                                {{ offer.company.name if offer.company else 'No company assigned' }}
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <span
-                                class="badge rounded-pill {{ tier_styles['Basic']['text'] }}"
-                                style="background-color: {{ tier_styles['Basic']['bg'] }};"
-                            >
-                                {{ '%.2f%%'|format(offer.base_discount) }}
-                            </span>
-                        </td>
-                        <td class="text-center">
-                            <span
-                                class="badge rounded-pill {{ tier_styles['Silver']['text'] }}"
-                                style="background-color: {{ tier_styles['Silver']['bg'] }};"
-                            >
-                                {{ '%.2f%%'|format(offer.get_discount_for_level('Silver')) }}
-                            </span>
-                        </td>
-                        <td class="text-center">
-                            <span
-                                class="badge rounded-pill {{ tier_styles['Gold']['text'] }}"
-                                style="background-color: {{ tier_styles['Gold']['bg'] }};"
-                            >
-                                {{ '%.2f%%'|format(offer.get_discount_for_level('Gold')) }}
-                            </span>
-                        </td>
-                        <td class="text-center">
-                            <span
-                                class="badge rounded-pill {{ tier_styles['Premium']['text'] }}"
-                                style="background-color: {{ tier_styles['Premium']['bg'] }};"
-                            >
-                                {{ '%.2f%%'|format(offer.get_discount_for_level('Premium')) }}
-                            </span>
-                        </td>
-                        <td class="text-end">
-                            <div class="btn-group" role="group">
-                                <a
-                                    class="btn btn-sm btn-outline-primary"
-                                    href="{{ url_for('admin.edit_offer_discount', offer_id=offer.id) }}"
-                                >
-                                    Edit Discount
-                                </a>
-                                <a
-                                    class="btn btn-sm btn-outline-secondary"
-                                    href="{{ url_for('admin.manage_offer', offer_id=offer.id) }}"
-                                >
-                                    Manage Offer
-                                </a>
-                                <form
-                                    class="d-inline"
-                                    action="{{ url_for('admin.delete_offer', offer_id=offer.id) }}"
-                                    method="post"
-                                    onsubmit="return confirm('Delete offer {{ offer.title }}?');"
-                                >
-                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                                </form>
-                                <form
-                                    class="d-inline"
-                                    action="{{ url_for('admin.trigger_offer_notification', offer_id=offer.id) }}"
-                                    method="post"
-                                    onsubmit="return confirm('Send notifications for {{ offer.title }}?');"
-                                >
-                                    <button class="btn btn-sm btn-outline-success" type="submit">
-                                        Notify Members
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td class="text-center" colspan="6">No offers found.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <!-- Offers table -->
+        <div class="card shadow-sm admin-card">
+            <div class="card-body">
+                <div class="admin-table-wrapper">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="admin-table-head">
+                            <tr>
+                                <th scope="col">Offer Title</th>
+                                <th scope="col" class="text-center">Base</th>
+                                <th scope="col" class="text-center">Silver</th>
+                                <th scope="col" class="text-center">Gold</th>
+                                <th scope="col" class="text-center">Premium</th>
+                                <th scope="col" class="text-center">Status</th>
+                                <th scope="col" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set now_value = current_time if current_time is defined else None %}
+                            {% for offer in offers %}
+                                {% set is_expired = now_value and offer.valid_until and offer.valid_until < now_value %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">{{ offer.title }}</div>
+                                        <div class="text-muted small">
+                                            {{ offer.company.name if offer.company else 'No company assigned' }}
+                                        </div>
+                                        {% if offer.valid_until %}
+                                            <div class="small text-muted mt-1">
+                                                Valid until {{ offer.valid_until.strftime('%Y-%m-%d') }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <span
+                                            class="badge rounded-pill {{ tier_styles['Basic']['text'] }}"
+                                            style="background-color: {{ tier_styles['Basic']['bg'] }};"
+                                        >
+                                            {{ '%.2f%%'|format(offer.base_discount) }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span
+                                            class="badge rounded-pill {{ tier_styles['Silver']['text'] }}"
+                                            style="background-color: {{ tier_styles['Silver']['bg'] }};"
+                                        >
+                                            {{ '%.2f%%'|format(offer.get_discount_for_level('Silver')) }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span
+                                            class="badge rounded-pill {{ tier_styles['Gold']['text'] }}"
+                                            style="background-color: {{ tier_styles['Gold']['bg'] }};"
+                                        >
+                                            {{ '%.2f%%'|format(offer.get_discount_for_level('Gold')) }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span
+                                            class="badge rounded-pill {{ tier_styles['Premium']['text'] }}"
+                                            style="background-color: {{ tier_styles['Premium']['bg'] }};"
+                                        >
+                                            {{ '%.2f%%'|format(offer.get_discount_for_level('Premium')) }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge-status {{ 'expired' if is_expired else 'active' }}">
+                                            {{ 'Expired' if is_expired else 'Active' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                            <a
+                                                class="btn btn-sm btn-admin-action"
+                                                href="{{ url_for('admin.edit_offer_discount', offer_id=offer.id) }}"
+                                            >
+                                                Edit Discount
+                                            </a>
+                                            <a
+                                                class="btn btn-sm btn-admin-action"
+                                                href="{{ url_for('admin.manage_offer', offer_id=offer.id) }}"
+                                            >
+                                                Manage Offer
+                                            </a>
+                                            <form
+                                                class="d-inline"
+                                                action="{{ url_for('admin.delete_offer', offer_id=offer.id) }}"
+                                                method="post"
+                                                onsubmit="return confirm('Delete offer {{ offer.title }}?');"
+                                            >
+                                                <button class="btn btn-sm btn-admin-action" data-variant="danger" type="submit">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                            <form
+                                                class="d-inline"
+                                                action="{{ url_for('admin.trigger_offer_notification', offer_id=offer.id) }}"
+                                                method="post"
+                                                onsubmit="return confirm('Send notifications for {{ offer.title }}?');"
+                                            >
+                                                <button class="btn btn-sm btn-admin-action" type="submit">
+                                                    Notify Members
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td class="text-center text-muted" colspan="7">No offers found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}

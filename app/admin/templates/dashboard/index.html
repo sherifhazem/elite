@@ -1,39 +1,104 @@
 <!-- Landing page for the Elite admin dashboard overview. -->
+{% set active_page = 'overview' %}
 {% extends "dashboard/base.html" %}
 
 {% block content %}
-    <div class="row g-4">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Users</h5>
-                    <p class="card-text">
-                        Review registered members, promote administrators, and reset credentials in a
-                        secure workspace.
-                    </p>
-                    <a class="btn btn-outline-primary" href="{{ url_for('admin.dashboard_users') }}">Manage Users</a>
+    <!-- Quick metrics cards -->
+    <div class="container-fluid py-4">
+        <div class="row g-4">
+            <div class="col-12 col-md-4">
+                <div class="card shadow-sm admin-card admin-stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="admin-stat-label">Total Users</div>
+                                <div class="admin-stat-value">{{ total_users|default(0) }}</div>
+                            </div>
+                            <span class="admin-stat-icon" aria-hidden="true">👥</span>
+                        </div>
+                        <p class="text-muted small mb-0 mt-3">
+                            Monitor community growth and ensure membership tiers stay aligned with Elite standards.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card shadow-sm admin-card admin-stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="admin-stat-label">Partner Companies</div>
+                                <div class="admin-stat-value">{{ total_companies|default(0) }}</div>
+                            </div>
+                            <span class="admin-stat-icon" aria-hidden="true">🏢</span>
+                        </div>
+                        <p class="text-muted small mb-0 mt-3">
+                            Keep the partner directory vibrant with accurate descriptions and polished branding.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card shadow-sm admin-card admin-stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="admin-stat-label">Live Offers</div>
+                                <div class="admin-stat-value">{{ total_offers|default(0) }}</div>
+                            </div>
+                            <span class="admin-stat-icon" aria-hidden="true">🎁</span>
+                        </div>
+                        <p class="text-muted small mb-0 mt-3">
+                            Curate seasonal campaigns and keep the discounts pipeline full for Elite members.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Companies</h5>
-                    <p class="card-text">
-                        Onboard new partners or refresh descriptions to keep marketplace listings up to date.
-                    </p>
-                    <a class="btn btn-outline-primary" href="{{ url_for('admin.dashboard_companies') }}">Manage Companies</a>
+
+        <hr class="admin-divider">
+
+        <!-- Management shortcuts -->
+        <div class="row g-4">
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm admin-card mb-4 mb-lg-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h2 class="h5 mb-1">Team Operations</h2>
+                                <p class="text-muted small mb-0">Invite administrators and resolve credential issues in seconds.</p>
+                            </div>
+                            <a class="btn btn-primary" href="{{ url_for('admin.dashboard_users') }}">Open Users</a>
+                        </div>
+                        <ul class="list-unstyled mb-0 small text-muted">
+                            <li class="mb-2">• Promote trusted members into admin or superadmin roles.</li>
+                            <li class="mb-2">• Reset passwords securely following Elite security guidance.</li>
+                            <li>• Track inactive accounts and archive them when needed.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Offers</h5>
-                    <p class="card-text">
-                        Publish timely deals, adjust discounts, and retire expired promotions with ease.
-                    </p>
-                    <a class="btn btn-outline-primary" href="{{ url_for('admin.dashboard_offers') }}">Manage Offers</a>
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm admin-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h2 class="h5 mb-1">Marketplace Health</h2>
+                                <p class="text-muted small mb-0">Balance partner onboarding with compelling offers for every tier.</p>
+                            </div>
+                            <a class="btn btn-outline-primary" href="{{ url_for('reports.reports_home') }}">View Reports</a>
+                        </div>
+                        <div class="row g-3 small text-muted">
+                            <div class="col-12 col-sm-6">
+                                <strong class="text-dark d-block mb-1">Partner Management</strong>
+                                <p class="mb-0">Audit company records, assign owners, and elevate standout brands.</p>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <strong class="text-dark d-block mb-1">Offer Lifecycle</strong>
+                                <p class="mb-0">Schedule launches, monitor expirations, and refresh discounts seamlessly.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

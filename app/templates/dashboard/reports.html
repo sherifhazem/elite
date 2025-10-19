@@ -1,3 +1,4 @@
+{% set active_page = 'reports' %}
 {% extends 'dashboard/base.html' %}
 
 {% block extra_styles %}
@@ -6,62 +7,91 @@
 {% endblock %}
 
 {% block content %}
-    <div class="reports-layout" lang="ar" dir="rtl">
-        <aside class="reports-sidebar">
-            <h2 class="sidebar-title">نظرة سريعة</h2>
-            <ul class="sidebar-links">
-                <li><a class="active" href="#overview">لوحة التحكم</a></li>
-                <li><a href="#charts">الرسوم البيانية</a></li>
-                <li><a href="#recent-offers">أحدث العروض</a></li>
-            </ul>
-        </aside>
-
-        <section class="reports-main">
-            <header class="reports-header" id="overview">
-                <h1>التقارير والتحليلات</h1>
+    <div class="container-fluid py-4" lang="ar" dir="rtl">
+        <!-- Page heading -->
+        <div class="card shadow-sm admin-card mb-4">
+            <div class="card-body d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                <div>
+                    <h1 class="h4 mb-1">Analytics Overview</h1>
+                    <p class="text-muted mb-0">لوحة تحليلات شاملة لمتابعة أداء الأعضاء والشركاء والعروض.</p>
+                </div>
                 <button class="btn btn-primary" id="exportPdfButton" type="button">تصدير التقرير PDF</button>
-            </header>
-
-            <div class="stats-grid">
-                <article class="stat-card">
-                    <span class="label">إجمالي الأعضاء</span>
-                    <span class="value" id="totalUsers">0</span>
-                    <span class="subtext" id="newUsers">انضم خلال ٧ أيام: 0</span>
-                </article>
-                <article class="stat-card">
-                    <span class="label">الشركات الشريكة</span>
-                    <span class="value" id="totalCompanies">0</span>
-                    <span class="subtext" id="newCompanies">انضمت خلال ٣٠ يوم: 0</span>
-                </article>
-                <article class="stat-card">
-                    <span class="label">العروض الفعالة</span>
-                    <span class="value" id="activeOffers">0</span>
-                    <span class="subtext" id="avgDiscount">متوسط الخصم: 0.00%</span>
-                </article>
             </div>
+        </div>
 
-            <div class="charts-grid" id="charts">
-                <article class="chart-card">
-                    <h3>توزيع العضويات</h3>
-                    <canvas id="membershipChart" aria-label="مخطط توزيع العضويات" role="img"></canvas>
-                </article>
-                <article class="chart-card">
-                    <h3>تسجيلات الأعضاء (٧ أيام)</h3>
-                    <canvas id="activityChart" aria-label="مخطط تسجيلات الأعضاء" role="img"></canvas>
-                </article>
-                <article class="chart-card">
-                    <h3>اتجاهات نشر العروض</h3>
-                    <canvas id="offersChart" aria-label="مخطط العروض" role="img"></canvas>
-                </article>
+        <!-- Summary statistics -->
+        <div class="row g-4 mb-4" id="overview">
+            <div class="col-12 col-lg-4">
+                <div class="card shadow-sm admin-card report-stat-card h-100">
+                    <div class="card-body">
+                        <div class="report-stat-label">إجمالي الأعضاء</div>
+                        <div class="report-stat-value" id="totalUsers">0</div>
+                        <p class="text-muted small mb-0" id="newUsers">انضم خلال ٧ أيام: 0</p>
+                    </div>
+                </div>
             </div>
+            <div class="col-12 col-lg-4">
+                <div class="card shadow-sm admin-card report-stat-card h-100">
+                    <div class="card-body">
+                        <div class="report-stat-label">الشركات الشريكة</div>
+                        <div class="report-stat-value" id="totalCompanies">0</div>
+                        <p class="text-muted small mb-0" id="newCompanies">انضمت خلال ٣٠ يوم: 0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-4">
+                <div class="card shadow-sm admin-card report-stat-card h-100">
+                    <div class="card-body">
+                        <div class="report-stat-label">العروض الفعالة</div>
+                        <div class="report-stat-value" id="activeOffers">0</div>
+                        <p class="text-muted small mb-0" id="avgDiscount">متوسط الخصم: 0.00%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <section class="table-card" id="recent-offers">
-                <div class="table-header">
-                    <h3>أحدث العروض</h3>
+        <hr class="admin-divider">
+
+        <!-- Charts grid -->
+        <div class="row g-4" id="charts">
+            <div class="col-12 col-xl-4">
+                <div class="card shadow-sm admin-card report-chart-card h-100">
+                    <div class="card-body">
+                        <h2 class="h6 mb-3">توزيع العضويات</h2>
+                        <canvas id="membershipChart" aria-label="مخطط توزيع العضويات" role="img"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-4">
+                <div class="card shadow-sm admin-card report-chart-card h-100">
+                    <div class="card-body">
+                        <h2 class="h6 mb-3">تسجيلات الأعضاء (٧ أيام)</h2>
+                        <canvas id="activityChart" aria-label="مخطط تسجيلات الأعضاء" role="img"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-4">
+                <div class="card shadow-sm admin-card report-chart-card h-100">
+                    <div class="card-body">
+                        <h2 class="h6 mb-3">اتجاهات نشر العروض</h2>
+                        <canvas id="offersChart" aria-label="مخطط العروض" role="img"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="admin-divider">
+
+        <!-- Recent offers table -->
+        <div class="card shadow-sm admin-card" id="recent-offers">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 mb-0">أحدث العروض</h2>
+                    <span class="text-muted small">بيانات مباشرة من لوحة التقارير.</span>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
-                        <thead>
+                        <thead class="admin-table-head">
                             <tr>
                                 <th scope="col">العرض</th>
                                 <th scope="col">الشركة</th>
@@ -77,8 +107,8 @@
                         </tbody>
                     </table>
                 </div>
-            </section>
-        </section>
+            </div>
+        </div>
     </div>
 {% endblock %}
 
