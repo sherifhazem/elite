@@ -3,11 +3,9 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" class="portal-mobile-shell">
     <head>
-        <!-- Standard metadata to ensure UTF-8 rendering and mobile viewport. -->
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <title>{% block title %}ELITE Mobile Portal{% endblock %}</title>
-        <!-- Webfonts supporting the visual identity (Poppins + Inter). -->
         <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
@@ -21,7 +19,6 @@
             crossorigin="anonymous"
             referrerpolicy="no-referrer"
         />
-        <!-- Unified stylesheet compiled for the mobile-first layout. -->
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2" />
         <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}" type="image/png" />
         <style>
@@ -88,8 +85,7 @@
                 gap: 24px;
             }
 
-            /* FIXED: Simplified and clarified bottom navigation bar (Mobile Portal) */
-            /* Removed blur/opacity effects for maximum readability on all devices */
+            /* ✅ Updated bottom navigation bar */
             .app-nav {
                 position: sticky;
                 bottom: 0;
@@ -99,9 +95,9 @@
                 grid-template-columns: repeat(4, 1fr);
                 background: #ffffff;
                 border-top: 1px solid #ddd;
-                padding: 10px 12px 16px;
+                padding: 10px 12px 12px;
                 box-shadow: none;
-                backdrop-filter: none;
+                z-index: 20;
             }
 
             .app-nav__item {
@@ -109,7 +105,7 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                gap: 5px;
+                gap: 4px;
                 padding: 8px 6px;
                 border-radius: 10px;
                 text-decoration: none;
@@ -118,6 +114,7 @@
                 font-weight: 600;
                 color: #4e2b8f;
                 transition: color 0.2s ease-in-out, background 0.2s ease-in-out;
+                z-index: 21;
             }
 
             .app-nav__icon {
@@ -126,13 +123,20 @@
                 color: inherit;
             }
 
+            .app-nav__label {
+                font-size: 0.72rem;
+                color: inherit;
+                line-height: 1.1;
+                text-align: center;
+            }
+
             .app-nav__item--active {
                 background: #4e2b8f;
                 color: #ffffff;
             }
 
             .app-nav__item:active {
-                opacity: 0.7;
+                opacity: 0.8;
             }
 
             .app-nav__item:focus-visible {
@@ -148,17 +152,6 @@
                 color: #fff;
                 font-size: 0.7rem;
                 font-weight: 600;
-            }
-
-            .visually-hidden {
-                position: absolute !important;
-                width: 1px;
-                height: 1px;
-                padding: 0;
-                margin: -1px;
-                overflow: hidden;
-                clip: rect(0, 0, 0, 0);
-                border: 0;
             }
 
             .toast-stack {
@@ -195,23 +188,17 @@
         </style>
     </head>
     <body class="portal-mobile-body">
-        <!-- Application shell wrapping all portal views. -->
         <div class="app-shell" id="app-shell" data-active-nav="{{ active_nav }}">
-            <!-- Compact header that only displays the active page title. -->
             <header class="app-header" id="portal-header">
                 <div class="header-title" id="portal-page-title">{% block page_heading %}ELITE{% endblock %}</div>
             </header>
-            <!-- Scrollable view stack containing the requested page content. -->
             <main class="app-main" id="portal-main" role="main">
-                <div class="pull-indicator" id="pull-to-refresh" hidden>
-                    <span class="pull-indicator__icon" aria-hidden="true">⭮</span>
-                    <span class="pull-indicator__label">Release to refresh</span>
-                </div>
                 <section class="view-container" id="portal-view" data-current-view="{{ active_nav }}">
                     {% block content %}{% endblock %}
                 </section>
             </main>
-            <!-- Persistent bottom navigation following native mobile patterns. -->
+
+            <!-- ✅ Updated visible bottom navigation -->
             <nav class="app-nav" aria-label="Primary navigation">
                 <a
                     class="app-nav__item {% if active_nav == 'home' %}app-nav__item--active{% endif %}"
@@ -219,42 +206,45 @@
                     data-nav-link
                     data-nav-target="home"
                 >
-                    <span class="app-nav__icon" aria-hidden="true"><i class="fa-solid fa-house"></i></span>
-                    <span class="visually-hidden">Home</span>
+                    <span class="app-nav__icon"><i class="fa-solid fa-house"></i></span>
+                    <span class="app-nav__label">الرئيسية</span>
                 </a>
+
                 <a
                     class="app-nav__item {% if active_nav == 'offers' %}app-nav__item--active{% endif %}"
                     href="{{ url_for('portal.offers') }}"
                     data-nav-link
                     data-nav-target="offers"
                 >
-                    <span class="app-nav__icon" aria-hidden="true"><i class="fa-solid fa-gift"></i></span>
-                    <span class="visually-hidden">Offers</span>
+                    <span class="app-nav__icon"><i class="fa-solid fa-gift"></i></span>
+                    <span class="app-nav__label">العروض</span>
                 </a>
+
                 <a
                     class="app-nav__item {% if active_nav == 'profile' %}app-nav__item--active{% endif %}"
                     href="{{ url_for('portal.profile') }}"
                     data-nav-link
                     data-nav-target="profile"
                 >
-                    <span class="app-nav__icon" aria-hidden="true"><i class="fa-solid fa-user"></i></span>
-                    <span class="visually-hidden">Profile</span>
+                    <span class="app-nav__icon"><i class="fa-solid fa-user"></i></span>
+                    <span class="app-nav__label">الملف</span>
                 </a>
+
                 <a
                     class="app-nav__item {% if active_nav == 'notifications' %}app-nav__item--active{% endif %}"
                     href="{{ url_for('portal.notifications') }}"
                     data-nav-link
                     data-nav-target="notifications"
                 >
-                    <span class="app-nav__icon" aria-hidden="true"><i class="fa-solid fa-bell"></i></span>
-                    <span class="app-nav__badge" id="notification-count" data-count="{{ notification_unread_count | default(0) }}">
-                        {{ notification_unread_count | default(0) }}
-                    </span>
-                    <span class="visually-hidden">Notifications</span>
+                    <span class="app-nav__icon"><i class="fa-solid fa-bell"></i></span>
+                    <span class="app-nav__label">الإشعارات</span>
+                    {% if notification_unread_count %}
+                    <span class="app-nav__badge" id="notification-count">{{ notification_unread_count }}</span>
+                    {% endif %}
                 </a>
             </nav>
         </div>
-        <!-- Lightweight modal container reused across pages. -->
+
         <div class="app-modal" id="portal-modal" role="dialog" aria-modal="true" hidden>
             <div class="app-modal__backdrop" data-modal-dismiss aria-hidden="true"></div>
             <article class="app-modal__sheet" role="document">
@@ -265,13 +255,14 @@
                 <div class="app-modal__body" id="modal-body"></div>
             </article>
         </div>
-        <!-- Toast region for transient success/error messages. -->
+
         <div class="toast-stack" id="toast-container" aria-live="polite" aria-atomic="true"></div>
-        <!-- Full-screen spinner shown during async navigation or API work. -->
+
         <div class="loading-indicator" id="loading-indicator" hidden>
             <div class="loading-indicator__spinner" aria-hidden="true"></div>
             <span class="loading-indicator__label">Loading</span>
         </div>
+
         <script src="{{ url_for('static', filename='js/main.js') }}?v=2" defer></script>
     </body>
 </html>
