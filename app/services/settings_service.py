@@ -1,3 +1,5 @@
+# LINKED: Added comprehensive Site Settings section in Admin Panel.
+# Includes Cities & Industries dynamic management integrated with Redis backend.
 # LINKED: Upgraded settings storage to Redis backend for dynamic dropdown lists.
 # Replaced local JSON persistence with Redis keys (elite:settings:cities, elite:settings:industries).
 """Utility helpers for managing admin-configurable dropdown lists via Redis."""
