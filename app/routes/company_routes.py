@@ -4,18 +4,25 @@
 # Verified welcome email and internal notification triggers for new accounts.
 """Company CRUD blueprint providing JSON endpoints."""
 
+# LINKED: Enhanced company registration form (business details + admin review integration)
+# Added mandatory fields for phone, industry, city, website, and social links without schema changes.
+
 import re
+from datetime import datetime
 from http import HTTPStatus
+from urllib.parse import urlparse
 
 from flask import Blueprint, jsonify, request, url_for
 from sqlalchemy.exc import IntegrityError
 
 from .. import db
+from ..forms import CITY_CHOICES, INDUSTRY_CHOICES
 from ..models.company import Company
 from ..models.user import User
 from ..services.mailer import send_company_welcome_email
 from ..services.notifications import send_welcome_notification
 from ..services.roles import require_role
+from ..auth.routes import _notify_admin_of_company_request
 
 
 company_routes = Blueprint("company_routes", __name__)
@@ -54,6 +61,11 @@ def register_company():
     password = payload.get("password")
     company_name = (payload.get("company_name") or "").strip()
     description = payload.get("description")
+    phone_number = (payload.get("phone_number") or "").strip()
+    industry = (payload.get("industry") or "").strip()
+    city = (payload.get("city") or "").strip()
+    website_url = (payload.get("website_url") or "").strip()
+    social_url = (payload.get("social_url") or "").strip()
 
     if not email or not password or not company_name:
         return (
@@ -62,6 +74,42 @@ def register_company():
                     "error": "email, password, and company_name are required.",
                 }
             ),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    if not phone_number or len(phone_number) < 8:
+        return (
+            jsonify({"error": "A valid phone_number with at least 8 characters is required."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    allowed_industries = {choice for choice, _ in INDUSTRY_CHOICES if choice}
+    allowed_cities = {choice for choice, _ in CITY_CHOICES if choice}
+    if industry not in allowed_industries:
+        return (
+            jsonify({"error": "industry is required and must be a supported choice."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+    if city not in allowed_cities:
+        return (
+            jsonify({"error": "city is required and must be a supported choice."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    def _is_valid_url(value: str) -> bool:
+        if not value:
+            return False
+        parsed = urlparse(value)
+        return bool(parsed.scheme in {"http", "https"} and parsed.netloc)
+
+    if website_url and not _is_valid_url(website_url):
+        return (
+            jsonify({"error": "website_url must be a valid HTTP or HTTPS link."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+    if not social_url or not _is_valid_url(social_url):
+        return (
+            jsonify({"error": "social_url must be a valid HTTP or HTTPS link."}),
             HTTPStatus.BAD_REQUEST,
         )
 
@@ -102,12 +150,20 @@ def register_company():
     owner.set_password(password)
     owner.role = "company"
     owner.membership_level = "Basic"
-    owner.is_active = True
+    owner.is_active = False
 
     company = Company(name=company_name, description=description)
     company.owner = owner
     owner.company = company
-    company.notification_preferences = {}
+    company.notification_preferences = {
+        "contact_phone": phone_number,
+        "industry": industry,
+        "city": city,
+        "website_url": website_url or None,
+        "social_url": social_url,
+        "status": "Pending Review",
+        "submitted_at": datetime.utcnow().isoformat() + "Z",
+    }
 
     db.session.add(owner)
     db.session.add(company)
@@ -121,13 +177,18 @@ def register_company():
             HTTPStatus.BAD_REQUEST,
         )
 
-    send_company_welcome_email(owner=owner, company_name=company.name)
-    send_welcome_notification(company)
+    _notify_admin_of_company_request(
+        company=company,
+        owner=owner,
+        phone_number=phone_number,
+        industry=industry,
+        city=city,
+    )
 
     response = {
         "company": _serialize_company(company),
         "owner": _serialize_owner(owner),
-        "message": "Company registered successfully.",
+        "message": "Company registration request received and pending review.",
         "redirect_url": url_for("auth.login_page"),
     }
     return jsonify(response), HTTPStatus.CREATED

@@ -8,6 +8,8 @@ Ensured endpoints, button labels, and behavior correctness without altering layo
 
 Admin dashboard routes restricted to privileged users."""
 
+# LINKED: Enhanced company registration form (business details + admin review integration)
+# Added mandatory fields for phone, industry, city, website, and social links without schema changes.
 from __future__ import annotations
 
 from datetime import datetime

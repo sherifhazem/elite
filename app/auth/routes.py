@@ -1,3 +1,5 @@
+# LINKED: Enhanced company registration form (business details + admin review integration)
+# Added mandatory fields for phone, industry, city, website, and social links without schema changes.
 # LINKED: Fixed duplicate email error after company deletion
 # Ensures orphaned company owners are cleaned up before new company registration.
 # LINKED: Added logout flow for member portal (no design change)
@@ -8,11 +10,14 @@
 """Authentication blueprint routes for registration, login, and profile retrieval."""
 from __future__ import annotations
 
+from datetime import datetime
 from http import HTTPStatus
 from typing import Dict, Optional, Tuple
+from urllib.parse import urlparse
 
 from flask import (
     Blueprint,
+    flash,
     Response,
     current_app,
     jsonify,
@@ -28,12 +33,9 @@ from sqlalchemy.exc import IntegrityError
 from .. import db
 from ..models.company import Company
 from ..models.user import User
-from ..services.mailer import (
-    send_company_welcome_email,
-    send_email,
-    send_member_welcome_email,
-)
-from ..services.notifications import send_welcome_notification
+from ..services.mailer import send_email, send_member_welcome_email
+from ..services.notifications import queue_notification
+from ..forms import CITY_CHOICES, INDUSTRY_CHOICES, CompanyRegistrationForm
 from .utils import confirm_token, create_token, decode_token, generate_token
 
 
@@ -127,15 +129,23 @@ def register_select_page() -> str:
     return render_template("auth/register_select.html")
 
 
-def _register_company_from_form() -> Dict[str, str]:
+def _register_company_from_form(
+    form: Optional[CompanyRegistrationForm] = None,
+) -> Dict[str, str]:
     """Normalize HTML form submissions for company registration."""
 
+    active_form = form or CompanyRegistrationForm()
     return {
-        "company_name": (request.form.get("company_name") or "").strip(),
-        "description": request.form.get("description"),
-        "email": (request.form.get("email") or "").strip().lower(),
-        "password": request.form.get("password"),
-        "username": (request.form.get("username") or "").strip(),
+        "company_name": (active_form.company_name.data or "").strip(),
+        "description": (active_form.description.data or "").strip() or None,
+        "email": (active_form.email.data or "").strip().lower(),
+        "password": active_form.password.data,
+        "username": "",
+        "phone_number": (active_form.phone_number.data or "").strip(),
+        "industry": (active_form.industry.data or "").strip(),
+        "city": (active_form.city.data or "").strip(),
+        "website_url": (active_form.website_url.data or "").strip(),
+        "social_url": (active_form.social_url.data or "").strip(),
     }
 
 
@@ -147,6 +157,11 @@ def _register_company_from_payload(payload: Dict[str, str]) -> Tuple[Response, i
     password = payload.get("password")
     company_name = (payload.get("company_name") or "").strip()
     description = payload.get("description")
+    phone_number = (payload.get("phone_number") or "").strip()
+    industry = (payload.get("industry") or "").strip()
+    city = (payload.get("city") or "").strip()
+    website_url = (payload.get("website_url") or "").strip()
+    social_url = (payload.get("social_url") or "").strip()
 
     if not email or not password or not company_name:
         return (
@@ -155,6 +170,42 @@ def _register_company_from_payload(payload: Dict[str, str]) -> Tuple[Response, i
                     "error": "email, password, and company_name are required.",
                 }
             ),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    if not phone_number or len(phone_number) < 8:
+        return (
+            jsonify({"error": "A valid phone_number with at least 8 characters is required."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    allowed_industries = {choice for choice, _ in INDUSTRY_CHOICES if choice}
+    allowed_cities = {choice for choice, _ in CITY_CHOICES if choice}
+    if industry not in allowed_industries:
+        return (
+            jsonify({"error": "industry is required and must be a supported choice."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+    if city not in allowed_cities:
+        return (
+            jsonify({"error": "city is required and must be a supported choice."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    def _is_valid_url(value: str) -> bool:
+        if not value:
+            return False
+        parsed = urlparse(value)
+        return bool(parsed.scheme in {"http", "https"} and parsed.netloc)
+
+    if website_url and not _is_valid_url(website_url):
+        return (
+            jsonify({"error": "website_url must be a valid HTTP or HTTPS link."}),
+            HTTPStatus.BAD_REQUEST,
+        )
+    if not social_url or not _is_valid_url(social_url):
+        return (
+            jsonify({"error": "social_url must be a valid HTTP or HTTPS link."}),
             HTTPStatus.BAD_REQUEST,
         )
 
@@ -224,11 +275,19 @@ def _register_company_from_payload(payload: Dict[str, str]) -> Tuple[Response, i
     owner.set_password(password)
     owner.role = "company"
     owner.membership_level = "Basic"
-    owner.is_active = True
+    owner.is_active = False
 
     company.owner = owner
     owner.company = company
-    company.notification_preferences = {}
+    company.notification_preferences = {
+        "contact_phone": phone_number,
+        "industry": industry,
+        "city": city,
+        "website_url": website_url or None,
+        "social_url": social_url,
+        "status": "Pending Review",
+        "submitted_at": datetime.utcnow().isoformat() + "Z",
+    }
 
     db.session.add(owner)
     db.session.add(company)
@@ -242,8 +301,13 @@ def _register_company_from_payload(payload: Dict[str, str]) -> Tuple[Response, i
             HTTPStatus.BAD_REQUEST,
         )
 
-    send_company_welcome_email(owner=owner, company_name=company.name)
-    send_welcome_notification(company)
+    _notify_admin_of_company_request(
+        company=company,
+        owner=owner,
+        phone_number=phone_number,
+        industry=industry,
+        city=city,
+    )
 
     response = {
         "company": {
@@ -259,10 +323,87 @@ def _register_company_from_payload(payload: Dict[str, str]) -> Tuple[Response, i
             "role": owner.role,
             "is_active": owner.is_active,
         },
-        "message": "Company registered successfully.",
+        "message": "Company registration request received and pending review.",
         "redirect_url": url_for("auth.login_page"),
     }
     return jsonify(response), HTTPStatus.CREATED
+
+
+def _notify_admin_of_company_request(
+    *,
+    company: Company,
+    owner: User,
+    phone_number: str,
+    industry: str,
+    city: str,
+) -> None:
+    """Send admin notifications and email summarizing the company request."""
+
+    admin_users = (
+        User.query.filter(
+            User.role.in_(["admin", "superadmin"]),
+            User.is_active.is_(True),
+        )
+        .order_by(User.id)
+        .all()
+    )
+
+    if not admin_users:
+        current_app.logger.warning(
+            "Company registration pending but no admin recipients found.",
+            extra={"company_id": company.id},
+        )
+    else:
+        message = (
+            f"تم استلام طلب تسجيل شركة جديدة: {company.name}.\n"
+            f"المدينة: {city}.\n"
+            f"المجال: {industry}.\n"
+            f"رقم التواصل: {phone_number}."
+        )
+        metadata = {
+            "company_id": company.id,
+            "company_name": company.name,
+            "industry": industry,
+            "city": city,
+            "phone_number": phone_number,
+            "owner_id": owner.id,
+            "owner_email": owner.email,
+        }
+        for admin in admin_users:
+            queue_notification(
+                admin.id,
+                type="new_company_request",
+                title="طلب تسجيل شركة جديد",
+                message=message,
+                metadata=metadata,
+            )
+
+    admin_email = (
+        current_app.config.get("ADMIN_CONTACT_EMAIL")
+        or current_app.config.get("MAIL_DEFAULT_SENDER")
+        or current_app.config.get("MAIL_USERNAME")
+    )
+    if not admin_email:
+        return
+
+    subject = f"طلب تسجيل شركة جديد: {company.name}"
+    message_lines = [
+        f"اسم الشركة: {company.name}",
+        f"المدينة: {city}",
+        f"المجال: {industry}",
+        f"البريد المسؤول: {owner.email}",
+        f"رقم الجوال: {phone_number}",
+        f"رابط التواصل: {company.notification_preferences.get('social_url')}",
+    ]
+    if company.notification_preferences.get("website_url"):
+        message_lines.append(
+            f"الموقع الإلكتروني: {company.notification_preferences.get('website_url')}"
+        )
+    message_lines.append("الحالة الحالية: Pending Review")
+
+    message_html = "<br>".join(message_lines)
+    context = {"subject": subject, "message_html": message_html}
+    send_email(admin_email, subject, "emails/admin_broadcast.html", context)
 
 
 @auth_bp.route("/register/member", methods=["GET", "POST"])
@@ -297,20 +438,30 @@ def register_member():
 def company_register_page():
     """Render or process the company registration form."""
 
+    form = CompanyRegistrationForm()
     if request.method == "GET":
-        return render_template("auth/register_company.html")
+        return render_template("auth/register_company.html", form=form)
 
-    payload = request.get_json(silent=True) or _register_company_from_form()
-    response, status = _register_company_from_payload(payload)
+    if request.is_json:
+        payload = request.get_json(silent=True) or {}
+        return _register_company_from_payload(payload)
 
-    if request.accept_mimetypes.accept_html and not request.is_json:
+    if form.validate_on_submit():
+        payload = _register_company_from_form(form)
+        response, status = _register_company_from_payload(payload)
         if status == HTTPStatus.CREATED:
-            data = response.get_json() if hasattr(response, "get_json") else None
-            target = (data or {}).get("redirect_url") or url_for("auth.login_page")
-            return redirect(target)
-        return redirect(url_for("auth.register_company"))
+            flash("تم استلام طلبك وسيتم مراجعته من قبل الإدارة.", "success")
+            return redirect(url_for("auth.register_company"))
 
-    return response, status
+        error_payload = response.get_json() if hasattr(response, "get_json") else None
+        if error_payload and error_payload.get("error"):
+            flash(error_payload["error"], "danger")
+        return render_template("auth/register_company.html", form=form), status
+
+    for field_errors in form.errors.values():
+        for error in field_errors:
+            flash(error, "danger")
+    return render_template("auth/register_company.html", form=form), HTTPStatus.BAD_REQUEST
 
 
 @auth_bp.post("/api/auth/login")
