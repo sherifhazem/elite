@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 """Application factory module initializing Flask app, database, Redis, Celery, and routes."""
 
+# LINKED: Fixed user context processor to inject current_user and role for both Flask-Login and JWT sessions.
+# Ensures consistent visibility of role-based UI elements (Logout, Admin links, etc.).
+
 from http import HTTPStatus
 
 from flask import Flask, abort, g, request
+from flask_login import current_user as flask_login_current_user
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -44,6 +48,12 @@ from .admin import admin_bp  # noqa: E402
 from .admin.routes_reports import reports_bp  # noqa: E402
 from .company import company_portal_bp  # noqa: E402
 
+try:  # pragma: no cover - optional dependency integration
+    from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request_optional
+except ImportError:  # pragma: no cover - gracefully degrade when extension missing
+    get_jwt_identity = None
+    verify_jwt_in_request_optional = None
+
 PROTECTED_PREFIXES = ("/admin", "/company")
 
 
@@ -53,7 +63,14 @@ def attach_current_user() -> None:
 
     from .services.roles import resolve_user_from_request
 
-    g.current_user = resolve_user_from_request()
+    current = resolve_user_from_request()
+    g.current_user = current
+    normalized_role = "guest"
+    if current is not None:
+        normalized_role = (getattr(current, "role", "member") or "member").strip().lower()
+    g.user_role = normalized_role
+    g.user_permissions = getattr(current, "permissions", None) if current else None
+
     if request.path.startswith(PROTECTED_PREFIXES):
         if g.current_user is None:
             abort(HTTPStatus.UNAUTHORIZED)
@@ -62,10 +79,46 @@ def attach_current_user() -> None:
 
 
 @app.context_processor
-def inject_current_user():
-    """Expose the current user to templates for role-aware rendering."""
+def inject_user_context():
+    """Provide template globals for user, role, and permission aware rendering."""
 
-    return {"current_user": getattr(g, "current_user", None)}
+    user = getattr(g, "current_user", None)
+    role = getattr(g, "user_role", "guest")
+    permissions = getattr(g, "user_permissions", None)
+
+    if not (user and getattr(user, "is_authenticated", False)):
+        if getattr(flask_login_current_user, "is_authenticated", False):
+            user = flask_login_current_user
+            role = getattr(user, "role", "member") or "member"
+            permissions = getattr(user, "permissions", None)
+        elif verify_jwt_in_request_optional and get_jwt_identity:
+            try:
+                verify_jwt_in_request_optional()
+                identity = get_jwt_identity()
+            except Exception:  # pragma: no cover - JWT extension raises for bad tokens
+                identity = None
+            if identity and not user:
+                fetched_user = User.query.get(identity)
+                if fetched_user:
+                    user = fetched_user
+                    role = getattr(fetched_user, "role", "member") or "member"
+                    permissions = getattr(fetched_user, "permissions", None)
+
+    normalized_role = (role or "guest").strip().lower()
+    g.current_user = user
+    g.user_role = normalized_role
+    g.user_permissions = permissions
+
+    is_admin = normalized_role in {"admin", "superadmin"}
+    is_superadmin = normalized_role == "superadmin"
+
+    return {
+        "current_user": user,
+        "user_role": normalized_role,
+        "user_permissions": permissions,
+        "is_admin": is_admin,
+        "is_superadmin": is_superadmin,
+    }
 
 
 app.logger.info("✅ Database connection configured for %s", app.config["SQLALCHEMY_DATABASE_URI"])
