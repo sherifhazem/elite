@@ -1,0 +1,45 @@
+<!-- LINKED: Added tabbed interface to Site Settings page (Dropdowns, Roles, General) -->
+{% extends "admin/layout.html" %}
+{% block title %}إعدادات الموقع · ELITE{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+  <h2 class="fw-bold text-primary mb-4">
+    <i class="fa-solid fa-gear me-2"></i> إعدادات الموقع
+  </h2>
+
+  <!-- Tabs Navigation -->
+  <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="dropdowns-tab" data-bs-toggle="tab"
+        data-bs-target="#dropdowns" type="button" role="tab">
+        🏙 القوائم المنسدلة
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="roles-tab" data-bs-toggle="tab"
+        data-bs-target="#roles" type="button" role="tab">
+        🔐 صلاحيات النظام
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="general-tab" data-bs-toggle="tab"
+        data-bs-target="#general" type="button" role="tab">
+        ⚙️ إعدادات عامة
+      </button>
+    </li>
+  </ul>
+
+  <!-- Tabs Content -->
+  <div class="tab-content border border-top-0 p-4 bg-white shadow-sm rounded-bottom" id="settingsTabsContent">
+    <div class="tab-pane fade show active" id="dropdowns" role="tabpanel">
+      {% include "admin/settings/partials/dropdowns.html" %}
+    </div>
+    <div class="tab-pane fade" id="roles" role="tabpanel">
+      {% include "admin/settings/partials/roles.html" %}
+    </div>
+    <div class="tab-pane fade" id="general" role="tabpanel">
+      {% include "admin/settings/partials/general.html" %}
+    </div>
+  </div>
+</div>
+{% endblock %}
