@@ -1,5 +1,5 @@
-# LINKED: Fixed duplicate email error after company deletion
-# Ensures orphaned company owners are cleaned up before new company registration.
+# LINKED: Fixed cascade deletion chain between Company → User → Notification
+# Ensures safe automatic cleanup without manual deletion or integrity errors.
 """Company model definition with ownership and branding metadata."""
 
 from __future__ import annotations
@@ -33,6 +33,7 @@ class Company(db.Model):
         backref=db.backref("owned_companies", lazy="dynamic"),
         cascade="all, delete-orphan",
         lazy="joined",
+        passive_deletes=True,
         post_update=True,
         single_parent=True,
         uselist=False,
