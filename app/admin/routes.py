@@ -1,6 +1,7 @@
-# LINKED: Route alignment & aliasing for registration and dashboards (no schema changes)
-# Updated templates to use endpoint-based url_for; README cleaned & synced with actual routes.
-"""Admin dashboard routes restricted to privileged users."""
+"""LINKED: Admin user management actions fixed (VIEW / EDIT / DELETE)
+Ensured endpoints, button labels, and behavior correctness without altering layout or design.
+
+Admin dashboard routes restricted to privileged users."""
 
 from __future__ import annotations
 
@@ -108,6 +109,19 @@ def dashboard_users() -> str:
         "dashboard/users.html",
         section_title="Users",
         users=users,
+    )
+
+
+@admin_bp.route("/users/view/<int:user_id>")
+@require_role("admin")
+def view_user(user_id: int) -> str:
+    """Display read-only details for the requested user."""
+
+    user = User.query.get_or_404(user_id)
+    return render_template(
+        "dashboard/user_detail.html",
+        section_title="View User",
+        user=user,
     )
 
 
@@ -262,7 +276,7 @@ def edit_user(user_id: int) -> str:
             flash("Unable to update user. Username or email may already exist.", "danger")
             return redirect(url_for("admin.edit_user", user_id=user_id))
 
-        flash(f"User '{username}' updated successfully.", "success")
+        flash("تم تعديل بيانات المستخدم بنجاح.", "success")
         return redirect(url_for("admin.dashboard_users"))
 
     return render_template(
@@ -276,7 +290,7 @@ def edit_user(user_id: int) -> str:
 
 
 @admin_bp.route("/users/delete/<int:user_id>", methods=["POST"])
-@require_role("superadmin")
+@require_role("admin")
 def delete_user(user_id: int) -> str:
     """Delete the specified user and redirect back to the listing."""
 
@@ -285,11 +299,15 @@ def delete_user(user_id: int) -> str:
         flash("You cannot delete your own account while logged in.", "warning")
         return redirect(url_for("admin.dashboard_users"))
 
+    if user.is_superadmin:
+        flash("لا يمكن حذف مستخدم يحمل دور Superadmin.", "warning")
+        return redirect(url_for("admin.dashboard_users"))
+
     _guard_superadmin_modification(user)
 
     db.session.delete(user)
     db.session.commit()
-    flash(f"User '{user.username}' deleted successfully.", "success")
+    flash("تم حذف المستخدم بنجاح.", "success")
     return redirect(url_for("admin.dashboard_users"))
 
 
