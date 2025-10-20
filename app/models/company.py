@@ -30,6 +30,7 @@ class Company(db.Model):
         foreign_keys=[owner_user_id],
         backref=db.backref("owned_companies", lazy="dynamic"),
         lazy="joined",
+        post_update=True,
     )
 
     redemptions = db.relationship(
