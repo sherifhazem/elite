@@ -1,3 +1,5 @@
+# LINKED: Added “Role Permissions” page under Site Settings for Superadmin.
+# Allows managing and viewing system roles stored dynamically in Redis.
 # LINKED: Added comprehensive Site Settings section in Admin Panel.
 # Includes Cities & Industries dynamic management integrated with Redis backend.
 # LINKED: Added admin-managed dropdown system for Cities and Industries.
@@ -34,13 +36,15 @@ from flask import (
 )
 from sqlalchemy.exc import IntegrityError
 
+from flask_login import current_user
+
 from .. import db
 from ..models.company import Company
 from ..models.offer import Offer
 from ..models.user import User
 from ..services.mailer import send_welcome_email
 from ..services.notifications import broadcast_new_offer, ensure_welcome_notification
-from ..services.roles import require_role
+from ..services.roles import admin_required, require_role
 from ..services import settings_service
 
 admin_bp = Blueprint(
@@ -732,6 +736,98 @@ def settings_home() -> str:
         active_page="settings",
         cities=cities,
         industries=industries,
+    )
+
+
+@admin_bp.route("/settings/roles")
+@admin_required
+def site_settings_roles() -> str:
+    """Render the Role Permissions management page for super administrators."""
+
+    if not getattr(current_user, "is_superadmin", False):
+        abort(HTTPStatus.FORBIDDEN)
+
+    from app.services.roles_service import (
+        DEFAULT_PERMISSIONS,
+        get_all_roles,
+        get_role_permissions,
+    )
+
+    roles = get_all_roles()
+    role_permissions = get_role_permissions()
+    catalog_from_defaults = {
+        permission
+        for permissions in DEFAULT_PERMISSIONS.values()
+        for permission in permissions
+        if permission != "all_permissions"
+    }
+    catalog_from_storage = {
+        permission
+        for permissions in role_permissions.values()
+        for permission in permissions
+        if permission != "all_permissions"
+    }
+    permissions_catalog = sorted(catalog_from_defaults | catalog_from_storage)
+
+    return render_template(
+        "admin/settings/roles.html",
+        section_title="Role Permissions",
+        active_page="settings",
+        active_tab="roles",
+        roles=roles,
+        role_permissions=role_permissions,
+        default_permissions=DEFAULT_PERMISSIONS,
+        permissions_catalog=permissions_catalog,
+    )
+
+
+@admin_bp.route("/settings/roles/save", methods=["POST"])
+@admin_required
+def save_site_settings_roles() -> Response:
+    """Persist role permission selections to Redis for the Superadmin."""
+
+    if not getattr(current_user, "is_superadmin", False):
+        abort(HTTPStatus.FORBIDDEN)
+
+    from app.services.roles_service import get_all_roles, get_role_permissions, save_role_permissions
+
+    payload = request.get_json(silent=True) or {}
+    updated_permissions = payload.get("role_permissions")
+    if not isinstance(updated_permissions, dict):
+        return _settings_error_response("صيغة البيانات غير صالحة.")
+
+    known_roles = set(get_all_roles())
+    existing_permissions = get_role_permissions()
+    sanitized: Dict[str, list[str]] = {}
+    for role_name in known_roles:
+        if role_name == "superadmin":
+            sanitized[role_name] = ["all_permissions"]
+            continue
+
+        values = updated_permissions.get(role_name)
+        if values is None:
+            existing = existing_permissions.get(role_name, [])
+            sanitized[role_name] = existing
+            continue
+        if not isinstance(values, list):
+            return _settings_error_response("صيغة الصلاحيات غير صالحة.")
+
+        cleaned_values = sorted(
+            {
+                str(permission).strip()
+                for permission in values
+                if str(permission).strip() and str(permission).strip() != "all_permissions"
+            }
+        )
+        sanitized[role_name] = cleaned_values
+
+    save_role_permissions(sanitized)
+    return jsonify(
+        {
+            "status": "success",
+            "message": "تم حفظ صلاحيات الأدوار بنجاح.",
+            "role_permissions": sanitized,
+        }
     )
 
 
