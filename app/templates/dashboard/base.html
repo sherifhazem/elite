@@ -1,3 +1,5 @@
+{# LINKED: Fixed admin permission logic and restored Site Settings visibility for Admin and Superadmin roles. #}
+{# Ensured correct decorator checks and sidebar rendering consistency. #}
 <!-- CLEANUP: Removed hardcoded sample data, preserved layout -->
 <!-- FIXED: Updated url_for() endpoints to match admin Blueprint -->
 <!DOCTYPE html>
@@ -63,6 +65,14 @@
                             <span>Offers</span>
                         </a>
                     </li>
+                    {% if current_user and current_user.is_authenticated and (current_user.is_admin or current_user.is_superadmin) %}
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {% if current_page == 'settings' %}active{% endif %}" href="{{ url_for('admin.settings_home') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Site Settings">
+                            <i class="fas fa-gear me-3"></i>
+                            <span>إعدادات الموقع</span>
+                        </a>
+                    </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link d-flex align-items-center {% if current_page == 'reports' %}active{% endif %}" href="{{ url_for('reports.reports_home') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Reports">
                             <i class="fas fa-chart-line me-3"></i>
