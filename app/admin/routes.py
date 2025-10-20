@@ -685,8 +685,10 @@ def _render_settings(active_tab: str) -> str:
     """Render the settings management interface with the requested tab."""
 
     resolved_tab = active_tab if active_tab in {"cities", "industries"} else "cities"
-    cities = settings_service.get_entries("cities")
-    industries = settings_service.get_entries("industries")
+    city_values = settings_service.get_list("cities")
+    industry_values = settings_service.get_list("industries")
+    cities = [{"id": value, "name": value, "active": True} for value in city_values]
+    industries = [{"id": value, "name": value, "active": True} for value in industry_values]
     return render_template(
         "dashboard/settings.html",
         section_title="إدارة القوائم المنسدلة",
@@ -740,10 +742,11 @@ def add_city() -> Response:
     """Add a new city entry to the managed list."""
 
     name = (request.form.get("name") or "").strip()
-    active_values = request.form.getlist("is_active")
-    is_active = True if not active_values else any(_parse_boolean(value) for value in active_values)
+    if not name:
+        flash("الاسم مطلوب.", "danger")
+        return _redirect_to_settings("cities")
     try:
-        settings_service.add_item("cities", name, active=is_active)
+        settings_service.add_item("cities", name)
         flash("تمت إضافة المدينة بنجاح.", "success")
     except ValueError as exc:  # pragma: no cover - simple flash path
         _handle_settings_error(exc)
@@ -756,10 +759,11 @@ def add_industry() -> Response:
     """Add a new industry entry to the managed list."""
 
     name = (request.form.get("name") or "").strip()
-    active_values = request.form.getlist("is_active")
-    is_active = True if not active_values else any(_parse_boolean(value) for value in active_values)
+    if not name:
+        flash("الاسم مطلوب.", "danger")
+        return _redirect_to_settings("industries")
     try:
-        settings_service.add_item("industries", name, active=is_active)
+        settings_service.add_item("industries", name)
         flash("تمت إضافة المجال بنجاح.", "success")
     except ValueError as exc:  # pragma: no cover - simple flash path
         _handle_settings_error(exc)
@@ -771,15 +775,12 @@ def add_industry() -> Response:
 def update_city(item_id: str) -> Response:
     """Update an existing city entry."""
 
-    name = request.form.get("name")
-    active_values = request.form.getlist("is_active")
+    name = (request.form.get("name") or "").strip()
+    if not name:
+        flash("الاسم مطلوب.", "danger")
+        return _redirect_to_settings("cities")
     try:
-        settings_service.update_item(
-            "cities",
-            item_id,
-            name=name,
-            active=any(_parse_boolean(value) for value in active_values) if active_values else False,
-        )
+        settings_service.update_item("cities", item_id, name)
         flash("تم تحديث بيانات المدينة.", "success")
     except ValueError as exc:  # pragma: no cover - simple flash path
         _handle_settings_error(exc)
@@ -791,15 +792,12 @@ def update_city(item_id: str) -> Response:
 def update_industry(item_id: str) -> Response:
     """Update an existing industry entry."""
 
-    name = request.form.get("name")
-    active_values = request.form.getlist("is_active")
+    name = (request.form.get("name") or "").strip()
+    if not name:
+        flash("الاسم مطلوب.", "danger")
+        return _redirect_to_settings("industries")
     try:
-        settings_service.update_item(
-            "industries",
-            item_id,
-            name=name,
-            active=any(_parse_boolean(value) for value in active_values) if active_values else False,
-        )
+        settings_service.update_item("industries", item_id, name)
         flash("تم تحديث بيانات المجال.", "success")
     except ValueError as exc:  # pragma: no cover - simple flash path
         _handle_settings_error(exc)

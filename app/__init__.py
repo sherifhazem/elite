@@ -8,7 +8,7 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from celery import Celery
-import redis
+from redis import Redis
 
 from .config import Config
 
@@ -21,7 +21,7 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-redis_client = redis.from_url(app.config["REDIS_URL"])
+redis_client = Redis.from_url(app.config["REDIS_URL"], decode_responses=True)
 
 celery = Celery(app.import_name, broker=app.config["CELERY_BROKER_URL"])
 celery.conf.update(app.config)
