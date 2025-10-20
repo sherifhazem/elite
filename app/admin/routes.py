@@ -36,7 +36,7 @@ from flask import (
 )
 from sqlalchemy.exc import IntegrityError
 
-from flask_login import current_user
+from flask_login import current_user, logout_user
 
 from .. import db
 from ..models.company import Company
@@ -53,6 +53,17 @@ admin_bp = Blueprint(
     url_prefix="/admin",
     template_folder="templates",
 )
+
+
+@admin_bp.route("/logout")
+@admin_required
+def admin_logout() -> Response:
+    """Log out an authenticated admin and return to the login page."""
+
+    if current_user.is_authenticated:
+        logout_user()
+        flash("تم تسجيل الخروج بنجاح ✅", "info")
+    return redirect(url_for("auth.login"))
 
 
 def _parse_boolean(value: str | None) -> bool:
