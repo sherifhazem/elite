@@ -19,6 +19,13 @@
             integrity="sha384-TN6N6pAoCYXM5PLQ4KJIp4jOSAmhpN6wX6Z1GDZCBoBPXaGNsq4CPGK/c/pXHi1S"
             crossorigin="anonymous"
         >
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+            integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1Gq3h45p2QPRdhR+M3XwEnG7qqg=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        >
         <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
         {% block extra_styles %}{% endblock %}
     </head>
@@ -88,6 +95,15 @@
                                     <span>{{ label }}</span>
                                 </a>
                             {% endfor %}
+                            {% if current_user.is_admin or current_user.is_superadmin %}
+                                <a
+                                    class="admin-nav-link {{ 'active' if resolved_active_page == 'site-settings' else '' }}"
+                                    href="{{ url_for('admin.site_settings') }}"
+                                >
+                                    <span class="icon" aria-hidden="true"><i class="fa-solid fa-gear"></i></span>
+                                    <span>إعدادات الموقع</span>
+                                </a>
+                            {% endif %}
                             {% if role == 'superadmin' %}
                                 <div class="admin-nav-divider">Advanced</div>
                                 <a
@@ -158,6 +174,15 @@
                                 <span>{{ label }}</span>
                             </a>
                         {% endfor %}
+                        {% if current_user.is_admin or current_user.is_superadmin %}
+                            <a
+                                class="admin-nav-link {{ 'active' if resolved_active_page == 'site-settings' else '' }}"
+                                href="{{ url_for('admin.site_settings') }}"
+                            >
+                                <span class="icon" aria-hidden="true"><i class="fa-solid fa-gear"></i></span>
+                                <span>إعدادات الموقع</span>
+                            </a>
+                        {% endif %}
                         {% if role == 'superadmin' %}
                             <div class="admin-nav-divider">Advanced</div>
                             <a
