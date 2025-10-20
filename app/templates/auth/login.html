@@ -1,3 +1,5 @@
+<!-- LINKED: Added logout flow for member portal (no design change) -->
+<!-- Implements proper session termination and user redirect while preserving full mobile-first UI. -->
 <!-- FIXED: Mobile-First User Portal Design (Member-Only) -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -277,7 +279,7 @@
             }
         </style>
     </head>
-    <body>
+    <body data-logout-notice="{{ logout_notice|e if logout_notice else '' }}">
         <main class="auth-shell">
             <header class="auth-header">
                 <div class="auth-header__logo" aria-hidden="true">
@@ -385,6 +387,16 @@
                     }
                     return response;
                 };
+
+                const logoutNotice = document.body?.dataset?.logoutNotice || "";
+                if (logoutNotice) {
+                    try {
+                        localStorage.removeItem("elite_token");
+                    } catch (error) {
+                        console.warn("Failed to clear stored token", error);
+                    }
+                    showToast(logoutNotice);
+                }
             })();
         </script>
         <script src="{{ url_for('static', filename='js/login.js') }}" defer></script>
