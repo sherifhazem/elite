@@ -1,3 +1,5 @@
+# LINKED: Fixed duplicate email error after company deletion
+# Ensures orphaned company owners are cleaned up before new company registration.
 """LINKED: Fixed admin company management actions (VIEW / EDIT / DELETE)
 Added button labels and ensured correct endpoint binding and confirmation logic.
 
@@ -469,6 +471,7 @@ def delete_company(company_id: int) -> str:
     """Remove the selected company from the database."""
 
     company = Company.query.get_or_404(company_id)
+    company.remove_owner_account()
     db.session.delete(company)
     db.session.commit()
     flash("تم حذف الشركة بنجاح.", "success")

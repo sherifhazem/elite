@@ -1,3 +1,5 @@
+# LINKED: Fixed duplicate email error after company deletion
+# Ensures orphaned company owners are cleaned up before new company registration.
 """Company model definition with ownership and branding metadata."""
 
 from __future__ import annotations
@@ -29,8 +31,11 @@ class Company(db.Model):
         "User",
         foreign_keys=[owner_user_id],
         backref=db.backref("owned_companies", lazy="dynamic"),
+        cascade="all, delete-orphan",
         lazy="joined",
         post_update=True,
+        single_parent=True,
+        uselist=False,
     )
 
     redemptions = db.relationship(
@@ -52,6 +57,28 @@ class Company(db.Model):
         if not isinstance(preferences, dict):
             return {}
         return preferences
+
+    def remove_owner_account(self) -> None:
+        """Delete the owner account while leaving member accounts untouched."""
+
+        from .user import User
+
+        owners = []
+        if self.owner is not None:
+            owners.append(self.owner)
+
+        owners.extend(
+            User.query.filter(
+                User.company_id == self.id,
+                User.role == "company",
+            ).all()
+        )
+
+        seen_ids = set()
+        for owner in owners:
+            if owner and owner.id not in seen_ids:
+                seen_ids.add(owner.id)
+                db.session.delete(owner)
 
 
 __all__ = ["Company"]

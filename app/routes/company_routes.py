@@ -1,3 +1,5 @@
+# LINKED: Fixed duplicate email error after company deletion
+# Ensures orphaned company owners are cleaned up before new company registration.
 # LINKED: Registration Flow & Welcome Notification Review (Users & Companies)
 # Verified welcome email and internal notification triggers for new accounts.
 """Company CRUD blueprint providing JSON endpoints."""
@@ -214,6 +216,7 @@ def delete_company(company_id: int):
     if company is None:
         return jsonify({"error": "Company not found."}), 404
 
+    company.remove_owner_account()
     db.session.delete(company)
     db.session.commit()
     return jsonify({"status": "deleted"}), 200
