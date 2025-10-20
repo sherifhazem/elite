@@ -1,3 +1,5 @@
+# LINKED: Fixed cascade deletion chain between Company → User → Notification
+# Ensures safe automatic cleanup without manual deletion or integrity errors.
 """Notification model definition."""
 
 from datetime import datetime
@@ -11,7 +13,12 @@ class Notification(db.Model):
     __tablename__ = "notifications"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), index=True, nullable=False)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
     type = db.Column(db.String(40))
     title = db.Column(db.String(150), nullable=False)
     message = db.Column(db.Text, nullable=False)
@@ -20,7 +27,7 @@ class Notification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True, nullable=False)
     metadata_json = db.Column(db.JSON)
 
-    user = db.relationship("User", backref=db.backref("notifications", lazy="dynamic"))
+    user = db.relationship("User", back_populates="notifications")
 
     def __repr__(self) -> str:
         """Return string representation for debugging purposes."""

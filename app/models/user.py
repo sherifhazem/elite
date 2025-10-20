@@ -1,3 +1,5 @@
+# LINKED: Fixed cascade deletion chain between Company → User → Notification
+# Ensures safe automatic cleanup without manual deletion or integrity errors.
 """User model definition with role and permission helpers."""
 
 from __future__ import annotations
@@ -68,6 +70,15 @@ class User(db.Model):
         lazy="joined",
         foreign_keys=[company_id],
         doc="Company entity associated with the user when acting as a business account.",
+    )
+
+    notifications = db.relationship(
+        "Notification",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        lazy="dynamic",
+        doc="In-app notifications associated with the user.",
     )
 
     #: Many-to-many relationship with Permission model for granular access checks.
