@@ -1,3 +1,5 @@
+# LINKED: Added admin-managed dropdown system for Cities and Industries.
+# Introduced unified Settings Service and admin UI for dynamic list management.
 # LINKED: Fixed duplicate email error after company deletion
 # Ensures orphaned company owners are cleaned up before new company registration.
 """LINKED: Fixed admin company management actions (VIEW / EDIT / DELETE)
@@ -36,6 +38,7 @@ from ..models.user import User
 from ..services.mailer import send_welcome_email
 from ..services.notifications import broadcast_new_offer, ensure_welcome_notification
 from ..services.roles import require_role
+from ..services import settings_service
 
 admin_bp = Blueprint(
     "admin",
@@ -676,6 +679,157 @@ def trigger_offer_notification(offer_id: int) -> str:
     broadcast_new_offer(offer.id)
     flash(f"Notification broadcast queued for '{offer.title}'.", "success")
     return redirect(url_for("admin.dashboard_offers"))
+
+
+def _render_settings(active_tab: str) -> str:
+    """Render the settings management interface with the requested tab."""
+
+    resolved_tab = active_tab if active_tab in {"cities", "industries"} else "cities"
+    cities = settings_service.get_entries("cities")
+    industries = settings_service.get_entries("industries")
+    return render_template(
+        "dashboard/settings.html",
+        section_title="إدارة القوائم المنسدلة",
+        active_settings_tab=resolved_tab,
+        cities=cities,
+        industries=industries,
+    )
+
+
+def _redirect_to_settings(tab: str) -> Response:
+    """Redirect helper that preserves the requested tab."""
+
+    return redirect(url_for("admin.settings_home", tab=tab))
+
+
+@admin_bp.route("/settings")
+@require_role("admin")
+def settings_home() -> str:
+    """Display the admin settings manager with dynamic dropdown lists."""
+
+    tab = request.args.get("tab", "cities")
+    return _render_settings(tab)
+
+
+@admin_bp.route("/settings/cities")
+@require_role("admin")
+def settings_cities() -> Response:
+    """Alias endpoint for directly opening the cities tab."""
+
+    return _redirect_to_settings("cities")
+
+
+@admin_bp.route("/settings/industries")
+@require_role("admin")
+def settings_industries() -> Response:
+    """Alias endpoint for directly opening the industries tab."""
+
+    return _redirect_to_settings("industries")
+
+
+def _handle_settings_error(exc: Exception) -> None:
+    """Flash a consistent danger message when a settings action fails."""
+
+    message = str(exc) or "تعذر تنفيذ العملية المطلوبة."
+    flash(message, "danger")
+
+
+@admin_bp.route("/settings/cities/add", methods=["POST"])
+@require_role("admin")
+def add_city() -> Response:
+    """Add a new city entry to the managed list."""
+
+    name = (request.form.get("name") or "").strip()
+    active_values = request.form.getlist("is_active")
+    is_active = True if not active_values else any(_parse_boolean(value) for value in active_values)
+    try:
+        settings_service.add_item("cities", name, active=is_active)
+        flash("تمت إضافة المدينة بنجاح.", "success")
+    except ValueError as exc:  # pragma: no cover - simple flash path
+        _handle_settings_error(exc)
+    return _redirect_to_settings("cities")
+
+
+@admin_bp.route("/settings/industries/add", methods=["POST"])
+@require_role("admin")
+def add_industry() -> Response:
+    """Add a new industry entry to the managed list."""
+
+    name = (request.form.get("name") or "").strip()
+    active_values = request.form.getlist("is_active")
+    is_active = True if not active_values else any(_parse_boolean(value) for value in active_values)
+    try:
+        settings_service.add_item("industries", name, active=is_active)
+        flash("تمت إضافة المجال بنجاح.", "success")
+    except ValueError as exc:  # pragma: no cover - simple flash path
+        _handle_settings_error(exc)
+    return _redirect_to_settings("industries")
+
+
+@admin_bp.route("/settings/cities/update/<item_id>", methods=["POST"])
+@require_role("admin")
+def update_city(item_id: str) -> Response:
+    """Update an existing city entry."""
+
+    name = request.form.get("name")
+    active_values = request.form.getlist("is_active")
+    try:
+        settings_service.update_item(
+            "cities",
+            item_id,
+            name=name,
+            active=any(_parse_boolean(value) for value in active_values) if active_values else False,
+        )
+        flash("تم تحديث بيانات المدينة.", "success")
+    except ValueError as exc:  # pragma: no cover - simple flash path
+        _handle_settings_error(exc)
+    return _redirect_to_settings("cities")
+
+
+@admin_bp.route("/settings/industries/update/<item_id>", methods=["POST"])
+@require_role("admin")
+def update_industry(item_id: str) -> Response:
+    """Update an existing industry entry."""
+
+    name = request.form.get("name")
+    active_values = request.form.getlist("is_active")
+    try:
+        settings_service.update_item(
+            "industries",
+            item_id,
+            name=name,
+            active=any(_parse_boolean(value) for value in active_values) if active_values else False,
+        )
+        flash("تم تحديث بيانات المجال.", "success")
+    except ValueError as exc:  # pragma: no cover - simple flash path
+        _handle_settings_error(exc)
+    return _redirect_to_settings("industries")
+
+
+@admin_bp.route("/settings/cities/delete/<item_id>", methods=["POST"])
+@require_role("admin")
+def delete_city(item_id: str) -> Response:
+    """Remove a city from the managed list."""
+
+    try:
+        settings_service.delete_item("cities", item_id)
+        flash("تم حذف المدينة بنجاح.", "success")
+    except ValueError as exc:  # pragma: no cover - simple flash path
+        _handle_settings_error(exc)
+    return _redirect_to_settings("cities")
+
+
+@admin_bp.route("/settings/industries/delete/<item_id>", methods=["POST"])
+@require_role("admin")
+def delete_industry(item_id: str) -> Response:
+    """Remove an industry from the managed list."""
+
+    try:
+        settings_service.delete_item("industries", item_id)
+        flash("تم حذف المجال بنجاح.", "success")
+    except ValueError as exc:  # pragma: no cover - simple flash path
+        _handle_settings_error(exc)
+    return _redirect_to_settings("industries")
 
 
 __all__ = ["admin_bp"]

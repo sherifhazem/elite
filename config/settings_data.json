@@ -1,0 +1,46 @@
+{
+  "cities": [
+    {
+      "id": "city-riyadh",
+      "name": "الرياض",
+      "active": true
+    },
+    {
+      "id": "city-jeddah",
+      "name": "جدة",
+      "active": true
+    },
+    {
+      "id": "city-dammam",
+      "name": "الدمام",
+      "active": true
+    },
+    {
+      "id": "city-khobar",
+      "name": "الخبر",
+      "active": true
+    }
+  ],
+  "industries": [
+    {
+      "id": "industry-restaurants",
+      "name": "مطاعم",
+      "active": true
+    },
+    {
+      "id": "industry-medical",
+      "name": "خدمات طبية",
+      "active": true
+    },
+    {
+      "id": "industry-education",
+      "name": "تعليم",
+      "active": true
+    },
+    {
+      "id": "industry-ecommerce",
+      "name": "تجارة إلكترونية",
+      "active": true
+    }
+  ]
+}
