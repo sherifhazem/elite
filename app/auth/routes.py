@@ -1,13 +1,24 @@
+# LINKED: Added logout flow for member portal (no design change)
+# Implements proper session termination and user redirect while preserving full mobile-first UI.
 # LINKED: Route alignment & aliasing for registration and dashboards (no schema changes)
 # Updated templates to use endpoint-based url_for; README cleaned & synced with actual routes.
-"""Authentication blueprint routes for registration, login, and profile retrieval."""
 
+"""Authentication blueprint routes for registration, login, and profile retrieval."""
 from __future__ import annotations
 
 from http import HTTPStatus
 from typing import Dict, Optional, Tuple
 
-from flask import Blueprint, Response, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    Response,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 
@@ -360,7 +371,8 @@ def profile() -> tuple:
 def login_page() -> str:
     """Render the browser-based login page."""
 
-    return render_template("auth/login.html")
+    logout_notice = session.pop("logout_notice", None)
+    return render_template("auth/login.html", logout_notice=logout_notice)
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
@@ -442,8 +454,14 @@ def reset_password(token: str):
 def logout():
     """Clear stored authentication state and return to the login screen."""
 
+    session.clear()
+    session["logout_notice"] = "تم تسجيل الخروج بنجاح"
+
     response = redirect(url_for("auth.login_page"))
     response.delete_cookie("elite_token", path="/")
     response.headers["Clear-Site-Data"] = '"storage"'
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     return response
 

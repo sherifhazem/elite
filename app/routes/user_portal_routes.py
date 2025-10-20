@@ -1,3 +1,5 @@
+# LINKED: Added logout flow for member portal (no design change)
+# Implements proper session termination and user redirect while preserving full mobile-first UI.
 # LINKED: Route alignment & aliasing for registration and dashboards (no schema changes)
 # Updated templates to use endpoint-based url_for; README cleaned & synced with actual routes.
 """User portal blueprint exposing membership-aware pages."""
@@ -7,7 +9,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, Optional, Tuple
 
-from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from urllib.parse import quote
+
+from flask import Blueprint, Response, jsonify, redirect, render_template, request, url_for
 
 from .. import db
 from ..auth.utils import get_user_from_token
@@ -22,6 +26,30 @@ from ..services.offers import get_company_brief, get_portal_offers_with_company
 from ..services.redemption import list_user_redemptions_with_context
 
 portal_bp = Blueprint("portal", __name__, url_prefix="/portal")
+
+
+def _redirect_to_login() -> Response:
+    """Redirect the current visitor to the login page with an optional return hint."""
+
+    login_url = url_for("auth.login_page")
+    next_target = request.full_path if request.query_string else request.path
+    if next_target:
+        normalized_next = next_target.rstrip("?")
+        if normalized_next and not normalized_next.startswith(login_url):
+            return redirect(f"{login_url}?next={quote(normalized_next, safe='/?=&')}")
+    return redirect(login_url)
+
+
+@portal_bp.after_request
+def _portal_no_cache(response: Response) -> Response:
+    """Prevent caching of member portal views to avoid stale authenticated content."""
+
+    response.headers.setdefault(
+        "Cache-Control", "no-store, no-cache, must-revalidate, max-age=0"
+    )
+    response.headers.setdefault("Pragma", "no-cache")
+    response.headers.setdefault("Expires", "0")
+    return response
 
 
 def _extract_token() -> Optional[str]:
@@ -85,6 +113,8 @@ def _membership_card_payload(user: Optional[User], membership_level: str) -> Dic
 @portal_bp.route("/", methods=["GET"])
 def home():
     user, membership_level = _resolve_user_context()
+    if user is None:
+        return _redirect_to_login()
     featured_offers = Offer.query.order_by(Offer.created_at.desc()).limit(6).all()
     return render_template(
         "portal/home.html",
@@ -108,6 +138,8 @@ def home_alias():
 @portal_bp.route("/offers", methods=["GET"])
 def offers():
     user, membership_level = _resolve_user_context()
+    if user is None:
+        return _redirect_to_login()
     offers_data = get_portal_offers_with_company(membership_level)
     return render_template(
         "portal/offers.html",
@@ -124,6 +156,8 @@ def offers():
 @portal_bp.route("/profile", methods=["GET"])
 def profile():
     user, membership_level = _resolve_user_context()
+    if user is None:
+        return _redirect_to_login()
     available_upgrades = []
     activations = []
     upgrade_success = request.args.get("upgraded") == "1"
@@ -218,6 +252,8 @@ def notifications():
     """Render the notifications center view for the authenticated member."""
 
     user, membership_level = _resolve_user_context()
+    if user is None:
+        return _redirect_to_login()
     unread_count = _unread_notification_count(user)
     notifications_list = []
     if user is not None:

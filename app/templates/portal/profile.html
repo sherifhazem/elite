@@ -1,3 +1,5 @@
+<!-- LINKED: Added logout flow for member portal (no design change) -->
+<!-- Implements proper session termination and user redirect while preserving full mobile-first UI. -->
 <!-- LINKED: Shared Offers & Redemptions Integration (no schema changes) -->
 <!-- FIXED: Mobile-First User Portal Design (Member-Only) -->
 {% extends 'portal/base.html' %}
@@ -97,6 +99,12 @@
             border: 1px solid rgba(78, 43, 143, 0.2);
             background: #fff;
             color: var(--portal-primary, #4e2b8f);
+        }
+
+        .profile-actions .logout-button {
+            grid-column: 1 / -1;
+            text-align: center;
+            display: inline-block;
         }
 
         .upgrade-panel,
@@ -241,6 +249,13 @@
         <div class="profile-actions">
             <button class="cta-button" type="button" id="upgrade-entry" data-scroll-target="#upgrade-panel">Upgrade Membership</button>
             <button class="ghost-button" type="button" id="download-card">Download My Card</button>
+            <a
+                class="ghost-button logout-button"
+                id="logout-action"
+                href="{{ url_for('auth.logout') }}"
+                role="button"
+                rel="nofollow"
+            >تسجيل الخروج</a>
         </div>
     </section>
     <section class="upgrade-panel" id="upgrade-panel">
