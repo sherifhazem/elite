@@ -1,2 +1,38 @@
+<!-- LINKED: Implemented centralized Site Settings service using Redis for dropdown and general admin configurations. -->
 <h5 class="fw-bold text-dark mb-3">القوائم المنسدلة</h5>
 <p class="text-muted">إدارة المدن ومجالات العمل الظاهرة في نماذج التسجيل.</p>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <form method="post" action="{{ url_for('admin.update_site_settings', section='cities') }}">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="fw-bold text-primary mb-2">قائمة المدن</h6>
+          <p class="text-muted small">أدخل كل مدينة في سطر منفصل كما ستظهر للمستخدمين.</p>
+          <textarea class="form-control bg-light border-0 shadow-sm" name="values" rows="8" placeholder="مثال: الرياض\nجدة\nالدمام">{{ settings["cities"] | join('\n') }}</textarea>
+        </div>
+        <div class="card-footer bg-white border-0 d-flex justify-content-end">
+          <button type="submit" class="btn btn-primary px-4">
+            <i class="fa-solid fa-floppy-disk me-1"></i> حفظ المدن
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="col-lg-6">
+    <form method="post" action="{{ url_for('admin.update_site_settings', section='industries') }}">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="fw-bold text-primary mb-2">مجالات العمل</h6>
+          <p class="text-muted small">أدخل كل مجال في سطر مستقل. سيتم حفظ القائمة بنفس الترتيب.</p>
+          <textarea class="form-control bg-light border-0 shadow-sm" name="values" rows="8" placeholder="مثال: مطاعم\nتجارة إلكترونية\nتعليم">{{ settings["industries"] | join('\n') }}</textarea>
+        </div>
+        <div class="card-footer bg-white border-0 d-flex justify-content-end">
+          <button type="submit" class="btn btn-primary px-4">
+            <i class="fa-solid fa-floppy-disk me-1"></i> حفظ المجالات
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
