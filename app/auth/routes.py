@@ -1,3 +1,5 @@
+# LINKED: Fixed duplicate email error after company deletion
+# Ensures orphaned company owners are cleaned up before new company registration.
 # LINKED: Added logout flow for member portal (no design change)
 # Implements proper session termination and user redirect while preserving full mobile-first UI.
 # LINKED: Route alignment & aliasing for registration and dashboards (no schema changes)
@@ -12,6 +14,7 @@ from typing import Dict, Optional, Tuple
 from flask import (
     Blueprint,
     Response,
+    current_app,
     jsonify,
     redirect,
     render_template,
@@ -155,11 +158,36 @@ def _register_company_from_payload(payload: Dict[str, str]) -> Tuple[Response, i
             HTTPStatus.BAD_REQUEST,
         )
 
-    if User.query.filter_by(email=email).first():
-        return (
-            jsonify({"error": "A user with the provided email already exists."}),
-            HTTPStatus.BAD_REQUEST,
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        normalized_role = (existing_user.role or "").strip().lower()
+        associated_company_exists = False
+        if existing_user.company_id:
+            associated_company_exists = (
+                Company.query.filter_by(id=existing_user.company_id).first()
+                is not None
+            )
+        owns_company = (
+            Company.query.filter_by(owner_user_id=existing_user.id).first()
+            is not None
         )
+
+        if (
+            normalized_role == "company"
+            and not associated_company_exists
+            and not owns_company
+        ):
+            current_app.logger.info(
+                "Removed orphaned company user before re-registering the company.",
+                extra={"email": existing_user.email},
+            )
+            db.session.delete(existing_user)
+            db.session.flush()
+        else:
+            return (
+                jsonify({"error": "A user with the provided email already exists."}),
+                HTTPStatus.BAD_REQUEST,
+            )
 
     if Company.query.filter_by(name=company_name).first():
         return (
