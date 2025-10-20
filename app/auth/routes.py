@@ -464,8 +464,8 @@ def company_register_page():
     return render_template("auth/register_company.html", form=form), HTTPStatus.BAD_REQUEST
 
 
-@auth_bp.post("/api/auth/login")
-def login() -> tuple:
+@auth_bp.post("/api/auth/login", endpoint="api_login")
+def api_login() -> tuple:
     """Authenticate a user and return a signed JWT token."""
 
     payload = _extract_json()
@@ -546,6 +546,7 @@ def profile() -> tuple:
     return jsonify(response), HTTPStatus.OK
 
 
+@auth_bp.route("/login", methods=["GET"], endpoint="login")
 @auth_bp.route("/login-page")
 def login_page() -> str:
     """Render the browser-based login page."""
