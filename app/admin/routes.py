@@ -1,4 +1,7 @@
-"""LINKED: Admin user management actions fixed (VIEW / EDIT / DELETE)
+"""LINKED: Fixed admin company management actions (VIEW / EDIT / DELETE)
+Added button labels and ensured correct endpoint binding and confirmation logic.
+
+LINKED: Admin user management actions fixed (VIEW / EDIT / DELETE)
 Ensured endpoints, button labels, and behavior correctness without altering layout or design.
 
 Admin dashboard routes restricted to privileged users."""
@@ -375,6 +378,25 @@ def dashboard_companies() -> str:
     )
 
 
+@admin_bp.route("/companies/view/<int:company_id>")
+@require_role("admin")
+def view_company(company_id: int) -> str:
+    """Display read-only details for the requested company."""
+
+    company = Company.query.get_or_404(company_id)
+    offers = sorted(
+        company.offers,
+        key=lambda offer: offer.created_at or datetime.min,
+        reverse=True,
+    )
+    return render_template(
+        "dashboard/company_detail.html",
+        section_title="View Company",
+        company=company,
+        offers=offers,
+    )
+
+
 @admin_bp.route("/companies/add", methods=["GET", "POST"])
 @require_role("admin")
 def add_company() -> str:
@@ -433,7 +455,7 @@ def edit_company(company_id: int) -> str:
             flash("Unable to update company. Name may already be in use.", "danger")
             return redirect(url_for("admin.edit_company", company_id=company_id))
 
-        flash(f"Company '{name}' updated successfully.", "success")
+        flash("تم تحديث بيانات الشركة بنجاح.", "success")
         return redirect(url_for("admin.dashboard_companies"))
 
     return render_template(
@@ -449,7 +471,7 @@ def delete_company(company_id: int) -> str:
     company = Company.query.get_or_404(company_id)
     db.session.delete(company)
     db.session.commit()
-    flash(f"Company '{company.name}' deleted successfully.", "success")
+    flash("تم حذف الشركة بنجاح.", "success")
     return redirect(url_for("admin.dashboard_companies"))
 
 
