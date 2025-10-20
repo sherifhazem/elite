@@ -1,0 +1,317 @@
+<!-- LINKED: Added admin-managed dropdown system for Cities and Industries. -->
+{% set active_page = 'settings' %}
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+    <div class="container-fluid py-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <h1 class="h3 mb-1">إدارة القوائم المنسدلة</h1>
+                <p class="text-muted mb-0">
+                    تحكم بقوائم المدن ومجالات العمل المستخدَمة في تسجيل الشركات من مكانٍ واحد.
+                </p>
+            </div>
+            <div class="text-md-end text-muted small">
+                <span class="d-block">التغييرات تظهر فورًا في واجهة التسجيل.</span>
+                <span>يتم حفظ جميع التعديلات تلقائيًا داخل إعدادات النظام.</span>
+            </div>
+        </div>
+
+        <ul class="nav nav-pills admin-pills">
+            <li class="nav-item">
+                <a
+                    class="nav-link {{ 'active' if active_settings_tab == 'cities' else '' }}"
+                    href="{{ url_for('admin.settings_home', tab='cities') }}"
+                >
+                    المدن
+                </a>
+            </li>
+            <li class="nav-item">
+                <a
+                    class="nav-link {{ 'active' if active_settings_tab == 'industries' else '' }}"
+                    href="{{ url_for('admin.settings_home', tab='industries') }}"
+                >
+                    مجالات العمل
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-4">
+            <div class="tab-pane fade {{ 'show active' if active_settings_tab == 'cities' else '' }}" id="settings-cities" role="tabpanel">
+                <div class="card shadow-sm admin-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="h5 mb-0">قائمة المدن</h2>
+                            <span class="text-muted small">تحكّم بالمدن المعروضة أثناء تسجيل الشركات الجديدة.</span>
+                        </div>
+                        <button
+                            class="btn btn-primary"
+                            type="button"
+                            data-bs-toggle="modal"
+                            data-bs-target="#addListModal"
+                            data-list-type="cities"
+                            data-modal-title="إضافة مدينة"
+                            data-submit-label="إضافة المدينة"
+                        >
+                            ➕ إضافة مدينة
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">الاسم</th>
+                                    <th scope="col" class="text-center">الحالة</th>
+                                    <th scope="col" class="text-end">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if cities %}
+                                    {% for city in cities %}
+                                        <tr>
+                                            <td class="fw-medium">{{ city.name }}</td>
+                                            <td class="text-center">
+                                                {% if city.active %}
+                                                    <span class="badge bg-success-subtle text-success">مفعل</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary-subtle text-secondary">موقوف</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="btn-group" role="group">
+                                                    <button
+                                                        class="btn btn-sm btn-outline-primary js-edit-item"
+                                                        type="button"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editListModal"
+                                                        data-list-type="cities"
+                                                        data-item-id="{{ city.id }}"
+                                                        data-item-name="{{ city.name }}"
+                                                        data-item-active="{{ '1' if city.active else '0' }}"
+                                                        data-modal-title="تعديل مدينة"
+                                                        data-submit-label="حفظ المدينة"
+                                                    >
+                                                        ✏️ تعديل
+                                                    </button>
+                                                    <form
+                                                        class="d-inline"
+                                                        method="post"
+                                                        action="{{ url_for('admin.delete_city', item_id=city.id) }}"
+                                                        onsubmit="return confirm('هل أنت متأكد من حذف هذه المدينة؟');"
+                                                    >
+                                                        <button class="btn btn-sm btn-outline-danger" type="submit">🗑 حذف</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-4">
+                                            لا توجد مدن مسجلة حاليًا.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade {{ 'show active' if active_settings_tab == 'industries' else '' }}" id="settings-industries" role="tabpanel">
+                <div class="card shadow-sm admin-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="h5 mb-0">قائمة مجالات العمل</h2>
+                            <span class="text-muted small">تحكّم بالخانات المعروضة في اختيار مجال عمل الشركة.</span>
+                        </div>
+                        <button
+                            class="btn btn-primary"
+                            type="button"
+                            data-bs-toggle="modal"
+                            data-bs-target="#addListModal"
+                            data-list-type="industries"
+                            data-modal-title="إضافة مجال"
+                            data-submit-label="إضافة المجال"
+                        >
+                            ➕ إضافة مجال
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">الاسم</th>
+                                    <th scope="col" class="text-center">الحالة</th>
+                                    <th scope="col" class="text-end">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if industries %}
+                                    {% for industry in industries %}
+                                        <tr>
+                                            <td class="fw-medium">{{ industry.name }}</td>
+                                            <td class="text-center">
+                                                {% if industry.active %}
+                                                    <span class="badge bg-success-subtle text-success">مفعل</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary-subtle text-secondary">موقوف</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="btn-group" role="group">
+                                                    <button
+                                                        class="btn btn-sm btn-outline-primary js-edit-item"
+                                                        type="button"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editListModal"
+                                                        data-list-type="industries"
+                                                        data-item-id="{{ industry.id }}"
+                                                        data-item-name="{{ industry.name }}"
+                                                        data-item-active="{{ '1' if industry.active else '0' }}"
+                                                        data-modal-title="تعديل مجال"
+                                                        data-submit-label="حفظ المجال"
+                                                    >
+                                                        ✏️ تعديل
+                                                    </button>
+                                                    <form
+                                                        class="d-inline"
+                                                        method="post"
+                                                        action="{{ url_for('admin.delete_industry', item_id=industry.id) }}"
+                                                        onsubmit="return confirm('هل أنت متأكد من حذف هذا المجال؟');"
+                                                    >
+                                                        <button class="btn btn-sm btn-outline-danger" type="submit">🗑 حذف</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-4">
+                                            لا توجد مجالات عمل مسجلة حاليًا.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- إضافة عنصر -->
+    <div class="modal fade" id="addListModal" tabindex="-1" aria-labelledby="addListModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addListModalLabel">إضافة عنصر</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" id="addListForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label" for="addItemName">الاسم</label>
+                            <input class="form-control" id="addItemName" name="name" type="text" required>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input type="hidden" name="is_active" value="0">
+                            <input class="form-check-input" id="addItemActive" name="is_active" type="checkbox" value="1" checked>
+                            <label class="form-check-label" for="addItemActive">نشط في الواجهة العامة</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary" id="addListSubmit">حفظ</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- تعديل عنصر -->
+    <div class="modal fade" id="editListModal" tabindex="-1" aria-labelledby="editListModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editListModalLabel">تعديل عنصر</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" id="editListForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label" for="editItemName">الاسم</label>
+                            <input class="form-control" id="editItemName" name="name" type="text" required>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input type="hidden" name="is_active" value="0">
+                            <input class="form-check-input" id="editItemActive" name="is_active" type="checkbox" value="1">
+                            <label class="form-check-label" for="editItemActive">نشط في الواجهة العامة</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary" id="editListSubmit">حفظ</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    {{ super() }}
+    <script>
+        const addListModal = document.getElementById('addListModal');
+        const editListModal = document.getElementById('editListModal');
+
+        const modalConfig = {
+            cities: {
+                addAction: '{{ url_for('admin.add_city') }}',
+                editAction: (id) => '{{ url_for('admin.update_city', item_id='__ID__') }}'.replace('__ID__', id)
+            },
+            industries: {
+                addAction: '{{ url_for('admin.add_industry') }}',
+                editAction: (id) => '{{ url_for('admin.update_industry', item_id='__ID__') }}'.replace('__ID__', id)
+            }
+        };
+
+        addListModal?.addEventListener('show.bs.modal', (event) => {
+            const trigger = event.relatedTarget;
+            if (!trigger) {
+                return;
+            }
+            const listType = trigger.getAttribute('data-list-type');
+            const modalTitle = trigger.getAttribute('data-modal-title');
+            const submitLabel = trigger.getAttribute('data-submit-label');
+
+            const form = document.getElementById('addListForm');
+            form.reset();
+            form.action = modalConfig[listType]?.addAction || '#';
+            document.getElementById('addItemActive').checked = true;
+            document.getElementById('addListModalLabel').textContent = modalTitle || 'إضافة عنصر';
+            document.getElementById('addListSubmit').textContent = submitLabel || 'حفظ';
+        });
+
+        editListModal?.addEventListener('show.bs.modal', (event) => {
+            const trigger = event.relatedTarget;
+            if (!trigger) {
+                return;
+            }
+            const listType = trigger.getAttribute('data-list-type');
+            const itemId = trigger.getAttribute('data-item-id');
+            const itemName = trigger.getAttribute('data-item-name');
+            const itemActive = trigger.getAttribute('data-item-active');
+            const modalTitle = trigger.getAttribute('data-modal-title');
+            const submitLabel = trigger.getAttribute('data-submit-label');
+
+            const form = document.getElementById('editListForm');
+            form.action = modalConfig[listType]?.editAction(itemId) || '#';
+            document.getElementById('editItemName').value = itemName || '';
+            const activeCheckbox = document.getElementById('editItemActive');
+            activeCheckbox.checked = itemActive === '1';
+            document.getElementById('editListModalLabel').textContent = modalTitle || 'تعديل عنصر';
+            document.getElementById('editListSubmit').textContent = submitLabel || 'حفظ';
+        });
+    </script>
+{% endblock %}
