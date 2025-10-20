@@ -742,7 +742,7 @@ def settings_home() -> str:
     cities = settings_service.get_list("cities")
     industries = settings_service.get_list("industries")
     return render_template(
-        "admin/settings/index.html",
+        "admin/settings/home.html",
         section_title="Site Settings",
         active_page="settings",
         cities=cities,
