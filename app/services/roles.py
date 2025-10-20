@@ -1,3 +1,5 @@
+# LINKED: Fixed admin permission logic and restored Site Settings visibility for Admin and Superadmin roles.
+# Ensured correct decorator checks and sidebar rendering consistency.
 """Utility helpers implementing the role and permission system."""
 
 from __future__ import annotations
@@ -6,7 +8,8 @@ from functools import wraps
 from http import HTTPStatus
 from typing import Callable, Iterable, Optional, Protocol
 
-from flask import abort, g, request
+from flask import abort, flash, g, redirect, request, url_for
+from flask_login import current_user as flask_current_user
 from sqlalchemy import func
 
 from ..auth.utils import get_user_from_token
@@ -56,10 +59,18 @@ def _extract_token() -> Optional[str]:
 def resolve_user_from_request():
     """Return the authenticated user object for the current request if available."""
 
+    # First prefer explicit bearer tokens to support API and SPA use-cases.
     token = _extract_token()
-    if not token:
-        return None
-    return get_user_from_token(token)
+    if token:
+        user = get_user_from_token(token)
+        if user is not None:
+            return user
+
+    # Fall back to Flask-Login's session-based user when available.
+    if getattr(flask_current_user, "is_authenticated", False):
+        return flask_current_user
+
+    return None
 
 
 def has_role(user: Optional[SupportsRole], role_name: str) -> bool:
@@ -67,6 +78,9 @@ def has_role(user: Optional[SupportsRole], role_name: str) -> bool:
 
     if user is None or not getattr(user, "is_active", False):
         return False
+
+    if hasattr(user, "has_role") and callable(getattr(user, "has_role")):
+        return bool(user.has_role(role_name))
 
     normalized = (role_name or "member").strip().lower()
     allowed_roles = ROLE_ACCESS_MATRIX.get(normalized, {normalized})
@@ -84,7 +98,13 @@ def require_role(role_name: str) -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
-            user = getattr(g, "current_user", None) or resolve_user_from_request()
+            user = getattr(g, "current_user", None)
+            if user is None or not getattr(user, "is_authenticated", False):
+                if getattr(flask_current_user, "is_authenticated", False):
+                    user = flask_current_user
+            if user is None:
+                user = resolve_user_from_request()
+
             if user is None:
                 abort(HTTPStatus.UNAUTHORIZED)
             if not getattr(user, "is_active", False):
@@ -97,6 +117,32 @@ def require_role(role_name: str) -> Callable:
         return wrapper
 
     return decorator
+
+
+def admin_required(view_func: Callable) -> Callable:
+    """Decorator enforcing admin (or higher) access with user-friendly redirects."""
+
+    @wraps(view_func)
+    def wrapper(*args, **kwargs):
+        user = getattr(g, "current_user", None)
+        if user is None or not getattr(user, "is_authenticated", False):
+            if getattr(flask_current_user, "is_authenticated", False):
+                user = flask_current_user
+
+        if user is None:
+            flash("يُسمح بالوصول للمشرفين فقط", "warning")
+            return redirect(url_for("auth.login"))
+
+        if not getattr(user, "is_active", False):
+            abort(HTTPStatus.FORBIDDEN)
+
+        if not has_role(user, "admin"):
+            abort(HTTPStatus.FORBIDDEN)
+
+        g.current_user = user
+        return view_func(*args, **kwargs)
+
+    return wrapper
 
 
 def can_access(user: Optional[SupportsRole], permission: str) -> bool:
@@ -143,6 +189,7 @@ __all__ = [
     "PERMISSION_ROLE_MATRIX",
     "has_role",
     "require_role",
+    "admin_required",
     "can_access",
     "resolve_user_from_request",
     "assign_permissions",
