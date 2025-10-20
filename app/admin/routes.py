@@ -1,3 +1,5 @@
+# LINKED: Added comprehensive Site Settings section in Admin Panel.
+# Includes Cities & Industries dynamic management integrated with Redis backend.
 # LINKED: Added admin-managed dropdown system for Cities and Industries.
 # Introduced unified Settings Service and admin UI for dynamic list management.
 # LINKED: Fixed duplicate email error after company deletion
@@ -24,6 +26,7 @@ from flask import (
     abort,
     flash,
     g,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -81,6 +84,41 @@ def _resolve_membership_level(level: str | None) -> str:
 
     normalized = User.normalize_membership_level(level or "Basic")
     return normalized or "Basic"
+
+
+def _settings_success_response(list_type: str, message: str | None = None) -> Response:
+    """Return a JSON response containing the refreshed list data."""
+
+    items = settings_service.get_list(list_type)
+    payload = {"status": "success", "items": items}
+    if message:
+        payload["message"] = message
+    return jsonify(payload)
+
+
+def _settings_error_response(message: str, status: HTTPStatus = HTTPStatus.BAD_REQUEST) -> Response:
+    """Return a JSON payload describing the failure."""
+
+    response = jsonify({"status": "error", "message": message})
+    response.status_code = int(status)
+    return response
+
+
+def _extract_value(*keys: str) -> str:
+    """Return the first non-empty value for the provided keys from request data."""
+
+    payload = request.get_json(silent=True)
+    if isinstance(payload, dict):
+        for key in keys:
+            value = payload.get(key)
+            if value:
+                return str(value)
+
+    for key in keys:
+        value = request.form.get(key)
+        if value:
+            return str(value)
+    return ""
 
 
 @admin_bp.route("/")
@@ -681,153 +719,120 @@ def trigger_offer_notification(offer_id: int) -> str:
     return redirect(url_for("admin.dashboard_offers"))
 
 
-def _render_settings(active_tab: str) -> str:
-    """Render the settings management interface with the requested tab."""
+@admin_bp.route("/settings")
+@require_role("admin")
+def settings_home() -> str:
+    """Render the consolidated site settings management experience."""
 
-    resolved_tab = active_tab if active_tab in {"cities", "industries"} else "cities"
-    city_values = settings_service.get_list("cities")
-    industry_values = settings_service.get_list("industries")
-    cities = [{"id": value, "name": value, "active": True} for value in city_values]
-    industries = [{"id": value, "name": value, "active": True} for value in industry_values]
+    cities = settings_service.get_list("cities")
+    industries = settings_service.get_list("industries")
     return render_template(
-        "dashboard/settings.html",
-        section_title="إدارة القوائم المنسدلة",
-        active_settings_tab=resolved_tab,
+        "admin/settings/index.html",
+        section_title="Site Settings",
+        active_page="settings",
         cities=cities,
         industries=industries,
     )
 
 
-def _redirect_to_settings(tab: str) -> Response:
-    """Redirect helper that preserves the requested tab."""
-
-    return redirect(url_for("admin.settings_home", tab=tab))
-
-
-@admin_bp.route("/settings")
+@admin_bp.route("/settings/cities", methods=["GET"])
 @require_role("admin")
-def settings_home() -> str:
-    """Display the admin settings manager with dynamic dropdown lists."""
+def fetch_cities() -> Response:
+    """Return the list of managed cities as JSON."""
 
-    tab = request.args.get("tab", "cities")
-    return _render_settings(tab)
+    return _settings_success_response("cities")
 
 
-@admin_bp.route("/settings/cities")
+@admin_bp.route("/settings/industries", methods=["GET"])
 @require_role("admin")
-def settings_cities() -> Response:
-    """Alias endpoint for directly opening the cities tab."""
+def fetch_industries() -> Response:
+    """Return the list of managed industries as JSON."""
 
-    return _redirect_to_settings("cities")
-
-
-@admin_bp.route("/settings/industries")
-@require_role("admin")
-def settings_industries() -> Response:
-    """Alias endpoint for directly opening the industries tab."""
-
-    return _redirect_to_settings("industries")
+    return _settings_success_response("industries")
 
 
-def _handle_settings_error(exc: Exception) -> None:
-    """Flash a consistent danger message when a settings action fails."""
+def _handle_add_item(list_type: str) -> Response:
+    """Shared handler for add endpoints."""
 
-    message = str(exc) or "تعذر تنفيذ العملية المطلوبة."
-    flash(message, "danger")
+    name = _extract_value("name", "value", "label")
+    if not (name or "").strip():
+        return _settings_error_response("الاسم مطلوب.")
+    try:
+        settings_service.add_item(list_type, name)
+    except ValueError as exc:
+        return _settings_error_response(str(exc))
+    return _settings_success_response(list_type, "✅ تم تحديث القائمة بنجاح")
+
+
+def _handle_update_item(list_type: str, item_id: str) -> Response:
+    """Shared handler for update endpoints."""
+
+    new_name = _extract_value("name", "new_name", "value")
+    if not (new_name or "").strip():
+        return _settings_error_response("الاسم مطلوب.")
+    try:
+        settings_service.update_item(list_type, item_id, new_name)
+    except ValueError as exc:
+        return _settings_error_response(str(exc))
+    return _settings_success_response(list_type, "✅ تم تحديث القائمة بنجاح")
+
+
+def _handle_delete_item(list_type: str, item_id: str) -> Response:
+    """Shared handler for delete endpoints."""
+
+    try:
+        settings_service.delete_item(list_type, item_id)
+    except ValueError as exc:
+        return _settings_error_response(str(exc))
+    return _settings_success_response(list_type, "✅ تم تحديث القائمة بنجاح")
 
 
 @admin_bp.route("/settings/cities/add", methods=["POST"])
 @require_role("admin")
 def add_city() -> Response:
-    """Add a new city entry to the managed list."""
+    """Add a new city entry to the managed list via JSON."""
 
-    name = (request.form.get("name") or "").strip()
-    if not name:
-        flash("الاسم مطلوب.", "danger")
-        return _redirect_to_settings("cities")
-    try:
-        settings_service.add_item("cities", name)
-        flash("تمت إضافة المدينة بنجاح.", "success")
-    except ValueError as exc:  # pragma: no cover - simple flash path
-        _handle_settings_error(exc)
-    return _redirect_to_settings("cities")
+    return _handle_add_item("cities")
 
 
 @admin_bp.route("/settings/industries/add", methods=["POST"])
 @require_role("admin")
 def add_industry() -> Response:
-    """Add a new industry entry to the managed list."""
+    """Add a new industry entry to the managed list via JSON."""
 
-    name = (request.form.get("name") or "").strip()
-    if not name:
-        flash("الاسم مطلوب.", "danger")
-        return _redirect_to_settings("industries")
-    try:
-        settings_service.add_item("industries", name)
-        flash("تمت إضافة المجال بنجاح.", "success")
-    except ValueError as exc:  # pragma: no cover - simple flash path
-        _handle_settings_error(exc)
-    return _redirect_to_settings("industries")
+    return _handle_add_item("industries")
 
 
-@admin_bp.route("/settings/cities/update/<item_id>", methods=["POST"])
+@admin_bp.route("/settings/cities/update/<path:item_id>", methods=["POST"])
 @require_role("admin")
 def update_city(item_id: str) -> Response:
-    """Update an existing city entry."""
+    """Rename a city entry."""
 
-    name = (request.form.get("name") or "").strip()
-    if not name:
-        flash("الاسم مطلوب.", "danger")
-        return _redirect_to_settings("cities")
-    try:
-        settings_service.update_item("cities", item_id, name)
-        flash("تم تحديث بيانات المدينة.", "success")
-    except ValueError as exc:  # pragma: no cover - simple flash path
-        _handle_settings_error(exc)
-    return _redirect_to_settings("cities")
+    return _handle_update_item("cities", item_id)
 
 
-@admin_bp.route("/settings/industries/update/<item_id>", methods=["POST"])
+@admin_bp.route("/settings/industries/update/<path:item_id>", methods=["POST"])
 @require_role("admin")
 def update_industry(item_id: str) -> Response:
-    """Update an existing industry entry."""
+    """Rename an industry entry."""
 
-    name = (request.form.get("name") or "").strip()
-    if not name:
-        flash("الاسم مطلوب.", "danger")
-        return _redirect_to_settings("industries")
-    try:
-        settings_service.update_item("industries", item_id, name)
-        flash("تم تحديث بيانات المجال.", "success")
-    except ValueError as exc:  # pragma: no cover - simple flash path
-        _handle_settings_error(exc)
-    return _redirect_to_settings("industries")
+    return _handle_update_item("industries", item_id)
 
 
-@admin_bp.route("/settings/cities/delete/<item_id>", methods=["POST"])
+@admin_bp.route("/settings/cities/delete/<path:item_id>", methods=["POST"])
 @require_role("admin")
 def delete_city(item_id: str) -> Response:
-    """Remove a city from the managed list."""
+    """Remove a city entry."""
 
-    try:
-        settings_service.delete_item("cities", item_id)
-        flash("تم حذف المدينة بنجاح.", "success")
-    except ValueError as exc:  # pragma: no cover - simple flash path
-        _handle_settings_error(exc)
-    return _redirect_to_settings("cities")
+    return _handle_delete_item("cities", item_id)
 
 
-@admin_bp.route("/settings/industries/delete/<item_id>", methods=["POST"])
+@admin_bp.route("/settings/industries/delete/<path:item_id>", methods=["POST"])
 @require_role("admin")
 def delete_industry(item_id: str) -> Response:
-    """Remove an industry from the managed list."""
+    """Remove an industry entry."""
 
-    try:
-        settings_service.delete_item("industries", item_id)
-        flash("تم حذف المجال بنجاح.", "success")
-    except ValueError as exc:  # pragma: no cover - simple flash path
-        _handle_settings_error(exc)
-    return _redirect_to_settings("industries")
+    return _handle_delete_item("industries", item_id)
 
 
 __all__ = ["admin_bp"]

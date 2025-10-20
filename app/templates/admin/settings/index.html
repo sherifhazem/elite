@@ -1,0 +1,512 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Site Settings · Elite Admin Console{% endblock %}
+
+{% block extra_head %}
+<style>
+    .site-settings-page .page-title {
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--elite-primary);
+    }
+
+    .site-settings-page .page-subtitle {
+        color: #5f6777;
+        max-width: 720px;
+    }
+
+    .site-settings-page .nav-pills .nav-link {
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        color: var(--elite-dark);
+        background: rgba(31, 59, 112, 0.06);
+    }
+
+    .site-settings-page .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, rgba(31, 59, 112, 0.85), rgba(96, 59, 140, 0.92));
+        color: #ffffff;
+        box-shadow: 0 10px 18px rgba(31, 59, 112, 0.18);
+    }
+
+    .settings-card {
+        border-radius: 18px;
+        box-shadow: var(--card-shadow);
+        border: none;
+    }
+
+    .settings-card .card-header {
+        background: linear-gradient(135deg, rgba(96, 59, 140, 0.08), rgba(31, 59, 112, 0.12));
+        border-bottom: none;
+        border-top-left-radius: 18px !important;
+        border-top-right-radius: 18px !important;
+    }
+
+    .settings-card table thead {
+        background: rgba(31, 59, 112, 0.08);
+        color: var(--elite-dark);
+    }
+
+    .settings-mobile-list .card {
+        border-radius: 16px;
+        border: 1px solid rgba(31, 59, 112, 0.1);
+        box-shadow: none;
+    }
+
+    .settings-mobile-list .card + .card {
+        margin-top: 0.75rem;
+    }
+
+    .settings-empty {
+        color: #7a8397;
+    }
+
+    @media (max-width: 991.98px) {
+        .site-settings-page .nav-pills {
+            gap: 0.75rem;
+        }
+
+        .site-settings-page .nav-pills .nav-link {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="site-settings-page py-4">
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
+        <div>
+            <h1 class="page-title mb-2">إعدادات الموقع</h1>
+            <p class="page-subtitle mb-0">
+                قم بإدارة القوائم الأساسية والإعدادات العامة للموقع. تؤثر هذه القيم على واجهات التسجيل والعضوية.
+            </p>
+        </div>
+    </div>
+
+    <div id="settings-alert" class="alert d-none align-items-center" role="alert">
+        <i class="fa-solid fa-circle-info me-2"></i>
+        <span id="settings-alert-message"></span>
+    </div>
+
+    <ul class="nav nav-pills mb-4" id="settingsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="cities-tab" data-bs-toggle="tab" data-bs-target="#tab-cities" type="button" role="tab" aria-controls="tab-cities" aria-selected="true">
+                <i class="fa-solid fa-city me-2"></i> المدن
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="industries-tab" data-bs-toggle="tab" data-bs-target="#tab-industries" type="button" role="tab" aria-controls="tab-industries" aria-selected="false">
+                <i class="fa-solid fa-briefcase me-2"></i> مجالات العمل
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="general-tab" data-bs-toggle="tab" data-bs-target="#tab-general" type="button" role="tab" aria-controls="tab-general" aria-selected="false">
+                <i class="fa-solid fa-sliders me-2"></i> إعدادات عامة
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="settingsTabsContent">
+        <div class="tab-pane fade show active" id="tab-cities" role="tabpanel" aria-labelledby="cities-tab">
+            <div class="card settings-card mb-4">
+                <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                    <div>
+                        <h2 class="h5 mb-1">إدارة المدن</h2>
+                        <p class="mb-0 text-muted">تتحكم هذه القائمة في القيم المتاحة ضمن نموذج تسجيل الشركات.</p>
+                    </div>
+                    <button type="button" class="btn btn-primary shadow-sm" data-action="open-add" data-list-type="cities">
+                        <i class="fa-solid fa-plus me-2"></i> إضافة مدينة
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive d-none d-lg-block">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">المدينة</th>
+                                    <th scope="col">الحالة</th>
+                                    <th scope="col" class="text-end">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cities-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="settings-mobile-list d-lg-none" id="cities-mobile-list"></div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="tab-industries" role="tabpanel" aria-labelledby="industries-tab">
+            <div class="card settings-card mb-4">
+                <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                    <div>
+                        <h2 class="h5 mb-1">إدارة مجالات العمل</h2>
+                        <p class="mb-0 text-muted">قم بتخصيص المجالات المتاحة عند تسجيل الشركات الجديدة.</p>
+                    </div>
+                    <button type="button" class="btn btn-primary shadow-sm" data-action="open-add" data-list-type="industries">
+                        <i class="fa-solid fa-plus me-2"></i> إضافة مجال عمل
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive d-none d-lg-block">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">مجال العمل</th>
+                                    <th scope="col">الحالة</th>
+                                    <th scope="col" class="text-end">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="industries-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="settings-mobile-list d-lg-none" id="industries-mobile-list"></div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="tab-general" role="tabpanel" aria-labelledby="general-tab">
+            <div class="card settings-card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">إعدادات عامة</h2>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0 text-muted">سيتم تفعيل إعدادات الموقع العامة لاحقًا.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal fade" id="listModal" tabindex="-1" aria-labelledby="listModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="listModalTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="listForm" novalidate>
+                <div class="modal-body pt-0">
+                    <div class="mb-3">
+                        <label for="itemName" class="form-label">اسم العنصر</label>
+                        <input type="text" class="form-control" id="itemName" name="name" required>
+                        <div class="invalid-feedback">الرجاء إدخال اسم صالح.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary" id="listModalSubmit">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="deleteModalTitle">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-0">
+                <p id="deleteModalMessage" class="mb-0"></p>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-danger" id="deleteConfirmBtn">
+                    <i class="fa-solid fa-trash-can me-2"></i> حذف
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const listLabels = {
+            cities: { singular: 'المدينة', add: 'إضافة مدينة', edit: 'تعديل مدينة', delete: 'المدينة' },
+            industries: { singular: 'مجال العمل', add: 'إضافة مجال عمل', edit: 'تعديل مجال عمل', delete: 'مجال العمل' }
+        };
+
+        const state = {
+            cities: {{ cities | tojson }},
+            industries: {{ industries | tojson }}
+        };
+
+        const alertElement = document.getElementById('settings-alert');
+        const alertMessage = document.getElementById('settings-alert-message');
+        let alertTimeoutId = null;
+
+        const listModalEl = document.getElementById('listModal');
+        const listModal = new bootstrap.Modal(listModalEl);
+        const listModalTitle = document.getElementById('listModalTitle');
+        const listModalSubmit = document.getElementById('listModalSubmit');
+        const itemNameInput = document.getElementById('itemName');
+        const listForm = document.getElementById('listForm');
+
+        const deleteModalEl = document.getElementById('deleteModal');
+        const deleteModal = new bootstrap.Modal(deleteModalEl);
+        const deleteModalMessage = document.getElementById('deleteModalMessage');
+        const deleteConfirmBtn = document.getElementById('deleteConfirmBtn');
+
+        const tableBodies = {
+            cities: document.getElementById('cities-table-body'),
+            industries: document.getElementById('industries-table-body')
+        };
+
+        const mobileContainers = {
+            cities: document.getElementById('cities-mobile-list'),
+            industries: document.getElementById('industries-mobile-list')
+        };
+
+        function escapeHtml(value) {
+            return (value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showAlert(message, variant = 'success') {
+            if (!alertElement) {
+                return;
+            }
+            alertElement.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning');
+            const variantClass = variant === 'success' ? 'alert-success' : variant === 'warning' ? 'alert-warning' : 'alert-danger';
+            alertElement.classList.add(variantClass);
+            alertMessage.textContent = message;
+            if (alertTimeoutId) {
+                clearTimeout(alertTimeoutId);
+            }
+            alertTimeoutId = setTimeout(() => {
+                alertElement.classList.add('d-none');
+            }, 4000);
+        }
+
+        function renderList(listType) {
+            const items = state[listType] || [];
+            const tbody = tableBodies[listType];
+            const mobileContainer = mobileContainers[listType];
+
+            if (tbody) {
+                if (items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 settings-empty">لا توجد عناصر متاحة حاليًا.</td></tr>';
+                } else {
+                    tbody.innerHTML = items.map((item) => {
+                        const displayItem = escapeHtml(item);
+                        const encodedItem = encodeURIComponent(item);
+                        return `
+                            <tr>
+                                <td class="fw-semibold">${displayItem}</td>
+                                <td><span class="badge bg-success-subtle text-success fw-semibold">نشط</span></td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary me-2" data-action="edit-item" data-list-type="${listType}" data-item-name="${encodedItem}">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-item" data-list-type="${listType}" data-item-name="${encodedItem}">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+
+            if (mobileContainer) {
+                if (items.length === 0) {
+                    mobileContainer.innerHTML = '<div class="text-center py-4 settings-empty">لا توجد عناصر متاحة حاليًا.</div>';
+                } else {
+                    mobileContainer.innerHTML = items.map((item) => {
+                        const displayItem = escapeHtml(item);
+                        const encodedItem = encodeURIComponent(item);
+                        return `
+                            <div class="card p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <span class="d-block fw-semibold mb-1">${displayItem}</span>
+                                        <span class="badge bg-success-subtle text-success fw-semibold">نشط</span>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="edit-item" data-list-type="${listType}" data-item-name="${encodedItem}">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-item" data-list-type="${listType}" data-item-name="${encodedItem}">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        function refreshAll() {
+            renderList('cities');
+            renderList('industries');
+        }
+
+        function openAddModal(listType) {
+            listModalEl.dataset.listType = listType;
+            listModalEl.dataset.mode = 'add';
+            listModalEl.dataset.originalValue = '';
+            itemNameInput.value = '';
+            itemNameInput.classList.remove('is-invalid');
+            listForm.classList.remove('was-validated');
+            listModalTitle.textContent = listLabels[listType].add;
+            listModalSubmit.textContent = 'حفظ';
+            listModal.show();
+            setTimeout(() => itemNameInput.focus(), 100);
+        }
+
+        function openEditModal(listType, value) {
+            listModalEl.dataset.listType = listType;
+            listModalEl.dataset.mode = 'edit';
+            listModalEl.dataset.originalValue = value;
+            itemNameInput.value = value;
+            itemNameInput.classList.remove('is-invalid');
+            listForm.classList.remove('was-validated');
+            listModalTitle.textContent = listLabels[listType].edit;
+            listModalSubmit.textContent = 'تحديث';
+            listModal.show();
+            setTimeout(() => {
+                itemNameInput.focus();
+                itemNameInput.select();
+            }, 100);
+        }
+
+        function openDeleteModal(listType, value) {
+            deleteModalEl.dataset.listType = listType;
+            deleteModalEl.dataset.itemName = value;
+            deleteModalMessage.innerHTML = `هل أنت متأكد من حذف ${listLabels[listType].delete} «${escapeHtml(value)}»؟`;
+            deleteModal.show();
+        }
+
+        itemNameInput.addEventListener('input', () => {
+            itemNameInput.classList.remove('is-invalid');
+            listForm.classList.remove('was-validated');
+        });
+
+        async function performRequest(url, payload) {
+            const options = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload ?? {})
+            };
+            const response = await fetch(url, options);
+            let data = {};
+            try {
+                data = await response.json();
+            } catch (error) {
+                data = {};
+            }
+            if (!response.ok || data.status === 'error') {
+                const message = data.message || 'حدث خطأ غير متوقع. يرجى المحاولة لاحقًا.';
+                throw new Error(message);
+            }
+            return data;
+        }
+
+        document.addEventListener('click', (event) => {
+            const trigger = event.target.closest('[data-action]');
+            if (!trigger) {
+                return;
+            }
+            const action = trigger.dataset.action;
+            const listType = trigger.dataset.listType;
+            const encodedItem = trigger.dataset.itemName || '';
+            const itemName = encodedItem ? decodeURIComponent(encodedItem) : '';
+
+            if (action === 'open-add') {
+                event.preventDefault();
+                openAddModal(listType);
+            } else if (action === 'edit-item') {
+                event.preventDefault();
+                openEditModal(listType, itemName);
+            } else if (action === 'delete-item') {
+                event.preventDefault();
+                openDeleteModal(listType, itemName);
+            }
+        });
+
+        listForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const listType = listModalEl.dataset.listType;
+            const mode = listModalEl.dataset.mode;
+            const originalValue = listModalEl.dataset.originalValue || '';
+            const value = (itemNameInput.value || '').trim();
+
+            if (!value) {
+                itemNameInput.classList.add('is-invalid');
+                listForm.classList.add('was-validated');
+                return;
+            }
+
+            try {
+                const endpoint = mode === 'edit'
+                    ? `/admin/settings/${listType}/update/${encodeURIComponent(originalValue)}`
+                    : `/admin/settings/${listType}/add`;
+                const payload = { name: value };
+                const data = await performRequest(endpoint, payload);
+                state[listType] = data.items || [];
+                renderList(listType);
+                listModal.hide();
+                showAlert(data.message || '✅ تم تحديث القائمة بنجاح', 'success');
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        });
+
+        deleteConfirmBtn.addEventListener('click', async () => {
+            const listType = deleteModalEl.dataset.listType;
+            const itemName = deleteModalEl.dataset.itemName;
+            if (!listType || !itemName) {
+                return;
+            }
+            try {
+                const endpoint = `/admin/settings/${listType}/delete/${encodeURIComponent(itemName)}`;
+                const data = await performRequest(endpoint);
+                state[listType] = data.items || [];
+                renderList(listType);
+                deleteModal.hide();
+                showAlert(data.message || '✅ تم تحديث القائمة بنجاح', 'success');
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        });
+
+        refreshAll();
+
+        const sidebarNav = document.getElementById('sidebarNav');
+        if (sidebarNav && !sidebarNav.querySelector('[data-settings-link]')) {
+            const li = document.createElement('li');
+            li.className = 'nav-item';
+            const anchor = document.createElement('a');
+            anchor.className = 'nav-link d-flex align-items-center';
+            if ({{ 'true' if active_page == 'settings' else 'false' }}) {
+                anchor.classList.add('active');
+            }
+            anchor.href = '/admin/settings';
+            anchor.dataset.settingsLink = 'true';
+            anchor.innerHTML = '<i class="fas fa-gear me-3"></i><span>إعدادات الموقع</span><small class="ms-2 text-white-50 d-none d-xl-inline">(Site Settings)</small>';
+            li.appendChild(anchor);
+            const offersLink = sidebarNav.querySelector('a[href*="/admin/offers"]');
+            if (offersLink && offersLink.parentElement) {
+                offersLink.parentElement.insertAdjacentElement('afterend', li);
+            } else {
+                sidebarNav.appendChild(li);
+            }
+        }
+    });
+</script>
+{% endblock %}
