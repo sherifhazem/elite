@@ -80,17 +80,22 @@ def attach_current_user() -> None:
 
 @app.context_processor
 def inject_user_context():
-    """Provide template globals for user, role, and permission aware rendering."""
+    """Inject user and role context into all templates, including status labels."""
 
     user = getattr(g, "current_user", None)
-    role = getattr(g, "user_role", "guest")
+    role = getattr(g, "user_role", "guest") or "guest"
     permissions = getattr(g, "user_permissions", None)
+    username = "ضيف"
 
-    if not (user and getattr(user, "is_authenticated", False)):
+    if user and getattr(user, "is_authenticated", False):
+        role = getattr(user, "role", role) or role
+        username = getattr(user, "username", username)
+    else:
         if getattr(flask_login_current_user, "is_authenticated", False):
             user = flask_login_current_user
             role = getattr(user, "role", "member") or "member"
             permissions = getattr(user, "permissions", None)
+            username = getattr(user, "username", username)
         elif verify_jwt_in_request_optional and get_jwt_identity:
             try:
                 verify_jwt_in_request_optional()
@@ -103,11 +108,24 @@ def inject_user_context():
                     user = fetched_user
                     role = getattr(fetched_user, "role", "member") or "member"
                     permissions = getattr(fetched_user, "permissions", None)
+                    username = getattr(fetched_user, "username", username)
 
     normalized_role = (role or "guest").strip().lower()
     g.current_user = user
     g.user_role = normalized_role
     g.user_permissions = permissions
+
+    if user:
+        if normalized_role == "superadmin":
+            user_status_label = f"🔑 Superadmin ({username})"
+        elif normalized_role == "admin":
+            user_status_label = f"🛡 Admin ({username})"
+        elif normalized_role == "company":
+            user_status_label = f"🏢 {username} (شركة)"
+        else:
+            user_status_label = f"👤 {username}"
+    else:
+        user_status_label = "👥 تصفح كـ ضيف"
 
     is_admin = normalized_role in {"admin", "superadmin"}
     is_superadmin = normalized_role == "superadmin"
@@ -116,6 +134,7 @@ def inject_user_context():
         "current_user": user,
         "user_role": normalized_role,
         "user_permissions": permissions,
+        "user_status_label": user_status_label,
         "is_admin": is_admin,
         "is_superadmin": is_superadmin,
     }

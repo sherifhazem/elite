@@ -52,6 +52,11 @@
                             <a class="nav-link" href="{{ url_for('portal.home') }}">Member Portal</a>
                         </li>
                     </ul>
+                    {% if user_status_label %}
+                        <div class="text-end small text-muted px-3">
+                            {{ user_status_label }}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </nav>
