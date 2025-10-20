@@ -1,3 +1,5 @@
+<!-- LINKED: Enhanced company registration form (business details + admin review integration) -->
+<!-- Added mandatory fields for phone, industry, city, website, and social links without schema changes. -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
     <head>
@@ -116,14 +118,29 @@
                 gap: 18px;
             }
 
+            .field-grid {
+                display: grid;
+                gap: 18px;
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            }
+
             .input-field {
                 display: grid;
                 gap: 8px;
             }
 
+            .input-control {
+                width: 100%;
+            }
+
             label {
                 font-weight: 600;
                 font-size: 0.95rem;
+            }
+
+            .required-asterisk {
+                color: var(--error);
+                margin-inline-start: 4px;
             }
 
             input,
@@ -186,11 +203,39 @@
                 text-decoration: underline;
             }
 
+            .field-hint {
+                color: rgba(47, 23, 64, 0.65);
+                font-size: 0.85rem;
+            }
+
             .error-message {
                 margin: 0;
                 color: var(--error);
-                font-size: 0.92rem;
-                min-height: 20px;
+                font-size: 0.88rem;
+            }
+
+            .alert-list {
+                display: grid;
+                gap: 10px;
+            }
+
+            .alert {
+                padding: 12px 16px;
+                border-radius: 14px;
+                font-size: 0.95rem;
+                font-weight: 500;
+            }
+
+            .alert-success {
+                background: rgba(111, 207, 151, 0.18);
+                color: #1b5e20;
+                border: 1px solid rgba(111, 207, 151, 0.4);
+            }
+
+            .alert-danger {
+                background: rgba(211, 47, 47, 0.12);
+                color: #8e1b1b;
+                border: 1px solid rgba(211, 47, 47, 0.24);
             }
 
             .toast-banner {
@@ -252,52 +297,117 @@
             </header>
             <section class="register-card" aria-labelledby="company-register-title">
                 <h2 id="company-register-title" class="visually-hidden">نموذج تسجيل الشركات</h2>
-                <form id="company-register-form" novalidate>
-                    <div class="input-field">
-                        <label for="company-name">اسم الشركة</label>
-                        <input
-                            type="text"
-                            id="company-name"
-                            name="company_name"
-                            autocomplete="organization"
-                            required
-                            placeholder="مثال: شركة النخبة"
-                        />
+                <form id="company-register-form" method="post" novalidate>
+                    {{ form.hidden_tag() }}
+                    {% with messages = get_flashed_messages(with_categories=True) %}
+                        {% if messages %}
+                            <div class="alert-list" role="alert">
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="field-grid">
+                        <div class="input-field">
+                            <label for="{{ form.company_name.id }}">
+                                {{ form.company_name.label.text }}<span class="required-asterisk">*</span>
+                            </label>
+                            {{ form.company_name(required=True) }}
+                            <small class="field-hint">اسمك التجاري الرسمي كما سيظهر في لوحة الإدارة.</small>
+                            {% for error in form.company_name.errors %}
+                                <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        <div class="input-field">
+                            <label for="{{ form.email.id }}">
+                                {{ form.email.label.text }}<span class="required-asterisk">*</span>
+                            </label>
+                            {{ form.email(required=True) }}
+                            <small class="field-hint">سنستخدم هذا البريد للتواصل حول حالة الطلب.</small>
+                            {% for error in form.email.errors %}
+                                <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
                     </div>
-                    <div class="input-field">
-                        <label for="company-email">البريد الإلكتروني الرسمي</label>
-                        <input
-                            type="email"
-                            id="company-email"
-                            name="email"
-                            inputmode="email"
-                            autocomplete="email"
-                            required
-                            placeholder="company@example.com"
-                        />
+
+                    <div class="field-grid">
+                        <div class="input-field">
+                            <label for="{{ form.password.id }}">
+                                {{ form.password.label.text }}<span class="required-asterisk">*</span>
+                            </label>
+                            {{ form.password(required=True) }}
+                            <small class="field-hint">حد أدنى 6 خانات مع مراعاة الأمان.</small>
+                            {% for error in form.password.errors %}
+                                <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        <div class="input-field">
+                            <label for="{{ form.phone_number.id }}">
+                                {{ form.phone_number.label.text }}<span class="required-asterisk">*</span>
+                            </label>
+                            {{ form.phone_number(required=True) }}
+                            <small class="field-hint">رقم مسؤول التواصل المباشر مع فريق ELITE.</small>
+                            {% for error in form.phone_number.errors %}
+                                <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
                     </div>
-                    <div class="input-field">
-                        <label for="company-password">كلمة المرور</label>
-                        <input
-                            type="password"
-                            id="company-password"
-                            name="password"
-                            autocomplete="new-password"
-                            required
-                            minlength="6"
-                            placeholder="••••••••"
-                        />
+
+                    <div class="field-grid">
+                        <div class="input-field">
+                            <label for="{{ form.industry.id }}">
+                                {{ form.industry.label.text }}<span class="required-asterisk">*</span>
+                            </label>
+                            {{ form.industry(required=True) }}
+                            <small class="field-hint">اختر القطاع الأقرب لنشاطك الحالي.</small>
+                            {% for error in form.industry.errors %}
+                                <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        <div class="input-field">
+                            <label for="{{ form.city.id }}">
+                                {{ form.city.label.text }}<span class="required-asterisk">*</span>
+                            </label>
+                            {{ form.city(required=True) }}
+                            <small class="field-hint">المدينة الرئيسية لفرعك أو عملياتك.</small>
+                            {% for error in form.city.errors %}
+                                <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
                     </div>
-                    <div class="input-field">
-                        <label for="company-description">وصف مختصر (اختياري)</label>
-                        <textarea
-                            id="company-description"
-                            name="description"
-                            rows="4"
-                            placeholder="عرفنا عن عروضك المميزة وفريقك."
-                        ></textarea>
+
+                    <div class="field-grid">
+                        <div class="input-field">
+                            <label for="{{ form.website_url.id }}">{{ form.website_url.label.text }}</label>
+                            {{ form.website_url() }}
+                            <small class="field-hint">أضف موقعك الرسمي إن وجد.</small>
+                            {% for error in form.website_url.errors %}
+                                <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        <div class="input-field">
+                            <label for="{{ form.social_url.id }}">
+                                {{ form.social_url.label.text }}<span class="required-asterisk">*</span>
+                            </label>
+                            {{ form.social_url(required=True) }}
+                            <small class="field-hint">شارك رابط حساب رسمي على الشبكات الاجتماعية.</small>
+                            {% for error in form.social_url.errors %}
+                                <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
                     </div>
-                    <p id="company-register-error" class="error-message" role="alert" aria-live="polite"></p>
+
+                    <div class="input-field">
+                        <label for="{{ form.description.id }}">{{ form.description.label.text }} <span class="text-muted">(اختياري)</span></label>
+                        {{ form.description() }}
+                        <small class="field-hint">عرفنا عن عروضك الحالية أو شراكاتك المميزة.</small>
+                        {% for error in form.description.errors %}
+                            <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
                     <button type="submit" id="company-register-submit" class="cta-button">
                         إنشاء حساب الشركة
                     </button>
@@ -310,88 +420,7 @@
         </main>
         <div class="toast-banner" id="company-register-toast" role="status" aria-live="polite">
             <div class="success-badge" aria-hidden="true"><i class="fa-solid fa-check"></i></div>
-            <span id="company-register-toast-message">تم إنشاء حساب الشركة بنجاح! جاري تحويلك...</span>
+            <span id="company-register-toast-message">تم استلام طلبك وسيتم مراجعته من قبل الإدارة.</span>
         </div>
-        <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                const form = document.getElementById("company-register-form");
-                const nameInput = document.getElementById("company-name");
-                const emailInput = document.getElementById("company-email");
-                const passwordInput = document.getElementById("company-password");
-                const descriptionInput = document.getElementById("company-description");
-                const submitButton = document.getElementById("company-register-submit");
-                const errorMessage = document.getElementById("company-register-error");
-                const toast = document.getElementById("company-register-toast");
-                const toastMessage = document.getElementById("company-register-toast-message");
-
-                if (!form) {
-                    return;
-                }
-
-                const showToast = (message) => {
-                    if (!toast || !toastMessage) {
-                        return;
-                    }
-                    toastMessage.textContent = message || "تم إنشاء حساب الشركة بنجاح";
-                    toast.dataset.visible = "true";
-                    setTimeout(() => {
-                        toast.dataset.visible = "false";
-                    }, 3200);
-                };
-
-                form.addEventListener("submit", async (event) => {
-                    event.preventDefault();
-
-                    const companyName = (nameInput.value || "").trim();
-                    const email = (emailInput.value || "").trim();
-                    const password = passwordInput.value || "";
-                    const description = (descriptionInput.value || "").trim();
-
-                    if (!companyName || !email || !password) {
-                        errorMessage.textContent = "يرجى تعبئة الحقول الإلزامية.";
-                        return;
-                    }
-
-                    errorMessage.textContent = "";
-                    submitButton.disabled = true;
-                    submitButton.textContent = "جاري إنشاء الحساب...";
-
-                    try {
-                        const payload = {
-                            company_name: companyName,
-                            email,
-                            password,
-                        };
-                        if (description) {
-                            payload.description = description;
-                        }
-
-                        const response = await fetch("/api/companies/register", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(payload),
-                        });
-                        const data = await response.json();
-
-                        if (!response.ok) {
-                            errorMessage.textContent = data?.error || "تعذر إنشاء حساب الشركة، حاول مرة أخرى.";
-                            return;
-                        }
-
-                        showToast("تم إنشاء حساب الشركة بنجاح! جاري تحويلك...");
-                        const redirectTarget = data.redirect_url || "/login-page";
-                        setTimeout(() => {
-                            window.location.replace(redirectTarget);
-                        }, 1400);
-                    } catch (error) {
-                        console.error("Company registration failed", error);
-                        errorMessage.textContent = "حدث خطأ غير متوقع. يرجى المحاولة لاحقًا.";
-                    } finally {
-                        submitButton.disabled = false;
-                        submitButton.textContent = "إنشاء حساب الشركة";
-                    }
-                });
-            });
-        </script>
     </body>
 </html>
