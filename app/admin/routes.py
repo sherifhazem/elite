@@ -39,7 +39,7 @@ from flask import (
 )
 from sqlalchemy.exc import IntegrityError
 
-from flask_login import current_user, logout_user
+from flask_login import current_user
 
 from .. import db
 from ..models.company import Company
