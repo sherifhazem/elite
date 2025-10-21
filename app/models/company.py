@@ -26,7 +26,7 @@ class Company(db.Model):
     notification_preferences = db.Column(
         MutableDict.as_mutable(db.JSON), default=dict, nullable=False
     )
-    status = db.Column(db.String(20), nullable=False, default='pending', server_default='pending')
+    status = db.Column(db.String(20), default="pending", nullable=False)
     admin_notes = db.Column(db.Text, nullable=True)
 
     owner = db.relationship(
@@ -52,6 +52,11 @@ class Company(db.Model):
         """Return a string representation for debugging."""
 
         return f"<Company {self.name}>"
+
+    def set_status(self, new_status: str | None) -> None:
+        """Normalize and store the company status value."""
+
+        self.status = (new_status or "pending").strip().lower()
 
     def notification_settings(self) -> Dict[str, Any]:
         """Return notification preferences while ensuring a dictionary output."""

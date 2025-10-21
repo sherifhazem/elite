@@ -155,7 +155,7 @@ def register_company():
     owner.is_active = False
 
     company = Company(name=company_name, description=description)
-    company.status = "pending"
+    company.set_status("pending")
     company.admin_notes = None
     company.owner = owner
     owner.company = company
