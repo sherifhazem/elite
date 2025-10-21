@@ -7,6 +7,7 @@ from __future__ import annotations
 # LINKED: Shared Offers & Redemptions Integration (no schema changes)
 from datetime import datetime
 from http import HTTPStatus
+from types import SimpleNamespace
 from typing import Dict, Optional, Tuple
 
 from flask import (

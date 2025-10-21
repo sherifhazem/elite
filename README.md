@@ -23,6 +23,13 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Added correction modal for admin notes.
 - Fixed HTML forms to use POST.
 
+## Fix: Company Correction / Completion Flow
+- Added CSRF protection via {{ form.hidden_tag() }} in register_company.html.
+- Set explicit form action for /company/complete_registration/<id>.
+- Updated complete_registration() to use form.validate_on_submit().
+- Added proper flash messages on validation failure and success.
+- Ensured consistent redirect to login page after successful resubmission.
+
 ## Feature: Company Application Review Workflow
 - Added new admin actions for reviewing pending company applications.
 - Admin can approve or request correction with custom notes.

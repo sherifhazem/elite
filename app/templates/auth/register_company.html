@@ -327,7 +327,12 @@
                         </div>
                     {% endif %}
                 {% endif %}
-                <form id="company-register-form" method="post" novalidate>
+                <form
+                    id="company-register-form"
+                    method="post"
+                    action="{{ url_for('company_portal_bp.complete_registration', company_id=company.id) }}"
+                    novalidate
+                >
                     {{ form.hidden_tag() }}
                     {% with messages = get_flashed_messages(with_categories=True) %}
                         {% if messages %}

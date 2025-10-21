@@ -13,6 +13,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from celery import Celery
 from redis import Redis
+from flask_wtf.csrf import CSRFProtect
 
 from .config import Config
 
@@ -21,6 +22,8 @@ app.config.from_object(Config)
 app.secret_key = app.config["SECRET_KEY"]
 
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+csrf = CSRFProtect(app)
 
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
