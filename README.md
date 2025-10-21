@@ -3,6 +3,11 @@ Last Updated: 2025-10-18
 
 The ELITE backend provides the foundational services for managing elite offers and related business logic. This initial setup prepares the project with a clean structure, environment configuration, and basic health monitoring endpoint.
 
+## Admin Dashboard Localization Update
+
+- All admin dashboard templates now present their interface text in English, covering navigation labels, the settings management screens, and the communication center views.
+- The existing layout, icons, and right-to-left orientation remain unchanged while the logout and settings entries use consistent English wording.
+
 ## Prerequisites
 
 - Python 3.11

@@ -33,13 +33,13 @@
     <body class="admin-body">
         {% set resolved_active_page = active_page if active_page is defined else 'overview' %}
         {% set admin_nav = [
-            ('overview', 'admin.dashboard_home', 'Overview', '🏠'),
+            ('overview', 'admin.dashboard_home', 'Dashboard', '🏠'),
             ('users', 'admin.dashboard_users', 'Users', '👥'),
             ('companies', 'admin.dashboard_companies', 'Companies', '🏢'),
             ('offers', 'admin.dashboard_offers', 'Offers', '🎁'),
-            ('settings', 'admin.settings_home', 'إدارة القوائم', '⚙️'),
+            ('settings', 'admin.settings_home', 'Settings', '⚙️'),
             ('communications', 'admin.communication_history', 'Communication Center', '✉️'),
-            ('reports', 'reports.reports_home', 'التقارير', '📊')
+            ('reports', 'reports.reports_home', 'Reports', '📊')
         ] %}
         {% set company_nav = [
             ('company-dashboard', 'company_portal.dashboard', 'Company Dashboard', '📈'),
@@ -65,7 +65,7 @@
                 <div class="d-flex align-items-center ms-auto">
                     {% if current_user and current_user.is_authenticated %}
                         <!-- FIX: Logout, Current User, Role Access, Membership Dropdown – Desktop Admin Context. -->
-                        <span class="text-white user-pill mb-0">مرحبًا، {{ current_user.username }}</span>
+                        <span class="text-white user-pill mb-0">Welcome, {{ current_user.username }}</span>
                         <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-outline-light btn-sm ms-2">
                             <i class="fa-solid fa-right-from-bracket me-1"></i>
                             Logout
@@ -181,7 +181,7 @@
                                 href="{{ url_for('admin.settings_home') }}"
                             >
                                 <span class="icon" aria-hidden="true"><i class="fa-solid fa-gear"></i></span>
-                                <span>إعدادات الموقع</span>
+                                <span>Settings</span>
                             </a>
                         {% endif %}
                         {% if current_user and current_user.is_superadmin %}
