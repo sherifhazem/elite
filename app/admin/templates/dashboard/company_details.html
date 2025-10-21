@@ -1,0 +1,148 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Company Details{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Company Details</h2>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">{{ company.name }}</h5>
+            <span class="badge
+                {% if company.status == 'pending' %}bg-secondary
+                {% elif company.status == 'approved' %}bg-success
+                {% elif company.status == 'suspended' %}bg-danger
+                {% elif company.status == 'correction' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                {{ (company.status or 'pending')|capitalize }}
+            </span>
+        </div>
+        <div class="card-body">
+            <p><strong>Email:</strong> {{ contact_email or '—' }}</p>
+            <p><strong>Phone:</strong> {{ contact_phone or '—' }}</p>
+            <p><strong>City:</strong> {{ company_city or '—' }}</p>
+            <p><strong>Industry:</strong> {{ company_industry or '—' }}</p>
+            <p><strong>Notes:</strong> {{ company.admin_notes or '—' }}</p>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        {% if company.status == 'pending' %}
+            <form action="{{ url_for('admin.approve_company', company_id=company.id) }}" method="post">
+                <button class="btn btn-success">Approve</button>
+            </form>
+            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#requestCorrectionModal">
+                Request Correction
+            </button>
+        {% elif company.status == 'approved' %}
+            <form action="{{ url_for('admin.suspend_company', company_id=company.id) }}" method="post">
+                <button class="btn btn-danger">Suspend</button>
+            </form>
+        {% elif company.status == 'suspended' %}
+            <form action="{{ url_for('admin.reactivate_company', company_id=company.id) }}" method="post">
+                <button class="btn btn-success">Reactivate</button>
+            </form>
+        {% elif company.status == 'correction' %}
+            <form action="{{ url_for('admin.approve_company', company_id=company.id) }}" method="post">
+                <button class="btn btn-success">Approve</button>
+            </form>
+        {% endif %}
+    </div>
+
+    <div class="modal fade" id="requestCorrectionModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Request Correction</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('admin.request_company_correction', company_id=company.id) }}" method="post">
+                        <textarea name="admin_notes" class="form-control" rows="4" placeholder="Write your notes..."></textarea>
+                        <div class="text-end mt-3">
+                            <button type="submit" class="btn btn-warning">Send Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="mt-5">Activity Log</h4>
+    {% if activity_log %}
+        <ul class="list-group mb-4">
+            {% for entry in activity_log %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ entry.label }}</strong><br>
+                        <small class="text-muted">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    <span class="badge {% if entry.type == 'offer' %}bg-primary{% else %}bg-info text-dark{% endif %}">
+                        {{ entry.type|capitalize }}
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">No activity recorded.</p>
+    {% endif %}
+
+    <h4>Company Offers</h4>
+    {% if offers %}
+        <ul class="list-group mb-4">
+            {% for offer in offers %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ offer.title }}</strong><br>
+                        <small>{{ offer.description or 'No description provided.' }}</small>
+                    </div>
+                    <span class="badge bg-primary">{{ offer.base_discount }}%</span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">No offers found.</p>
+    {% endif %}
+
+    <h4>Recent Redemptions</h4>
+    {% if redemptions %}
+        <table class="table table-sm table-bordered mt-2">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Offer</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for redemption in redemptions %}
+                    <tr>
+                        <td>{{ redemption.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            {% if redemption.user %}
+                                {{ redemption.user.username or redemption.user.email }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>{{ redemption.offer.title if redemption.offer else '—' }}</td>
+                        <td>
+                            <span class="badge
+                                {% if redemption.status == 'pending' %}bg-secondary
+                                {% elif redemption.status == 'redeemed' %}bg-success
+                                {% elif redemption.status == 'expired' %}bg-danger
+                                {% else %}bg-info text-dark{% endif %}">
+                                {{ redemption.status|capitalize }}
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No redemption records.</p>
+    {% endif %}
+
+    <a href="{{ url_for('admin.list_companies') }}" class="btn btn-link mt-3">&larr; Back to Companies</a>
+</div>
+{% endblock %}

@@ -1043,3 +1043,9 @@ Run these smoke checks after deploying or touching the registration flows:
 - Updated company model with status field.
 - Prevented suspended companies from accessing their portal.
 - All operations are non-destructive (no deletions).
+
+## Feature: Company Details Page in Admin Panel
+- Added detailed view for each company under `/admin/companies/<id>`.
+- Displays full company info, offers, and redemption history.
+- Integrated management actions (Approve / Suspend / Reactivate / Request Correction).
+- Improved admin workflow and company tracking experience.

@@ -64,6 +64,7 @@
                             {% endif %}
                             <a class="btn btn-sm btn-primary" href="{{ url_for('admin.review_company', company_id=company.id) }}">Review</a>
                             <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.view_company', company_id=company.id) }}">View</a>
+                            <a href="{{ url_for('admin.view_company_details', company_id=company.id) }}" class="btn btn-outline-primary btn-sm">Details</a>
                             <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_company', company_id=company.id) }}">Edit</a>
                             <form class="d-inline" action="{{ url_for('admin.delete_company', company_id=company.id) }}" method="post" onsubmit="return confirm('Delete company {{ company.name }}?');">
                                 <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
