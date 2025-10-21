@@ -1,3 +1,5 @@
+# LINKED: Unified Logout mechanism using admin.admin_logout (GET) across all admin templates.
+# Removed POST logout forms without CSRF.
 # LINKED: Added “Role Permissions” page under Site Settings for Superadmin.
 # Allows managing and viewing system roles stored dynamically in Redis.
 # LINKED: Added comprehensive Site Settings section in Admin Panel.
@@ -37,7 +39,7 @@ from flask import (
 )
 from sqlalchemy.exc import IntegrityError
 
-from flask_login import current_user, logout_user
+from flask_login import current_user
 
 from .. import db
 from ..models.company import Company
@@ -59,11 +61,13 @@ admin_bp = Blueprint(
 @admin_bp.route("/logout")
 @admin_required
 def admin_logout() -> Response:
-    """Log out an authenticated admin and return to the login page."""
+    """تسجيل خروج الأدمن وإعادة التوجيه إلى صفحة تسجيل الدخول."""
 
-    if current_user.is_authenticated:
-        logout_user()
-        flash("تم تسجيل الخروج بنجاح ✅", "info")
+    from flask import flash, redirect, url_for
+    from flask_login import logout_user
+
+    logout_user()
+    flash("تم تسجيل الخروج بنجاح ✅", "info")
     return redirect(url_for("auth.login"))
 
 
