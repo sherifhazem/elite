@@ -23,8 +23,16 @@ The ELITE backend provides the foundational services for managing elite offers a
 ## Feature: Company Activity Log
 - Implemented ActivityLog model to track admin actions (approve, suspend, correction, reactivate).
 - Integrated automatic logging in all admin company actions.
-- Displayed full history in company details page (/admin/companies/\<id>). 
+- Displayed full history in company details page (/admin/companies/\<id>).
 - Provides transparent review and accountability.
+
+## Feature: Admin Notifications (Redis-based)
+- Implemented Redis-backed notifications without DB migrations.
+- Added API endpoints:
+  - GET /admin/api/notifications (items + unread count)
+  - POST /admin/api/notifications/read (mark all read)
+- Hooked notifications into company admin actions (new application, approve, correction, suspend, reactivate).
+- Added bell icon + dropdown in admin navbar with live polling (30s).
 
 ## Prerequisites
 

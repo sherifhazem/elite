@@ -7,16 +7,25 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
 
 from flask import current_app, url_for
 from sqlalchemy.orm import joinedload
 
-from .. import app, celery, db
+from .. import app, celery, db, redis_client
 from ..models.notification import Notification
 from ..models.offer import Offer
 from ..models.user import User
+
+
+# Redis-backed admin notification keys and defaults
+ADMIN_NOTIF_LIST_KEY = "admin:notifications"
+ADMIN_NOTIF_LAST_SEEN_KEY = "admin:last_seen:{user_id}"
+
+MAX_LIST_SIZE = 500
+DEFAULT_TTL_DAYS = 14
 
 
 WELCOME_NOTIFICATION_TEMPLATES: Dict[str, Dict[str, Optional[str]]] = {
@@ -465,6 +474,97 @@ def broadcast_offer_task(offer_id: int, batch_size: int = 100):
         return total_created
 
 
+def _now_iso() -> str:
+    """Return the current UTC timestamp formatted as ISO-8601 with a Z suffix."""
+
+    return datetime.utcnow().isoformat(timespec="seconds") + "Z"
+
+
+def push_admin_notification(
+    event_type: str,
+    title: str,
+    message: str,
+    link: str = "",
+    *,
+    actor_id: Optional[int] = None,
+    company_id: Optional[int] = None,
+    ttl_days: int = DEFAULT_TTL_DAYS,
+) -> None:
+    """Push a new admin notification payload into Redis."""
+
+    payload = {
+        "ts": _now_iso(),
+        "type": event_type,
+        "title": title,
+        "message": message,
+        "link": link,
+        "actor_id": actor_id,
+        "company_id": company_id,
+        "ttl_days": ttl_days,
+    }
+    redis_client.lpush(ADMIN_NOTIF_LIST_KEY, json.dumps(payload))
+    redis_client.ltrim(ADMIN_NOTIF_LIST_KEY, 0, MAX_LIST_SIZE - 1)
+
+
+def list_admin_notifications(limit: int = 20) -> List[Dict[str, Any]]:
+    """Return the most recent, non-expired admin notification payloads."""
+
+    raw_items = redis_client.lrange(ADMIN_NOTIF_LIST_KEY, 0, limit - 1) or []
+    items: List[Dict[str, Any]] = []
+    now = datetime.utcnow()
+
+    for raw in raw_items:
+        try:
+            obj = json.loads(raw)
+        except Exception:  # pragma: no cover - guard against malformed payloads
+            continue
+
+        ttl_days = int(obj.get("ttl_days", DEFAULT_TTL_DAYS))
+        ts_value = obj.get("ts")
+        if ts_value:
+            try:
+                dt = datetime.fromisoformat(ts_value.replace("Z", ""))
+            except Exception:  # pragma: no cover - fallback for invalid timestamps
+                dt = now
+            if now - dt > timedelta(days=ttl_days):
+                continue
+
+        items.append(obj)
+
+    return items
+
+
+def get_unread_count(user_id: int, sample_limit: int = 50) -> int:
+    """Return the number of unread notifications since the user's last seen timestamp."""
+
+    last_seen = redis_client.get(ADMIN_NOTIF_LAST_SEEN_KEY.format(user_id=user_id))
+    if not last_seen:
+        return len(list_admin_notifications(sample_limit))
+
+    try:
+        seen_dt = datetime.fromisoformat(last_seen.replace("Z", ""))
+    except Exception:  # pragma: no cover - fallback to counting sample window
+        return len(list_admin_notifications(sample_limit))
+
+    unread = 0
+    for notification in list_admin_notifications(sample_limit):
+        try:
+            ts_value = notification["ts"]
+            ts = datetime.fromisoformat(ts_value.replace("Z", ""))
+        except Exception:  # pragma: no cover - skip malformed timestamps
+            continue
+        if ts > seen_dt:
+            unread += 1
+
+    return unread
+
+
+def mark_all_read(user_id: int) -> None:
+    """Mark all admin notifications as read for the specified administrator."""
+
+    redis_client.set(ADMIN_NOTIF_LAST_SEEN_KEY.format(user_id=user_id), _now_iso())
+
+
 __all__ = [
     "queue_notification",
     "broadcast_new_offer",
@@ -477,4 +577,8 @@ __all__ = [
     "fetch_offer_feedback_counts",
     "create_notification_task",
     "broadcast_offer_task",
+    "push_admin_notification",
+    "list_admin_notifications",
+    "get_unread_count",
+    "mark_all_read",
 ]
