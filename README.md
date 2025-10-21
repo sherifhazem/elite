@@ -1085,3 +1085,7 @@ Run these smoke checks after deploying or touching the registration flows:
 - Added admin_notes field.
 - Normalized status values to lowercase (pending, approved, correction, suspended).
 - Added helper function set_status().
+
+## Feature: Company Email Integration & Re-submission
+- Added email notifications for approval, correction, suspension, reactivation.
+- Added /company/complete_registration/<id> route for companies to update info.
