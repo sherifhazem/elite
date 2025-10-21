@@ -1,12 +1,10 @@
-<!-- LINKED: Added logout flow for member portal (no design change) -->
-<!-- Implements proper session termination and user redirect while preserving full mobile-first UI. -->
 <!-- FIXED: Mobile-First User Portal Design (Member-Only) -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>ELITE | تسجيل الدخول</title>
+        <title>ELITE | Logout </title>
         <link
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -279,7 +277,7 @@
             }
         </style>
     </head>
-    <body data-logout-notice="{{ logout_notice|e if logout_notice else '' }}">
+    <body>
         <main class="auth-shell">
             <header class="auth-header">
                 <div class="auth-header__logo" aria-hidden="true">
@@ -324,7 +322,7 @@
                 </button>
                 <p class="register-hint">
                     ليس لديك حساب؟
-                    <a href="{{ url_for('auth.register_select') }}" id="register-link">أنشئ حسابك الآن</a>
+                    <a href="{{ url_for('auth.register_page') }}" id="register-link">أنشئ حسابك الآن</a>
                 </p>
             </section>
         </main>
@@ -387,16 +385,6 @@
                     }
                     return response;
                 };
-
-                const logoutNotice = document.body?.dataset?.logoutNotice || "";
-                if (logoutNotice) {
-                    try {
-                        localStorage.removeItem("elite_token");
-                    } catch (error) {
-                        console.warn("Failed to clear stored token", error);
-                    }
-                    showToast(logoutNotice);
-                }
             })();
         </script>
         <script src="{{ url_for('static', filename='js/login.js') }}" defer></script>
