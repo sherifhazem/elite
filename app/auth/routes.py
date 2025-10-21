@@ -271,7 +271,7 @@ def _register_company_from_payload(payload: Dict[str, str]) -> Tuple[Response, i
         )
 
     company = Company(name=company_name, description=description)
-    company.status = "pending"
+    company.set_status("pending")
     company.admin_notes = None
 
     owner = User(username=username, email=email)

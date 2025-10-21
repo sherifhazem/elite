@@ -1063,3 +1063,8 @@ Run these smoke checks after deploying or touching the registration flows:
 - Displays full company info, offers, and redemption history.
 - Integrated management actions (Approve / Suspend / Reactivate / Request Correction).
 - Improved admin workflow and company tracking experience.
+
+## Fix: Unified Company Status Field
+- Added admin_notes field.
+- Normalized status values to lowercase (pending, approved, correction, suspended).
+- Added helper function set_status().

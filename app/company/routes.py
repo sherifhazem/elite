@@ -259,7 +259,7 @@ def complete_registration(company_id: int):
 
         company.name = new_name or company.name
         company.description = new_description
-        company.status = "pending"
+        company.set_status("pending")
         company.admin_notes = None
 
         updated_preferences = dict(preferences)

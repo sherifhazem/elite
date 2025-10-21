@@ -501,7 +501,7 @@ def suspend_company(company_id: int):
     """Suspend a company (temporarily disable access)."""
 
     company = Company.query.get_or_404(company_id)
-    company.status = "suspended"
+    company.set_status("suspended")
     company.admin_notes = request.form.get("admin_notes", "")
     db.session.commit()
 
@@ -535,7 +535,7 @@ def reactivate_company(company_id: int):
     """Reactivate a suspended company."""
 
     company = Company.query.get_or_404(company_id)
-    company.status = "approved"
+    company.set_status("approved")
     db.session.commit()
 
     log_company_activity(
@@ -603,7 +603,7 @@ def approve_company(company_id: int) -> Response:
     """Approve a pending company application."""
 
     company = Company.query.get_or_404(company_id)
-    company.status = "approved"
+    company.set_status("approved")
     if company.owner:
         company.owner.is_active = True
 
@@ -642,7 +642,7 @@ def request_company_correction(company_id: int) -> Response:
     company = Company.query.get_or_404(company_id)
     notes = request.form.get("admin_notes", "").strip()
     company.admin_notes = notes
-    company.status = "correction"
+    company.set_status("correction")
     db.session.commit()
 
     log_company_activity(
