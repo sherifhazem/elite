@@ -49,6 +49,7 @@ from ..services.mailer import send_welcome_email
 from ..services.notifications import broadcast_new_offer, ensure_welcome_notification
 from ..services.roles import admin_required, require_role
 from ..services import settings_service
+from flask import make_response, session
 
 admin_bp = Blueprint(
     "admin",
@@ -58,14 +59,26 @@ admin_bp = Blueprint(
 )
 
 
+
+
 @admin_bp.route("/logout", endpoint="admin_logout")
 @admin_required
 def admin_logout() -> Response:
-    """تسجيل خروج الأدمن"""
-
+    """تسجيل خروج الأدمن مع مسح الكوكي والجلسة."""
     logout_user()
+    session.clear()
+
+    resp = make_response(redirect(url_for("auth.login")))
+    # احذف كوكي الـ JWT حتى لا تتم إعادة المصادقة تلقائيًا
+    resp.delete_cookie("elite_token", path="/")
+    # طبقة أمان إضافية للمتصفح
+    resp.headers["Clear-Site-Data"] = '"storage"'
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+
     flash("تم تسجيل الخروج بنجاح ✅", "info")
-    return redirect(url_for("auth.login"))
+    return resp
 
 
 def _parse_boolean(value: str | None) -> bool:

@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """Application factory module initializing Flask app, database, Redis, Celery, and routes."""
 
-# LINKED: Fixed user context processor to inject current_user and role for both Flask-Login and JWT sessions.
-# Ensures consistent visibility of role-based UI elements (Logout, Admin links, etc.).
+# FIXED: Unified context processor to ensure role and logout visibility across Flask-Login and JWT sessions.
+# - Added 'role' key for compatibility with templates.
+# - Forced is_authenticated=True for JWT-based users.
+# - Ensured user_status_label and logout button visibility are consistent.
 
 from http import HTTPStatus
-
 from flask import Flask, abort, g, request
 from flask_login import current_user as flask_login_current_user
 from flask_cors import CORS
@@ -24,17 +25,16 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
 redis_client = Redis.from_url(app.config["REDIS_URL"], decode_responses=True)
 
 celery = Celery(app.import_name, broker=app.config["CELERY_BROKER_URL"])
 celery.conf.update(app.config)
 
-# Ensure models are registered with SQLAlchemy's metadata for migrations
+# Ensure models are registered
 from .models import Company, Offer, Permission, Redemption, User  # noqa: F401
 
-# Register blueprints after extensions are initialized
-from .routes import (  # noqa: E402
+# Register blueprints after extensions
+from .routes import (
     company_routes,
     main as main_blueprint,
     notif_bp,
@@ -48,9 +48,9 @@ from .admin import admin_bp  # noqa: E402
 from .admin.routes_reports import reports_bp  # noqa: E402
 from .company import company_portal_bp  # noqa: E402
 
-try:  # pragma: no cover - optional dependency integration
+try:
     from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request_optional
-except ImportError:  # pragma: no cover - gracefully degrade when extension missing
+except ImportError:
     get_jwt_identity = None
     verify_jwt_in_request_optional = None
 
@@ -60,14 +60,18 @@ PROTECTED_PREFIXES = ("/admin", "/company")
 @app.before_request
 def attach_current_user() -> None:
     """Resolve the current user from JWT credentials and guard protected areas."""
-
     from .services.roles import resolve_user_from_request
 
     current = resolve_user_from_request()
     g.current_user = current
     normalized_role = "guest"
+
     if current is not None:
         normalized_role = (getattr(current, "role", "member") or "member").strip().lower()
+        # ضمان وجود خاصية is_authenticated
+        if not hasattr(current, "is_authenticated"):
+            current.is_authenticated = True
+
     g.user_role = normalized_role
     g.user_permissions = getattr(current, "permissions", None) if current else None
 
@@ -81,7 +85,6 @@ def attach_current_user() -> None:
 @app.context_processor
 def inject_user_context():
     """Inject user and role context into all templates, including status labels."""
-
     user = getattr(g, "current_user", None)
     role = getattr(g, "user_role", "guest") or "guest"
     permissions = getattr(g, "user_permissions", None)
@@ -100,11 +103,13 @@ def inject_user_context():
             try:
                 verify_jwt_in_request_optional()
                 identity = get_jwt_identity()
-            except Exception:  # pragma: no cover - JWT extension raises for bad tokens
+            except Exception:
                 identity = None
             if identity and not user:
                 fetched_user = User.query.get(identity)
                 if fetched_user:
+                    # تأكد من أن المستخدم قابل للعرض في القوالب
+                    fetched_user.is_authenticated = True
                     user = fetched_user
                     role = getattr(fetched_user, "role", "member") or "member"
                     permissions = getattr(fetched_user, "permissions", None)
@@ -132,6 +137,7 @@ def inject_user_context():
 
     return {
         "current_user": user,
+        "role": normalized_role,  # <--- أُضيف لضمان عمل {{ role }} في القوالب
         "user_role": normalized_role,
         "user_permissions": permissions,
         "user_status_label": user_status_label,
