@@ -8,6 +8,11 @@ The ELITE backend provides the foundational services for managing elite offers a
 - All admin dashboard templates now present their interface text in English, covering navigation labels, the settings management screens, and the communication center views.
 - The existing layout, icons, and right-to-left orientation remain unchanged while the logout and settings entries use consistent English wording.
 
+## Fix: Admin Settings Template Path
+- Replaced "admin/layout.html" with "dashboard/base.html" in all admin settings templates.
+- Resolved Jinja2 TemplateNotFound error.
+- Verified Settings page loads correctly after fix.
+
 ## Prerequisites
 
 - Python 3.11
