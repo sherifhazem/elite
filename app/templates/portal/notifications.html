@@ -1,3 +1,4 @@
+<!-- LINKED: Standardized conditional access checks across templates using current_user-based logic. -->
 <!-- FIXED: Mobile-First User Portal Design (Member-Only) -->
 {% extends 'portal/base.html' %}
 {% block title %}الإشعارات · ELITE{% endblock %}
@@ -122,7 +123,7 @@
         </button>
     </section>
     <section>
-        {% if not user %}
+        {% if not current_user.is_authenticated %}
             <div class="empty-state">
                 <p>قم بتسجيل الدخول لعرض الإشعارات الخاصة بك.</p>
             </div>
