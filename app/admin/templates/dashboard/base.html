@@ -68,7 +68,7 @@
                         <span class="text-white user-pill mb-0">مرحبًا، {{ current_user.username }}</span>
                         <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-outline-light btn-sm ms-2">
                             <i class="fa-solid fa-right-from-bracket me-1"></i>
-                            تسجيل الخروج
+                            Logout
                         </a>
                     {% endif %}
                 </div>
@@ -102,7 +102,7 @@
                                     href="{{ url_for('admin.settings_home') }}"
                                 >
                                     <span class="icon" aria-hidden="true"><i class="fa-solid fa-gear"></i></span>
-                                    <span>إعدادات الموقع</span>
+                                    <span>Settings</span>
                                 </a>
                             {% endif %}
                             {% if current_user and current_user.is_superadmin %}
