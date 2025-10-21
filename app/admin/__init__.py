@@ -6,5 +6,6 @@ from .routes import admin_bp
 
 # Import communication routes so they register with the shared blueprint.
 from . import routes_communications  # noqa: F401
+from . import routes_companies  # noqa: F401
 
 __all__ = ["admin_bp"]
