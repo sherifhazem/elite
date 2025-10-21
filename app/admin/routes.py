@@ -1,3 +1,5 @@
+# LINKED: Unified Logout mechanism using admin.admin_logout (GET) across all admin templates.
+# Removed POST logout forms without CSRF.
 # LINKED: Added “Role Permissions” page under Site Settings for Superadmin.
 # Allows managing and viewing system roles stored dynamically in Redis.
 # LINKED: Added comprehensive Site Settings section in Admin Panel.
@@ -59,11 +61,10 @@ admin_bp = Blueprint(
 @admin_bp.route("/logout")
 @admin_required
 def admin_logout() -> Response:
-    """Log out an authenticated admin and return to the login page."""
+    """تسجيل خروج الأدمن"""
 
-    if current_user.is_authenticated:
-        logout_user()
-        flash("تم تسجيل الخروج بنجاح ✅", "info")
+    logout_user()
+    flash("تم تسجيل الخروج بنجاح ✅", "info")
     return redirect(url_for("auth.login"))
 
 
