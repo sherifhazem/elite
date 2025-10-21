@@ -13,6 +13,11 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Resolved Jinja2 TemplateNotFound error.
 - Verified Settings page loads correctly after fix.
 
+## Fix: Admin Company Routes
+- Rebuilt admin routes (approve, suspend, reactivate, correction).
+- Linked email notifications for each status.
+- Ensured admin_required protection.
+
 ## Feature: Company Application Review Workflow
 - Added new admin actions for reviewing pending company applications.
 - Admin can approve or request correction with custom notes.
