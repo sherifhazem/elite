@@ -68,22 +68,22 @@
     </div>
 
     <h4 class="mt-5">Activity Log</h4>
-    {% if activity_log %}
-        <ul class="list-group mb-4">
-            {% for entry in activity_log %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>{{ entry.label }}</strong><br>
-                        <small class="text-muted">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+    {% if company.activity_logs %}
+        <ul class="list-group mt-2">
+            {% for log in company.activity_logs|sort(attribute='timestamp', reverse=True) %}
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ log.action }}</strong>
+                            {% if log.notes %}<br><small>{{ log.notes }}</small>{% endif %}
+                        </div>
+                        <small class="text-muted">{{ log.timestamp.strftime("%Y-%m-%d %H:%M") }}</small>
                     </div>
-                    <span class="badge {% if entry.type == 'offer' %}bg-primary{% else %}bg-info text-dark{% endif %}">
-                        {{ entry.type|capitalize }}
-                    </span>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p class="text-muted">No activity recorded.</p>
+        <p class="text-muted">No activity recorded for this company.</p>
     {% endif %}
 
     <h4>Company Offers</h4>

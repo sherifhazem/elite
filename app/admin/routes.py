@@ -65,6 +65,9 @@ admin_bp = Blueprint(
 )
 
 
+from .routes_companies import log_company_activity  # noqa: E402  pylint: disable=wrong-import-position
+
+
 
 
 @admin_bp.route("/logout", endpoint="admin_logout")
@@ -498,6 +501,13 @@ def suspend_company(company_id: int):
     company.admin_notes = request.form.get("admin_notes", "")
     db.session.commit()
 
+    log_company_activity(
+        company.id,
+        getattr(current_user, "id", None),
+        "Suspended",
+        company.admin_notes or None,
+    )
+
     from app.services.mailer import send_company_suspension_email
 
     send_company_suspension_email(company)
@@ -514,6 +524,13 @@ def reactivate_company(company_id: int):
     company = Company.query.get_or_404(company_id)
     company.status = "approved"
     db.session.commit()
+
+    log_company_activity(
+        company.id,
+        getattr(current_user, "id", None),
+        "Reactivated",
+        None,
+    )
 
     from app.services.mailer import send_company_reactivation_email
 
@@ -570,6 +587,13 @@ def approve_company(company_id: int) -> Response:
 
     db.session.commit()
 
+    log_company_activity(
+        company.id,
+        getattr(current_user, "id", None),
+        "Approved",
+        "Company approved by admin.",
+    )
+
     send_company_approval_email(company)
 
     flash(f"Company '{company.name}' approved successfully.", "success")
@@ -589,6 +613,13 @@ def request_company_correction(company_id: int) -> Response:
     company.admin_notes = notes
     company.status = "correction"
     db.session.commit()
+
+    log_company_activity(
+        company.id,
+        getattr(current_user, "id", None),
+        "Correction Requested",
+        notes or None,
+    )
 
     correction_link = f"{request.url_root}company/complete_registration/{company.id}"
     send_company_correction_email(company, notes, correction_link)
