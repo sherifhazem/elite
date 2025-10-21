@@ -57,6 +57,38 @@ def _dispatch_email(recipient: str, subject: str, html_body: str) -> None:
     mail.send(msg)
 
 
+def _send_company_status_email(company, subject: str, html_body: str) -> bool:
+    """Deliver a simple HTML email to the primary company contact."""
+
+    recipient = _company_primary_email(company)
+    if not recipient:
+        current_app.logger.warning(
+            "Skipping company status email due to missing recipient",
+            extra={"company_id": getattr(company, "id", None), "subject": subject},
+        )
+        return False
+
+    with app.app_context():
+        if current_app.config.get("MAIL_SUPPRESS_SEND", False):
+            current_app.logger.info(
+                "Company status email suppressed by configuration",
+                extra={"recipient": recipient, "subject": subject},
+            )
+            return True
+
+        try:
+            _dispatch_email(recipient, subject, html_body)
+        except Exception as error:  # pragma: no cover - mail transport guard
+            current_app.logger.exception("Company status email failed: %s", error)
+            return False
+
+    current_app.logger.info(
+        "Company status email delivered",
+        extra={"recipient": recipient, "subject": subject},
+    )
+    return True
+
+
 def send_email(
     recipient: str,
     subject: str,
@@ -161,6 +193,73 @@ def send_staff_welcome_email(*, user) -> bool:
         WELCOME_EMAIL_SUBJECTS["staff"],
         WELCOME_EMAIL_TEMPLATES["staff"],
         context,
+    )
+
+
+def send_company_approval_email(company) -> bool:
+    """Notify the company contact when the application has been approved."""
+
+    company_name = getattr(company, "name", "Valued Partner") or "Valued Partner"
+    html_body = (
+        f"<p>Hello {company_name},</p>"
+        "<p>Your company application has been approved. You can now sign in to manage your offers and engage with ELITE members.</p>"
+        "<p>Best regards,<br>The ELITE Team</p>"
+    )
+    return _send_company_status_email(
+        company,
+        "Your Company Application Has Been Approved",
+        html_body,
+    )
+
+
+def send_company_correction_email(company, notes, link: str) -> bool:
+    """Send a correction email including review notes and the re-submission link."""
+
+    company_name = getattr(company, "name", "Valued Partner") or "Valued Partner"
+    safe_notes = notes or "Please review the requested changes and submit the corrected information."
+    html_body = (
+        f"<p>Hello {company_name},</p>"
+        f"<p>We reviewed your application and need a few updates before approval:</p>"
+        f"<blockquote>{safe_notes}</blockquote>"
+        f"<p>You can update your details here: <a href=\"{link}\">Complete your company registration</a>.</p>"
+        "<p>Thank you for your cooperation,<br>The ELITE Team</p>"
+    )
+    return _send_company_status_email(
+        company,
+        "Action Required: Update Your Company Application",
+        html_body,
+    )
+
+
+def send_company_suspension_email(company) -> bool:
+    """Inform the company contact that their account has been suspended."""
+
+    company_name = getattr(company, "name", "Valued Partner") or "Valued Partner"
+    html_body = (
+        f"<p>Hello {company_name},</p>"
+        "<p>We have temporarily suspended your company account. Please contact the ELITE support team if you have any questions or would like to appeal the decision.</p>"
+        "<p>Sincerely,<br>The ELITE Team</p>"
+    )
+    return _send_company_status_email(
+        company,
+        "Notice: Your Company Account Has Been Suspended",
+        html_body,
+    )
+
+
+def send_company_reactivation_email(company) -> bool:
+    """Let the company know their account has been restored."""
+
+    company_name = getattr(company, "name", "Valued Partner") or "Valued Partner"
+    html_body = (
+        f"<p>Hello {company_name},</p>"
+        "<p>Your company account has been reactivated. You can sign in again to manage offers and review performance analytics.</p>"
+        "<p>Welcome back,<br>The ELITE Team</p>"
+    )
+    return _send_company_status_email(
+        company,
+        "Good News: Your Company Account Is Active Again",
+        html_body,
     )
 
 
