@@ -1,3 +1,4 @@
+<!-- LINKED: Replaced 'role' variable with user property checks (current_user.is_admin / is_superadmin) -->
 <!-- LINKED: Added admin-managed dropdown system for Cities and Industries. -->
 <!-- ADDED: Admin Communication Center – bulk/group message system (no DB schema change). -->
 <!-- Base layout for Elite admin dashboard interface. -->
@@ -30,7 +31,6 @@
         {% block extra_styles %}{% endblock %}
     </head>
     <body class="admin-body">
-        {% set role = current_user.normalized_role if current_user else None %}
         {% set resolved_active_page = active_page if active_page is defined else 'overview' %}
         {% set admin_nav = [
             ('overview', 'admin.dashboard_home', 'Overview', '🏠'),
@@ -66,9 +66,10 @@
                     {% if current_user %}
                         <!-- FIX: Logout, Current User, Role Access, Membership Dropdown – Desktop Admin Context. -->
                         <span class="text-white user-pill mb-0">مرحبًا، {{ current_user.username }}</span>
-                        <form action="{{ url_for('auth.logout') }}" method="post" class="mb-0 ms-2">
-                            <button class="btn btn-outline-light btn-sm" type="submit">تسجيل الخروج</button>
-                        </form>
+                        <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-outline-light btn-sm ms-2">
+                            <i class="fa-solid fa-right-from-bracket me-1"></i>
+                            تسجيل الخروج
+                        </a>
                     {% endif %}
                 </div>
             </div>
@@ -83,7 +84,7 @@
                         <span>EA</span>
                         Elite Admin
                     </div>
-                    {% if role in ['admin', 'superadmin'] %}
+                    {% if current_user and (current_user.is_admin or current_user.is_superadmin) %}
                         <div class="admin-nav">
                             <div class="admin-nav-divider">Main</div>
                             {% for key, endpoint, label, icon in admin_nav %}
@@ -104,7 +105,7 @@
                                     <span>إعدادات الموقع</span>
                                 </a>
                             {% endif %}
-                            {% if role == 'superadmin' %}
+                            {% if current_user and current_user.is_superadmin %}
                                 <div class="admin-nav-divider">Advanced</div>
                                 <a
                                     class="admin-nav-link {{ 'active' if resolved_active_page == 'roles' else '' }}"
@@ -116,7 +117,7 @@
                             {% endif %}
                         </div>
                     {% endif %}
-                    {% if role in ['company', 'superadmin'] %}
+                    {% if current_user and (current_user.has_role('company') or current_user.is_superadmin) %}
                         <div class="admin-nav mt-4">
                             <div class="admin-nav-divider">Company</div>
                             {% for key, endpoint, label, icon in company_nav %}
@@ -162,7 +163,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body">
-                {% if role in ['admin', 'superadmin'] %}
+                {% if current_user and (current_user.is_admin or current_user.is_superadmin) %}
                     <div class="admin-nav mb-4">
                         <div class="admin-nav-divider">Main</div>
                         {% for key, endpoint, label, icon in admin_nav %}
@@ -183,7 +184,7 @@
                                 <span>إعدادات الموقع</span>
                             </a>
                         {% endif %}
-                        {% if role == 'superadmin' %}
+                        {% if current_user and current_user.is_superadmin %}
                             <div class="admin-nav-divider">Advanced</div>
                             <a
                                 class="admin-nav-link {{ 'active' if resolved_active_page == 'roles' else '' }}"
@@ -195,7 +196,7 @@
                         {% endif %}
                     </div>
                 {% endif %}
-                {% if role in ['company', 'superadmin'] %}
+                {% if current_user and (current_user.has_role('company') or current_user.is_superadmin) %}
                     <div class="admin-nav">
                         <div class="admin-nav-divider">Company</div>
                         {% for key, endpoint, label, icon in company_nav %}

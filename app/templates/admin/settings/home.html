@@ -1,4 +1,4 @@
-<!-- LINKED: Added tabbed interface to Site Settings page (Dropdowns, Roles, General) -->
+<!-- LINKED: Implemented centralized Site Settings service using Redis for dropdown and general admin configurations. -->
 {% extends "admin/layout.html" %}
 {% block title %}إعدادات الموقع · ELITE{% endblock %}
 {% block content %}
@@ -6,6 +6,16 @@
   <h2 class="fw-bold text-primary mb-4">
     <i class="fa-solid fa-gear me-2"></i> إعدادات الموقع
   </h2>
+
+  {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+      <div class="mb-4">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} shadow-sm mb-2" role="alert">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
 
   <!-- Tabs Navigation -->
   <ul class="nav nav-tabs" id="settingsTabs" role="tablist">

@@ -1,3 +1,5 @@
+# LINKED: Unified Logout mechanism using admin.admin_logout (GET) across all admin templates.
+# Removed POST logout forms without CSRF.
 # LINKED: Added “Role Permissions” page under Site Settings for Superadmin.
 # Allows managing and viewing system roles stored dynamically in Redis.
 # LINKED: Added comprehensive Site Settings section in Admin Panel.
@@ -6,6 +8,7 @@
 # Introduced unified Settings Service and admin UI for dynamic list management.
 # LINKED: Fixed duplicate email error after company deletion
 # Ensures orphaned company owners are cleaned up before new company registration.
+# LINKED: Implemented centralized Site Settings service using Redis for dropdown and general admin configurations.
 """LINKED: Fixed admin company management actions (VIEW / EDIT / DELETE)
 Added button labels and ensured correct endpoint binding and confirmation logic.
 
@@ -58,11 +61,10 @@ admin_bp = Blueprint(
 @admin_bp.route("/logout")
 @admin_required
 def admin_logout() -> Response:
-    """Log out an authenticated admin and return to the login page."""
+    """تسجيل خروج الأدمن"""
 
-    if current_user.is_authenticated:
-        logout_user()
-        flash("تم تسجيل الخروج بنجاح ✅", "info")
+    logout_user()
+    flash("تم تسجيل الخروج بنجاح ✅", "info")
     return redirect(url_for("auth.login"))
 
 
@@ -739,15 +741,47 @@ def trigger_offer_notification(offer_id: int) -> str:
 def settings_home() -> str:
     """Render the consolidated site settings management experience."""
 
-    cities = settings_service.get_list("cities")
-    industries = settings_service.get_list("industries")
+    settings_payload = settings_service.get_all_settings()
     return render_template(
         "admin/settings/home.html",
         section_title="Site Settings",
         active_page="settings",
-        cities=cities,
-        industries=industries,
+        settings=settings_payload,
     )
+
+
+@admin_bp.route("/settings/update/<section>", methods=["POST"])
+@require_role("admin")
+def update_site_settings(section: str) -> Response:
+    """Persist updates for dropdown or general configuration sections."""
+
+    normalized_section = (section or "").strip().lower()
+    if normalized_section not in {"cities", "industries", "general"}:
+        abort(HTTPStatus.NOT_FOUND)
+
+    if current_user.normalized_role not in {"admin", "superadmin"}:
+        abort(HTTPStatus.FORBIDDEN)
+
+    try:
+        if normalized_section in {"cities", "industries"}:
+            payload = request.form.getlist("values")
+            if not payload:
+                payload = request.form.get("values", "")
+            settings_service.update_settings(normalized_section, payload)
+        else:
+            general_data: Dict[str, object] = {
+                "support_email": request.form.get("support_email", ""),
+                "support_phone": request.form.get("support_phone", ""),
+                "allow_company_auto_approval": request.form.get(
+                    "allow_company_auto_approval"
+                ),
+            }
+            settings_service.update_settings("general", general_data)
+        flash("تم حفظ الإعدادات بنجاح ✅", "success")
+    except ValueError as exc:
+        flash(str(exc), "danger")
+
+    return redirect(url_for("admin.settings_home"))
 
 
 @admin_bp.route("/settings/roles")
