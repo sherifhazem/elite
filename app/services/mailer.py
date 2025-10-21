@@ -280,6 +280,70 @@ def send_company_correction_email(company, notes: str, correction_link: str) -> 
     return True
 
 
+def send_company_suspension_email(company) -> bool:
+    """Notify a company contact that their account has been suspended."""
+
+    recipient = _resolve_company_recipient(company)
+    if not recipient:
+        current_app.logger.warning(
+            "Skipping suspension email due to missing recipient",
+            extra={"company_id": getattr(company, "id", None)},
+        )
+        return False
+
+    company_name = getattr(company, "name", "") or "your company"
+    html_body = f"""
+    <h3>Notice of Suspension</h3>
+    <p>Dear {company_name},</p>
+    <p>Your company account has been temporarily suspended due to policy violations or pending review.</p>
+    <p>If you believe this is a mistake, please contact our support team.</p>
+    """
+
+    try:
+        with app.app_context():
+            _dispatch_email(recipient, "Your Account Has Been Suspended - Elite Discounts", html_body)
+    except Exception as error:  # pragma: no cover - defensive mail handling
+        current_app.logger.exception(
+            "Failed to send company suspension email",
+            extra={"company_id": getattr(company, "id", None), "error": str(error)},
+        )
+        return False
+    return True
+
+
+def send_company_reactivation_email(company) -> bool:
+    """Notify a company contact that their portal access has been restored."""
+
+    recipient = _resolve_company_recipient(company)
+    if not recipient:
+        current_app.logger.warning(
+            "Skipping reactivation email due to missing recipient",
+            extra={"company_id": getattr(company, "id", None)},
+        )
+        return False
+
+    company_name = getattr(company, "name", "") or "your company"
+    base_url = (app.config.get("BASE_URL") or current_app.config.get("BASE_URL") or "").rstrip("/")
+    login_link = f"{base_url}/company/login" if base_url else "/company/login"
+    html_body = f"""
+    <h3>Account Reactivated</h3>
+    <p>Dear {company_name},</p>
+    <p>Your company account has been reactivated. You may now log in to your portal again and continue offering discounts.</p>
+    <p><a href="{login_link}">Login to your account</a></p>
+    """
+
+    try:
+        with app.app_context():
+            _dispatch_email(recipient, "Your Company Account Has Been Reactivated", html_body)
+    except Exception as error:  # pragma: no cover - defensive mail handling
+        current_app.logger.exception(
+            "Failed to send company reactivation email",
+            extra={"company_id": getattr(company, "id", None), "error": str(error)},
+        )
+        return False
+    return True
+
+
 __all__ = [
     "send_email",
     "send_member_welcome_email",
@@ -288,5 +352,7 @@ __all__ = [
     "send_welcome_email",
     "send_company_approval_email",
     "send_company_correction_email",
+    "send_company_suspension_email",
+    "send_company_reactivation_email",
     "WELCOME_EMAIL_SUBJECTS",
 ]

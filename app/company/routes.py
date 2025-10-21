@@ -21,6 +21,7 @@ from flask import (
     request,
     url_for,
 )
+from flask_login import current_user as flask_current_user
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
@@ -33,7 +34,7 @@ from ..services.notifications import (
 )
 from ..services.offers import list_company_offers
 from ..services.redemption import list_company_redemptions
-from ..services.roles import require_role
+from ..services.roles import require_role, resolve_user_from_request
 
 company_portal_bp = Blueprint(
     "company_portal_bp",
@@ -41,6 +42,37 @@ company_portal_bp = Blueprint(
     url_prefix="/company",
     template_folder="../templates/company",
 )
+
+
+@company_portal_bp.before_request
+def _prevent_suspended_company_access():
+    """Redirect suspended companies back to the login screen."""
+
+    endpoint = request.endpoint or ""
+    if not endpoint.startswith("company_portal_bp."):
+        return None
+
+    if endpoint == "company_portal_bp.complete_registration":
+        return None
+
+    user = getattr(g, "current_user", None)
+    if user is None or not getattr(user, "is_authenticated", False):
+        if getattr(flask_current_user, "is_authenticated", False):
+            user = flask_current_user
+    if user is None:
+        user = resolve_user_from_request()
+
+    if user is None or getattr(user, "role", "").strip().lower() != "company":
+        return None
+
+    company = getattr(user, "company", None)
+    if company is None and getattr(user, "company_id", None):
+        company = Company.query.get(user.company_id)
+
+    if company and (company.status or "").strip().lower() == "suspended":
+        flash("Your account is suspended. Please contact support.", "danger")
+        return redirect(url_for("auth.login_page"))
+    return None
 
 
 def _ensure_company(user) -> Company:

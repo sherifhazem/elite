@@ -20,18 +20,6 @@
                 {% set city = preferences.get('city') %}
                 {% set phone_number = preferences.get('contact_phone') %}
                 {% set normalized_status = (company.status or 'pending')|lower %}
-                {% set status_label = status_label_map.get(normalized_status, company.status or 'Pending Review') %}
-                {% if normalized_status == 'pending' %}
-                    {% set badge_class = 'badge rounded-pill bg-warning-subtle text-warning fw-semibold' %}
-                {% elif normalized_status == 'approved' %}
-                    {% set badge_class = 'badge rounded-pill bg-success-subtle text-success fw-semibold' %}
-                {% elif normalized_status in ['rejected', 'suspended'] %}
-                    {% set badge_class = 'badge rounded-pill bg-danger-subtle text-danger fw-semibold' %}
-                {% elif normalized_status == 'correction' %}
-                    {% set badge_class = 'badge rounded-pill bg-info-subtle text-info fw-semibold' %}
-                {% else %}
-                    {% set badge_class = 'badge rounded-pill bg-secondary-subtle text-secondary fw-semibold' %}
-                {% endif %}
                 <tr>
                     <td>{{ company.id }}</td>
                     <td class="fw-semibold">
@@ -41,7 +29,19 @@
                     <td>{{ industry or '—' }}</td>
                     <td>{{ city or '—' }}</td>
                     <td>{{ phone_number or '—' }}</td>
-                    <td><span class="{{ badge_class }}">{{ status_label }}</span></td>
+                    <td>
+                        {% if normalized_status == 'pending' %}
+                            <span class="badge bg-secondary">Pending</span>
+                        {% elif normalized_status == 'approved' %}
+                            <span class="badge bg-success">Active</span>
+                        {% elif normalized_status == 'suspended' %}
+                            <span class="badge bg-danger">Suspended</span>
+                        {% elif normalized_status == 'correction' %}
+                            <span class="badge bg-warning text-dark">Correction</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ status_label_map.get(normalized_status, company.status or 'Pending') }}</span>
+                        {% endif %}
+                    </td>
                     <td>{{ company.created_at.strftime('%Y-%m-%d') if company.created_at else '—' }}</td>
                     <td class="text-end">
                         <div class="d-flex flex-wrap justify-content-end gap-2">
@@ -52,6 +52,15 @@
                                 <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#correctionModal{{ company.id }}">
                                     Request Correction
                                 </button>
+                            {% endif %}
+                            {% if normalized_status == 'approved' %}
+                                <form action="{{ url_for('admin.suspend_company', company_id=company.id) }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-warning btn-sm">Suspend</button>
+                                </form>
+                            {% elif normalized_status == 'suspended' %}
+                                <form action="{{ url_for('admin.reactivate_company', company_id=company.id) }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-success btn-sm">Reactivate</button>
+                                </form>
                             {% endif %}
                             <a class="btn btn-sm btn-primary" href="{{ url_for('admin.review_company', company_id=company.id) }}">Review</a>
                             <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.view_company', company_id=company.id) }}">View</a>
