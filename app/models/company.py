@@ -26,7 +26,7 @@ class Company(db.Model):
     notification_preferences = db.Column(
         MutableDict.as_mutable(db.JSON), default=dict, nullable=False
     )
-    status = db.Column(db.String(20), default="pending", nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='pending', server_default='pending')
     admin_notes = db.Column(db.Text, nullable=True)
 
     owner = db.relationship(
