@@ -27,6 +27,7 @@ from flask import (
     session,
     url_for,
 )
+from flask_login import current_user
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 
@@ -34,7 +35,7 @@ from .. import db
 from ..models.company import Company
 from ..models.user import User
 from ..services.mailer import send_email, send_member_welcome_email
-from ..services.notifications import queue_notification
+from ..services.notifications import queue_notification, push_admin_notification
 from ..forms import CITY_CHOICES, INDUSTRY_CHOICES, CompanyRegistrationForm
 from .utils import confirm_token, create_token, decode_token, generate_token
 
@@ -301,6 +302,15 @@ def _register_company_from_payload(payload: Dict[str, str]) -> Tuple[Response, i
             jsonify({"error": "Unable to register company with the provided details."}),
             HTTPStatus.BAD_REQUEST,
         )
+
+    push_admin_notification(
+        event_type="company.new_application",
+        title="New Company Application",
+        message=f"A new company '{company.name}' submitted an application.",
+        link="/admin/companies?status=pending",
+        company_id=company.id,
+        actor_id=getattr(current_user, "id", None),
+    )
 
     _notify_admin_of_company_request(
         company=company,
