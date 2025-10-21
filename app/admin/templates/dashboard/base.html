@@ -63,7 +63,7 @@
                     </button>
                 </div>
                 <div class="d-flex align-items-center ms-auto">
-                    {% if current_user %}
+                    {% if current_user and current_user.is_authenticated %}
                         <!-- FIX: Logout, Current User, Role Access, Membership Dropdown – Desktop Admin Context. -->
                         <span class="text-white user-pill mb-0">مرحبًا، {{ current_user.username }}</span>
                         <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-outline-light btn-sm ms-2">

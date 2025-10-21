@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Application factory module initializing Flask app, database, Redis, Celery, and routes."""
-
 # FIXED: Unified context processor to ensure role and logout visibility across Flask-Login and JWT sessions.
 # - Added 'role' key for compatibility with templates.
 # - Forced is_authenticated=True for JWT-based users.
@@ -8,7 +7,7 @@
 
 from http import HTTPStatus
 from flask import Flask, abort, g, request
-from flask_login import current_user as flask_login_current_user
+from flask_login import LoginManager, current_user as flask_login_current_user
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -22,6 +21,11 @@ app.config.from_object(Config)
 app.secret_key = app.config["SECRET_KEY"]
 
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+login_manager = LoginManager()
+login_manager.login_view = "auth.login"
+login_manager.login_message_category = "info"
+login_manager.init_app(app)
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -57,6 +61,15 @@ except ImportError:
 PROTECTED_PREFIXES = ("/admin", "/company")
 
 
+@login_manager.user_loader
+def load_user(user_id: str):
+    """Load a persisted user session for Flask-Login."""
+
+    from .models import User
+
+    return User.query.get(int(user_id))
+
+
 @app.before_request
 def attach_current_user() -> None:
     """Resolve the current user from JWT credentials and guard protected areas."""
@@ -69,8 +82,11 @@ def attach_current_user() -> None:
     if current is not None:
         normalized_role = (getattr(current, "role", "member") or "member").strip().lower()
         # ضمان وجود خاصية is_authenticated
-        if not hasattr(current, "is_authenticated"):
-            current.is_authenticated = True
+        if getattr(current, "is_authenticated", None) is not True:
+            try:
+                current.is_authenticated = True
+            except AttributeError:
+                pass
 
     g.user_role = normalized_role
     g.user_permissions = getattr(current, "permissions", None) if current else None
@@ -109,7 +125,10 @@ def inject_user_context():
                 fetched_user = User.query.get(identity)
                 if fetched_user:
                     # تأكد من أن المستخدم قابل للعرض في القوالب
-                    fetched_user.is_authenticated = True
+                    try:
+                        fetched_user.is_authenticated = True
+                    except AttributeError:
+                        pass
                     user = fetched_user
                     role = getattr(fetched_user, "role", "member") or "member"
                     permissions = getattr(fetched_user, "permissions", None)
@@ -121,6 +140,11 @@ def inject_user_context():
     g.user_permissions = permissions
 
     if user:
+        if getattr(user, "is_authenticated", None) is not True:
+            try:
+                user.is_authenticated = True
+            except AttributeError:
+                pass
         if normalized_role == "superadmin":
             user_status_label = f"🔑 Superadmin ({username})"
         elif normalized_role == "admin":

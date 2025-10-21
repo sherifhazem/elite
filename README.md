@@ -308,6 +308,12 @@ After starting the server, visit [`http://localhost:5000/health`](http://localho
 
 - تم تصحيح العلاقة بين User و Company بإضافة `foreign_keys=[company_id]` لمنع الغموض في ORM.
 
+## Fix: Logout Button & Flask-Login Integration
+- Added LoginManager initialization to enable logout_user().
+- Configured user_loader for User model.
+- Updated admin_logout route to clear elite_token cookie.
+- Ensured consistent user authentication context for Flask-Login and JWT.
+
 ## Membership Upgrade System
 
 The member portal now allows authenticated users to elevate their membership tier directly from the profile page.
