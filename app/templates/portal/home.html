@@ -1,3 +1,4 @@
+<!-- LINKED: Standardized conditional access checks across templates using current_user-based logic. -->
 <!-- FIXED: Mobile-First User Portal Design (Member-Only) -->
 {% extends 'portal/base.html' %}
 {% block title %}الرئيسية · ELITE{% endblock %}
@@ -182,14 +183,14 @@
         </div>
         <div>
             <h1 class="home-hero__title">
-                {% if user %}
-                    مرحباً {{ user.username }}
+                {% if current_user.is_authenticated %}
+                    مرحباً {{ current_user.username }}
                 {% else %}
                     مرحباً بك في ELITE
                 {% endif %}
             </h1>
             <p class="home-hero__text">
-                {% if user %}
+                {% if current_user.is_authenticated %}
                     تابع أحدث العروض المتاحة لمستوى <strong>{{ membership_level }}</strong> واجمع نقاطك بسهولة من الهاتف.
                 {% else %}
                     قم بتسجيل الدخول لمزامنة عضويتك والوصول إلى أفضل العروض المصممة للأعضاء.
