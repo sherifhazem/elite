@@ -20,6 +20,12 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Added status filtering (pending / approved / correction).
 - Added secure correction link for company to update data.
 
+## Feature: Company Activity Log
+- Implemented ActivityLog model to track admin actions (approve, suspend, correction, reactivate).
+- Integrated automatic logging in all admin company actions.
+- Displayed full history in company details page (/admin/companies/\<id>). 
+- Provides transparent review and accountability.
+
 ## Prerequisites
 
 - Python 3.11

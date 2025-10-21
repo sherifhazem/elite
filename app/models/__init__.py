@@ -7,6 +7,7 @@ from .user import User
 from .company import Company
 from .offer import Offer
 from .notification import Notification
+from .activity_log import ActivityLog
 from .redemption import Redemption
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "Notification",
     "Redemption",
     "Permission",
+    "ActivityLog",
 ]
