@@ -99,7 +99,7 @@
                             {% if current_user.is_admin or current_user.is_superadmin %}
                                 <a
                                     class="admin-nav-link {{ 'active' if resolved_active_page == 'site-settings' else '' }}"
-                                    href="{{ url_for('admin.site_settings') }}"
+                                    href="{{ url_for('admin.settings_home') }}"
                                 >
                                     <span class="icon" aria-hidden="true"><i class="fa-solid fa-gear"></i></span>
                                     <span>إعدادات الموقع</span>
@@ -109,7 +109,7 @@
                                 <div class="admin-nav-divider">Advanced</div>
                                 <a
                                     class="admin-nav-link {{ 'active' if resolved_active_page == 'roles' else '' }}"
-                                    href="{{ url_for('admin.manage_user_roles') }}"
+                                    href="{{ url_for('admin.site_settings_roles') }}"
                                 >
                                     <span class="icon" aria-hidden="true">🛡️</span>
                                     <span>Roles</span>
@@ -178,7 +178,7 @@
                         {% if current_user.is_admin or current_user.is_superadmin %}
                             <a
                                 class="admin-nav-link {{ 'active' if resolved_active_page == 'site-settings' else '' }}"
-                                href="{{ url_for('admin.site_settings') }}"
+                                href="{{ url_for('admin.settings_home') }}"
                             >
                                 <span class="icon" aria-hidden="true"><i class="fa-solid fa-gear"></i></span>
                                 <span>إعدادات الموقع</span>
@@ -188,7 +188,7 @@
                             <div class="admin-nav-divider">Advanced</div>
                             <a
                                 class="admin-nav-link {{ 'active' if resolved_active_page == 'roles' else '' }}"
-                                href="{{ url_for('admin.manage_user_roles') }}"
+                                href="{{ url_for('admin.site_settings_roles') }}"
                             >
                                 <span class="icon" aria-hidden="true">🛡️</span>
                                 <span>Roles</span>

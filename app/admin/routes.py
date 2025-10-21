@@ -39,7 +39,7 @@ from flask import (
 )
 from sqlalchemy.exc import IntegrityError
 
-from flask_login import current_user
+from flask_login import current_user, logout_user
 
 from .. import db
 from ..models.company import Company
@@ -58,7 +58,7 @@ admin_bp = Blueprint(
 )
 
 
-@admin_bp.route("/logout")
+@admin_bp.route("/logout", endpoint="admin_logout")
 @admin_required
 def admin_logout() -> Response:
     """تسجيل خروج الأدمن"""
@@ -736,7 +736,7 @@ def trigger_offer_notification(offer_id: int) -> str:
     return redirect(url_for("admin.dashboard_offers"))
 
 
-@admin_bp.route("/settings")
+@admin_bp.route("/settings", endpoint="settings_home")
 @require_role("admin")
 def settings_home() -> str:
     """Render the consolidated site settings management experience."""
@@ -784,7 +784,7 @@ def update_site_settings(section: str) -> Response:
     return redirect(url_for("admin.settings_home"))
 
 
-@admin_bp.route("/settings/roles")
+@admin_bp.route("/settings/roles", endpoint="site_settings_roles")
 @admin_required
 def site_settings_roles() -> str:
     """Render the Role Permissions management page for super administrators."""

@@ -158,6 +158,14 @@ This stage connects the application to PostgreSQL through SQLAlchemy and Flask-M
        wcwidth==0.2.14 \
        werkzeug==3.1.3
    ```
+
+## Endpoint Naming Standardization
+- Unified endpoint names for admin routes:
+  - admin.settings_home
+  - admin.site_settings_roles
+  - admin.admin_logout
+- Updated all templates and route calls accordingly.
+- Verified url_for() references after changes.
 2. Set the Flask application context:
    ```bash
    export FLASK_APP=run.py
