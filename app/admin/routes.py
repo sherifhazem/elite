@@ -61,10 +61,7 @@ admin_bp = Blueprint(
 @admin_bp.route("/logout")
 @admin_required
 def admin_logout() -> Response:
-    """تسجيل خروج الأدمن وإعادة التوجيه إلى صفحة تسجيل الدخول."""
-
-    from flask import flash, redirect, url_for
-    from flask_login import logout_user
+    """تسجيل خروج الأدمن"""
 
     logout_user()
     flash("تم تسجيل الخروج بنجاح ✅", "info")
