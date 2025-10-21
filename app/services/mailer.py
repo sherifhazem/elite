@@ -185,47 +185,99 @@ def send_welcome_email(
     return send_member_welcome_email(user=user)
 
 
-def send_company_approval_email(company, portal_link: Optional[str] = None) -> bool:
-    """Notify the company that their application has been approved."""
+def _resolve_company_recipient(company) -> str:
+    """Return the best email address to reach a company contact."""
 
-    recipient = _company_primary_email(company)
+    if company is None:
+        return ""
+
+    direct_email = getattr(company, "email", "")
+    if direct_email:
+        return direct_email
+
+    owner = getattr(company, "owner", None)
+    owner_email = getattr(owner, "email", "") if owner else ""
+    if owner_email:
+        return owner_email
+
+    preferences = getattr(company, "notification_preferences", None) or {}
+    if isinstance(preferences, dict):
+        contact_email = preferences.get("contact_email") or preferences.get("email")
+        if contact_email:
+            return contact_email
+
+    return ""
+
+
+def send_company_approval_email(company) -> bool:
+    """Send a confirmation email when a company application is approved."""
+
+    recipient = _resolve_company_recipient(company)
     if not recipient:
+        current_app.logger.warning(
+            "Skipping approval email due to missing recipient",
+            extra={"company_id": getattr(company, "id", None)},
+        )
         return False
 
     company_name = getattr(company, "name", "") or "your company"
-    context = {
-        "company_name": company_name,
-        "portal_link": portal_link or current_app.config.get("COMPANY_PORTAL_URL"),
-    }
-    return send_email(
-        recipient,
-        "Welcome to ELITE Partners",
-        "emails/company_approval.html",
-        context,
-    )
+    base_url = (app.config.get("BASE_URL") or current_app.config.get("BASE_URL") or "").rstrip("/")
+    login_link = f"{base_url}/company/login" if base_url else "/company/login"
+    html_body = f"""
+    <h3>Welcome to Elite Discounts!</h3>
+    <p>Dear {company_name},</p>
+    <p>Your registration has been approved. You can now access your portal to upload offers and manage QR codes.</p>
+    <p><a href="{login_link}">Click here to log in</a></p>
+    """
+
+    try:
+        with app.app_context():
+            _dispatch_email(recipient, "Your Company Has Been Approved - Elite Program", html_body)
+    except Exception as error:  # pragma: no cover - defensive mail handling
+        current_app.logger.exception(
+            "Failed to send company approval email",
+            extra={"company_id": getattr(company, "id", None), "error": str(error)},
+        )
+        return False
+    return True
 
 
-def send_company_correction_email(
-    company, *, notes: str, correction_link: str
-) -> bool:
-    """Send a correction request with the admin notes to the company."""
+def send_company_correction_email(company, notes: str, correction_link: str) -> bool:
+    """Send a correction request email with admin notes and update link."""
 
-    recipient = _company_primary_email(company)
+    recipient = _resolve_company_recipient(company)
     if not recipient:
+        current_app.logger.warning(
+            "Skipping correction email due to missing recipient",
+            extra={"company_id": getattr(company, "id", None)},
+        )
         return False
 
     company_name = getattr(company, "name", "") or "your company"
-    context = {
-        "company_name": company_name,
-        "admin_notes": notes,
-        "correction_link": correction_link,
-    }
-    return send_email(
-        recipient,
-        "Action Required: Update Your ELITE Application",
-        "emails/company_correction.html",
-        context,
-    )
+    safe_notes = notes or ""
+    html_body = f"""
+    <h3>Elite Discounts - Application Review</h3>
+    <p>Dear {company_name},</p>
+    <p>Your application needs some corrections or additional details before approval.</p>
+    <p><b>Admin Notes:</b> {safe_notes}</p>
+    <p>Please visit the following link to update your information:</p>
+    <p><a href="{correction_link}">{correction_link}</a></p>
+    """
+
+    try:
+        with app.app_context():
+            _dispatch_email(
+                recipient,
+                "Correction Required for Your Company Application",
+                html_body,
+            )
+    except Exception as error:  # pragma: no cover - defensive mail handling
+        current_app.logger.exception(
+            "Failed to send company correction email",
+            extra={"company_id": getattr(company, "id", None), "error": str(error)},
+        )
+        return False
+    return True
 
 
 __all__ = [

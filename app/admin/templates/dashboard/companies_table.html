@@ -45,9 +45,15 @@
                     <td>{{ company.created_at.strftime('%Y-%m-%d') if company.created_at else '—' }}</td>
                     <td class="text-end">
                         <div class="d-flex flex-wrap justify-content-end gap-2">
-                            {% if allow_review and normalized_status in ['pending', 'correction'] %}
-                                <a class="btn btn-sm btn-primary" href="{{ url_for('admin.review_company', company_id=company.id) }}">Review</a>
+                            {% if active_tab == 'pending' %}
+                                <form action="{{ url_for('admin.approve_company', company_id=company.id) }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                </form>
+                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#correctionModal{{ company.id }}">
+                                    Request Correction
+                                </button>
                             {% endif %}
+                            <a class="btn btn-sm btn-primary" href="{{ url_for('admin.review_company', company_id=company.id) }}">Review</a>
                             <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.view_company', company_id=company.id) }}">View</a>
                             <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_company', company_id=company.id) }}">Edit</a>
                             <form class="d-inline" action="{{ url_for('admin.delete_company', company_id=company.id) }}" method="post" onsubmit="return confirm('Delete company {{ company.name }}?');">
@@ -64,3 +70,25 @@
         </tbody>
     </table>
 </div>
+{% if active_tab == 'pending' %}
+    {% for company in active_companies %}
+        <div class="modal fade" id="correctionModal{{ company.id }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Request Correction - {{ company.name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="{{ url_for('admin.request_company_correction', company_id=company.id) }}" method="post">
+                            <textarea name="admin_notes" class="form-control" rows="4" placeholder="Write your notes...">{{ company.admin_notes or '' }}</textarea>
+                            <div class="text-end mt-3">
+                                <button type="submit" class="btn btn-warning">Send Request</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}

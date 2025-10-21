@@ -56,7 +56,6 @@ from ..services.mailer import (
 from ..services.notifications import broadcast_new_offer, ensure_welcome_notification
 from ..services.roles import admin_required, require_role
 from ..services import settings_service
-from itsdangerous import URLSafeTimedSerializer
 
 admin_bp = Blueprint(
     "admin",
@@ -165,17 +164,6 @@ def _normalize_company_status(company: Company) -> str:
     if not status:
         return "pending"
     return status
-
-
-def _generate_correction_token(company: Company) -> str:
-    """Create a signed token allowing the company to update its application."""
-
-    secret_key = current_app.config.get("SECRET_KEY")
-    if not secret_key:
-        raise RuntimeError("SECRET_KEY must be configured to issue correction links.")
-
-    serializer = URLSafeTimedSerializer(secret_key)
-    return serializer.dumps({"company_id": company.id}, salt="company-correction")
 
 
 @admin_bp.route("/")
@@ -469,36 +457,34 @@ def manage_user_roles() -> str:
     )
 
 
-@admin_bp.route("/companies")
+@admin_bp.route("/companies", methods=["GET"], endpoint="list_companies")
+@admin_bp.route("/companies", methods=["GET"], endpoint="dashboard_companies")
 @require_role("admin")
-def dashboard_companies() -> str:
-    """Render the company management interface showing all companies."""
+def list_companies() -> str:
+    """Render the company management interface filtered by status."""
+
+    requested_status = (request.args.get("status") or "pending").strip().lower()
+    valid_statuses = {"pending", "approved", "correction"}
+    active_tab = requested_status if requested_status in valid_statuses else "pending"
 
     companies = Company.query.order_by(Company.created_at.desc()).all()
-    pending_statuses = {"pending", "correction"}
-    rejected_statuses = {"rejected", "suspended"}
-
-    pending_companies = []
-    approved_companies = []
-    rejected_companies = []
+    grouped: Dict[str, list[Company]] = {key: [] for key in valid_statuses}
 
     for company in companies:
         status = _normalize_company_status(company)
-        if status in pending_statuses:
-            pending_companies.append(company)
-        elif status == "approved":
-            approved_companies.append(company)
-        elif status in rejected_statuses:
-            rejected_companies.append(company)
+        if status not in valid_statuses:
+            grouped["pending"].append(company)
         else:
-            pending_companies.append(company)
+            grouped[status].append(company)
+
+    status_counts = {key: len(value) for key, value in grouped.items()}
 
     return render_template(
         "dashboard/companies.html",
         section_title="Companies",
-        pending_companies=pending_companies,
-        approved_companies=approved_companies,
-        rejected_companies=rejected_companies,
+        companies=grouped.get(active_tab, grouped["pending"]),
+        active_tab=active_tab,
+        status_counts=status_counts,
     )
 
 
@@ -540,31 +526,19 @@ def review_company(company_id: int) -> str:
 @admin_bp.route("/companies/<int:company_id>/approve", methods=["POST"])
 @admin_required
 def approve_company(company_id: int) -> Response:
-    """Approve a pending company and notify the applicant."""
+    """Approve a pending company application."""
 
     company = Company.query.get_or_404(company_id)
-    notes = (request.form.get("admin_notes") or "").strip()
-
-    company.admin_notes = notes or None
     company.status = "approved"
     if company.owner:
         company.owner.is_active = True
 
-    try:
-        db.session.commit()
-    except Exception as error:  # pragma: no cover - defensive DB error handling
-        db.session.rollback()
-        current_app.logger.exception("Failed to approve company %s", company_id)
-        flash("Unable to approve the company at this time.", "danger")
-        return redirect(url_for("admin.review_company", company_id=company_id))
+    db.session.commit()
 
-    portal_link = url_for("company_portal_bp.dashboard", _external=True)
-    if not send_company_approval_email(company, portal_link=portal_link):
-        flash("Company approved, but email notification could not be sent.", "warning")
-    else:
-        flash("Company approved and notified successfully.", "success")
+    send_company_approval_email(company)
 
-    return redirect(url_for("admin.dashboard_companies"))
+    flash(f"Company '{company.name}' approved successfully.", "success")
+    return redirect(url_for("admin.list_companies", status="pending"))
 
 
 @admin_bp.route(
@@ -572,44 +546,26 @@ def approve_company(company_id: int) -> Response:
     methods=["POST"],
 )
 @admin_required
-def request_correction(company_id: int) -> Response:
-    """Request additional information or corrections from a company."""
+def request_company_correction(company_id: int) -> Response:
+    """Request additional info or correction from company."""
 
     company = Company.query.get_or_404(company_id)
-    notes = (request.form.get("admin_notes") or "").strip()
-
-    if not notes:
-        flash("Please provide admin notes describing the required corrections.", "warning")
-        return redirect(url_for("admin.review_company", company_id=company_id))
-
+    notes = request.form.get("admin_notes", "").strip()
     company.admin_notes = notes
     company.status = "correction"
+    db.session.commit()
 
-    try:
-        db.session.commit()
-    except Exception as error:  # pragma: no cover - defensive DB error handling
-        db.session.rollback()
-        current_app.logger.exception(
-            "Failed to request correction for company %s", company_id
-        )
-        flash("Unable to update the company status.", "danger")
-        return redirect(url_for("admin.review_company", company_id=company_id))
+    correction_link = f"{request.url_root}company/complete_registration/{company.id}"
+    send_company_correction_email(company, notes, correction_link)
 
-    token = _generate_correction_token(company)
-    base_url = request.url_root.rstrip("/")
-    correction_link = f"{base_url}/company/complete_registration/{token}"
-
-    if not send_company_correction_email(
-        company, notes=notes, correction_link=correction_link
-    ):
-        flash(
-            "Correction requested, but the notification email could not be sent.",
-            "warning",
-        )
-    else:
-        flash("Correction request sent to the company.", "success")
-
-    return redirect(url_for("admin.dashboard_companies"))
+    contact_email = getattr(getattr(company, "owner", None), "email", "") or getattr(
+        company, "email", ""
+    )
+    flash(
+        f"Correction request sent to '{contact_email or 'company contact'}'",
+        "info",
+    )
+    return redirect(url_for("admin.list_companies", status="pending"))
 
 
 @admin_bp.route("/companies/add", methods=["GET", "POST"])
