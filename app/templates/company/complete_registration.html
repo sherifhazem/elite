@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Company Registration{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="h3 mb-3 text-center">Update Your Company Details</h1>
+                    <p class="text-muted text-center mb-4">
+                        Please review the information below, update it if necessary, and submit the form so we can continue reviewing your application.
+                    </p>
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="company-name" class="form-label">Company Name</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="company-name"
+                                name="name"
+                                value="{{ company.name }}"
+                                required
+                            >
+                        </div>
+                        <div class="mb-4">
+                            <label for="company-contact" class="form-label">Primary Contact Number</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="company-contact"
+                                name="contact_number"
+                                value="{{ contact_number }}"
+                                required
+                            >
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Submit for Review</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <p class="text-center text-muted mt-3 mb-0">
+                Need help? Contact the ELITE support team for assistance.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
