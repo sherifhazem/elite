@@ -48,15 +48,10 @@ from .. import db
 from ..models.company import Company
 from ..models.offer import Offer
 from ..models.user import User
-from ..services.mailer import (
-    send_company_approval_email,
-    send_company_correction_email,
-    send_welcome_email,
-)
+from ..services.mailer import send_welcome_email
 from ..services.notifications import (
     broadcast_new_offer,
     ensure_welcome_notification,
-    push_admin_notification,
 )
 from ..services.roles import admin_required, require_role
 from ..services import settings_service
@@ -67,11 +62,6 @@ admin_bp = Blueprint(
     url_prefix="/admin",
     template_folder="templates",
 )
-
-
-from .routes_companies import log_company_activity  # noqa: E402  pylint: disable=wrong-import-position
-
-
 
 
 @admin_bp.route("/logout", endpoint="admin_logout")
@@ -495,73 +485,6 @@ def list_companies() -> str:
     )
 
 
-@admin_bp.route("/companies/<int:company_id>/suspend", methods=["POST"])
-@admin_required
-def suspend_company(company_id: int):
-    """Suspend a company (temporarily disable access)."""
-
-    company = Company.query.get_or_404(company_id)
-    company.set_status("suspended")
-    company.admin_notes = request.form.get("admin_notes", "")
-    db.session.commit()
-
-    log_company_activity(
-        company.id,
-        getattr(current_user, "id", None),
-        "Suspended",
-        company.admin_notes or None,
-    )
-
-    push_admin_notification(
-        event_type="company.suspended",
-        title="Company Suspended",
-        message=f"'{company.name}' has been suspended.",
-        link=f"/admin/companies/{company.id}",
-        company_id=company.id,
-        actor_id=getattr(current_user, "id", None),
-    )
-
-    from app.services.mailer import send_company_suspension_email
-
-    send_company_suspension_email(company)
-
-    flash(f"Company '{company.name}' has been suspended.", "warning")
-    return redirect(url_for("admin.list_companies"))
-
-
-@admin_bp.route("/companies/<int:company_id>/reactivate", methods=["POST"])
-@admin_required
-def reactivate_company(company_id: int):
-    """Reactivate a suspended company."""
-
-    company = Company.query.get_or_404(company_id)
-    company.set_status("approved")
-    db.session.commit()
-
-    log_company_activity(
-        company.id,
-        getattr(current_user, "id", None),
-        "Reactivated",
-        None,
-    )
-
-    push_admin_notification(
-        event_type="company.reactivated",
-        title="Company Reactivated",
-        message=f"'{company.name}' has been reactivated.",
-        link=f"/admin/companies/{company.id}",
-        company_id=company.id,
-        actor_id=getattr(current_user, "id", None),
-    )
-
-    from app.services.mailer import send_company_reactivation_email
-
-    send_company_reactivation_email(company)
-
-    flash(f"Company '{company.name}' has been reactivated.", "success")
-    return redirect(url_for("admin.list_companies"))
-
-
 @admin_bp.route("/companies/view/<int:company_id>")
 @require_role("admin")
 def view_company(company_id: int) -> str:
@@ -595,84 +518,6 @@ def review_company(company_id: int) -> str:
         preferences=preferences,
         status=_normalize_company_status(company),
     )
-
-
-@admin_bp.route("/companies/<int:company_id>/approve", methods=["POST"])
-@admin_required
-def approve_company(company_id: int) -> Response:
-    """Approve a pending company application."""
-
-    company = Company.query.get_or_404(company_id)
-    company.set_status("approved")
-    if company.owner:
-        company.owner.is_active = True
-
-    db.session.commit()
-
-    log_company_activity(
-        company.id,
-        getattr(current_user, "id", None),
-        "Approved",
-        "Company approved by admin.",
-    )
-
-    push_admin_notification(
-        event_type="company.approved",
-        title="Company Approved",
-        message=f"'{company.name}' has been approved.",
-        link=f"/admin/companies/{company.id}",
-        company_id=company.id,
-        actor_id=getattr(current_user, "id", None),
-    )
-
-    send_company_approval_email(company)
-
-    flash(f"Company '{company.name}' approved successfully.", "success")
-    return redirect(url_for("admin.list_companies", status="pending"))
-
-
-@admin_bp.route(
-    "/companies/<int:company_id>/request_correction",
-    methods=["POST"],
-)
-@admin_required
-def request_company_correction(company_id: int) -> Response:
-    """Request additional info or correction from company."""
-
-    company = Company.query.get_or_404(company_id)
-    notes = request.form.get("admin_notes", "").strip()
-    company.admin_notes = notes
-    company.set_status("correction")
-    db.session.commit()
-
-    log_company_activity(
-        company.id,
-        getattr(current_user, "id", None),
-        "Correction Requested",
-        notes or None,
-    )
-
-    push_admin_notification(
-        event_type="company.correction",
-        title="Correction Requested",
-        message=f"Correction requested for '{company.name}'.",
-        link=f"/admin/companies/{company.id}",
-        company_id=company.id,
-        actor_id=getattr(current_user, "id", None),
-    )
-
-    correction_link = f"{request.url_root}company/complete_registration/{company.id}"
-    send_company_correction_email(company, notes, correction_link)
-
-    contact_email = getattr(getattr(company, "owner", None), "email", "") or getattr(
-        company, "email", ""
-    )
-    flash(
-        f"Correction request sent to '{contact_email or 'company contact'}'",
-        "info",
-    )
-    return redirect(url_for("admin.list_companies", status="pending"))
-
 
 @admin_bp.route("/companies/add", methods=["GET", "POST"])
 @require_role("admin")

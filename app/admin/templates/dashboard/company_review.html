@@ -86,7 +86,7 @@
                         <button type="submit" class="btn btn-success" formaction="{{ url_for('admin.approve_company', company_id=company.id) }}">
                             <i class="fas fa-check me-2"></i>Approve
                         </button>
-                        <button type="submit" class="btn btn-warning" formaction="{{ url_for('admin.request_company_correction', company_id=company.id) }}">
+                        <button type="submit" class="btn btn-warning" formaction="{{ url_for('admin.request_correction', company_id=company.id) }}">
                             <i class="fas fa-envelope me-2"></i>Request Correction
                         </button>
                     </div>
