@@ -29,6 +29,7 @@ from flask import (
     Blueprint,
     Response,
     abort,
+    current_app,
     flash,
     g,
     jsonify,
@@ -47,10 +48,15 @@ from .. import db
 from ..models.company import Company
 from ..models.offer import Offer
 from ..models.user import User
-from ..services.mailer import send_welcome_email
+from ..services.mailer import (
+    send_company_approval_email,
+    send_company_correction_email,
+    send_welcome_email,
+)
 from ..services.notifications import broadcast_new_offer, ensure_welcome_notification
 from ..services.roles import admin_required, require_role
 from ..services import settings_service
+from itsdangerous import URLSafeTimedSerializer
 
 admin_bp = Blueprint(
     "admin",
@@ -150,6 +156,26 @@ def _extract_value(*keys: str) -> str:
         if value:
             return str(value)
     return ""
+
+
+def _normalize_company_status(company: Company) -> str:
+    """Return the normalized status string for a company record."""
+
+    status = (company.status or "").strip().lower()
+    if not status:
+        return "pending"
+    return status
+
+
+def _generate_correction_token(company: Company) -> str:
+    """Create a signed token allowing the company to update its application."""
+
+    secret_key = current_app.config.get("SECRET_KEY")
+    if not secret_key:
+        raise RuntimeError("SECRET_KEY must be configured to issue correction links.")
+
+    serializer = URLSafeTimedSerializer(secret_key)
+    return serializer.dumps({"company_id": company.id}, salt="company-correction")
 
 
 @admin_bp.route("/")
@@ -448,9 +474,31 @@ def manage_user_roles() -> str:
 def dashboard_companies() -> str:
     """Render the company management interface showing all companies."""
 
-    companies = Company.query.order_by(Company.id).all()
+    companies = Company.query.order_by(Company.created_at.desc()).all()
+    pending_statuses = {"pending", "correction"}
+    rejected_statuses = {"rejected", "suspended"}
+
+    pending_companies = []
+    approved_companies = []
+    rejected_companies = []
+
+    for company in companies:
+        status = _normalize_company_status(company)
+        if status in pending_statuses:
+            pending_companies.append(company)
+        elif status == "approved":
+            approved_companies.append(company)
+        elif status in rejected_statuses:
+            rejected_companies.append(company)
+        else:
+            pending_companies.append(company)
+
     return render_template(
-        "dashboard/companies.html", section_title="Companies", companies=companies
+        "dashboard/companies.html",
+        section_title="Companies",
+        pending_companies=pending_companies,
+        approved_companies=approved_companies,
+        rejected_companies=rejected_companies,
     )
 
 
@@ -471,6 +519,97 @@ def view_company(company_id: int) -> str:
         company=company,
         offers=offers,
     )
+
+
+@admin_bp.route("/companies/review/<int:company_id>")
+@admin_required
+def review_company(company_id: int) -> str:
+    """Show the review workspace for a pending company."""
+
+    company = Company.query.get_or_404(company_id)
+    preferences = company.notification_settings()
+    return render_template(
+        "dashboard/company_review.html",
+        section_title="Review Company",
+        company=company,
+        preferences=preferences,
+        status=_normalize_company_status(company),
+    )
+
+
+@admin_bp.route("/companies/<int:company_id>/approve", methods=["POST"])
+@admin_required
+def approve_company(company_id: int) -> Response:
+    """Approve a pending company and notify the applicant."""
+
+    company = Company.query.get_or_404(company_id)
+    notes = (request.form.get("admin_notes") or "").strip()
+
+    company.admin_notes = notes or None
+    company.status = "approved"
+    if company.owner:
+        company.owner.is_active = True
+
+    try:
+        db.session.commit()
+    except Exception as error:  # pragma: no cover - defensive DB error handling
+        db.session.rollback()
+        current_app.logger.exception("Failed to approve company %s", company_id)
+        flash("Unable to approve the company at this time.", "danger")
+        return redirect(url_for("admin.review_company", company_id=company_id))
+
+    portal_link = url_for("company_portal_bp.dashboard", _external=True)
+    if not send_company_approval_email(company, portal_link=portal_link):
+        flash("Company approved, but email notification could not be sent.", "warning")
+    else:
+        flash("Company approved and notified successfully.", "success")
+
+    return redirect(url_for("admin.dashboard_companies"))
+
+
+@admin_bp.route(
+    "/companies/<int:company_id>/request_correction",
+    methods=["POST"],
+)
+@admin_required
+def request_correction(company_id: int) -> Response:
+    """Request additional information or corrections from a company."""
+
+    company = Company.query.get_or_404(company_id)
+    notes = (request.form.get("admin_notes") or "").strip()
+
+    if not notes:
+        flash("Please provide admin notes describing the required corrections.", "warning")
+        return redirect(url_for("admin.review_company", company_id=company_id))
+
+    company.admin_notes = notes
+    company.status = "correction"
+
+    try:
+        db.session.commit()
+    except Exception as error:  # pragma: no cover - defensive DB error handling
+        db.session.rollback()
+        current_app.logger.exception(
+            "Failed to request correction for company %s", company_id
+        )
+        flash("Unable to update the company status.", "danger")
+        return redirect(url_for("admin.review_company", company_id=company_id))
+
+    token = _generate_correction_token(company)
+    base_url = request.url_root.rstrip("/")
+    correction_link = f"{base_url}/company/complete_registration/{token}"
+
+    if not send_company_correction_email(
+        company, notes=notes, correction_link=correction_link
+    ):
+        flash(
+            "Correction requested, but the notification email could not be sent.",
+            "warning",
+        )
+    else:
+        flash("Correction request sent to the company.", "success")
+
+    return redirect(url_for("admin.dashboard_companies"))
 
 
 @admin_bp.route("/companies/add", methods=["GET", "POST"])

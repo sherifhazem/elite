@@ -1,0 +1,66 @@
+{% set status_label_map = status_map if status_map is defined else {} %}
+<div class="admin-table-wrapper">
+    <table class="table table-striped table-hover align-middle mb-0">
+        <thead class="admin-table-head">
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Company</th>
+                <th scope="col">Industry</th>
+                <th scope="col">City</th>
+                <th scope="col">Phone</th>
+                <th scope="col">Status</th>
+                <th scope="col">Created</th>
+                <th scope="col" class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for company in active_companies %}
+                {% set preferences = company.notification_settings() %}
+                {% set industry = preferences.get('industry') %}
+                {% set city = preferences.get('city') %}
+                {% set phone_number = preferences.get('contact_phone') %}
+                {% set normalized_status = (company.status or 'pending')|lower %}
+                {% set status_label = status_label_map.get(normalized_status, company.status or 'Pending Review') %}
+                {% if normalized_status == 'pending' %}
+                    {% set badge_class = 'badge rounded-pill bg-warning-subtle text-warning fw-semibold' %}
+                {% elif normalized_status == 'approved' %}
+                    {% set badge_class = 'badge rounded-pill bg-success-subtle text-success fw-semibold' %}
+                {% elif normalized_status in ['rejected', 'suspended'] %}
+                    {% set badge_class = 'badge rounded-pill bg-danger-subtle text-danger fw-semibold' %}
+                {% elif normalized_status == 'correction' %}
+                    {% set badge_class = 'badge rounded-pill bg-info-subtle text-info fw-semibold' %}
+                {% else %}
+                    {% set badge_class = 'badge rounded-pill bg-secondary-subtle text-secondary fw-semibold' %}
+                {% endif %}
+                <tr>
+                    <td>{{ company.id }}</td>
+                    <td class="fw-semibold">
+                        <div>{{ company.name }}</div>
+                        <div class="text-muted small">{{ company.description or '—' }}</div>
+                    </td>
+                    <td>{{ industry or '—' }}</td>
+                    <td>{{ city or '—' }}</td>
+                    <td>{{ phone_number or '—' }}</td>
+                    <td><span class="{{ badge_class }}">{{ status_label }}</span></td>
+                    <td>{{ company.created_at.strftime('%Y-%m-%d') if company.created_at else '—' }}</td>
+                    <td class="text-end">
+                        <div class="d-flex flex-wrap justify-content-end gap-2">
+                            {% if allow_review and normalized_status in ['pending', 'correction'] %}
+                                <a class="btn btn-sm btn-primary" href="{{ url_for('admin.review_company', company_id=company.id) }}">Review</a>
+                            {% endif %}
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.view_company', company_id=company.id) }}">View</a>
+                            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_company', company_id=company.id) }}">Edit</a>
+                            <form class="d-inline" action="{{ url_for('admin.delete_company', company_id=company.id) }}" method="post" onsubmit="return confirm('Delete company {{ company.name }}?');">
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td class="text-center text-muted" colspan="8">No companies found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

@@ -13,6 +13,12 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Resolved Jinja2 TemplateNotFound error.
 - Verified Settings page loads correctly after fix.
 
+## Feature: Company Application Review Workflow
+- Added company review panel under `/admin/companies`
+- Enabled status transitions: pending → approved / correction
+- Integrated email notifications for approval and correction requests
+- Added admin notes and secure correction link
+
 ## Prerequisites
 
 - Python 3.11

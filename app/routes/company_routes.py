@@ -36,6 +36,8 @@ def _serialize_company(company: Company) -> dict:
         "name": company.name,
         "description": company.description,
         "created_at": company.created_at.isoformat() if company.created_at else None,
+        "status": company.status,
+        "admin_notes": company.admin_notes,
     }
 
 
@@ -153,6 +155,8 @@ def register_company():
     owner.is_active = False
 
     company = Company(name=company_name, description=description)
+    company.status = "pending"
+    company.admin_notes = None
     company.owner = owner
     owner.company = company
     company.notification_preferences = {
@@ -161,7 +165,6 @@ def register_company():
         "city": city,
         "website_url": website_url or None,
         "social_url": social_url,
-        "status": "Pending Review",
         "submitted_at": datetime.utcnow().isoformat() + "Z",
     }
 

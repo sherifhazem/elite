@@ -270,6 +270,8 @@ def _register_company_from_payload(payload: Dict[str, str]) -> Tuple[Response, i
         )
 
     company = Company(name=company_name, description=description)
+    company.status = "pending"
+    company.admin_notes = None
 
     owner = User(username=username, email=email)
     owner.set_password(password)
@@ -285,7 +287,6 @@ def _register_company_from_payload(payload: Dict[str, str]) -> Tuple[Response, i
         "city": city,
         "website_url": website_url or None,
         "social_url": social_url,
-        "status": "Pending Review",
         "submitted_at": datetime.utcnow().isoformat() + "Z",
     }
 
