@@ -1,0 +1,97 @@
+{% extends 'dashboard/base.html' %}
+{% set active_page = 'companies' %}
+
+{% block title %}Review Company | Elite Admin Console{% endblock %}
+
+{% block content %}
+    <div class="py-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Review Application</h3>
+                <a href="{{ url_for('admin.dashboard_companies') }}" class="btn btn-light text-primary fw-semibold">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Companies
+                </a>
+            </div>
+            <div class="card-body bg-white">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <h5 class="text-muted text-uppercase">Company Profile</h5>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Name</dt>
+                            <dd class="col-sm-8">{{ company.name }}</dd>
+                            <dt class="col-sm-4">Status</dt>
+                            <dd class="col-sm-8">
+                                {% if status == 'approved' %}
+                                    Approved
+                                {% elif status == 'correction' %}
+                                    Needs Correction
+                                {% elif status in ['rejected', 'suspended'] %}
+                                    {{ status|title }}
+                                {% else %}
+                                    Pending Review
+                                {% endif %}
+                            </dd>
+                            <dt class="col-sm-4">Submitted</dt>
+                            <dd class="col-sm-8">{{ company.created_at.strftime('%B %d, %Y %I:%M %p') if company.created_at else '—' }}</dd>
+                            <dt class="col-sm-4">Owner</dt>
+                            <dd class="col-sm-8">
+                                {% if company.owner %}
+                                    {{ company.owner.username }} ({{ company.owner.email }})
+                                {% else %}
+                                    <span class="text-muted">Owner account not assigned</span>
+                                {% endif %}
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-lg-6">
+                        <h5 class="text-muted text-uppercase">Contact Details</h5>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Industry</dt>
+                            <dd class="col-sm-8">{{ preferences.get('industry', '—') }}</dd>
+                            <dt class="col-sm-4">City</dt>
+                            <dd class="col-sm-8">{{ preferences.get('city', '—') }}</dd>
+                            <dt class="col-sm-4">Phone</dt>
+                            <dd class="col-sm-8">{{ preferences.get('contact_phone', '—') }}</dd>
+                            <dt class="col-sm-4">Website</dt>
+                            <dd class="col-sm-8">
+                                {% if preferences.get('website_url') %}
+                                    <a href="{{ preferences.get('website_url') }}" target="_blank" rel="noopener">{{ preferences.get('website_url') }}</a>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </dd>
+                            <dt class="col-sm-4">Social</dt>
+                            <dd class="col-sm-8">
+                                {% if preferences.get('social_url') %}
+                                    <a href="{{ preferences.get('social_url') }}" target="_blank" rel="noopener">{{ preferences.get('social_url') }}</a>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h5 class="text-muted text-uppercase">Company Description</h5>
+                    <p class="mb-0">{{ company.description or 'No description supplied by applicant.' }}</p>
+                </div>
+                <hr class="my-4">
+                <form method="post" class="d-flex flex-column gap-3">
+                    <div>
+                        <label for="admin_notes" class="form-label fw-semibold">Admin Notes</label>
+                        <textarea class="form-control" id="admin_notes" name="admin_notes" rows="4" placeholder="Summarize the review findings or corrections needed.">{{ request.form.get('admin_notes', company.admin_notes or '') }}</textarea>
+                        <div class="form-text">Notes are stored with the company and shared when requesting corrections.</div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-success" formaction="{{ url_for('admin.approve_company', company_id=company.id) }}">
+                            <i class="fas fa-check me-2"></i>Approve
+                        </button>
+                        <button type="submit" class="btn btn-warning" formaction="{{ url_for('admin.request_correction', company_id=company.id) }}">
+                            <i class="fas fa-envelope me-2"></i>Request Correction
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

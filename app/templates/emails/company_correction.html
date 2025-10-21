@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Action Required: Update Your ELITE Application</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f8f9fa; color: #212529; margin: 0; padding: 0; }
+        .container { max-width: 640px; margin: 0 auto; padding: 32px 24px; background-color: #ffffff; }
+        .notes { background-color: #f1f3f5; border-left: 4px solid #ffc107; padding: 16px; border-radius: 6px; }
+        .cta { display: inline-block; margin-top: 24px; padding: 12px 24px; background-color: #ffc107; color: #212529; text-decoration: none; border-radius: 6px; font-weight: 600; }
+        .cta:hover { background-color: #e0a800; }
+        .footer { margin-top: 32px; font-size: 13px; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Action Required for {{ company_name }}</h2>
+        <p>Thank you for submitting your application to join ELITE. Our review team needs a few updates before we can activate your partner account.</p>
+        <div class="notes">
+            <strong>Reviewer notes:</strong>
+            <p>{{ admin_notes }}</p>
+        </div>
+        <p>Please use the secure link below to reopen your application and provide the requested corrections.</p>
+        <a class="cta" href="{{ correction_link }}" target="_blank" rel="noopener">Update Application</a>
+        <p class="footer">If you have any questions, reply to this email and we will be happy to help.</p>
+    </div>
+</body>
+</html>

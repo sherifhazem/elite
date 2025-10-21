@@ -28,6 +28,26 @@ WELCOME_EMAIL_TEMPLATES: Dict[str, str] = {
 }
 
 
+def _company_primary_email(company) -> str:
+    """Return the most suitable email address for company correspondence."""
+
+    if company is None:
+        return ""
+
+    owner = getattr(company, "owner", None)
+    owner_email = getattr(owner, "email", "") if owner else ""
+    if owner_email:
+        return owner_email
+
+    preferences = getattr(company, "notification_preferences", None) or {}
+    if isinstance(preferences, dict):
+        contact_email = preferences.get("contact_email") or preferences.get("email")
+        if contact_email:
+            return contact_email
+
+    return ""
+
+
 def _dispatch_email(recipient: str, subject: str, html_body: str) -> None:
     """Send an HTML email using the configured SMTP settings."""
 
@@ -165,11 +185,56 @@ def send_welcome_email(
     return send_member_welcome_email(user=user)
 
 
+def send_company_approval_email(company, portal_link: Optional[str] = None) -> bool:
+    """Notify the company that their application has been approved."""
+
+    recipient = _company_primary_email(company)
+    if not recipient:
+        return False
+
+    company_name = getattr(company, "name", "") or "your company"
+    context = {
+        "company_name": company_name,
+        "portal_link": portal_link or current_app.config.get("COMPANY_PORTAL_URL"),
+    }
+    return send_email(
+        recipient,
+        "Welcome to ELITE Partners",
+        "emails/company_approval.html",
+        context,
+    )
+
+
+def send_company_correction_email(
+    company, *, notes: str, correction_link: str
+) -> bool:
+    """Send a correction request with the admin notes to the company."""
+
+    recipient = _company_primary_email(company)
+    if not recipient:
+        return False
+
+    company_name = getattr(company, "name", "") or "your company"
+    context = {
+        "company_name": company_name,
+        "admin_notes": notes,
+        "correction_link": correction_link,
+    }
+    return send_email(
+        recipient,
+        "Action Required: Update Your ELITE Application",
+        "emails/company_correction.html",
+        context,
+    )
+
+
 __all__ = [
     "send_email",
     "send_member_welcome_email",
     "send_company_welcome_email",
     "send_staff_welcome_email",
     "send_welcome_email",
+    "send_company_approval_email",
+    "send_company_correction_email",
     "WELCOME_EMAIL_SUBJECTS",
 ]

@@ -1,103 +1,69 @@
 <!-- LINKED: Enhanced company registration form (business details + admin review integration) -->
-<!-- Added mandatory fields for phone, industry, city, website, and social links without schema changes. -->
-<!-- Company management table and action controls. -->
+<!-- Company management workspace with status tabs and review workflow. -->
 {% set active_page = 'companies' %}
 {% extends "dashboard/base.html" %}
 
 {% block content %}
+    {% set status_map = {
+        'pending': 'Pending Review',
+        'approved': 'Approved',
+        'correction': 'Needs Correction',
+        'rejected': 'Rejected',
+        'suspended': 'Suspended'
+    } %}
+    {% set pending_count = pending_companies|length %}
+    {% set approved_count = approved_companies|length %}
+    {% set rejected_count = rejected_companies|length %}
     <div class="container-fluid py-4">
-        <!-- Page heading -->
         <div class="card shadow-sm admin-card mb-4">
             <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                 <div>
                     <h1 class="h4 mb-1">Company Management</h1>
-                    <p class="text-muted mb-0">Oversee Elite partners and keep marketplace profiles accurate.</p>
+                    <p class="text-muted mb-0">Track partner onboarding progress and action pending applications.</p>
                 </div>
                 <a class="btn btn-primary" href="{{ url_for('admin.add_company') }}">Add Company</a>
             </div>
         </div>
 
-        <!-- Companies table -->
         <div class="card shadow-sm admin-card">
             <div class="card-body">
-                <div class="admin-table-wrapper">
-                    <table class="table table-striped table-hover align-middle mb-0">
-                        <thead class="admin-table-head">
-                            <tr>
-                                <th scope="col">ID</th>
-                                <th scope="col">Company</th>
-                                <th scope="col">Industry</th>
-                                <th scope="col">City</th>
-                                <th scope="col">Phone</th>
-                                <th scope="col">Status</th>
-                                <th scope="col">Created</th>
-                                <th scope="col" class="text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for company in companies %}
-                                {% if company.notification_preferences and company.notification_preferences.items is defined %}
-                                    {% set preferences = company.notification_preferences %}
-                                {% else %}
-                                    {% set preferences = {} %}
-                                {% endif %}
-                                {% set industry = company.industry if company.industry is defined else preferences.get('industry') %}
-                                {% set city = company.city if company.city is defined else preferences.get('city') %}
-                                {% set phone_number = preferences.get('contact_phone') %}
-                                {% set status_value = company.status if company.status is defined else preferences.get('status') %}
-                                {% if not status_value %}
-                                    {% if company.owner and company.owner.is_active %}
-                                        {% set status_value = 'Active' %}
-                                    {% else %}
-                                        {% set status_value = 'Pending Review' %}
-                                    {% endif %}
-                                {% endif %}
-                                {% set status_normalized = status_value | default('', true) | lower %}
-                                {% set status_badge = 'badge rounded-pill bg-info-subtle text-info fw-semibold' %}
-                                {% if 'active' in status_normalized %}
-                                    {% set status_badge = 'badge rounded-pill bg-success-subtle text-success fw-semibold' %}
-                                {% elif 'pending' in status_normalized or 'review' in status_normalized %}
-                                    {% set status_badge = 'badge rounded-pill bg-warning-subtle text-warning fw-semibold' %}
-                                {% elif 'reject' in status_normalized or 'inactive' in status_normalized or 'suspend' in status_normalized %}
-                                    {% set status_badge = 'badge rounded-pill bg-danger-subtle text-danger fw-semibold' %}
-                                {% endif %}
-                                <tr>
-                                    <td>{{ company.id }}</td>
-                                    <td class="fw-semibold">
-                                        {{ company.name }}
-                                        <div class="text-muted small">{{ company.description or '—' }}</div>
-                                    </td>
-                                    <td>{{ industry or '—' }}</td>
-                                    <td>{{ city or '—' }}</td>
-                                    <td>{{ phone_number or '—' }}</td>
-                                    <td><span class="{{ status_badge }}">{{ status_value }}</span></td>
-                                    <td>{{ company.created_at.strftime('%Y-%m-%d') if company.created_at else '—' }}</td>
-                                    <td class="text-end">
-                                        <a
-                                            class="btn btn-sm btn-admin-action"
-                                            href="{{ url_for('admin.edit_company', company_id=company.id) }}"
-                                        >
-                                            Edit
-                                        </a>
-                                        <form
-                                            class="d-inline"
-                                            action="{{ url_for('admin.delete_company', company_id=company.id) }}"
-                                            method="post"
-                                            onsubmit="return confirm('Delete company {{ company.name }}?');"
-                                        >
-                                            <button class="btn btn-sm btn-admin-action" data-variant="danger" type="submit">
-                                                Delete
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            {% else %}
-                                <tr>
-                                    <td class="text-center text-muted" colspan="8">No companies found.</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <ul class="nav nav-pills flex-column flex-md-row gap-2 gap-md-3" id="companyStatusTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active d-flex align-items-center gap-2" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-pane" type="button" role="tab" aria-controls="pending-pane" aria-selected="true">
+                            <span>Pending Applications</span>
+                            <span class="badge rounded-pill bg-warning-subtle text-warning fw-semibold">{{ pending_count }}</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link d-flex align-items-center gap-2" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved-pane" type="button" role="tab" aria-controls="approved-pane" aria-selected="false">
+                            <span>Approved Companies</span>
+                            <span class="badge rounded-pill bg-success-subtle text-success fw-semibold">{{ approved_count }}</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link d-flex align-items-center gap-2" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected-pane" type="button" role="tab" aria-controls="rejected-pane" aria-selected="false">
+                            <span>Rejected / Suspended</span>
+                            <span class="badge rounded-pill bg-danger-subtle text-danger fw-semibold">{{ rejected_count }}</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content mt-4" id="companyStatusContent">
+                    <div class="tab-pane fade show active" id="pending-pane" role="tabpanel" aria-labelledby="pending-tab">
+                        {% set active_companies = pending_companies %}
+                        {% set allow_review = True %}
+                        {% include 'dashboard/companies_table.html' %}
+                    </div>
+                    <div class="tab-pane fade" id="approved-pane" role="tabpanel" aria-labelledby="approved-tab">
+                        {% set active_companies = approved_companies %}
+                        {% set allow_review = False %}
+                        {% include 'dashboard/companies_table.html' %}
+                    </div>
+                    <div class="tab-pane fade" id="rejected-pane" role="tabpanel" aria-labelledby="rejected-tab">
+                        {% set active_companies = rejected_companies %}
+                        {% set allow_review = False %}
+                        {% include 'dashboard/companies_table.html' %}
+                    </div>
                 </div>
             </div>
         </div>

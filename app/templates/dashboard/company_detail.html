@@ -19,6 +19,18 @@ Added button labels and ensured correct endpoint binding and confirmation logic.
                         <h5 class="text-muted text-uppercase">Company Overview</h5>
                         <ul class="list-unstyled mb-0">
                             <li class="mb-2"><strong>Name:</strong> {{ company.name }}</li>
+                            <li class="mb-2"><strong>Status:</strong>
+                                {% set normalized_status = (company.status or 'pending')|lower %}
+                                {% if normalized_status == 'approved' %}
+                                    Approved
+                                {% elif normalized_status == 'correction' %}
+                                    Needs Correction
+                                {% elif normalized_status in ['rejected', 'suspended'] %}
+                                    {{ normalized_status|title }}
+                                {% else %}
+                                    Pending Review
+                                {% endif %}
+                            </li>
                             <li class="mb-2"><strong>Created:</strong>
                                 {% if company.created_at %}
                                     {{ company.created_at.strftime('%B %d, %Y %I:%M %p') }}
@@ -43,6 +55,13 @@ Added button labels and ensured correct endpoint binding and confirmation logic.
                                     {{ company.description }}
                                 {% else %}
                                     <span class="text-muted">No description provided</span>
+                                {% endif %}
+                            </li>
+                            <li class="mb-2"><strong>Admin Notes:</strong>
+                                {% if company.admin_notes %}
+                                    {{ company.admin_notes }}
+                                {% else %}
+                                    <span class="text-muted">No administrative notes recorded</span>
                                 {% endif %}
                             </li>
                             <li class="mb-2"><strong>Notification Preferences:</strong>
