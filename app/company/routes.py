@@ -22,9 +22,11 @@ from flask import (
     url_for,
 )
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 
 from .. import db
-from ..models import Company, Offer, Redemption
+from ..forms import CompanyRegistrationForm
+from ..models import Company, Offer, Redemption, User
 from ..services.notifications import (
     broadcast_new_offer,
     fetch_offer_feedback_counts,
@@ -112,6 +114,167 @@ def _parse_offer_payload(data: Dict[str, str]) -> Tuple[Dict[str, object], str |
         "send_notifications": send_notifications,
     }
     return payload, None
+
+
+@company_portal_bp.route(
+    "/complete_registration/<int:company_id>",
+    methods=["GET", "POST"],
+)
+def complete_registration(company_id: int):
+    """Allow companies to update their application using a correction link."""
+
+    company = Company.query.get_or_404(company_id)
+    form = CompanyRegistrationForm()
+    owner = company.owner
+    original_notes = company.admin_notes
+
+    preferences = company.notification_settings()
+
+    if request.method == "GET":
+        form.process(
+            data={
+                "company_name": company.name,
+                "description": company.description or "",
+                "email": getattr(owner, "email", ""),
+                "phone_number": preferences.get("contact_phone", ""),
+                "industry": preferences.get("industry", ""),
+                "city": preferences.get("city", ""),
+                "website_url": preferences.get("website_url", ""),
+                "social_url": preferences.get("social_url", ""),
+            }
+        )
+        return render_template(
+            "auth/register_company.html",
+            form=form,
+            company=company,
+            correction_mode=True,
+            admin_notes=original_notes,
+        )
+
+    if form.validate_on_submit():
+        new_name = (form.company_name.data or "").strip()
+        new_description = (form.description.data or "").strip() or None
+        new_email = (form.email.data or "").strip().lower()
+        phone_number = (form.phone_number.data or "").strip()
+        industry = (form.industry.data or "").strip()
+        city = (form.city.data or "").strip()
+        website_url = (form.website_url.data or "").strip()
+        social_url = (form.social_url.data or "").strip()
+
+        if (
+            new_name
+            and new_name != company.name
+            and Company.query.filter(
+                Company.id != company.id, Company.name == new_name
+            ).first()
+        ):
+            flash("A company with the provided name already exists.", "danger")
+            return render_template(
+                "auth/register_company.html",
+                form=form,
+                company=company,
+                correction_mode=True,
+                admin_notes=original_notes,
+            )
+
+        existing_user = None
+        if new_email:
+            existing_user = (
+                User.query.filter(User.email == new_email, User.id != getattr(owner, "id", 0))
+                .order_by(User.id)
+                .first()
+            )
+        if existing_user is not None:
+            flash("A user with the provided email already exists.", "danger")
+            return render_template(
+                "auth/register_company.html",
+                form=form,
+                company=company,
+                correction_mode=True,
+                admin_notes=original_notes,
+            )
+
+        def _ensure_owner_username(base_value: str) -> str:
+            import re
+
+            base_source = base_value or new_email.split("@")[0] if new_email else "company"
+            cleaned = re.sub(r"[^\w\u0621-\u064A]+", "", base_source, flags=re.UNICODE)
+            cleaned = cleaned or f"company{company.id}"
+            candidate = cleaned
+            suffix = 1
+            while User.query.filter(User.username == candidate, User.id != getattr(owner, "id", 0)).first():
+                candidate = f"{cleaned}{suffix}"
+                suffix += 1
+            return candidate
+
+        if owner is None:
+            username = _ensure_owner_username(new_name or company.name or "")
+            owner = User(
+                username=username,
+                email=new_email,
+                role="company",
+                membership_level="Basic",
+                is_active=False,
+            )
+            owner.set_password(form.password.data)
+            company.owner = owner
+            owner.company = company
+            db.session.add(owner)
+        else:
+            owner.email = new_email
+            owner.set_password(form.password.data)
+            owner.is_active = False
+
+        company.name = new_name or company.name
+        company.description = new_description
+        company.status = "pending"
+        company.admin_notes = None
+
+        updated_preferences = dict(preferences)
+        updated_preferences.update(
+            {
+                "contact_phone": phone_number,
+                "industry": industry,
+                "city": city,
+                "website_url": website_url or None,
+                "social_url": social_url,
+                "updated_at": datetime.utcnow().isoformat() + "Z",
+            }
+        )
+        company.notification_preferences = updated_preferences
+
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash("Unable to update the company details. Please try again.", "danger")
+            return (
+                render_template(
+                    "auth/register_company.html",
+                    form=form,
+                    company=company,
+                    correction_mode=True,
+                    admin_notes=original_notes,
+                ),
+                HTTPStatus.BAD_REQUEST,
+            )
+
+        flash("Your company information has been updated successfully.", "success")
+        return redirect(url_for("auth.login_page"))
+
+    for field_errors in form.errors.values():
+        for error in field_errors:
+            flash(error, "danger")
+    return (
+        render_template(
+            "auth/register_company.html",
+            form=form,
+            company=company,
+            correction_mode=True,
+            admin_notes=original_notes,
+        ),
+        HTTPStatus.BAD_REQUEST,
+    )
 
 
 @company_portal_bp.route("/")

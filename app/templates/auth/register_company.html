@@ -219,6 +219,25 @@
                 gap: 10px;
             }
 
+            .correction-banner {
+                border-radius: 18px;
+                padding: 16px 18px;
+                background: rgba(106, 27, 154, 0.08);
+                color: var(--text);
+                font-size: 0.95rem;
+                line-height: 1.6;
+            }
+
+            .correction-banner--warning {
+                background: rgba(246, 195, 66, 0.18);
+            }
+
+            .correction-banner strong {
+                display: block;
+                font-weight: 700;
+                margin-bottom: 6px;
+            }
+
             .alert {
                 padding: 12px 16px;
                 border-radius: 14px;
@@ -297,6 +316,17 @@
             </header>
             <section class="register-card" aria-labelledby="company-register-title">
                 <h2 id="company-register-title" class="visually-hidden">نموذج تسجيل الشركات</h2>
+                {% if correction_mode %}
+                    <div class="correction-banner" role="status">
+                        Please review the admin feedback below and update your company details to continue the approval process.
+                    </div>
+                    {% if admin_notes %}
+                        <div class="correction-banner correction-banner--warning" role="alert">
+                            <strong>Admin Notes</strong>
+                            <span>{{ admin_notes }}</span>
+                        </div>
+                    {% endif %}
+                {% endif %}
                 <form id="company-register-form" method="post" novalidate>
                     {{ form.hidden_tag() }}
                     {% with messages = get_flashed_messages(with_categories=True) %}

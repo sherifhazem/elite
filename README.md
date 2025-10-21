@@ -14,10 +14,11 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Verified Settings page loads correctly after fix.
 
 ## Feature: Company Application Review Workflow
-- Added company review panel under `/admin/companies`
-- Enabled status transitions: pending → approved / correction
-- Integrated email notifications for approval and correction requests
-- Added admin notes and secure correction link
+- Added new admin actions for reviewing pending company applications.
+- Admin can approve or request correction with custom notes.
+- Integrated email notifications (approval / correction).
+- Added status filtering (pending / approved / correction).
+- Added secure correction link for company to update data.
 
 ## Prerequisites
 
