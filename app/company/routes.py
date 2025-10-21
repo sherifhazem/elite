@@ -1,35 +1,18 @@
-# LINKED: Shared Offers & Redemptions Integration (no schema changes)
-"""Blueprint implementing the company portal dashboard and management features."""
-# UPDATED: Responsive Company Portal with Restricted Editable Fields.
-
 from __future__ import annotations
-
-# LINKED: Shared Offers & Redemptions Integration (no schema changes)
 from datetime import datetime
 from http import HTTPStatus
-from types import SimpleNamespace
 from typing import Dict, Optional, Tuple
-
 from flask import (
-    Blueprint,
-    abort,
-    current_app,
-    flash,
-    g,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    url_for,
+    Blueprint, abort, current_app, flash, g, jsonify,
+    redirect, render_template, request, url_for,
 )
 from flask_login import current_user as flask_current_user
 from sqlalchemy import func
-
+from sqlalchemy.exc import IntegrityError
 from .. import db
-from ..models import Company, Offer, Redemption
+from ..models import Company, Offer, Redemption, User
 from ..services.notifications import (
-    broadcast_new_offer,
-    fetch_offer_feedback_counts,
+    broadcast_new_offer, fetch_offer_feedback_counts,
 )
 from ..services.offers import list_company_offers
 from ..services.redemption import list_company_redemptions
@@ -42,101 +25,68 @@ company_portal_bp = Blueprint(
     template_folder="../templates/company",
 )
 
-
 @company_portal_bp.before_request
 def _prevent_suspended_company_access():
-    """Redirect suspended companies back to the login screen."""
-
     endpoint = request.endpoint or ""
     if not endpoint.startswith("company_portal_bp."):
         return None
-
     if endpoint == "company_portal_bp.complete_registration":
         return None
-
-    user = getattr(g, "current_user", None)
-    if user is None or not getattr(user, "is_authenticated", False):
-        if getattr(flask_current_user, "is_authenticated", False):
-            user = flask_current_user
-    if user is None:
+    user = getattr(g, "current_user", None) or flask_current_user
+    if not getattr(user, "is_authenticated", False):
         user = resolve_user_from_request()
-
     if user is None or getattr(user, "role", "").strip().lower() != "company":
         return None
-
     company = getattr(user, "company", None)
     if company is None and getattr(user, "company_id", None):
         company = Company.query.get(user.company_id)
-
-    if company and (company.status or "").strip().lower() == "suspended":
-        flash("Your account is suspended. Please contact support.", "danger")
+    if company and isinstance(company.status, str) and company.status.lower() == "suspended":
+        flash("تم تعليق حساب شركتك مؤقتًا. يُرجى التواصل مع الدعم.", "danger")
         return redirect(url_for("auth.login_page"))
     return None
 
 
 def _ensure_company(user) -> Company:
-    """Return the company linked to the provided user or abort with 403."""
-
     if user is None:
         abort(HTTPStatus.UNAUTHORIZED)
-
     company = getattr(user, "company", None)
     if company is None and getattr(user, "company_id", None):
         company = Company.query.get(user.company_id)
-
     if company is None:
-        company = (
-            Company.query.filter(Company.owner_user_id == user.id)
-            .order_by(Company.id.asc())
-            .first()
-        )
-
+        company = Company.query.filter(Company.owner_user_id == user.id).first()
     if company is None:
         abort(HTTPStatus.FORBIDDEN)
-
     if company.owner_user_id is None:
         company.owner_user_id = user.id
         db.session.commit()
-
     return company
 
 
 def _current_company() -> Company:
-    """Resolve the authenticated company using the global request context."""
-
     user = getattr(g, "current_user", None)
     return _ensure_company(user)
 
 
 def _parse_offer_payload(data: Dict[str, str]) -> Tuple[Dict[str, object], str | None]:
-    """Validate offer payload coming from forms or JSON requests."""
-
     title = (data.get("title") or "").strip()
     description = (data.get("description") or "").strip()
     base_discount_raw = (data.get("base_discount") or "0").strip()
     valid_until_raw = (data.get("valid_until") or "").strip()
     send_notifications = str(data.get("send_notifications", "")).lower() in {
-        "true",
-        "1",
-        "on",
-        "yes",
+        "true", "1", "on", "yes",
     }
-
     if not title:
         return {}, "Title is required."
-
     try:
         base_discount = float(base_discount_raw)
     except ValueError:
         return {}, "Base discount must be numeric."
-
     valid_until = None
     if valid_until_raw:
         try:
             valid_until = datetime.strptime(valid_until_raw, "%Y-%m-%d")
         except ValueError:
             return {}, "Valid until must follow YYYY-MM-DD format."
-
     payload = {
         "title": title,
         "description": description or None,
@@ -147,19 +97,11 @@ def _parse_offer_payload(data: Dict[str, str]) -> Tuple[Dict[str, object], str |
     return payload, None
 
 
-@company_portal_bp.route(
-    "/complete_registration/<int:company_id>", methods=["GET", "POST"]
-)
+@company_portal_bp.route("/complete_registration/<int:company_id>", methods=["GET", "POST"])
 def complete_registration(company_id: int):
-    """Allow a company to resubmit essential contact details for review."""
-
     company = Company.query.get_or_404(company_id)
     preferences = company.notification_settings()
-    contact_number = getattr(company, "contact_number", None) or preferences.get(
-        "contact_phone",
-        "",
-    )
-
+    contact_number = getattr(company, "contact_number", None) or preferences.get("contact_phone", "")
     if request.method == "POST":
         company.name = (request.form.get("name") or company.name or "").strip()
         new_contact_number = (request.form.get("contact_number") or "").strip()
@@ -169,11 +111,18 @@ def complete_registration(company_id: int):
             updated_preferences = dict(preferences)
             updated_preferences["contact_phone"] = new_contact_number
             company.notification_preferences = updated_preferences
-        company.set_status("pending")
-        db.session.commit()
-        flash("Your data has been resubmitted for review.", "info")
+        company.admin_notes = None
+        if hasattr(company, "set_status"):
+            company.set_status("pending")
+        else:
+            company.status = "pending"
+        try:
+            db.session.commit()
+            flash("تم إعادة إرسال بيانات الشركة للمراجعة.", "success")
+        except IntegrityError:
+            db.session.rollback()
+            flash("حدث خطأ أثناء حفظ البيانات. حاول مجددًا.", "danger")
         return redirect(url_for("auth.login_page"))
-
     return render_template(
         "company/complete_registration.html",
         company=company,
@@ -181,6 +130,8 @@ def complete_registration(company_id: int):
     )
 
 
+# باقي المسارات (dashboard, offers, redemptions, settings)
+# تترك كما هي لأن الكود الحالي لها صحيح ووظيفي.
 @company_portal_bp.route("/")
 @require_role("company")
 def index() -> str:
