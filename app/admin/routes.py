@@ -464,7 +464,7 @@ def list_companies() -> str:
     """Render the company management interface filtered by status."""
 
     requested_status = (request.args.get("status") or "pending").strip().lower()
-    valid_statuses = {"pending", "approved", "correction"}
+    valid_statuses = {"pending", "approved", "correction", "suspended"}
     active_tab = requested_status if requested_status in valid_statuses else "pending"
 
     companies = Company.query.order_by(Company.created_at.desc()).all()
@@ -486,6 +486,41 @@ def list_companies() -> str:
         active_tab=active_tab,
         status_counts=status_counts,
     )
+
+
+@admin_bp.route("/companies/<int:company_id>/suspend", methods=["POST"])
+@admin_required
+def suspend_company(company_id: int):
+    """Suspend a company (temporarily disable access)."""
+
+    company = Company.query.get_or_404(company_id)
+    company.status = "suspended"
+    company.admin_notes = request.form.get("admin_notes", "")
+    db.session.commit()
+
+    from app.services.mailer import send_company_suspension_email
+
+    send_company_suspension_email(company)
+
+    flash(f"Company '{company.name}' has been suspended.", "warning")
+    return redirect(url_for("admin.list_companies"))
+
+
+@admin_bp.route("/companies/<int:company_id>/reactivate", methods=["POST"])
+@admin_required
+def reactivate_company(company_id: int):
+    """Reactivate a suspended company."""
+
+    company = Company.query.get_or_404(company_id)
+    company.status = "approved"
+    db.session.commit()
+
+    from app.services.mailer import send_company_reactivation_email
+
+    send_company_reactivation_email(company)
+
+    flash(f"Company '{company.name}' has been reactivated.", "success")
+    return redirect(url_for("admin.list_companies"))
 
 
 @admin_bp.route("/companies/view/<int:company_id>")

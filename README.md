@@ -1036,3 +1036,10 @@ Run these smoke checks after deploying or touching the registration flows:
 4. Open `/portal/home` and confirm it redirects to the live portal home view without errors.
 5. Open `/admin/dashboard` and confirm it redirects to the admin landing page without errors.
 6. Traverse the main navigation templates and confirm `url_for` is used for dynamic links.
+
+## Feature: Company Suspension & Reactivation
+- Added suspend/reactivate actions in admin company management.
+- Integrated email notifications for suspension and reactivation.
+- Updated company model with status field.
+- Prevented suspended companies from accessing their portal.
+- All operations are non-destructive (no deletions).
