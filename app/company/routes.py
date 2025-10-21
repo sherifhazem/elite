@@ -7,6 +7,7 @@ from __future__ import annotations
 # LINKED: Shared Offers & Redemptions Integration (no schema changes)
 from datetime import datetime
 from http import HTTPStatus
+from types import SimpleNamespace
 from typing import Dict, Optional, Tuple
 
 from flask import (
@@ -156,32 +157,22 @@ def complete_registration(company_id: int):
     """Allow companies to update their application using a correction link."""
 
     company = Company.query.get_or_404(company_id)
-    form = CompanyRegistrationForm()
     owner = company.owner
     original_notes = company.admin_notes
-
     preferences = company.notification_settings()
 
-    if request.method == "GET":
-        form.process(
-            data={
-                "company_name": company.name,
-                "description": company.description or "",
-                "email": getattr(owner, "email", ""),
-                "phone_number": preferences.get("contact_phone", ""),
-                "industry": preferences.get("industry", ""),
-                "city": preferences.get("city", ""),
-                "website_url": preferences.get("website_url", ""),
-                "social_url": preferences.get("social_url", ""),
-            }
-        )
-        return render_template(
-            "auth/register_company.html",
-            form=form,
-            company=company,
-            correction_mode=True,
-            admin_notes=original_notes,
-        )
+    initial_data = SimpleNamespace(
+        company_name=company.name or "",
+        description=company.description or "",
+        email=getattr(owner, "email", ""),
+        phone_number=preferences.get("contact_phone", ""),
+        industry=preferences.get("industry", ""),
+        city=preferences.get("city", ""),
+        website_url=preferences.get("website_url", ""),
+        social_url=preferences.get("social_url", ""),
+    )
+
+    form = CompanyRegistrationForm(obj=initial_data)
 
     if form.validate_on_submit():
         new_name = (form.company_name.data or "").strip()
@@ -201,12 +192,15 @@ def complete_registration(company_id: int):
             ).first()
         ):
             flash("A company with the provided name already exists.", "danger")
-            return render_template(
-                "auth/register_company.html",
-                form=form,
-                company=company,
-                correction_mode=True,
-                admin_notes=original_notes,
+            return (
+                render_template(
+                    "auth/register_company.html",
+                    form=form,
+                    company=company,
+                    correction_mode=True,
+                    admin_notes=original_notes,
+                ),
+                HTTPStatus.BAD_REQUEST,
             )
 
         existing_user = None
@@ -218,12 +212,15 @@ def complete_registration(company_id: int):
             )
         if existing_user is not None:
             flash("A user with the provided email already exists.", "danger")
-            return render_template(
-                "auth/register_company.html",
-                form=form,
-                company=company,
-                correction_mode=True,
-                admin_notes=original_notes,
+            return (
+                render_template(
+                    "auth/register_company.html",
+                    form=form,
+                    company=company,
+                    correction_mode=True,
+                    admin_notes=original_notes,
+                ),
+                HTTPStatus.BAD_REQUEST,
             )
 
         def _ensure_owner_username(base_value: str) -> str:
@@ -291,21 +288,32 @@ def complete_registration(company_id: int):
                 HTTPStatus.BAD_REQUEST,
             )
 
-        flash("Your company information has been updated successfully.", "success")
+        flash("Your data has been resubmitted for review.", "success")
         return redirect(url_for("auth.login_page"))
 
-    for field_errors in form.errors.values():
-        for error in field_errors:
-            flash(error, "danger")
-    return (
-        render_template(
-            "auth/register_company.html",
-            form=form,
-            company=company,
-            correction_mode=True,
-            admin_notes=original_notes,
-        ),
-        HTTPStatus.BAD_REQUEST,
+    if request.method == "POST":
+        for field_name, errors in form.errors.items():
+            label = getattr(getattr(form, field_name, None), "label", None)
+            field_label = label.text if label is not None else field_name
+            for error in errors:
+                flash(f"{field_label}: {error}", "danger")
+        return (
+            render_template(
+                "auth/register_company.html",
+                form=form,
+                company=company,
+                correction_mode=True,
+                admin_notes=original_notes,
+            ),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    return render_template(
+        "auth/register_company.html",
+        form=form,
+        company=company,
+        correction_mode=True,
+        admin_notes=original_notes,
     )
 
 
