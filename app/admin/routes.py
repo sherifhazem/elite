@@ -32,9 +32,11 @@ from flask import (
     flash,
     g,
     jsonify,
+    make_response,
     redirect,
     render_template,
     request,
+    session,
     url_for,
 )
 from sqlalchemy.exc import IntegrityError
@@ -49,7 +51,6 @@ from ..services.mailer import send_welcome_email
 from ..services.notifications import broadcast_new_offer, ensure_welcome_notification
 from ..services.roles import admin_required, require_role
 from ..services import settings_service
-from flask import make_response, session
 
 admin_bp = Blueprint(
     "admin",
