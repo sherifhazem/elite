@@ -23,7 +23,8 @@ app.secret_key = app.config["SECRET_KEY"]
 
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-csrf = CSRFProtect(app)
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
@@ -186,3 +187,22 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(reports_bp)
 app.register_blueprint(portal_bp)
 app.register_blueprint(company_portal_bp)
+
+
+@csrf.exempt
+def exempt_endpoints():
+    """List endpoints exempted from CSRF (mostly API or public routes)."""
+
+    exempt_list = [
+        "company_portal_bp.complete_registration",
+        "auth.login",
+        "auth.logout",
+        "main.index",
+        "user_routes.api_user_login",
+    ]
+    for endpoint in exempt_list:
+        if endpoint in app.view_functions:
+            csrf.exempt(app.view_functions[endpoint])
+
+
+exempt_endpoints()

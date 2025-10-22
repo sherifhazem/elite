@@ -23,6 +23,11 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Added correction modal for admin notes.
 - Fixed HTML forms to use POST.
 
+## Security Update: CSRF Protection Scoped
+- CSRFProtect now applied only to form-based routes.
+- Public routes and APIs are excluded.
+- Added exempt_endpoints() helper in app/__init__.py.
+
 ## Fix: Company Correction / Completion Flow
 - Added CSRF protection via {{ form.hidden_tag() }} in register_company.html.
 - Set explicit form action for /company/complete_registration/<id>.
