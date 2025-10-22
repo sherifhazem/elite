@@ -1140,3 +1140,8 @@ Run these smoke checks after deploying or touching the registration flows:
 - Standardized all company-related routes under 'company_portal_bp' blueprint.
 - Updated all url_for() references to use 'company_portal_bp.complete_registration'.
 - Removed older aliases (company_bp, companyportal_bp) to prevent BuildError conflicts.
+
+## Fix: Consistent set_status() Usage
+- Replaced all incorrect assignments (company.set_status = "...") with proper method calls (company.set_status("...")).
+- Ensures database status updates and admin actions (approve, suspend, reactivate, correction) work correctly.
+- All status values are now lowercase and normalized.
