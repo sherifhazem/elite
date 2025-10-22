@@ -12,7 +12,11 @@
                     <p class="text-muted text-center mb-4">
                         Please review the information below, update it if necessary, and submit the form so we can continue reviewing your application.
                     </p>
-                    <form method="post" action="{{ url_for('company_portal_bp.complete_registration', company_id=company.id) }}" novalidate>
+                    <form
+                        method="post"
+                        action="{{ url_for('company_portal_bp.complete_registration', company_id=company.id) }}"
+                        novalidate
+                    >
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                         <div class="mb-3">
@@ -40,7 +44,7 @@
                             <textarea name="description" class="form-control" rows="4">{{ company.description or '' }}</textarea>
                         </div>
 
-                        <div class="text-end">
+                        <div class="text-end mt-3">
                             <button type="submit" class="btn btn-primary">Submit Correction</button>
                         </div>
                     </form>

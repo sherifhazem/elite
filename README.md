@@ -1109,3 +1109,8 @@ Run these smoke checks after deploying or touching the registration flows:
 - Replaced incorrect assignments `company.set_status = "..."` with proper calls `company.set_status("...")`.
 - Ensured all admin actions (approve, suspend, reactivate, request_correction) normalize status via model helper.
 - No migrations or binary files were created.
+
+## Fix: Company Completion Form Endpoint
+- Corrected form action in app/templates/company/complete_registration.html.
+- Now uses url_for('company_portal_bp.complete_registration', company_id=...) safely.
+- Added CSRF token and ensured full POST compatibility with Flask routes.
