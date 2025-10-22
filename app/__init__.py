@@ -55,11 +55,11 @@ from .admin import admin_bp  # noqa: E402
 from .admin.routes_reports import reports_bp  # noqa: E402
 from .company import company_portal_bp  # noqa: E402
 
-try:
-    from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request_optional
-except ImportError:
-    get_jwt_identity = None
-    verify_jwt_in_request_optional = None
+# JWT authentication temporarily disabled during web testing phase.
+# To re-enable, restore imports from flask_jwt_extended.
+# from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request_optional
+get_jwt_identity = lambda: None
+verify_jwt_in_request_optional = lambda *a, **kw: None
 
 PROTECTED_PREFIXES = ("/admin", "/company")
 

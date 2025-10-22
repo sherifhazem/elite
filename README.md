@@ -51,6 +51,11 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Hooked notifications into company admin actions (new application, approve, correction, suspend, reactivate).
 - Added bell icon + dropdown in admin navbar with live polling (30s).
 
+## Temporary Change: JWT Disabled
+- Disabled flask_jwt_extended integration for simplicity during web-only testing.
+- All JWT functions now safely return None.
+- Will be re-enabled for mobile app API integration phase.
+
 ## Prerequisites
 
 - Python 3.11
