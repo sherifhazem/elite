@@ -1,5 +1,13 @@
 """Company portal package exposing the Flask blueprint for /company pages."""
 
-from .routes import company_portal_bp
+from flask import Blueprint
+
+company_portal_bp = Blueprint(
+    "company_portal_bp",
+    __name__,
+    url_prefix="/company"
+)
+
+from . import routes  # noqa: E402,F401
 
 __all__ = ["company_portal_bp"]

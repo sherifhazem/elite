@@ -1135,3 +1135,8 @@ Run these smoke checks after deploying or touching the registration flows:
 - Corrected form action in app/templates/company/complete_registration.html.
 - Now uses url_for('company_portal_bp.complete_registration', company_id=...) safely.
 - Added CSRF token and ensured full POST compatibility with Flask routes.
+
+## Update: Unified Blueprint and Endpoint Names
+- Standardized all company-related routes under 'company_portal_bp' blueprint.
+- Updated all url_for() references to use 'company_portal_bp.complete_registration'.
+- Removed older aliases (company_bp, companyportal_bp) to prevent BuildError conflicts.
