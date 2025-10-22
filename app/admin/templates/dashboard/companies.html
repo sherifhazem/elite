@@ -4,6 +4,20 @@
 {% extends "dashboard/base.html" %}
 
 {% block content %}
+        <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container-fluid">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show mt-2" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
     {% set status_map = {
         'pending': 'Pending Review',
         'approved': 'Approved',
@@ -101,19 +115,25 @@
                                         <div class="d-flex flex-wrap justify-content-end gap-2">
                                             {% if normalized_status == 'pending' %}
                                                 <form method="post" action="{{ url_for('admin.approve_company', company_id=company.id) }}" class="d-inline">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <button class="btn btn-success btn-sm" type="submit">Approve</button>
                                                 </form>
+
                                                 <button class="btn btn-warning btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#correctionModal{{ company.id }}">
                                                     Request Correction
                                                 </button>
                                             {% elif normalized_status == 'approved' %}
                                                 <form method="post" action="{{ url_for('admin.suspend_company', company_id=company.id) }}" class="d-inline">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <button class="btn btn-danger btn-sm" type="submit">Suspend</button>
                                                 </form>
+
                                             {% elif normalized_status == 'suspended' %}
                                                 <form method="post" action="{{ url_for('admin.reactivate_company', company_id=company.id) }}" class="d-inline">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <button class="btn btn-success btn-sm" type="submit">Reactivate</button>
                                                 </form>
+
                                             {% endif %}
                                         </div>
                                     </td>
@@ -139,11 +159,13 @@
                     </div>
                     <div class="modal-body">
                         <form method="post" action="{{ url_for('admin.request_correction', company_id=company.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <textarea class="form-control" name="admin_notes" rows="4" placeholder="Write your notes...">{{ company.admin_notes or '' }}</textarea>
                             <div class="text-end mt-3">
                                 <button type="submit" class="btn btn-warning">Send Request</button>
                             </div>
                         </form>
+
                     </div>
                 </div>
             </div>

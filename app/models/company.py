@@ -88,5 +88,25 @@ class Company(db.Model):
                 seen_ids.add(owner.id)
                 db.session.delete(owner)
 
+        # ------------------------------------------------------------------
+        # Helper method: Normalize and update company status
+        # ------------------------------------------------------------------
+        def set_status(self, new_status: str):
+            """
+            Safely set the company's status, enforcing lowercase normalization.
+            Allowed values: pending, approved, correction, suspended.
+            """
+            valid_statuses = {"pending", "approved", "correction", "suspended"}
+            if not new_status:
+                normalized = "pending"
+            else:
+                normalized = new_status.strip().lower()
+
+            # fallback if invalid value is provided
+            if normalized not in valid_statuses:
+                normalized = "pending"
+
+            self.status = normalized
+
 
 __all__ = ["Company"]

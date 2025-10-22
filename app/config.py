@@ -39,7 +39,8 @@ class Config:
     MAIL_USE_TLS = True
     MAIL_USERNAME = os.getenv("MAIL_USERNAME")
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
-    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", MAIL_USERNAME)
+    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER") or "no-reply@elite-discounts.com"
+
 
 
 logger.info(
