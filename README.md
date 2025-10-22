@@ -1177,3 +1177,8 @@ Run these smoke checks after deploying or touching the registration flows:
 - Added relationships between ActivityLog and User/Company models.
 - Template now shows admin username and company name instead of numeric IDs.
 - Improved readability and user experience for system administrators.
+
+## Feature: Membership Choice Page
+- Added new route /auth/choose_membership for onboarding users visually.
+- Users can now choose between joining as a Member or a Company.
+- Modern responsive design optimized for mobile with clear explanations.

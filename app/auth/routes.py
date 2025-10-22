@@ -557,6 +557,13 @@ def profile() -> tuple:
     return jsonify(response), HTTPStatus.OK
 
 
+@auth_bp.route("/choose_membership")
+def choose_membership():
+    """Landing page to choose between member or company registration."""
+
+    return render_template("auth/choose_membership.html")
+
+
 @auth_bp.route("/login", methods=["GET"], endpoint="login")
 @auth_bp.route("/login-page")
 def login_page() -> str:
@@ -572,7 +579,7 @@ def register_page():
 
     if request.method == "POST":
         return register_member()
-    return redirect(url_for("auth.register_member"))
+    return redirect(url_for("auth.choose_membership"))
 
 
 @auth_bp.route("/api/auth/verify/<token>")
