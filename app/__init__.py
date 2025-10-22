@@ -98,16 +98,21 @@ def attach_current_user() -> None:
     g.user_role = normalized_role
     g.user_permissions = getattr(current, "permissions", None) if current else None
 
+    # ======================================================
+    # Scoped Access Control: only protect sensitive routes
+    # ======================================================
     protected_paths = ("/admin", "/company")
     exempt_paths = (
-        "/auth/login",
-        "/auth/register",
-        "/",
-        "/company/complete_registration",
+        "/",                      # homepage
+        "/auth/login",            # login
+        "/auth/register",         # register
+        "/company/complete_registration",  # company correction/completion link
+        "/static",                # static assets
+        "/api",                   # APIs
     )
 
     if request.path.startswith(protected_paths) and not any(
-        request.path.startswith(e) for e in exempt_paths
+        request.path.startswith(ex) for ex in exempt_paths
     ):
         if g.current_user is None:
             abort(HTTPStatus.UNAUTHORIZED)
