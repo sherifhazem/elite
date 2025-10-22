@@ -53,10 +53,20 @@ class Company(db.Model):
 
         return f"<Company {self.name}>"
 
-    def set_status(self, new_status: str | None) -> None:
-        """Normalize and store the company status value."""
+    # The Company model now enforces lowercase normalized status values.
+    # This ensures consistent filtering and template rendering across the admin panel.
+    def set_status(self, new_status: str):
+        """
+        Safely set the company's status, enforcing lowercase normalization.
+        Allowed values: pending, approved, correction, suspended.
+        """
+        valid_statuses = {"pending", "approved", "correction", "suspended"}
+        normalized = (new_status or "pending").strip().lower()
 
-        self.status = (new_status or "pending").strip().lower()
+        if normalized not in valid_statuses:
+            normalized = "pending"
+
+        self.status = normalized
 
     def notification_settings(self) -> Dict[str, Any]:
         """Return notification preferences while ensuring a dictionary output."""
@@ -87,26 +97,6 @@ class Company(db.Model):
             if owner and owner.id not in seen_ids:
                 seen_ids.add(owner.id)
                 db.session.delete(owner)
-
-        # ------------------------------------------------------------------
-        # Helper method: Normalize and update company status
-        # ------------------------------------------------------------------
-        def set_status(self, new_status: str):
-            """
-            Safely set the company's status, enforcing lowercase normalization.
-            Allowed values: pending, approved, correction, suspended.
-            """
-            valid_statuses = {"pending", "approved", "correction", "suspended"}
-            if not new_status:
-                normalized = "pending"
-            else:
-                normalized = new_status.strip().lower()
-
-            # fallback if invalid value is provided
-            if normalized not in valid_statuses:
-                normalized = "pending"
-
-            self.status = normalized
 
 
 __all__ = ["Company"]
