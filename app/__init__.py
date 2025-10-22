@@ -11,6 +11,7 @@ from flask_login import LoginManager, current_user as flask_login_current_user
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_mail import Mail
 from celery import Celery
 from redis import Redis
 # ======================================================
@@ -40,6 +41,8 @@ redis_client = Redis.from_url(app.config["REDIS_URL"], decode_responses=True)
 
 celery = Celery(app.import_name, broker=app.config["CELERY_BROKER_URL"])
 celery.conf.update(app.config)
+
+mail = Mail(app)
 
 # Ensure models are registered
 from .models import Company, Offer, Permission, Redemption, User  # noqa: F401

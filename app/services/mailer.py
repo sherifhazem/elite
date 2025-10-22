@@ -6,14 +6,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from flask import current_app, render_template
-from flask_mail import Mail, Message
+from flask import current_app as app, render_template
+from flask_mail import Message
 
-from app import app
-
-# Initialize a Mail instance tied to the core Flask app configuration so SMTP
-# credentials configured in ``Config`` are honored for every outgoing message.
-mail = Mail(app)
+from app import app as flask_app, mail
 
 WELCOME_EMAIL_SUBJECTS: Dict[str, str] = {
     "member": "مرحبًا بك في ELITE – عروضك المميزة بانتظارك!",
@@ -26,6 +22,22 @@ WELCOME_EMAIL_TEMPLATES: Dict[str, str] = {
     "company": "emails/welcome_company.html",
     "staff": "emails/welcome_staff.html",
 }
+
+
+def safe_send(msg: Message) -> bool:
+    """Safely send an email message and log results."""
+
+    try:
+        mail.send(msg)
+        app.logger.info(
+            f"📧 Email sent to {msg.recipients} — Subject: {msg.subject}"
+        )
+        return True
+    except Exception as error:  # pragma: no cover - mail transport guard
+        app.logger.error(
+            f"❌ Failed to send email to {msg.recipients}: {error}"
+        )
+        return False
 
 
 def _company_primary_email(company) -> str:
@@ -48,13 +60,13 @@ def _company_primary_email(company) -> str:
     return ""
 
 
-def _dispatch_email(recipient: str, subject: str, html_body: str) -> None:
+def _dispatch_email(recipient: str, subject: str, html_body: str) -> bool:
     """Send an HTML email using the configured SMTP settings."""
 
     msg = Message(subject, recipients=[recipient])
-    msg.sender = current_app.config.get("MAIL_DEFAULT_SENDER")
+    msg.sender = app.config.get("MAIL_DEFAULT_SENDER")
     msg.html = html_body
-    mail.send(msg)
+    return safe_send(msg)
 
 
 def _send_company_status_email(company, subject: str, html_body: str) -> bool:
@@ -62,27 +74,28 @@ def _send_company_status_email(company, subject: str, html_body: str) -> bool:
 
     recipient = _company_primary_email(company)
     if not recipient:
-        current_app.logger.warning(
+        app.logger.warning(
             "Skipping company status email due to missing recipient",
             extra={"company_id": getattr(company, "id", None), "subject": subject},
         )
         return False
 
-    with app.app_context():
-        if current_app.config.get("MAIL_SUPPRESS_SEND", False):
-            current_app.logger.info(
+    with flask_app.app_context():
+        if app.config.get("MAIL_SUPPRESS_SEND", False):
+            app.logger.info(
                 "Company status email suppressed by configuration",
                 extra={"recipient": recipient, "subject": subject},
             )
             return True
 
-        try:
-            _dispatch_email(recipient, subject, html_body)
-        except Exception as error:  # pragma: no cover - mail transport guard
-            current_app.logger.exception("Company status email failed: %s", error)
+        if not _dispatch_email(recipient, subject, html_body):
+            app.logger.error(
+                "Company status email failed",
+                extra={"recipient": recipient, "subject": subject},
+            )
             return False
 
-    current_app.logger.info(
+    app.logger.info(
         "Company status email delivered",
         extra={"recipient": recipient, "subject": subject},
     )
@@ -98,20 +111,20 @@ def send_email(
     """Render an email template and deliver it to the provided recipient."""
 
     if not recipient:
-        current_app.logger.warning("Skipping email send due to missing recipient")
+        app.logger.warning("Skipping email send due to missing recipient")
         return False
 
     safe_context = dict(context or {})
 
-    with app.app_context():
+    with flask_app.app_context():
         html_body = render_template(template, **safe_context)
 
-        if current_app.config.get("MAIL_SUPPRESS_SEND", False):
-            current_app.logger.info(
+        if app.config.get("MAIL_SUPPRESS_SEND", False):
+            app.logger.info(
                 "Email suppressed by configuration",
                 extra={"recipient": recipient, "subject": subject},
             )
-            current_app.logger.debug(
+            app.logger.debug(
                 "Suppressed email subject='%s' template='%s' context=%s",
                 subject,
                 template,
@@ -119,13 +132,14 @@ def send_email(
             )
             return True
 
-        try:
-            _dispatch_email(recipient, subject, html_body)
-        except Exception as error:  # pragma: no cover - mail transport guard
-            current_app.logger.exception("Email delivery failed: %s", error)
+        if not _dispatch_email(recipient, subject, html_body):
+            app.logger.error(
+                "Email delivery failed",
+                extra={"recipient": recipient, "subject": subject},
+            )
             return False
 
-    current_app.logger.info(
+    app.logger.info(
         "Email delivered successfully",
         extra={"recipient": recipient, "subject": subject},
     )
@@ -313,14 +327,14 @@ def send_company_approval_email(company) -> bool:
 
     recipient = _resolve_company_recipient(company)
     if not recipient:
-        current_app.logger.warning(
+        app.logger.warning(
             "Skipping approval email due to missing recipient",
             extra={"company_id": getattr(company, "id", None)},
         )
         return False
 
     company_name = getattr(company, "name", "") or "your company"
-    base_url = (app.config.get("BASE_URL") or current_app.config.get("BASE_URL") or "").rstrip("/")
+    base_url = (flask_app.config.get("BASE_URL") or "").rstrip("/")
     login_link = f"{base_url}/company/login" if base_url else "/company/login"
     html_body = f"""
     <h3>Welcome to Elite Discounts!</h3>
@@ -329,15 +343,17 @@ def send_company_approval_email(company) -> bool:
     <p><a href="{login_link}">Click here to log in</a></p>
     """
 
-    try:
-        with app.app_context():
-            _dispatch_email(recipient, "Your Company Has Been Approved - Elite Program", html_body)
-    except Exception as error:  # pragma: no cover - defensive mail handling
-        current_app.logger.exception(
-            "Failed to send company approval email",
-            extra={"company_id": getattr(company, "id", None), "error": str(error)},
-        )
-        return False
+    with flask_app.app_context():
+        if not _dispatch_email(
+            recipient,
+            "Your Company Has Been Approved - Elite Program",
+            html_body,
+        ):
+            app.logger.error(
+                "Failed to send company approval email",
+                extra={"company_id": getattr(company, "id", None)},
+            )
+            return False
     return True
 
 
@@ -346,7 +362,7 @@ def send_company_correction_email(company, notes: str, correction_link: str) -> 
 
     recipient = _resolve_company_recipient(company)
     if not recipient:
-        current_app.logger.warning(
+        app.logger.warning(
             "Skipping correction email due to missing recipient",
             extra={"company_id": getattr(company, "id", None)},
         )
@@ -363,19 +379,17 @@ def send_company_correction_email(company, notes: str, correction_link: str) -> 
     <p><a href="{correction_link}">{correction_link}</a></p>
     """
 
-    try:
-        with app.app_context():
-            _dispatch_email(
-                recipient,
-                "Correction Required for Your Company Application",
-                html_body,
+    with flask_app.app_context():
+        if not _dispatch_email(
+            recipient,
+            "Correction Required for Your Company Application",
+            html_body,
+        ):
+            app.logger.error(
+                "Failed to send company correction email",
+                extra={"company_id": getattr(company, "id", None)},
             )
-    except Exception as error:  # pragma: no cover - defensive mail handling
-        current_app.logger.exception(
-            "Failed to send company correction email",
-            extra={"company_id": getattr(company, "id", None), "error": str(error)},
-        )
-        return False
+            return False
     return True
 
 
@@ -384,7 +398,7 @@ def send_company_suspension_email(company) -> bool:
 
     recipient = _resolve_company_recipient(company)
     if not recipient:
-        current_app.logger.warning(
+        app.logger.warning(
             "Skipping suspension email due to missing recipient",
             extra={"company_id": getattr(company, "id", None)},
         )
@@ -398,15 +412,17 @@ def send_company_suspension_email(company) -> bool:
     <p>If you believe this is a mistake, please contact our support team.</p>
     """
 
-    try:
-        with app.app_context():
-            _dispatch_email(recipient, "Your Account Has Been Suspended - Elite Discounts", html_body)
-    except Exception as error:  # pragma: no cover - defensive mail handling
-        current_app.logger.exception(
-            "Failed to send company suspension email",
-            extra={"company_id": getattr(company, "id", None), "error": str(error)},
-        )
-        return False
+    with flask_app.app_context():
+        if not _dispatch_email(
+            recipient,
+            "Your Account Has Been Suspended - Elite Discounts",
+            html_body,
+        ):
+            app.logger.error(
+                "Failed to send company suspension email",
+                extra={"company_id": getattr(company, "id", None)},
+            )
+            return False
     return True
 
 
@@ -415,14 +431,14 @@ def send_company_reactivation_email(company) -> bool:
 
     recipient = _resolve_company_recipient(company)
     if not recipient:
-        current_app.logger.warning(
+        app.logger.warning(
             "Skipping reactivation email due to missing recipient",
             extra={"company_id": getattr(company, "id", None)},
         )
         return False
 
     company_name = getattr(company, "name", "") or "your company"
-    base_url = (app.config.get("BASE_URL") or current_app.config.get("BASE_URL") or "").rstrip("/")
+    base_url = (flask_app.config.get("BASE_URL") or "").rstrip("/")
     login_link = f"{base_url}/company/login" if base_url else "/company/login"
     html_body = f"""
     <h3>Account Reactivated</h3>
@@ -431,15 +447,17 @@ def send_company_reactivation_email(company) -> bool:
     <p><a href="{login_link}">Login to your account</a></p>
     """
 
-    try:
-        with app.app_context():
-            _dispatch_email(recipient, "Your Company Account Has Been Reactivated", html_body)
-    except Exception as error:  # pragma: no cover - defensive mail handling
-        current_app.logger.exception(
-            "Failed to send company reactivation email",
-            extra={"company_id": getattr(company, "id", None), "error": str(error)},
-        )
-        return False
+    with flask_app.app_context():
+        if not _dispatch_email(
+            recipient,
+            "Your Company Account Has Been Reactivated",
+            html_body,
+        ):
+            app.logger.error(
+                "Failed to send company reactivation email",
+                extra={"company_id": getattr(company, "id", None)},
+            )
+            return False
     return True
 
 
