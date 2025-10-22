@@ -23,6 +23,11 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Added correction modal for admin notes.
 - Fixed HTML forms to use POST.
 
+## Update: Scoped CSRF Protection
+- CSRFProtect now initialized selectively for form-based routes.
+- Public routes and API endpoints are excluded via exempt_endpoints().
+- This prevents unintended 400 errors on POST requests (e.g., company completion, login, register).
+
 ## Security Update: CSRF Protection Scoped
 - CSRFProtect now applied only to form-based routes.
 - Public routes and APIs are excluded.
