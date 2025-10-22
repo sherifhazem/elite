@@ -61,6 +61,11 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Added proper flash messages on validation failure and success.
 - Ensured consistent redirect to login page after successful resubmission.
 
+## Fix: Company Completion Form Endpoint
+- Corrected the form action in app/templates/company/complete_registration.html.
+- Now points to company_portal_bp.complete_registration endpoint for proper POST submission.
+- Ensures company data resubmission works from email links without errors.
+
 ## Feature: Company Application Review Workflow
 - Added new admin actions for reviewing pending company applications.
 - Admin can approve or request correction with custom notes.
