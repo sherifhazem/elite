@@ -86,7 +86,7 @@ def view_company_details(company_id: int) -> str:
 def approve_company(company_id):
     """Approve a pending company application."""
     company = Company.query.get_or_404(company_id)
-    company.set_status = "approved"
+    company.set_status("approved")
     db.session.commit()
 
     try:
@@ -95,7 +95,7 @@ def approve_company(company_id):
         app.logger.warning(f"Failed to send approval email: {e}")
 
     flash(f"Company '{company.name}' approved successfully.", "success")
-    return redirect(url_for("admin.list_companies"))
+    return redirect(url_for("admin.list_companies", status="approved"))
 
 
 @admin_bp.route("/companies/<int:company_id>/request_correction", methods=["POST"])
@@ -105,7 +105,7 @@ def request_correction(company_id):
     company = Company.query.get_or_404(company_id)
     notes = request.form.get("admin_notes", "").strip()
     company.admin_notes = notes
-    company.set_status = "correction"
+    company.set_status("correction")
     db.session.commit()
 
     correction_link = url_for(
@@ -119,7 +119,7 @@ def request_correction(company_id):
         app.logger.warning(f"Failed to send correction email: {e}")
 
     flash(f"Correction request sent to '{company.email}'", "warning")
-    return redirect(url_for("admin.list_companies"))
+    return redirect(url_for("admin.list_companies", status="correction"))
 
 
 @admin_bp.route("/companies/<int:company_id>/suspend", methods=["POST"])
@@ -129,7 +129,7 @@ def suspend_company(company_id):
     company = Company.query.get_or_404(company_id)
 
     # Normalize and update status
-    company.set_status = "suspended"
+    company.set_status("suspended")
     db.session.commit()
 
     try:
@@ -148,7 +148,7 @@ def reactivate_company(company_id):
     company = Company.query.get_or_404(company_id)
 
     # Normalize and update status
-    company.set_status = "approved"
+    company.set_status("approved")
     db.session.commit()
 
     try:
