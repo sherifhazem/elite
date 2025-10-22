@@ -13,7 +13,10 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from celery import Celery
 from redis import Redis
-from flask_wtf import CSRFProtect
+# ======================================================
+# Scoped CSRF Protection - applies only to form routes
+# ======================================================
+from flask_wtf.csrf import CSRFProtect
 
 from .config import Config
 
@@ -198,15 +201,19 @@ app.register_blueprint(reports_bp)
 app.register_blueprint(portal_bp)
 app.register_blueprint(company_portal_bp)
 
-
+# ======================================================
+# CSRF Exemptions
+# ======================================================
 @csrf.exempt
 def exempt_endpoints():
-    """List endpoints exempted from CSRF (mostly API or public routes)."""
-
+    """
+    List endpoints that are public or API-based,
+    excluded from CSRF validation.
+    """
     exempt_list = [
         "company_portal_bp.complete_registration",
         "auth.login",
-        "auth.logout",
+        "auth.register",
         "main.index",
         "user_routes.api_user_login",
     ]
