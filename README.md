@@ -1104,3 +1104,8 @@ Run these smoke checks after deploying or touching the registration flows:
 ## Feature: Company Email Integration & Re-submission
 - Added email notifications for approval, correction, suspension, reactivation.
 - Added /company/complete_registration/<id> route for companies to update info.
+
+## Fix: Admin Status Updates via set_status()
+- Replaced incorrect assignments `company.set_status = "..."` with proper calls `company.set_status("...")`.
+- Ensured all admin actions (approve, suspend, reactivate, request_correction) normalize status via model helper.
+- No migrations or binary files were created.
