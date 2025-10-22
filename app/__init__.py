@@ -95,10 +95,20 @@ def attach_current_user() -> None:
     g.user_role = normalized_role
     g.user_permissions = getattr(current, "permissions", None) if current else None
 
-    if request.path.startswith(PROTECTED_PREFIXES):
+    protected_paths = ("/admin", "/company")
+    exempt_paths = (
+        "/auth/login",
+        "/auth/register",
+        "/",
+        "/company/complete_registration",
+    )
+
+    if request.path.startswith(protected_paths) and not any(
+        request.path.startswith(e) for e in exempt_paths
+    ):
         if g.current_user is None:
             abort(HTTPStatus.UNAUTHORIZED)
-        if not g.current_user.is_active:
+        if hasattr(g.current_user, "is_active") and not g.current_user.is_active:
             abort(HTTPStatus.FORBIDDEN)
 
 
