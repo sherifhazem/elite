@@ -60,6 +60,7 @@ from .routes.user_portal_routes import portal_bp  # noqa: E402
 from .auth import auth_bp  # noqa: E402
 from .admin import admin_bp  # noqa: E402
 from .admin.routes_reports import reports_bp  # noqa: E402
+from .admin.routes_activity_log import activity_log_bp  # noqa: E402
 from .company import company_portal_bp  # noqa: E402
 
 # JWT authentication temporarily disabled during web testing phase.
@@ -208,6 +209,7 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(reports_bp)
 app.register_blueprint(portal_bp)
 app.register_blueprint(company_portal_bp)
+app.register_blueprint(activity_log_bp)
 
 # ======================================================
 # CSRF Exemptions — Exclude public and API routes

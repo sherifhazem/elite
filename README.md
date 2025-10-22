@@ -1166,3 +1166,9 @@ Run these smoke checks after deploying or touching the registration flows:
 - All company actions (approve, correction, suspend, reactivate) now generate a log entry.
 - Each record contains: admin_id, company_id, action, timestamp, and details.
 - To apply the new model, run: flask db migrate && flask db upgrade
+
+## Feature: Admin Activity Log UI
+- Added new route /admin/activity_log to display all administrative actions.
+- Supports filtering by admin or company.
+- Template located at app/admin/templates/dashboard/activity_log.html.
+- Blueprint registered as activity_log_bp.
