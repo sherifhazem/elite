@@ -1172,3 +1172,8 @@ Run these smoke checks after deploying or touching the registration flows:
 - Supports filtering by admin or company.
 - Template located at app/admin/templates/dashboard/activity_log.html.
 - Blueprint registered as activity_log_bp.
+
+## Enhancement: Activity Log — Display Names Instead of IDs
+- Added relationships between ActivityLog and User/Company models.
+- Template now shows admin username and company name instead of numeric IDs.
+- Improved readability and user experience for system administrators.
