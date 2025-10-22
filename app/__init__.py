@@ -13,7 +13,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from celery import Celery
 from redis import Redis
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf import CSRFProtect
 
 from .config import Config
 

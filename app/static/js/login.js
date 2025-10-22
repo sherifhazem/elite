@@ -2,7 +2,10 @@
 // انتظر تحميل عناصر الصفحة قبل تشغيل أي منطق.
 document.addEventListener("DOMContentLoaded", () => {
   // التقط عناصر النموذج والأزرار والرسائل من الصفحة.
-  const form = document.getElementById("login-form");
+  const form = document.getElementById("loginForm");
+  if (!form) {
+    return;
+  }
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
   const submitButton = document.getElementById("login-button");
@@ -31,6 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // امنع السلوك الافتراضي للنموذج حتى لا يتم إعادة تحميل الصفحة.
     event.preventDefault();
 
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+
     // نظّف رسالة الخطأ وأعد ضبط مظهر الإدخالات قبل المحاولة.
     errorMessage.textContent = "";
     emailInput.setAttribute("aria-invalid", "false");
@@ -54,10 +60,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       // أرسل طلب POST إلى واجهة تسجيل الدخول مع البيانات في صيغة JSON.
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch(form.action, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
         },
         body: JSON.stringify({ email, password }),
       });
@@ -134,38 +141,44 @@ document.addEventListener("DOMContentLoaded", () => {
       const email = (resetEmailInput.value || "").trim();
       if (!email) {
         resetFeedback.textContent = "يرجى إدخال البريد الإلكتروني.";
-      resetEmailInput.setAttribute("aria-invalid", "true");
-      return;
-    }
-
-    resetFeedback.textContent = "";
-    resetEmailInput.setAttribute("aria-invalid", "false");
-    resetSubmitButton.disabled = true;
-    resetSubmitButton.textContent = "جاري الإرسال...";
-
-    try {
-      const response = await fetch("/api/auth/reset-request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        resetFeedback.textContent = data?.message || "تعذر إرسال البريد.";
         resetEmailInput.setAttribute("aria-invalid", "true");
         return;
       }
 
-      resetFeedback.textContent = "تم إرسال رابط الاستعادة إلى بريدك الإلكتروني.";
-      setTimeout(() => toggleResetModal(false), 1800);
-    } catch (error) {
-      console.error("Password reset request failed", error);
-      resetFeedback.textContent = "حدث خطأ أثناء الإرسال، حاول مرة أخرى.";
-    } finally {
-      resetSubmitButton.disabled = false;
-      resetSubmitButton.textContent = "إرسال الرابط";
-    }
+      resetFeedback.textContent = "";
+      resetEmailInput.setAttribute("aria-invalid", "false");
+      resetSubmitButton.disabled = true;
+      resetSubmitButton.textContent = "جاري الإرسال...";
+
+      try {
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+
+        const response = await fetch("/api/auth/reset-request", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({ email }),
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          resetFeedback.textContent = data?.message || "تعذر إرسال البريد.";
+          resetEmailInput.setAttribute("aria-invalid", "true");
+          return;
+        }
+
+        resetFeedback.textContent = "تم إرسال رابط الاستعادة إلى بريدك الإلكتروني.";
+        setTimeout(() => toggleResetModal(false), 1800);
+      } catch (error) {
+        console.error("Password reset request failed", error);
+        resetFeedback.textContent = "حدث خطأ أثناء الإرسال، حاول مرة أخرى.";
+      } finally {
+        resetSubmitButton.disabled = false;
+        resetSubmitButton.textContent = "إرسال الرابط";
+      }
     });
   }
 });
