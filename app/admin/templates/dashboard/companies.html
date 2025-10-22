@@ -114,6 +114,9 @@
                                     <td class="text-end">
                                         <div class="d-flex flex-wrap justify-content-end gap-2">
                                             {% if normalized_status == 'pending' %}
+                                                <a class="btn btn-sm btn-primary" href="{{ url_for('admin.review_company', company_id=company.id) }}">
+                                                    استكمال الطلب
+                                                </a>
                                                 <form method="post" action="{{ url_for('admin.approve_company', company_id=company.id) }}" class="d-inline">
                                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <button class="btn btn-success btn-sm" type="submit">Approve</button>

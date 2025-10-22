@@ -46,6 +46,7 @@
                     <td class="text-end">
                         <div class="d-flex flex-wrap justify-content-end gap-2">
                             {% if active_tab == 'pending' %}
+                                <a class="btn btn-sm btn-primary" href="{{ url_for('admin.review_company', company_id=company.id) }}">استكمال الطلب</a>
                                 <form action="{{ url_for('admin.approve_company', company_id=company.id) }}" method="post" class="d-inline">
                                     <button type="submit" class="btn btn-success btn-sm">Approve</button>
                                 </form>
@@ -62,7 +63,9 @@
                                     <button type="submit" class="btn btn-success btn-sm">Reactivate</button>
                                 </form>
                             {% endif %}
-                            <a class="btn btn-sm btn-primary" href="{{ url_for('admin.review_company', company_id=company.id) }}">Review</a>
+                            {% if normalized_status != 'pending' %}
+                                <a class="btn btn-sm btn-primary" href="{{ url_for('admin.review_company', company_id=company.id) }}">Review</a>
+                            {% endif %}
                             <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.view_company', company_id=company.id) }}">View</a>
                             <a href="{{ url_for('admin.view_company_details', company_id=company.id) }}" class="btn btn-outline-primary btn-sm">Details</a>
                             <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_company', company_id=company.id) }}">Edit</a>
