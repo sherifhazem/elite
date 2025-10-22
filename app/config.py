@@ -29,11 +29,7 @@ MAIL_USERNAME = os.getenv("MAIL_USERNAME")
 MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
 
 # Ensure default sender is always defined
-MAIL_DEFAULT_SENDER = (
-    os.getenv("MAIL_DEFAULT_SENDER")
-    or MAIL_USERNAME
-    or "no-reply@elite-discounts.com"
-)
+MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER") or MAIL_USERNAME or "no-reply@elite-discounts.com"
 
 
 class Config:

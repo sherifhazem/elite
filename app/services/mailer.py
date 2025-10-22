@@ -29,15 +29,16 @@ def safe_send(msg: Message) -> bool:
 
     try:
         mail.send(msg)
-        app.logger.info(
-            f"📧 Email sent to {msg.recipients} — Subject: {msg.subject}"
-        )
-        return True
-    except Exception as error:  # pragma: no cover - mail transport guard
+    except Exception as exc:  # pragma: no cover - mail transport guard
         app.logger.error(
-            f"❌ Failed to send email to {msg.recipients}: {error}"
+            f"❌ Failed to send email to {msg.recipients}: {exc}"
         )
         return False
+
+    app.logger.info(
+        f"📧 Email sent to {msg.recipients} — Subject: {msg.subject}"
+    )
+    return True
 
 
 def _company_primary_email(company) -> str:
