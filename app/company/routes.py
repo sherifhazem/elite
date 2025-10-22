@@ -3,7 +3,7 @@ from datetime import datetime
 from http import HTTPStatus
 from typing import Dict, Optional, Tuple
 from flask import (
-    Blueprint, abort, current_app, flash, g, jsonify,
+    abort, current_app, flash, g, jsonify,
     redirect, render_template, request, url_for,
 )
 from flask_login import current_user as flask_current_user
@@ -17,13 +17,7 @@ from ..services.notifications import (
 from ..services.offers import list_company_offers
 from ..services.redemption import list_company_redemptions
 from ..services.roles import require_role, resolve_user_from_request
-
-company_portal_bp = Blueprint(
-    "company_portal_bp",
-    __name__,
-    url_prefix="/company",
-    template_folder="../templates/company",
-)
+from . import company_portal_bp
 
 @company_portal_bp.before_request
 def _prevent_suspended_company_access():
