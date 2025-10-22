@@ -36,8 +36,8 @@ The ELITE backend provides the foundational services for managing elite offers a
 
 ## Update: Scoped CSRF Protection
 - CSRFProtect now initialized selectively for form-based routes.
-- Public routes and API endpoints are excluded via exempt_endpoints().
-- This prevents unintended 400 errors on POST requests (e.g., company completion, login, register).
+- Public and API routes are excluded via exempt_endpoints().
+- Prevents unintended 400 errors on POST requests (e.g., company completion, login, register).
 
 ## Update: before_request Scope Restriction
 - Limited access control to sensitive routes only (/admin, /company).
