@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List
 
-from flask import flash, redirect, render_template, request, url_for
-from flask_login import current_user
+from flask import flash, g, redirect, render_template, request, url_for
 
-from .. import db
+from app import app, db
+from app.models.activity_log import ActivityLog
 from ..models.company import Company
 from ..models.offer import Offer
 from ..models.redemption import Redemption
-from ..models.activity_log import ActivityLog
 from ..services.notifications import push_admin_notification
 # ======================================================
 # Email Notifications and Admin Permissions
@@ -27,19 +26,22 @@ from app.services.roles import admin_required
 from .routes import admin_bp
 
 
-def log_company_activity(
-    company_id: int, admin_id: Optional[int], action: str, notes: Optional[str] = None
-) -> None:
-    """Persist an activity log entry for a company."""
-
-    entry = ActivityLog(
-        company_id=company_id,
-        admin_id=admin_id,
-        action=action,
-        notes=notes,
-    )
-    db.session.add(entry)
-    db.session.commit()
+def log_admin_action(admin, company, action, details=None):
+    """Record an administrative action in the activity log."""
+    try:
+        entry = ActivityLog(
+            admin_id=admin.id if admin else 0,
+            company_id=company.id,
+            action=action,
+            details=details or "",
+        )
+        db.session.add(entry)
+        db.session.commit()
+        app.logger.info(
+            f"📝 {action.title()} | {company.name} by {getattr(admin, 'username', 'Unknown')}"
+        )
+    except Exception as e:
+        app.logger.error(f"❌ Failed to log admin action: {e}")
 
 
 @admin_bp.route("/companies/<int:company_id>", methods=["GET"])
@@ -88,6 +90,7 @@ def approve_company(company_id):
     company = Company.query.get_or_404(company_id)
     company.set_status("approved")
     db.session.commit()
+    log_admin_action(g.current_user, company, "approve")
 
     try:
         send_company_approval_email(company)
@@ -107,6 +110,7 @@ def request_correction(company_id):
     company.admin_notes = notes
     company.set_status("correction")
     db.session.commit()
+    log_admin_action(g.current_user, company, "request_correction", notes)
 
     correction_link = url_for(
         "company_portal_bp.complete_registration",
@@ -131,6 +135,7 @@ def suspend_company(company_id):
     # Normalize and update status
     company.set_status("suspended")
     db.session.commit()
+    log_admin_action(g.current_user, company, "suspend")
 
     try:
         send_company_suspension_email(company)
@@ -150,6 +155,7 @@ def reactivate_company(company_id):
     # Normalize and update status
     company.set_status("approved")
     db.session.commit()
+    log_admin_action(g.current_user, company, "reactivate")
 
     try:
         send_company_reactivation_email(company)

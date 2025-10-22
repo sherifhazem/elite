@@ -1160,3 +1160,9 @@ Run these smoke checks after deploying or touching the registration flows:
 - Replaced all incorrect assignments (company.set_status = "...") with proper method calls (company.set_status("...")).
 - Ensures database status updates and admin actions (approve, suspend, reactivate, correction) work correctly.
 - All status values are now lowercase and normalized.
+
+## Feature: Admin Activity Log
+- Added new model app/models/activity_log.py to track admin actions.
+- All company actions (approve, correction, suspend, reactivate) now generate a log entry.
+- Each record contains: admin_id, company_id, action, timestamp, and details.
+- To apply the new model, run: flask db migrate && flask db upgrade
