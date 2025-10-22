@@ -23,6 +23,17 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Added correction modal for admin notes.
 - Fixed HTML forms to use POST.
 
+## Update: Company Status Normalization
+- Added Company.set_status() helper method for unified lowercase status values.
+- All admin actions now call set_status() instead of direct assignment.
+- Normalized existing database records to 'pending', 'approved', 'correction', or 'suspended'.
+
+### Positive Impact
+- الأزرار في لوحة الأدمن (Approve / Suspend / Reactivate / Request Correction) تعمل بدقة.
+- التبويبات في /admin/companies تعرض الشركات في أماكنها الصحيحة.
+- جميع رسائل البريد والحالات في القوالب تُطابق الحالة الحقيقية.
+- اختفت مشكلة “الزر لا يظهر” تمامًا.
+
 ## Update: Scoped CSRF Protection
 - CSRFProtect now initialized selectively for form-based routes.
 - Public routes and API endpoints are excluded via exempt_endpoints().

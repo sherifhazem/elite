@@ -112,10 +112,7 @@ def complete_registration(company_id: int):
             updated_preferences["contact_phone"] = new_contact_number
             company.notification_preferences = updated_preferences
         company.admin_notes = None
-        if hasattr(company, "set_status"):
-            company.set_status("pending")
-        else:
-            company.status = "pending"
+        company.set_status("pending")
         try:
             db.session.commit()
             flash("تم إعادة إرسال بيانات الشركة للمراجعة.", "success")
