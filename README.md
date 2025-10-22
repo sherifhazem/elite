@@ -3,6 +3,11 @@ Last Updated: 2025-10-18
 
 The ELITE backend provides the foundational services for managing elite offers and related business logic. This initial setup prepares the project with a clean structure, environment configuration, and basic health monitoring endpoint.
 
+## Update: Email Configuration & Safe Logging
+- Added default MAIL_DEFAULT_SENDER fallback ("no-reply@elite-discounts.com") in config.py.
+- Introduced safe_send() helper in mailer.py to prevent crashes when email sending fails.
+- All company notification emails now log success or failure without interrupting request flow.
+
 ## Admin Dashboard Localization Update
 
 - All admin dashboard templates now present their interface text in English, covering navigation labels, the settings management screens, and the communication center views.

@@ -19,6 +19,22 @@ else:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+# ======================================================
+# Email Configuration
+# ======================================================
+MAIL_SERVER = os.getenv("MAIL_SERVER", "smtp.gmail.com")
+MAIL_PORT = int(os.getenv("MAIL_PORT", 587))
+MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
+MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+
+# Ensure default sender is always defined
+MAIL_DEFAULT_SENDER = (
+    os.getenv("MAIL_DEFAULT_SENDER")
+    or MAIL_USERNAME
+    or "no-reply@elite-discounts.com"
+)
+
 
 class Config:
     """Application configuration sourced from environment variables with sensible defaults."""
@@ -34,12 +50,12 @@ class Config:
     CELERY_BROKER_URL = REDIS_URL
     CELERY_RESULT_BACKEND = REDIS_URL
     TIMEZONE = os.getenv("TIMEZONE", "UTC")
-    MAIL_SERVER = os.getenv("MAIL_SERVER", "smtp.gmail.com")
-    MAIL_PORT = int(os.getenv("MAIL_PORT", 587))
-    MAIL_USE_TLS = True
-    MAIL_USERNAME = os.getenv("MAIL_USERNAME")
-    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
-    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER") or "no-reply@elite-discounts.com"
+    MAIL_SERVER = MAIL_SERVER
+    MAIL_PORT = MAIL_PORT
+    MAIL_USE_TLS = MAIL_USE_TLS
+    MAIL_USERNAME = MAIL_USERNAME
+    MAIL_PASSWORD = MAIL_PASSWORD
+    MAIL_DEFAULT_SENDER = MAIL_DEFAULT_SENDER
 
 
 
