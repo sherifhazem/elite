@@ -28,6 +28,11 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Public routes and APIs are excluded.
 - Added exempt_endpoints() helper in app/__init__.py.
 
+## Security Optimization: before_request Scope
+- Applied before_request guard only to sensitive admin/company routes.
+- Excluded login, register, and complete_registration routes.
+- Prevents unnecessary 401 errors for public pages.
+
 ## Fix: Company Correction / Completion Flow
 - Added CSRF protection via {{ form.hidden_tag() }} in register_company.html.
 - Set explicit form action for /company/complete_registration/<id>.
