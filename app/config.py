@@ -23,7 +23,8 @@ logger = logging.getLogger(__name__)
 class Config:
     """Application configuration sourced from environment variables with sensible defaults."""
 
-    SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
+    SECRET_KEY = os.getenv("SECRET_KEY", "ضع_قيمة_سرية_ثابتة_هنا")
+    WTF_CSRF_ENABLED = True
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "SQLALCHEMY_DATABASE_URI",
         "postgresql://postgres:postgres@localhost:5432/elite",
