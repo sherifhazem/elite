@@ -441,6 +441,13 @@ def register_member():
     return response, status
 
 
+@auth_bp.route("/auth/register/member", methods=["GET", "POST"])
+def register_member_legacy():
+    """Preserve the historic /auth/register/member path."""
+
+    return register_member()
+
+
 @auth_bp.route(
     "/register/company",
     methods=["GET", "POST"],
