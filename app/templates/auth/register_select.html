@@ -1,263 +1,59 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>اختر نوع الحساب | ELITE</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap"
-            rel="stylesheet"
-        />
-        <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-            integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
-            crossorigin="anonymous"
-            referrerpolicy="no-referrer"
-        />
-        <style>
-            :root {
-                color-scheme: light;
-                --page-bg: radial-gradient(circle at top, #f3ebff 0%, #f7f5fb 45%, #ffffff 100%);
-                --card-bg: rgba(255, 255, 255, 0.92);
-                --primary: #6a1b9a;
-                --primary-dark: #4a136c;
-                --gold: #f6c342;
-                --text: #2f1740;
-            }
+{% extends "base.html" %}
+{% block title %}الانضمام إلى ELITE{% endblock %}
 
-            * {
-                box-sizing: border-box;
-            }
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold mb-3">انضم إلى برنامج الخصومات ELITE</h2>
+        <p class="text-muted">اختر الطريقة التي تناسبك للانضمام إلى عالم الخصومات والعروض الحصرية</p>
+    </div>
 
-            body {
-                margin: 0;
-                min-height: 100vh;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                padding: 32px 16px;
-                font-family: "Tajawal", "Segoe UI", Tahoma, sans-serif;
-                background: var(--page-bg);
-                color: var(--text);
-            }
-
-            main {
-                width: min(520px, 100%);
-                display: grid;
-                gap: 24px;
-                text-align: center;
-            }
-
-            .selection-header {
-                display: grid;
-                gap: 12px;
-            }
-
-            .selection-badge {
-                width: 64px;
-                height: 64px;
-                border-radius: 20px;
-                margin: 0 auto;
-                display: grid;
-                place-items: center;
-                background: linear-gradient(135deg, rgba(106, 27, 154, 0.12), rgba(246, 195, 66, 0.2));
-                color: var(--primary);
-                font-size: 26px;
-            }
-
-            .selection-title {
-                font-size: clamp(1.4rem, 4vw, 1.8rem);
-                font-weight: 700;
-                margin: 0;
-            }
-
-            .selection-subtitle {
-                margin: 0 auto;
-                line-height: 1.7;
-                max-width: 420px;
-                font-size: 0.98rem;
-                color: rgba(47, 23, 64, 0.78);
-            }
-
-            .options-grid {
-                display: grid;
-                gap: 18px;
-            }
-
-            .option-card {
-                display: flex;
-                gap: 16px;
-                align-items: center;
-                justify-content: space-between;
-                padding: 20px 22px;
-                border-radius: 22px;
-                border: 1px solid rgba(106, 27, 154, 0.12);
-                background: var(--card-bg);
-                box-shadow: 0 18px 35px rgba(106, 27, 154, 0.08);
-                text-decoration: none;
-                color: inherit;
-                position: relative;
-                overflow: hidden;
-                transition: transform 180ms ease, box-shadow 180ms ease;
-            }
-
-            .option-card::after {
-                content: "";
-                position: absolute;
-                inset: 0;
-                background: linear-gradient(135deg, rgba(106, 27, 154, 0.08), rgba(246, 195, 66, 0.08));
-                opacity: 0;
-                transition: opacity 180ms ease;
-            }
-
-            .option-card:hover,
-            .option-card:focus-visible {
-                transform: translateY(-4px);
-                box-shadow: 0 24px 40px rgba(106, 27, 154, 0.12);
-            }
-
-            .option-card:hover::after,
-            .option-card:focus-visible::after {
-                opacity: 1;
-            }
-
-            .option-icon {
-                width: 56px;
-                height: 56px;
-                border-radius: 16px;
-                display: grid;
-                place-items: center;
-                font-size: 24px;
-                background: linear-gradient(135deg, rgba(106, 27, 154, 0.15), rgba(246, 195, 66, 0.25));
-                color: var(--primary-dark);
-                flex-shrink: 0;
-                z-index: 1;
-            }
-
-            .option-content {
-                display: grid;
-                gap: 6px;
-                text-align: right;
-                z-index: 1;
-            }
-
-            .option-title {
-                font-weight: 700;
-                font-size: 1.1rem;
-                margin: 0;
-            }
-
-            .option-description {
-                margin: 0;
-                font-size: 0.95rem;
-                color: rgba(47, 23, 64, 0.74);
-                line-height: 1.6;
-            }
-
-            .option-cta {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                padding: 12px 18px;
-                border-radius: 999px;
-                font-weight: 600;
-                background: linear-gradient(135deg, var(--primary), #8e24aa);
-                color: #ffffff;
-                box-shadow: 0 14px 24px rgba(106, 27, 154, 0.18);
-                transition: transform 150ms ease, box-shadow 150ms ease;
-                border: none;
-            }
-
-            .option-card--company .option-cta {
-                background: linear-gradient(135deg, var(--gold), #f0a500);
-                color: #4a136c;
-                box-shadow: 0 14px 24px rgba(246, 195, 66, 0.22);
-            }
-
-            .option-card:hover .option-cta,
-            .option-card:focus-visible .option-cta {
-                transform: translateY(-2px);
-            }
-
-            footer {
-                font-size: 0.92rem;
-                color: rgba(47, 23, 64, 0.68);
-            }
-
-            @media (max-width: 480px) {
-                body {
-                    padding: 24px 12px;
-                }
-
-                .option-card {
-                    flex-direction: column;
-                    align-items: stretch;
-                    gap: 14px;
-                    text-align: center;
-                }
-
-                .option-content {
-                    text-align: center;
-                }
-
-                .option-icon {
-                    margin: 0 auto;
-                }
-
-                .option-cta {
-                    width: 100%;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <main>
-            <header class="selection-header">
-                <div class="selection-badge" aria-hidden="true"><i class="fa-solid fa-star"></i></div>
-                <h1 class="selection-title">اختر نوع حساب ELITE الخاص بك</h1>
-                <p class="selection-subtitle">
-                    بداية رحلتك معنا خطوة واحدة فقط. اختر نوع العضوية الذي يناسب احتياجاتك
-                    للحصول على تجربة مصممة خصيصًا لك.
-                </p>
-            </header>
-            <section class="options-grid" aria-label="خيارات التسجيل">
-                <a class="option-card" href="{{ url_for('auth.register_member') }}">
-                    <span class="option-icon" aria-hidden="true"><i class="fa-solid fa-gift"></i></span>
-                    <div class="option-content">
-                        <h2 class="option-title">عضو للاستفادة من الخصومات</h2>
-                        <p class="option-description">
-                            احصل على أحدث العروض والخصومات المخصصة، واحتفظ بمكافآتك دائمًا في متناول
-                            يدك عبر تطبيق ELITE.
-                        </p>
+    <div class="row justify-content-center g-4">
+        <!-- بطاقة الأفراد -->
+        <div class="col-12 col-md-5 col-lg-4">
+            <div class="card shadow-lg border-0 rounded-4 h-100 text-center p-4 hover-scale">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="fa-solid fa-user text-primary fs-1"></i>
                     </div>
-                    <span class="option-cta" role="presentation">
-                        ابدأ كعضو
-                        <i class="fa-solid fa-arrow-left"></i>
-                    </span>
-                </a>
-                <a class="option-card option-card--company" href="{{ url_for('auth.register_company') }}">
-                    <span class="option-icon" aria-hidden="true"><i class="fa-solid fa-building"></i></span>
-                    <div class="option-content">
-                        <h2 class="option-title">شركة لتقديم العروض وجذب الأعضاء</h2>
-                        <p class="option-description">
-                            أنشئ حساب شركتك، أدر عروضك بسهولة، وتواصل مع أعضاء ELITE لتعزيز حضورك
-                            وجذب عملاء جدد.
-                        </p>
+                    <h5 class="fw-bold mb-3">الانضمام كـ فرد</h5>
+                    <p class="text-muted mb-4">
+                        سجل كعضو فردي للاستفادة من الخصومات والعروض الحصرية التي تقدمها الشركات المشاركة.
+                    </p>
+                    <a href="{{ url_for('auth.register_member') }}" class="btn btn-primary w-100 py-2 fw-semibold">
+                        انضم كعضو
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة الشركات -->
+        <div class="col-12 col-md-5 col-lg-4">
+            <div class="card shadow-lg border-0 rounded-4 h-100 text-center p-4 hover-scale">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="fa-solid fa-building text-success fs-1"></i>
                     </div>
-                    <span class="option-cta" role="presentation">
-                        ابدأ كشركة
-                        <i class="fa-solid fa-arrow-left"></i>
-                    </span>
-                </a>
-            </section>
-            <footer>
-                لديك حساب بالفعل؟
-                <a href="{{ url_for('auth.login_page') }}">سجّل الدخول هنا</a>
-            </footer>
-        </main>
-    </body>
-</html>
+                    <h5 class="fw-bold mb-3">الانضمام كشركة</h5>
+                    <p class="text-muted mb-4">
+                        انضم كشريك تجاري لتقديم عروض وخصومات حصرية وجذب المزيد من العملاء إلى متجرك أو خدمتك.
+                    </p>
+                    <a href="{{ url_for('auth.register_company') }}" class="btn btn-outline-success w-100 py-2 fw-semibold">
+                        انضم كشركة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-scale {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-scale:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+</style>
+{% endblock %}
