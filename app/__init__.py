@@ -27,8 +27,19 @@ app.secret_key = app.config["SECRET_KEY"]
 
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-csrf = CSRFProtect()
-csrf.init_app(app)
+if app.config.get("RELAX_SECURITY_CONTROLS", False):
+    class _DisabledCSRF:
+        """No-op CSRF handler used while protections are relaxed during development."""
+
+        @staticmethod
+        def exempt(view_func):
+            return view_func
+
+    csrf = _DisabledCSRF()
+    app.logger.warning("CSRF protection disabled for development and testing purposes.")
+else:
+    csrf = CSRFProtect()
+    csrf.init_app(app)
 
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
@@ -69,9 +80,6 @@ from .company import company_portal_bp  # noqa: E402
 get_jwt_identity = lambda: None
 verify_jwt_in_request_optional = lambda *a, **kw: None
 
-PROTECTED_PREFIXES = ("/admin", "/company")
-
-
 @login_manager.user_loader
 def load_user(user_id: str):
     """Load a persisted user session for Flask-Login."""
@@ -102,26 +110,24 @@ def attach_current_user() -> None:
     g.user_role = normalized_role
     g.user_permissions = getattr(current, "permissions", None) if current else None
 
-    # ======================================================
-    # Scoped Access Control — Protect only sensitive routes
-    # ======================================================
-    protected_paths = ("/admin", "/company")
-    exempt_paths = (
-        "/",                          # homepage
-        "/auth/login",                # login
-        "/auth/register",             # register
-        "/company/complete_registration",  # correction/completion link
-        "/static",                    # static files
-        "/api",                       # public APIs
-    )
+    if not app.config.get("RELAX_SECURITY_CONTROLS", False):
+        protected_paths = ("/admin", "/company")
+        exempt_paths = (
+            "/",                          # homepage
+            "/auth/login",                # login
+            "/auth/register",             # register
+            "/company/complete_registration",  # correction/completion link
+            "/static",                    # static files
+            "/api",                       # public APIs
+        )
 
-    if request.path.startswith(protected_paths) and not any(
-        request.path.startswith(ex) for ex in exempt_paths
-    ):
-        if g.current_user is None:
-            abort(HTTPStatus.UNAUTHORIZED)
-        if hasattr(g.current_user, "is_active") and not g.current_user.is_active:
-            abort(HTTPStatus.FORBIDDEN)
+        if request.path.startswith(protected_paths) and not any(
+            request.path.startswith(ex) for ex in exempt_paths
+        ):
+            if g.current_user is None:
+                abort(HTTPStatus.UNAUTHORIZED)
+            if hasattr(g.current_user, "is_active") and not g.current_user.is_active:
+                abort(HTTPStatus.FORBIDDEN)
 
 
 @app.context_processor
@@ -211,26 +217,3 @@ app.register_blueprint(portal_bp)
 app.register_blueprint(company_portal_bp)
 app.register_blueprint(activity_log_bp)
 
-# ======================================================
-# CSRF Exemptions — Exclude public and API routes
-# ======================================================
-@csrf.exempt
-def exempt_endpoints():
-    """
-    List of routes that are public or API-based,
-    excluded from CSRF validation.
-    """
-    exempt_list = [
-        "company_portal_bp.complete_registration",  # company correction form
-        "auth.login",
-        "auth.register",
-        "main.index",
-        "user_routes.api_user_login",
-        "api.get_offers",      # example API endpoint if exists
-    ]
-    for endpoint in exempt_list:
-        if endpoint in app.view_functions:
-            csrf.exempt(app.view_functions[endpoint])
-
-
-exempt_endpoints()

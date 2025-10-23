@@ -4,6 +4,7 @@
 import logging
 import os
 from pathlib import Path
+from typing import Optional
 
 from dotenv import load_dotenv
 from sqlalchemy.engine.url import make_url
@@ -20,11 +21,24 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # ======================================================
+# Helpers
+# ======================================================
+
+
+def _as_bool(value: Optional[str], default: bool) -> bool:
+    """Parse a truthy environment string into a boolean with fallback."""
+
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+# ======================================================
 # Email Configuration
 # ======================================================
 MAIL_SERVER = os.getenv("MAIL_SERVER", "smtp.gmail.com")
 MAIL_PORT = int(os.getenv("MAIL_PORT", 587))
-MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
+MAIL_USE_TLS = _as_bool(os.getenv("MAIL_USE_TLS"), True)
 MAIL_USERNAME = os.getenv("MAIL_USERNAME")
 MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
 
@@ -36,7 +50,8 @@ class Config:
     """Application configuration sourced from environment variables with sensible defaults."""
 
     SECRET_KEY = os.getenv("SECRET_KEY", "ضع_قيمة_سرية_ثابتة_هنا")
-    WTF_CSRF_ENABLED = True
+    RELAX_SECURITY_CONTROLS = _as_bool(os.getenv("RELAX_SECURITY_CONTROLS"), True)
+    WTF_CSRF_ENABLED = _as_bool(os.getenv("WTF_CSRF_ENABLED"), not RELAX_SECURITY_CONTROLS)
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "SQLALCHEMY_DATABASE_URI",
         "postgresql://postgres:postgres@localhost:5432/elite",
