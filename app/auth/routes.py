@@ -115,9 +115,23 @@ def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, in
     return jsonify(response), HTTPStatus.CREATED
 
 
-@auth_bp.post("/api/auth/register")
-def register() -> tuple:
+@auth_bp.route("/api/auth/register", methods=["GET", "POST"], endpoint="api_register")
+def register() -> Response | tuple:
     """Register a new member account tailored for the mobile portal."""
+
+    if request.method == "GET":
+        if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+            return (
+                jsonify(
+                    {
+                        "message": "Submit a POST request with username, email, and password to register a new member.",
+                        "redirect_url": url_for("auth.register_member"),
+                    }
+                ),
+                HTTPStatus.OK,
+            )
+
+        return redirect(url_for("auth.register_member"))
 
     payload = _extract_json()
     return _register_member_from_payload(payload)
