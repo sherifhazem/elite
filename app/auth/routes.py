@@ -31,6 +31,7 @@ from .. import db
 from ..models.user import User
 from ..services.company_registration import register_company_account
 from ..services.mailer import send_email, send_member_welcome_email
+from ..services.notifications import send_welcome_notification
 from ..forms import CompanyRegistrationForm
 from .utils import confirm_token, create_token, decode_token, generate_token
 
