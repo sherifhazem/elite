@@ -282,6 +282,39 @@
                     padding: 24px 20px 28px;
                 }
             }
+
+            /* تحسين وضوح النص داخل حقول تسجيل الدخول */
+            .login-input {
+                color: #212529 !important;
+                background-color: #ffffff !important;
+                border: 1px solid #ced4da;
+                border-radius: 0.5rem;
+                padding: 0.75rem 1rem;
+                font-size: 1rem;
+                transition: all 0.3s ease;
+            }
+
+            .login-input::placeholder {
+                color: #9ca3af !important;
+            }
+
+            .login-input:focus {
+                border-color: #0d6efd !important;
+                box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+                background-color: #fff;
+                color: #000;
+            }
+
+            @media (prefers-color-scheme: dark) {
+                .login-input {
+                    background-color: #1e1e1e !important;
+                    color: #f1f1f1 !important;
+                    border-color: #333;
+                }
+                .login-input::placeholder {
+                    color: #777 !important;
+                }
+            }
         </style>
     </head>
     <body>
@@ -304,29 +337,27 @@
                     novalidate
                 >
                     {{ form.hidden_tag() }}
-                    <label class="input-group" for="email">
-                        <span>البريد الإلكتروني</span>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            inputmode="email"
-                            autocomplete="email"
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">البريد الإلكتروني</label>
+                        <input 
+                            type="email" 
+                            name="email" 
+                            class="form-control login-input"
+                            placeholder="example@email.com" 
                             required
-                            placeholder="name@example.com"
-                        />
-                    </label>
-                    <label class="input-group" for="password">
-                        <span>كلمة المرور</span>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            autocomplete="current-password"
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">كلمة المرور</label>
+                        <input 
+                            type="password" 
+                            name="password" 
+                            class="form-control login-input"
+                            placeholder="••••••••" 
                             required
-                            placeholder="••••••••"
-                        />
-                    </label>
+                        >
+                    </div>
                     <p id="login-error" class="error-message" role="alert" aria-live="polite"></p>
                     <button type="submit" id="login-button">تسجيل الدخول</button>
                 </form>

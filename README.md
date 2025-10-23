@@ -1182,3 +1182,9 @@ Run these smoke checks after deploying or touching the registration flows:
 - Added new route /auth/choose_membership for onboarding users visually.
 - Users can now choose between joining as a Member or a Company.
 - Modern responsive design optimized for mobile with clear explanations.
+
+## Enhancement: Login Input Field Visibility
+- Improved color contrast for email and password fields in the login page.
+- Inputs now use dark text (#212529) on white background for clear readability.
+- Password field retains masked characters for security.
+- Added dark-mode support for users with dark system themes.
