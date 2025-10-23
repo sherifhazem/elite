@@ -17,6 +17,7 @@ from flask import (
     Blueprint,
     flash,
     Response,
+    current_app,
     jsonify,
     redirect,
     render_template,
@@ -31,6 +32,10 @@ from .. import db
 from ..models.user import User
 from ..services.company_registration import register_company_account
 from ..services.mailer import send_email, send_member_welcome_email
+try:  # تحصين الاستيراد لمنع أخطاء NameError في بيئات التحزيم المختلفة
+    from ..services.notifications import send_welcome_notification as _send_welcome_notification
+except Exception:  # pragma: no cover - fallback guard for optional notification layer
+    _send_welcome_notification = None
 from ..forms import CompanyRegistrationForm
 from .utils import confirm_token, create_token, decode_token, generate_token
 
@@ -92,7 +97,7 @@ def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, in
     db.session.commit()
 
     send_member_welcome_email(user=user)
-    send_welcome_notification(user)
+    _dispatch_member_welcome_notification(user)
 
     token = create_token(user.id)
 
@@ -410,4 +415,18 @@ def logout():
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
+
+def _dispatch_member_welcome_notification(user: User) -> None:
+    """إرسال إشعار الترحيب عند توفر خدمة الإشعارات دون التسبب في أخطاء."""
+
+    if _send_welcome_notification is None:
+        return
+
+    try:
+        _send_welcome_notification(user)
+    except Exception:  # pragma: no cover - notifications are best-effort
+        try:
+            current_app.logger.exception("Failed to send welcome notification")
+        except Exception:
+            pass
 
