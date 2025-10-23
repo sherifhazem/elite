@@ -37,13 +37,13 @@
     <body class="admin-body">
         {% set resolved_active_page = active_page if active_page is defined else 'overview' %}
         {% set admin_nav = [
-            ('overview', 'admin.dashboard_home', 'Dashboard', '🏠'),
+            ('overview', 'admin.dashboard_home', 'Overview', '🏠'),
             ('users', 'admin.dashboard_users', 'Users', '👥'),
             ('companies', 'admin.dashboard_companies', 'Companies', '🏢'),
             ('offers', 'admin.dashboard_offers', 'Offers', '🎁'),
-            ('settings', 'admin.settings_home', 'Settings', '⚙️'),
+            ('settings', 'admin.settings_home', 'إدارة القوائم', '⚙️'),
             ('communications', 'admin.communication_history', 'Communication Center', '✉️'),
-            ('reports', 'reports.reports_home', 'Reports', '📊')
+            ('reports', 'reports.reports_home', 'التقارير', '📊')
         ] %}
         {% set company_nav = [
             ('company-dashboard', 'company_portal.dashboard', 'Company Dashboard', '📈'),
@@ -68,6 +68,7 @@
                 </div>
                 <div class="d-flex align-items-center ms-auto">
                     {% if current_user and current_user.is_authenticated %}
+<<<<<<< HEAD
                         <ul class="navbar-nav flex-row align-items-center gap-3 mb-0">
                             <li class="nav-item dropdown">
                                 <a
@@ -116,6 +117,14 @@
                                 </a>
                             </li>
                         </ul>
+=======
+                        <!-- FIX: Logout, Current User, Role Access, Membership Dropdown – Desktop Admin Context. -->
+                        <span class="text-white user-pill mb-0">مرحبًا، {{ current_user.username }}</span>
+                        <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-outline-light btn-sm ms-2">
+                            <i class="fa-solid fa-right-from-bracket me-1"></i>
+                            Logout
+                        </a>
+>>>>>>> parent of 6b8d0ef (Translate admin dashboard templates to English (#62))
                     {% endif %}
                 </div>
             </div>
@@ -227,7 +236,7 @@
                                 href="{{ url_for('admin.settings_home') }}"
                             >
                                 <span class="icon" aria-hidden="true"><i class="fa-solid fa-gear"></i></span>
-                                <span>Settings</span>
+                                <span>إعدادات الموقع</span>
                             </a>
                         {% endif %}
                         {% if current_user and current_user.is_superadmin %}

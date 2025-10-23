@@ -2,10 +2,10 @@
 {# Allows managing and viewing system roles stored dynamically in Redis. #}
 {% extends "dashboard/base.html" %}
 {% set role_labels = {
-    'member': 'Member',
-    'company': 'Company',
-    'admin': 'System Admin',
-    'superadmin': 'Super Admin'
+    'member': 'عضو',
+    'company': 'شركة',
+    'admin': 'مشرف النظام',
+    'superadmin': 'سوبر أدمن'
 } %}
 {% set role_badges = {
     'member': 'fa-user',
@@ -14,21 +14,21 @@
     'superadmin': 'fa-crown'
 } %}
 {% set role_descriptions = {
-    'member': 'Member permissions focus on redeeming offers and engaging with the platform.',
-    'company': 'Companies can manage their offers and dedicated dashboard features.',
-    'admin': 'System admins can manage users and entities across the platform.',
-    'superadmin': 'Super admins have unrestricted access to every permission and configuration.'
+    'member': 'صلاحيات العضو تركز على الاستفادة من العروض والتفاعل مع المنصة.',
+    'company': 'تمكّن الشركات من إدارة عروضها ولوحة التحكم الخاصة بها.',
+    'admin': 'صلاحيات المشرف تسمح بإدارة المستخدمين والكيانات داخل المنصة.',
+    'superadmin': 'السوبر أدمن يمتلك تحكمًا كاملاً بجميع الصلاحيات والإعدادات.'
 } %}
 {% set permission_labels = {
-    'view_offers': 'View offers',
-    'redeem_offers': 'Redeem offers',
-    'view_dashboard': 'Access dashboard',
-    'create_offer': 'Create new offers',
-    'view_redemptions': 'View redemptions',
-    'view_admin': 'Access admin console',
-    'manage_users': 'Manage users',
-    'manage_companies': 'Manage companies',
-    'view_reports': 'View reports'
+    'view_offers': 'عرض العروض',
+    'redeem_offers': 'استبدال العروض',
+    'view_dashboard': 'عرض لوحة التحكم',
+    'create_offer': 'إنشاء عروض جديدة',
+    'view_redemptions': 'عرض عمليات الاستبدال',
+    'view_admin': 'الوصول إلى لوحة الإدارة',
+    'manage_users': 'إدارة المستخدمين',
+    'manage_companies': 'إدارة الشركات',
+    'view_reports': 'عرض التقارير'
 } %}
 
 {% block title %}Role Permissions · Elite Admin Console{% endblock %}
@@ -167,14 +167,14 @@
 <div class="role-permissions-page py-4">
     <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
         <div>
-            <h1 class="page-title mb-2">System Permissions</h1>
+            <h1 class="page-title mb-2">صلاحيات النظام</h1>
             <p class="page-subtitle mb-0">
-                Review the permissions assigned to each role and adjust admin capabilities before applying them to user accounts.
+                راجع صلاحيات الأدوار المختلفة داخل النظام وقم بتقييد صلاحيات المشرفين عند الحاجة قبل تفعيلها على المستخدمين.
             </p>
         </div>
         <div class="text-lg-end">
             <span class="badge bg-primary text-white px-3 py-2 shadow-sm">
-                <i class="fa-solid fa-shield-halved me-2"></i>Super Admin Mode
+                <i class="fa-solid fa-shield-halved me-2"></i>وضع السوبر أدمن
             </span>
         </div>
     </div>
@@ -197,17 +197,17 @@
                             </div>
                         </div>
                         {% if role == 'admin' %}
-                            <span class="badge bg-success-subtle text-success fw-semibold">Editable</span>
+                            <span class="badge bg-success-subtle text-success fw-semibold">قابل للتعديل</span>
                         {% elif role == 'superadmin' %}
-                            <span class="badge fw-semibold">Full Access</span>
+                            <span class="badge fw-semibold">وصول كامل</span>
                         {% else %}
-                            <span class="badge bg-secondary-subtle text-secondary fw-semibold">View Only</span>
+                            <span class="badge bg-secondary-subtle text-secondary fw-semibold">للمراجعة فقط</span>
                         {% endif %}
                     </div>
                     <div class="card-body">
                         {% if role == 'superadmin' %}
                             <p class="mb-0 role-hint">
-                                This role has every permission without restriction. It is stored as the <code>all_permissions</code> value and cannot be modified here for security reasons.
+                                يمتلك هذا الدور جميع الصلاحيات دون قيود. يتم حفظ ذلك كقيمة <code>all_permissions</code> ولا يمكن تعديلها من هنا لضمان الأمان.
                             </p>
                         {% else %}
                             {% set assigned = role_permissions.get(role, []) %}
@@ -229,7 +229,7 @@
                                     {% endfor %}
                                 </div>
                             {% else %}
-                                <p class="permissions-empty mb-0">No permissions are currently defined for this role.</p>
+                                <p class="permissions-empty mb-0">لا توجد صلاحيات معرفة حاليًا لهذا الدور.</p>
                             {% endif %}
                         {% endif %}
                     </div>
@@ -242,14 +242,14 @@
         <div class="card p-3 p-lg-4">
             <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
                 <div class="text-muted small">
-                    Any changes are saved to the Redis cache and can be applied to user accounts later.
+                    أي تغييرات يتم حفظها في التخزين المؤقت (Redis) ويمكن تطبيقها لاحقًا على حسابات المستخدمين.
                 </div>
                 <div class="d-flex align-items-center">
                     <button type="button" class="btn btn-outline-secondary" id="resetRolesButton">
-                        <i class="fa-solid fa-rotate-left me-2"></i>Restore Defaults
+                        <i class="fa-solid fa-rotate-left me-2"></i>استرجاع القيم الافتراضية
                     </button>
                     <button type="button" class="btn btn-primary" id="saveRolesButton">
-                        <i class="fa-solid fa-floppy-disk me-2"></i>Save Changes
+                        <i class="fa-solid fa-floppy-disk me-2"></i>حفظ التغييرات
                     </button>
                 </div>
             </div>
@@ -326,7 +326,7 @@
         if (resetButton) {
             resetButton.addEventListener('click', () => {
                 applyState(defaultPermissions);
-                showAlert('Default role permissions restored.', 'warning');
+                showAlert('تمت استعادة القيم الافتراضية للأدوار.', 'warning');
             });
         }
 
@@ -351,12 +351,12 @@
                         data = {};
                     }
                     if (!response.ok || data.status !== 'success') {
-                        throw new Error(data.message || 'Unable to save permissions. Please try again later.');
+                        throw new Error(data.message || 'تعذر حفظ الصلاحيات، حاول مجددًا لاحقًا.');
                     }
                     currentPermissions = data.role_permissions || currentPermissions;
-                    showAlert(data.message || 'Permissions saved successfully.', 'success');
+                    showAlert(data.message || 'تم حفظ الصلاحيات بنجاح.', 'success');
                 } catch (error) {
-                    showAlert(error.message || 'An unexpected error occurred.', 'danger');
+                    showAlert(error.message || 'حدث خطأ غير متوقع.', 'danger');
                 } finally {
                     saveButton.disabled = false;
                     saveButton.classList.remove('disabled');
@@ -375,7 +375,7 @@
             if ({{ 'true' if active_tab == 'roles' else 'false' }}) {
                 anchor.classList.add('active');
             }
-            anchor.innerHTML = '<i class="fa-solid fa-user-shield me-3"></i><span>System Permissions</span>';
+            anchor.innerHTML = '<i class="fa-solid fa-user-shield me-3"></i><span>صلاحيات النظام</span>';
             li.appendChild(anchor);
 
             const settingsLink = sidebarNav.querySelector('[data-settings-link]');

@@ -4,33 +4,33 @@
 {% block content %}
     <div class="mb-4">
         <h1 class="h3 mb-1">Create Broadcast Message</h1>
-        <p class="text-muted mb-0">Send emails or in-app notifications to targeted user segments.</p>
+        <p class="text-muted mb-0">أرسل رسائل بريدية أو تنبيهات داخلية إلى الشرائح المحددة من المستخدمين.</p>
     </div>
 
     <form method="post" class="card shadow-sm">
         <div class="card-body">
             <div class="row g-4">
                 <div class="col-12">
-                    <label class="form-label" for="subject">Message Subject</label>
+                    <label class="form-label" for="subject">عنوان الرسالة</label>
                     <input type="text" class="form-control" id="subject" name="subject" maxlength="150" required>
                 </div>
                 <div class="col-12">
-                    <label class="form-label" for="body">Message Body</label>
+                    <label class="form-label" for="body">نص الرسالة</label>
                     <textarea class="form-control" id="body" name="body" rows="6" required></textarea>
                 </div>
                 <div class="col-12">
-                    <label class="form-label d-block">Delivery Method</label>
+                    <label class="form-label d-block">طريقة الإرسال</label>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" id="sendEmail" name="send_via" value="email">
-                        <label class="form-check-label" for="sendEmail">Email</label>
+                        <label class="form-check-label" for="sendEmail">بريد إلكتروني</label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" id="sendNotification" name="send_via" value="notification">
-                        <label class="form-check-label" for="sendNotification">Internal Notification</label>
+                        <label class="form-check-label" for="sendNotification">تنبيه داخلي</label>
                     </div>
                 </div>
                 <div class="col-12 col-lg-6">
-                    <label class="form-label" for="audience">Audience Type</label>
+                    <label class="form-label" for="audience">نوع الجمهور</label>
                     <select class="form-select" id="audience" name="audience">
                         {% for key, label in audience_labels.items() %}
                             <option value="{{ key }}">{{ label }}</option>
@@ -38,10 +38,10 @@
                     </select>
                 </div>
                 <div class="col-12 col-lg-6">
-                    <label class="form-label">Additional Options</label>
+                    <label class="form-label">خيارات إضافية</label>
                     <div class="d-grid gap-2">
-                        <button class="btn btn-outline-secondary" type="button" disabled>Schedule Later (coming soon)</button>
-                        <small class="text-muted">Scheduling will be provided in a future release. Messages are sent immediately for now.</small>
+                        <button class="btn btn-outline-secondary" type="button" disabled>جدولة لاحقًا (قريبًا)</button>
+                        <small class="text-muted">سيتم توفير ميزة الجدولة في إصدار لاحق. حاليًا يتم الإرسال الفوري فقط.</small>
                     </div>
                 </div>
             </div>
@@ -50,25 +50,25 @@
                 <hr>
                 <div class="row g-3 align-items-end">
                     <div class="col-12 col-md-6">
-                        <label class="form-label" id="manualSearchLabel" for="recipientSearch">Choose recipients</label>
-                        <input type="search" class="form-control" id="recipientSearch" placeholder="Start typing to search...">
-                        <div class="form-text">Search the database by name or email.</div>
+                        <label class="form-label" id="manualSearchLabel" for="recipientSearch">اختر المستلمين</label>
+                        <input type="search" class="form-control" id="recipientSearch" placeholder="ابدأ بالكتابة للبحث...">
+                        <div class="form-text">يتم البحث في قاعدة البيانات عن طريق الاسم أو البريد الإلكتروني.</div>
                     </div>
                     <div class="col-12 col-md-6">
                         <div class="border rounded p-3 bg-light" id="recipientResults" style="min-height: 72px;">
-                            <span class="text-muted">Results will appear here for selection.</span>
+                            <span class="text-muted">ستظهر النتائج هنا للاختيار.</span>
                         </div>
                     </div>
                 </div>
                 <div class="mt-3">
-                    <h2 class="h6">Selected Recipients</h2>
+                    <h2 class="h6">المستلمون المختارون</h2>
                     <div class="d-flex flex-wrap gap-2" id="selectedRecipients"></div>
                 </div>
             </div>
         </div>
         <div class="card-footer d-flex flex-column flex-md-row justify-content-md-end gap-2">
-            <a class="btn btn-outline-secondary" href="{{ url_for('admin.communication_history') }}">Cancel</a>
-            <button class="btn btn-primary" type="submit">Send Now</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('admin.communication_history') }}">إلغاء</a>
+            <button class="btn btn-primary" type="submit">إرسال الآن</button>
         </div>
     </form>
 {% endblock %}
@@ -98,9 +98,9 @@
                 const value = audienceField.value;
                 if (audienceRequiresManualSelection(value)) {
                     searchContainer.classList.remove('d-none');
-                    manualSearchLabel.textContent = value === 'selected_companies' ? 'Choose companies' : 'Choose users';
+                    manualSearchLabel.textContent = value === 'selected_companies' ? 'اختر الشركات' : 'اختر المستخدمين';
                     searchInput.value = '';
-                    resultsContainer.innerHTML = '<span class="text-muted">Start typing to search.</span>';
+                    resultsContainer.innerHTML = '<span class="text-muted">ابدأ بالكتابة للبحث.</span>';
                 } else {
                     searchContainer.classList.add('d-none');
                     selectedRecipients.clear();
@@ -124,7 +124,7 @@
                     const removeBtn = document.createElement('button');
                     removeBtn.type = 'button';
                     removeBtn.className = 'btn-close btn-close-white btn-sm ms-2';
-                    removeBtn.setAttribute('aria-label', 'Remove');
+                    removeBtn.setAttribute('aria-label', 'إزالة');
                     removeBtn.addEventListener('click', () => {
                         selectedRecipients.delete(itemId);
                         renderSelectedRecipients();
@@ -150,12 +150,12 @@
                 const params = new URLSearchParams({ query: term, type: lookupType });
                 const response = await fetch(`{{ url_for('admin.communication_lookup') }}?${params.toString()}`);
                 if (!response.ok) {
-                    resultsContainer.innerHTML = '<span class="text-danger">Unable to load results.</span>';
+                    resultsContainer.innerHTML = '<span class="text-danger">تعذر تحميل النتائج.</span>';
                     return;
                 }
                 const payload = await response.json();
                 if (!payload.results || payload.results.length === 0) {
-                    resultsContainer.innerHTML = '<span class="text-muted">No matching results found.</span>';
+                    resultsContainer.innerHTML = '<span class="text-muted">لم يتم العثور على نتائج مطابقة.</span>';
                     return;
                 }
                 resultsContainer.innerHTML = '';
@@ -186,10 +186,10 @@
                     clearTimeout(lookupTimeout);
                 }
                 if (term.length < 2) {
-                    resultsContainer.innerHTML = '<span class="text-muted">Enter at least two characters to search.</span>';
+                    resultsContainer.innerHTML = '<span class="text-muted">أدخل حرفين على الأقل للبحث.</span>';
                     return;
                 }
-                resultsContainer.innerHTML = '<span class="text-muted">Searching...</span>';
+                resultsContainer.innerHTML = '<span class="text-muted">جاري البحث...</span>';
                 lookupTimeout = setTimeout(() => performLookup(term), 300);
             });
 

@@ -1,10 +1,10 @@
 <!-- LINKED: Implemented centralized Site Settings service using Redis for dropdown and general admin configurations. -->
 {% extends "admin/layout.html" %}
-{% block title %}Site Settings · ELITE{% endblock %}
+{% block title %}إعدادات الموقع · ELITE{% endblock %}
 {% block content %}
 <div class="container-fluid py-4">
   <h2 class="fw-bold text-primary mb-4">
-    <i class="fa-solid fa-gear me-2"></i> Site Settings
+    <i class="fa-solid fa-gear me-2"></i> إعدادات الموقع
   </h2>
 
   {% with messages = get_flashed_messages(with_categories=True) %}
@@ -22,19 +22,19 @@
     <li class="nav-item" role="presentation">
       <button class="nav-link active" id="dropdowns-tab" data-bs-toggle="tab"
         data-bs-target="#dropdowns" type="button" role="tab">
-        🏙 Dropdowns
+        🏙 القوائم المنسدلة
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" id="roles-tab" data-bs-toggle="tab"
         data-bs-target="#roles" type="button" role="tab">
-        🔐 System Permissions
+        🔐 صلاحيات النظام
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" id="general-tab" data-bs-toggle="tab"
         data-bs-target="#general" type="button" role="tab">
-        ⚙️ General Settings
+        ⚙️ إعدادات عامة
       </button>
     </li>
   </ul>

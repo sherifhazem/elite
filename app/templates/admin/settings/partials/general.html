@@ -1,12 +1,12 @@
 <!-- LINKED: Implemented centralized Site Settings service using Redis for dropdown and general admin configurations. -->
-<h5 class="fw-bold text-dark mb-3">General Settings</h5>
-<p class="text-muted">Customize email, notification, and public site interface preferences.</p>
+<h5 class="fw-bold text-dark mb-3">إعدادات عامة</h5>
+<p class="text-muted">تخصيص إعدادات البريد، الإشعارات، أو واجهة الموقع العامة.</p>
 
 <form method="post" action="{{ url_for('admin.update_site_settings', section='general') }}" class="card border-0 shadow-sm">
   <div class="card-body">
     <div class="row g-4">
       <div class="col-lg-6">
-        <label for="supportEmail" class="form-label fw-semibold text-dark">Support Email</label>
+        <label for="supportEmail" class="form-label fw-semibold text-dark">بريد الدعم</label>
         <input
           type="email"
           id="supportEmail"
@@ -17,7 +17,7 @@
         >
       </div>
       <div class="col-lg-6">
-        <label for="supportPhone" class="form-label fw-semibold text-dark">Support Phone</label>
+        <label for="supportPhone" class="form-label fw-semibold text-dark">رقم التواصل</label>
         <input
           type="text"
           id="supportPhone"
@@ -39,16 +39,16 @@
             {% if settings['general']['allow_company_auto_approval'] %}checked{% endif %}
           >
           <label class="form-check-label fw-semibold" for="allowAutoApproval">
-            Enable automatic approval for company requests
+            تفعيل القبول التلقائي لطلبات الشركات
           </label>
-          <p class="text-muted small mb-0">When enabled, new company applications are approved automatically.</p>
+          <p class="text-muted small mb-0">عند التفعيل سيتم اعتماد طلبات الشركات الجديدة بشكل تلقائي.</p>
         </div>
       </div>
     </div>
   </div>
   <div class="card-footer bg-white border-0 d-flex justify-content-end">
     <button type="submit" class="btn btn-primary px-4">
-      <i class="fa-solid fa-floppy-disk me-1"></i> Save General Settings
+      <i class="fa-solid fa-floppy-disk me-1"></i> حفظ الإعدادات العامة
     </button>
   </div>
 </form>
