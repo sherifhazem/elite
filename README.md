@@ -8,6 +8,11 @@ The ELITE backend provides the foundational services for managing elite offers a
 - Introduced safe_send() helper in mailer.py to prevent crashes when email sending fails.
 - All company notification emails now log success or failure without interrupting request flow.
 
+## Update: Registration Entry Point
+- `/auth/register` now presents a dedicated selection page guiding new visitors to join as individuals or companies.
+- The refreshed template adopts the shared ELITE styling by extending `base.html`, ensuring consistent typography and colors across the site.
+- Member and company buttons link directly to `auth.register_member` and `auth.register_company`, streamlining onboarding for both audiences.
+
 ## Admin Dashboard Localization Update
 
 - All admin dashboard templates now present their interface text in English, covering navigation labels, the settings management screens, and the communication center views.
