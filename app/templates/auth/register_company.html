@@ -1,475 +1,102 @@
-{% extends "base.html" %}
-
-{% block title %}تسجيل الشركات | ELITE{% endblock %}
-
-{% block extra_head %}
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-    href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap"
-    rel="stylesheet"
-/>
-<link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
-    crossorigin="anonymous"
-    referrerpolicy="no-referrer"
-/>
-<style>
-    .company-register-wrapper {
-        --page-bg: radial-gradient(circle at top, #f3ebff 0%, #f7f5fb 45%, #ffffff 100%);
-        --card-bg: rgba(255, 255, 255, 0.9);
-        --primary: #6a1b9a;
-        --primary-dark: #4a136c;
-        --gold: #f6c342;
-        --text: #2f1740;
-        --error: #d32f2f;
-        font-family: "Tajawal", "Segoe UI", Tahoma, sans-serif;
-        background: var(--page-bg);
-        color: var(--text);
-        padding: 2.5rem 1.25rem 3rem;
-        border-radius: 32px;
-        position: relative;
-    }
-
-    .register-shell {
-        width: min(560px, 100%);
-        margin: 0 auto;
-        display: grid;
-        gap: 20px;
-    }
-
-    .register-header {
-        display: grid;
-        gap: 16px;
-        text-align: center;
-    }
-
-    .register-header__badge {
-        width: 72px;
-        height: 72px;
-        border-radius: 24px;
-        margin: 0 auto;
-        display: grid;
-        place-items: center;
-        background: linear-gradient(135deg, rgba(106, 27, 154, 0.2), rgba(246, 195, 66, 0.24));
-        color: var(--primary);
-        font-size: 30px;
-    }
-
-    .register-header__title {
-        margin: 0;
-        font-size: clamp(1.5rem, 4vw, 1.9rem);
-        font-weight: 700;
-    }
-
-    .register-header__subtitle {
-        margin: 0 auto;
-        line-height: 1.7;
-        max-width: 460px;
-        color: rgba(47, 23, 64, 0.78);
-        font-size: 1rem;
-    }
-
-    .register-card {
-        background: var(--card-bg);
-        border-radius: 28px;
-        padding: 32px 28px 36px;
-        box-shadow: 0 24px 48px rgba(106, 27, 154, 0.12);
-        display: grid;
-        gap: 22px;
-    }
-
-    .visually-hidden {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-    }
-
-    .register-card h2 {
-        margin: 0;
-        font-size: 1.2rem;
-        font-weight: 700;
-    }
-
-    form {
-        display: grid;
-        gap: 18px;
-    }
-
-    .field-grid {
-        display: grid;
-        gap: 18px;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    }
-
-    .input-field {
-        display: grid;
-        gap: 8px;
-    }
-
-    .input-control {
-        width: 100%;
-    }
-
-    label {
-        font-weight: 600;
-        font-size: 0.95rem;
-    }
-
-    .required-asterisk {
-        color: var(--error);
-        margin-inline-start: 4px;
-    }
-
-    input,
-    textarea,
-    select {
-        font: inherit;
-        padding: 12px 14px;
-        border-radius: 14px;
-        border: 1px solid rgba(106, 27, 154, 0.16);
-        background: rgba(255, 255, 255, 0.92);
-        transition: border-color 150ms ease, box-shadow 150ms ease;
-        resize: none;
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(106, 27, 154, 0.18);
-    }
-
-    textarea {
-        min-height: 120px;
-        line-height: 1.6;
-    }
-
-    .cta-button {
-        border: none;
-        border-radius: 999px;
-        background: linear-gradient(135deg, var(--primary), #8e24aa);
-        color: #ffffff;
-        padding: 14px 24px;
-        font-size: 1.05rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: transform 150ms ease, box-shadow 150ms ease;
-        box-shadow: 0 16px 28px rgba(106, 27, 154, 0.2);
-    }
-
-    .cta-button:disabled {
-        opacity: 0.65;
-        cursor: progress;
-        box-shadow: none;
-    }
-
-    .helper-text {
-        margin: 0;
-        text-align: center;
-        color: rgba(47, 23, 64, 0.75);
-        font-size: 0.95rem;
-    }
-
-    .helper-text a {
-        color: var(--primary);
-        font-weight: 600;
-        text-decoration: none;
-    }
-
-    .helper-text a:hover,
-    .helper-text a:focus {
-        text-decoration: underline;
-    }
-
-    .field-hint {
-        color: rgba(47, 23, 64, 0.65);
-        font-size: 0.85rem;
-    }
-
-    .error-message {
-        margin: 0;
-        color: var(--error);
-        font-size: 0.88rem;
-    }
-
-    .alert-list {
-        display: grid;
-        gap: 10px;
-    }
-
-    .correction-banner {
-        border-radius: 18px;
-        padding: 16px 18px;
-        background: rgba(106, 27, 154, 0.08);
-        color: var(--text);
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
-
-    .correction-banner--warning {
-        background: rgba(246, 195, 66, 0.18);
-    }
-
-    .correction-banner strong {
-        display: block;
-        font-weight: 700;
-        margin-bottom: 6px;
-    }
-
-    .alert {
-        padding: 12px 16px;
-        border-radius: 14px;
-        font-size: 0.95rem;
-        font-weight: 500;
-    }
-
-    .alert-success {
-        background: rgba(111, 207, 151, 0.18);
-        color: #1b5e20;
-        border: 1px solid rgba(111, 207, 151, 0.4);
-    }
-
-    .alert-danger {
-        background: rgba(211, 47, 47, 0.12);
-        color: #8e1b1b;
-        border: 1px solid rgba(211, 47, 47, 0.24);
-    }
-
-    .toast-banner {
-        position: fixed;
-        bottom: 24px;
-        inset-inline-start: 50%;
-        transform: translateX(-50%) translateY(120%);
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        padding: 14px 18px;
-        border-radius: 18px;
-        background: linear-gradient(135deg, var(--gold), #f0a500);
-        color: var(--primary-dark);
-        font-weight: 600;
-        box-shadow: 0 20px 40px rgba(246, 195, 66, 0.25);
-        transition: transform 220ms ease, opacity 220ms ease;
-        opacity: 0;
-        z-index: 1050;
-    }
-
-    .toast-banner[data-visible="true"] {
-        transform: translateX(-50%) translateY(0);
-        opacity: 1;
-    }
-
-    .success-badge {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        background: rgba(255, 255, 255, 0.16);
-        display: grid;
-        place-items: center;
-        color: var(--primary-dark);
-    }
-
-    @media (min-width: 768px) {
-        .company-register-wrapper {
-            padding: 3rem 3rem 4rem;
-        }
-    }
-
-    @media (max-width: 360px) {
-        .company-register-wrapper {
-            padding: 24px 12px 36px;
-        }
-
-        .register-card {
-            padding: 28px 20px 32px;
-        }
-    }
-</style>
-{% endblock %}
+{% extends "auth/base_auth.html" %}
+{% block title %}تسجيل شركة جديدة | ELITE{% endblock %}
 
 {% block content %}
-{% set submission_url = url_for('auth.register_company') %}
-{% if company is defined and company %}
-    {% set submission_url = url_for('company_portal_bp.complete_registration', company_id=company.id) %}
-{% endif %}
-<div class="company-register-wrapper mx-auto">
-    <main class="register-shell">
-        <header class="register-header">
-            <div class="register-header__badge" aria-hidden="true">
-                <i class="fa-solid fa-building"></i>
-            </div>
-            <h1 class="register-header__title">إنشاء حساب شركة في ELITE</h1>
-            <p class="register-header__subtitle">
-                صممنا هذه التجربة خصيصًا لفرق التسويق وروّاد الأعمال لتفعيل العروض والوصول إلى مجتمع أعضاء ELITE بسهولة وسرعة.
-            </p>
-        </header>
-        <section class="register-card" aria-labelledby="company-register-title">
-            <h2 id="company-register-title" class="visually-hidden">نموذج تسجيل الشركات</h2>
-            {% if correction_mode %}
-                <div class="correction-banner" role="status">
-                    Please review the admin feedback below and update your company details to continue the approval process.
-                </div>
-                {% if admin_notes %}
-                    <div class="correction-banner correction-banner--warning" role="alert">
-                        <strong>Admin Notes</strong>
-                        <span>{{ admin_notes }}</span>
-                    </div>
-                {% endif %}
-            {% endif %}
-            <form id="company-register-form" method="post" action="{{ submission_url }}" novalidate>
-                {{ form.hidden_tag() }}
-                {% with messages = get_flashed_messages(with_categories=True) %}
-                    {% if messages %}
-                        <div class="alert-list" role="alert">
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category }}">{{ message }}</div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                {% endwith %}
+<div class="auth-card mx-auto" style="max-width: 540px;">
+  <div class="text-center mb-4">
+    <div class="mb-3">
+      <i class="fa-solid fa-building fa-3x text-gradient"></i>
+    </div>
+    <h2 class="fw-bold mb-2" style="color: var(--brand-primary);">تسجيل شركتك في ELITE</h2>
+    <p class="text-muted">املأ بيانات شركتك للانضمام إلى شركائنا وتقديم عروضك الخاصة.</p>
+  </div>
 
-                <div class="field-grid">
-                    <div class="input-field">
-                        <label for="{{ form.company_name.id }}">
-                            {{ form.company_name.label.text }}<span class="required-asterisk">*</span>
-                        </label>
-                        {{ form.company_name(class_="input-control", required=True) }}
-                        <small class="field-hint">اسمك التجاري الرسمي كما سيظهر في لوحة الإدارة.</small>
-                        {% for error in form.company_name.errors %}
-                            <p class="error-message">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    <div class="input-field">
-                        <label for="{{ form.email.id }}">
-                            {{ form.email.label.text }}<span class="required-asterisk">*</span>
-                        </label>
-                        {{ form.email(class_="input-control", required=True) }}
-                        <small class="field-hint">سنستخدم هذا البريد للتواصل حول حالة الطلب.</small>
-                        {% for error in form.email.errors %}
-                            <p class="error-message">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                </div>
+  <form id="register-company-form" method="post" novalidate>
+    {{ form.hidden_tag() }}
 
-                <div class="field-grid">
-                    <div class="input-field">
-                        <label for="{{ form.password.id }}">
-                            {{ form.password.label.text }}<span class="required-asterisk">*</span>
-                        </label>
-                        {{ form.password(class_="input-control", required=True) }}
-                        <small class="field-hint">حد أدنى 6 خانات مع مراعاة الأمان.</small>
-                        {% for error in form.password.errors %}
-                            <p class="error-message">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    <div class="input-field">
-                        <label for="{{ form.phone_number.id }}">
-                            {{ form.phone_number.label.text }}<span class="required-asterisk">*</span>
-                        </label>
-                        {{ form.phone_number(class_="input-control", required=True) }}
-                        <small class="field-hint">رقم مسؤول التواصل المباشر مع فريق ELITE.</small>
-                        {% for error in form.phone_number.errors %}
-                            <p class="error-message">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                </div>
+    <div class="mb-3 text-start">
+      <label class="form-label">اسم الشركة</label>
+      {{ form.name(class="form-control auth-input", placeholder="اسم الشركة") }}
+    </div>
 
-                <div class="field-grid">
-                    <div class="input-field">
-                        <label for="{{ form.industry.id }}">
-                            {{ form.industry.label.text }}<span class="required-asterisk">*</span>
-                        </label>
-                        {{ form.industry(class_="input-control", required=True) }}
-                        <small class="field-hint">اختر القطاع الأقرب لنشاطك الحالي.</small>
-                        {% for error in form.industry.errors %}
-                            <p class="error-message">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    <div class="input-field">
-                        <label for="{{ form.city.id }}">
-                            {{ form.city.label.text }}<span class="required-asterisk">*</span>
-                        </label>
-                        {{ form.city(class_="input-control", required=True) }}
-                        <small class="field-hint">المدينة الرئيسية لفرعك أو عملياتك.</small>
-                        {% for error in form.city.errors %}
-                            <p class="error-message">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                </div>
+    <div class="mb-3 text-start">
+      <label class="form-label">البريد الإلكتروني للشركة</label>
+      {{ form.email(class="form-control auth-input", placeholder="company@example.com") }}
+    </div>
 
-                <div class="field-grid">
-                    <div class="input-field">
-                        <label for="{{ form.website_url.id }}">{{ form.website_url.label.text }}</label>
-                        {{ form.website_url(class_="input-control") }}
-                        <small class="field-hint">أضف موقعك الرسمي إن وجد.</small>
-                        {% for error in form.website_url.errors %}
-                            <p class="error-message">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    <div class="input-field">
-                        <label for="{{ form.social_url.id }}">
-                            {{ form.social_url.label.text }}<span class="required-asterisk">*</span>
-                        </label>
-                        {{ form.social_url(class_="input-control", required=True) }}
-                        <small class="field-hint">شارك رابط حساب رسمي على الشبكات الاجتماعية.</small>
-                        {% for error in form.social_url.errors %}
-                            <p class="error-message">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                </div>
+    <div class="mb-3 text-start">
+      <label class="form-label">رقم الهاتف</label>
+      {{ form.phone(class="form-control auth-input", placeholder="05xxxxxxxx") }}
+    </div>
 
-                <div class="input-field">
-                    <label for="{{ form.description.id }}">{{ form.description.label.text }} <span class="text-muted">(اختياري)</span></label>
-                    {{ form.description(class_="input-control") }}
-                    <small class="field-hint">عرفنا عن عروضك الحالية أو شراكاتك المميزة.</small>
-                    {% for error in form.description.errors %}
-                        <p class="error-message">{{ error }}</p>
-                    {% endfor %}
-                </div>
+    <div class="mb-3 text-start">
+      <label class="form-label">المدينة</label>
+      {{ form.city(class="form-control auth-input", placeholder="المدينة") }}
+    </div>
 
-                <button type="submit" id="company-register-submit" class="cta-button">
-                    إنشاء حساب الشركة
-                </button>
-            </form>
-            <p class="helper-text">
-                لست شركة؟
-                <a href="{{ url_for('auth.register_member') }}">سجّل كعضو للاستفادة من العروض</a>
-            </p>
-        </section>
-    </main>
+    <div class="mb-3 text-start">
+      <label class="form-label">نبذة عن الشركة</label>
+      {{ form.description(class="form-control auth-input", rows="3", placeholder="أدخل وصفًا مختصرًا عن نشاط شركتك") }}
+    </div>
+
+    <div class="mb-3 text-start">
+      <label class="form-label">كلمة المرور</label>
+      {{ form.password(class="form-control auth-input", placeholder="••••••••") }}
+    </div>
+
+    <div id="company-error" class="text-danger small mb-2" role="alert"></div>
+
+    <button type="submit" id="register-company-submit" class="btn btn-gradient w-100 py-2">
+      إرسال طلب الانضمام
+    </button>
+
+    <div class="text-center mt-4">
+      <p class="text-muted mb-0">
+        لديك حساب بالفعل؟
+        <a href="{{ url_for('auth.login') }}" class="fw-semibold text-decoration-none text-primary">
+          تسجيل الدخول
+        </a>
+      </p>
+    </div>
+  </form>
 </div>
-<div class="toast-banner" id="company-register-toast" role="status" aria-live="polite">
-    <div class="success-badge" aria-hidden="true"><i class="fa-solid fa-check"></i></div>
-    <span id="company-register-toast-message">تم استلام طلبك وسيتم مراجعته من قبل الإدارة.</span>
+
+<div class="toast-banner" id="company-toast" role="status" aria-live="polite">
+  <div class="me-2"><i class="fa-solid fa-check fa-lg"></i></div>
+  <span id="company-toast-message">تم إرسال طلب شركتك بنجاح!</span>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const toast = document.getElementById("company-register-toast");
-        if (!toast) {
-            return;
-        }
-        const showToast = () => {
-            toast.dataset.visible = "true";
-            setTimeout(() => {
-                toast.dataset.visible = "false";
-            }, 3200);
-        };
-        if (toast.dataset.visible === "true") {
-            showToast();
-        }
-    });
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("register-company-form");
+  const submitButton = document.getElementById("register-company-submit");
+  const errorMessage = document.getElementById("company-error");
+  const toast = document.getElementById("company-toast");
+  const toastMessage = document.getElementById("company-toast-message");
+
+  if (!form) return;
+
+  const showToast = (message) => {
+    if (!toast || !toastMessage) return;
+    toastMessage.textContent = message || "تم إرسال الطلب بنجاح";
+    toast.dataset.visible = "true";
+    setTimeout(() => (toast.dataset.visible = "false"), 3200);
+  };
+
+  form.addEventListener("submit", (event) => {
+    if (!form.checkValidity()) {
+      event.preventDefault();
+      errorMessage.textContent = "يرجى تعبئة جميع الحقول المطلوبة بشكل صحيح.";
+      form.classList.add("was-validated");
+    } else {
+      errorMessage.textContent = "";
+      submitButton.disabled = true;
+      submitButton.textContent = "جاري الإرسال...";
+      showToast("تم إرسال طلب شركتك بنجاح! سيتم مراجعة الطلب قريبًا.");
+    }
+  });
+});
 </script>
 {% endblock %}

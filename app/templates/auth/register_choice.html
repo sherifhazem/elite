@@ -1,27 +1,99 @@
-{% extends "base.html" %}
-
+{% extends "auth/base_auth.html" %}
 {% block title %}انضم إلى ELITE{% endblock %}
 
 {% block content %}
-<div class="text-center py-5">
-    <h2 class="mb-4">اختر طريقة الانضمام إلى برنامج ELITE</h2>
+<div class="text-center py-4">
+  <div class="mb-4">
+    <i class="fa-solid fa-users fa-3x text-gradient"></i>
+  </div>
+  <h2 class="fw-bold mb-3" style="color: var(--brand-primary);">اختر طريقة الانضمام إلى ELITE</h2>
+  <p class="text-muted mb-5">حدد نوع حسابك لتبدأ رحلتك معنا.</p>
 
-    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-4">
-        <div class="card shadow p-4" style="width: 18rem;">
-            <h5 class="mb-3">الانضمام كـ فرد</h5>
-            <p class="text-muted mb-4">
-                انضم كعضو للاستفادة من الخصومات الحصرية والعروض الخاصة بالشركاء.
-            </p>
-            <a href="{{ url_for('auth.register_member') }}" class="btn btn-primary w-100">انضم كعضو</a>
-        </div>
+  <div class="row justify-content-center g-4">
 
-        <div class="card shadow p-4" style="width: 18rem;">
-            <h5 class="mb-3">الانضمام كشركة</h5>
-            <p class="text-muted mb-4">
-                سجّل كشركة لتقديم عروض وخصومات حصرية لجذب المزيد من العملاء.
-            </p>
-            <a href="{{ url_for('auth.register_company') }}" class="btn btn-outline-primary w-100">انضم كشركة</a>
+    <!-- انضم كعضو -->
+    <div class="col-12 col-md-5">
+      <div class="card auth-card p-4 h-100 border-0 rounded-4 hover-shadow transition-all member-card">
+        <div class="text-center mb-3">
+          <i class="fa-solid fa-user fa-2x text-primary"></i>
         </div>
+        <h4 class="fw-semibold mb-3 text-primary">👤 الانضمام كعضو</h4>
+        <p class="text-muted mb-4">
+          انضم كعضو للاستفادة من الخصومات والعروض الحصرية المقدمة من شركائنا في ELITE.
+        </p>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-member w-100 fw-bold rounded-pill py-2">
+          انضم الآن كعضو
+        </a>
+      </div>
     </div>
+
+    <!-- انضم كشركة -->
+    <div class="col-12 col-md-5">
+      <div class="card auth-card p-4 h-100 border-0 rounded-4 hover-shadow transition-all company-card">
+        <div class="text-center mb-3">
+          <i class="fa-solid fa-building fa-2x text-success"></i>
+        </div>
+        <h4 class="fw-semibold mb-3 text-success">🏢 الانضمام كشركة</h4>
+        <p class="text-muted mb-4">
+          سجّل كشركة لتقديم عروضك الحصرية وجذب عملاء جدد عبر منصة ELITE.
+        </p>
+        <a href="{{ url_for('auth.register_company') }}" class="btn btn-company w-100 fw-bold rounded-pill py-2">
+          انضم كشريك الآن
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="mt-5">
+    <p class="text-muted small">
+      لديك حساب مسبقًا؟
+      <a href="{{ url_for('auth.login') }}" class="fw-semibold text-decoration-none text-primary">تسجيل الدخول</a>
+    </p>
+  </div>
 </div>
+
+<style>
+/* بطاقات التسجيل */
+.member-card {
+  background: linear-gradient(180deg, rgba(78,43,143,0.08), #fff);
+  border-top: 4px solid var(--brand-primary);
+}
+.company-card {
+  background: linear-gradient(180deg, rgba(31,179,106,0.08), #fff);
+  border-top: 4px solid var(--success);
+}
+
+/* الأزرار المخصصة */
+.btn-member {
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 8px rgba(78,43,143,0.2);
+}
+.btn-member:hover {
+  filter: brightness(1.08);
+  color: #fff;
+}
+
+.btn-company {
+  background: linear-gradient(135deg, #1fb36a, #28c97a);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 8px rgba(31,179,106,0.2);
+}
+.btn-company:hover {
+  filter: brightness(1.08);
+  color: #fff;
+}
+
+/* تأثير hover */
+.hover-shadow:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+.transition-all {
+  transition: all 0.3s ease;
+}
+</style>
 {% endblock %}
