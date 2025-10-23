@@ -90,12 +90,12 @@ document.addEventListener("DOMContentLoaded", () => {
       // حدد وجهة الانتقال وفق الدور المرسل من الخادم مع قيمة احتياطية.
       const role = (data.role || "member").toLowerCase();
       const roleRedirects = {
-        member: data.redirect_url || "/portal/",
+        member: "/portal/",
         company: "/company/",
         admin: "/admin/",
         superadmin: "/admin/",
       };
-      const target = roleRedirects[role] || "/portal/";
+      const target = data.redirect_url || roleRedirects[role] || "/portal/";
 
       // استخدم window.location لاستبدال الصفحة الحالية وتجنب الرجوع للوراء.
       window.location.replace(target);
