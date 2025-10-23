@@ -2,28 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict
 
 from flask import Blueprint, jsonify, request, g
 
 from .. import db
 from ..auth.utils import get_user_from_token
 from ..models.notification import Notification
+from ..services.roles import _extract_token
 
 notif_bp = Blueprint("notifications", __name__, url_prefix="/api/notifications")
-
-
-def _extract_token() -> Optional[str]:
-    """Return a JWT token from the request headers or cookies."""
-
-    authorization = request.headers.get("Authorization", "").strip()
-    scheme, _, token = authorization.partition(" ")
-    if scheme.lower() == "bearer" and token:
-        return token
-    cookie_token = request.cookies.get("elite_token")
-    if cookie_token:
-        return cookie_token
-    return None
 
 
 def _serialize_notification(notification: Notification) -> Dict[str, object]:
