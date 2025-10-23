@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}انضم إلى ELITE{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h2 class="mb-4">اختر طريقة الانضمام إلى برنامج ELITE</h2>
+
+    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-4">
+        <div class="card shadow p-4" style="width: 18rem;">
+            <h5 class="mb-3">الانضمام كـ فرد</h5>
+            <p class="text-muted mb-4">
+                انضم كعضو للاستفادة من الخصومات الحصرية والعروض الخاصة بالشركاء.
+            </p>
+            <a href="{{ url_for('auth.register_member') }}" class="btn btn-primary w-100">انضم كعضو</a>
+        </div>
+
+        <div class="card shadow p-4" style="width: 18rem;">
+            <h5 class="mb-3">الانضمام كشركة</h5>
+            <p class="text-muted mb-4">
+                سجّل كشركة لتقديم عروض وخصومات حصرية لجذب المزيد من العملاء.
+            </p>
+            <a href="{{ url_for('auth.register_company') }}" class="btn btn-outline-primary w-100">انضم كشركة</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

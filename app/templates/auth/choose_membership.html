@@ -1,4 +1,5 @@
-{% extends "layouts/base.html" %}
+{% extends "base.html" %}
+{% block title %}اختر طريقة الانضمام{% endblock %}
 {% block content %}
 <div class="container py-5 text-center">
     <h1 class="mb-4 fw-bold">اختر طريقة انضمامك إلى ELITE</h1>
@@ -13,7 +14,7 @@
                 <p class="text-muted mb-4">
                     يمكنك التسجيل كعضو للاستفادة من الخصومات والعروض الحصرية المقدمة من شركائنا.
                 </p>
-                <a href="{{ url_for('auth.register') }}" class="btn btn-lg btn-outline-primary w-100 fw-bold rounded-pill">
+                <a href="{{ url_for('auth.register_member') }}" class="btn btn-lg btn-outline-primary w-100 fw-bold rounded-pill">
                     انضم الآن كعضو
                 </a>
             </div>
