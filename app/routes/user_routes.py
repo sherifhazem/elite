@@ -1,10 +1,11 @@
-"""User CRUD blueprint providing JSON endpoints."""
+"""User CRUD blueprint providing JSON endpoints secured by RBAC."""
 
 from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
 from .. import db
 from ..models.user import User
+from ..services.roles import require_role
 
 
 user_routes = Blueprint("user_routes", __name__)
@@ -23,6 +24,7 @@ def _serialize_user(user: User) -> dict:
 
 
 @user_routes.route("/", methods=["GET"])
+@require_role("admin")
 def list_users():
     """Return all users in the system."""
 
@@ -31,19 +33,21 @@ def list_users():
 
 
 @user_routes.route("/", methods=["POST"])
+@require_role("admin")
 def create_user():
     """Create a new user from the provided JSON payload."""
 
     payload = request.get_json(silent=True) or {}
     username = payload.get("username")
     email = payload.get("email")
-    password_hash = payload.get("password_hash")
+    password = payload.get("password")
     membership_level = payload.get("membership_level")
 
-    if not username or not email or not password_hash:
-        return jsonify({"error": "username, email, and password_hash are required."}), 400
+    if not username or not email or not password:
+        return jsonify({"error": "username, email, and password are required."}), 400
 
-    user = User(username=username, email=email, password_hash=password_hash)
+    user = User(username=username, email=email)
+    user.set_password(password)
     if membership_level:
         user.update_membership_level(membership_level)
     db.session.add(user)
@@ -57,6 +61,7 @@ def create_user():
 
 
 @user_routes.route("/<int:user_id>", methods=["PUT"])
+@require_role("admin")
 def update_user(user_id: int):
     """Update an existing user identified by user_id."""
 
@@ -68,15 +73,15 @@ def update_user(user_id: int):
 
     username = payload.get("username")
     email = payload.get("email")
-    password_hash = payload.get("password_hash")
+    password = payload.get("password")
     membership_level = payload.get("membership_level")
 
     if username is not None:
         user.username = username
     if email is not None:
         user.email = email
-    if password_hash is not None:
-        user.password_hash = password_hash
+    if password is not None:
+        user.set_password(password)
     if membership_level is not None:
         user.update_membership_level(membership_level)
 
@@ -90,6 +95,7 @@ def update_user(user_id: int):
 
 
 @user_routes.route("/<int:user_id>", methods=["DELETE"])
+@require_role("admin")
 def delete_user(user_id: int):
     """Remove a user from the database."""
 
@@ -103,6 +109,7 @@ def delete_user(user_id: int):
 
 
 @user_routes.route("/<int:user_id>/membership", methods=["PATCH"])
+@require_role("admin")
 def update_membership(user_id: int):
     """Update the membership level for a specific user."""
 
