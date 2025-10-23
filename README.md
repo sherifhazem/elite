@@ -5,6 +5,7 @@ The ELITE backend provides the foundational services for managing elite offers a
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ## Update: Email Configuration & Safe Logging
 - Added default MAIL_DEFAULT_SENDER fallback ("no-reply@elite-discounts.com") in config.py.
 - Introduced safe_send() helper in mailer.py to prevent crashes when email sending fails.
@@ -112,6 +113,8 @@ The ELITE backend provides the foundational services for managing elite offers a
 
 =======
 >>>>>>> parent of 59ac094 (Fix admin settings template extends (#63))
+=======
+>>>>>>> parent of 6b8d0ef (Translate admin dashboard templates to English (#62))
 =======
 >>>>>>> parent of 6b8d0ef (Translate admin dashboard templates to English (#62))
 =======
