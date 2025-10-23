@@ -1178,10 +1178,10 @@ Run these smoke checks after deploying or touching the registration flows:
 - Template now shows admin username and company name instead of numeric IDs.
 - Improved readability and user experience for system administrators.
 
-## Feature: Membership Choice Page
-- Added new route /auth/choose_membership for onboarding users visually.
-- Users can now choose between joining as a Member or a Company.
-- Modern responsive design optimized for mobile with clear explanations.
+## Feature: Registration Choice Portal
+- `/auth/register` now presents a welcoming choice screen that guides visitors to the correct signup path.
+- The page highlights the two experiences: **/auth/register_member** للأفراد و **/auth/register_company** للشركات.
+- Both registration forms now inherit from the shared `base.html`, ensuring consistent navigation, flash messages, and layout across the authentication flow.
 
 ## Enhancement: Login Input Field Visibility
 - Improved color contrast for email and password fields in the login page.

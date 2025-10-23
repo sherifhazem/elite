@@ -124,10 +124,10 @@ def register() -> tuple:
 
 
 @auth_bp.route("/register/select", methods=["GET"], endpoint="register_select")
-def register_select_page() -> str:
-    """Render the entry screen where visitors choose their account type."""
+def register_select_page() -> Response:
+    """Maintain legacy path by redirecting to the unified registration choice page."""
 
-    return render_template("auth/register_select.html")
+    return redirect(url_for("auth.register_choice"))
 
 
 def _register_company_from_form(
@@ -558,10 +558,10 @@ def profile() -> tuple:
 
 
 @auth_bp.route("/choose_membership")
-def choose_membership():
-    """Landing page to choose between member or company registration."""
+def choose_membership() -> Response:
+    """Preserve legacy path and forward visitors to the refreshed register chooser."""
 
-    return render_template("auth/choose_membership.html")
+    return redirect(url_for("auth.register_choice"))
 
 
 @auth_bp.route("/login", methods=["GET"], endpoint="login")
@@ -573,13 +573,11 @@ def login_page() -> str:
     return render_template("auth/login.html", logout_notice=logout_notice)
 
 
-@auth_bp.route("/register", methods=["GET", "POST"])
-def register_page():
-    """Legacy alias preserved for older registration bookmarks."""
+@auth_bp.route("/register", methods=["GET"], endpoint="register_choice")
+def register_choice() -> str:
+    """عرض صفحة اختيار نوع التسجيل."""
 
-    if request.method == "POST":
-        return register_member()
-    return redirect(url_for("auth.choose_membership"))
+    return render_template("auth/register_choice.html")
 
 
 @auth_bp.route("/api/auth/verify/<token>")
