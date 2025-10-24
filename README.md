@@ -3,6 +3,11 @@ Last Updated: 2025-10-18
 
 The ELITE backend provides the foundational services for managing elite offers and related business logic. This initial setup prepares the project with a clean structure, environment configuration, and basic health monitoring endpoint.
 
+## Fix: Company Registration Template Field
+- Replaced {{ form.name }} with {{ form.company_name }} in all company registration templates.
+- Updated templates to reference {{ form.phone_number }} so the phone field renders correctly.
+- Prevented UndefinedError on company creation.
+
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
