@@ -491,23 +491,15 @@ def list_companies() -> str:
     )
 
 
-@admin_bp.route("/companies/view/<int:company_id>")
-@require_role("admin")
-def view_company(company_id: int) -> str:
-    """Display read-only details for the requested company."""
+@admin_bp.route("/companies/<int:company_id>", methods=["GET"])
+@admin_required
+def view_company(company_id):
+    """Display full company details for admin review and management."""
+    from app.models.company import Company
 
     company = Company.query.get_or_404(company_id)
-    offers = sorted(
-        company.offers,
-        key=lambda offer: offer.created_at or datetime.min,
-        reverse=True,
-    )
-    return render_template(
-        "dashboard/company_detail.html",
-        section_title="View Company",
-        company=company,
-        offers=offers,
-    )
+    return render_template("dashboard/company_details.html", company=company)
+
 
 
 @admin_bp.route("/companies/review/<int:company_id>")
