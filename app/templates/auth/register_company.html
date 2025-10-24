@@ -31,8 +31,23 @@
       </div>
 
       <div class="col-12 col-md-6">
-        <label class="form-label fw-semibold d-block text-end">المدينة</label>
-        {{ form.city(class="form-control auth-input text-end", placeholder="المدينة") }}
+        <label class="form-label fw-semibold d-block text-end">مجال عمل الشركة</label>
+        {{ form.industry(class="form-select auth-input text-end") }}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold d-block text-end">اسم المدينة</label>
+        {{ form.city(class="form-select auth-input text-end") }}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold d-block text-end">رابط الموقع الإلكتروني</label>
+        {{ form.website_url(class="form-control auth-input text-start", dir="ltr", placeholder="https://example.com") }}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold d-block text-end">رابط التواصل الاجتماعي</label>
+        {{ form.social_url(class="form-control auth-input text-start", dir="ltr", placeholder="https://instagram.com/yourbrand") }}
       </div>
 
       <div class="col-12 col-md-6">
