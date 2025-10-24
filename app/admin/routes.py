@@ -1043,3 +1043,4 @@ def delete_industry(item_id: str) -> Response:
 
 
 __all__ = ["admin_bp"]
+
