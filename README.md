@@ -117,6 +117,12 @@ def secure_action():
 - Supports status filtering (pending, approved, suspended, correction).
 - Returns companies.html with status tabs and counts.
 
+## Phase 2: Admin Companies Template (Basic)
+- Added new clean companies.html template.
+- Includes tabs for status filtering and basic company table.
+- No action buttons yet (to be added in next phase).
+- Compatible with /admin/companies route from Phase 1.
+
 ## موارد إضافية
 - وثائق Flask: <https://flask.palletsprojects.com/>
 - وثائق Alembic: <https://alembic.sqlalchemy.org/>
