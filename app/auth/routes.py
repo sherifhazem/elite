@@ -33,6 +33,7 @@ from .. import db
 from ..models.user import User
 from ..services.company_registration import register_company_account
 from ..services.mailer import send_email, send_member_welcome_email
+from ..services.notifications import send_welcome_notification
 from ..forms import CompanyRegistrationForm
 from .utils import confirm_token, create_token, decode_token, generate_token
 
@@ -436,23 +437,14 @@ def logout():
 def _dispatch_member_welcome_notification(user: User) -> None:
     """إرسال إشعار الترحيب عند توفر خدمة الإشعارات دون التسبب في أخطاء."""
 
-    notifier = _resolve_welcome_notifier()
-    if notifier is None:
-        global _welcome_notifier_unavailable_logged
-        if not _welcome_notifier_unavailable_logged:
-            try:
-                current_app.logger.debug(
-                    "Welcome notification service unavailable; skipping dispatch"
-                )
-            except Exception:
-                pass
-            _welcome_notifier_unavailable_logged = True
+    if _send_welcome_notification is None:
         return
 
     try:
-        notifier(user)
+        _send_welcome_notification(user)
     except Exception:  # pragma: no cover - notifications are best-effort
         try:
             current_app.logger.exception("Failed to send welcome notification")
         except Exception:
             pass
+
