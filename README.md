@@ -129,6 +129,12 @@ def secure_action():
 - Displays all company info, links, and admin notes.
 - Prepares structure for management actions (Phase 4).
 
+## Phase 4: Admin Company Management Actions
+- Added full CRUD actions for companies (view, edit, delete).
+- Added admin status controls: Activate, Suspend, Reactivate.
+- Integrated email notifications for status changes.
+- Simplified routes and templates for clean maintainability.
+
 ## موارد إضافية
 - وثائق Flask: <https://flask.palletsprojects.com/>
 - وثائق Alembic: <https://alembic.sqlalchemy.org/>
