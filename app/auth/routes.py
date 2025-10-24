@@ -11,7 +11,8 @@
 from __future__ import annotations
 
 from http import HTTPStatus
-from typing import Dict, Optional, Tuple
+from functools import lru_cache
+from typing import Callable, Dict, Optional, Tuple
 
 from flask import (
     Blueprint,
@@ -38,6 +39,26 @@ from .utils import confirm_token, create_token, decode_token, generate_token
 
 
 auth_bp = Blueprint("auth", __name__)
+
+
+WelcomeNotifier = Callable[[User], Optional[int]]
+
+_welcome_notifier_unavailable_logged = False
+
+
+@lru_cache(maxsize=1)
+def _resolve_welcome_notifier() -> Optional[WelcomeNotifier]:
+    """Return the welcome notification dispatcher when available."""
+
+    try:  # pragma: no cover - optional dependency graph in some deployments
+        from ..services.notifications import send_welcome_notification
+    except Exception:
+        return None
+
+    if not callable(send_welcome_notification):
+        return None
+
+    return send_welcome_notification
 
 
 def _extract_json() -> Dict[str, str]:
