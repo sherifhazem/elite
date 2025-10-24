@@ -106,6 +106,12 @@ def secure_action():
 - عند العمل على لوحة الإدارة، استخدم حسابًا بصلاحيات `admin` أو `superadmin` لمشاهدة الأزرار الكاملة للتفعيل والتعليق.
 - في حال تغير بنية النماذج، أعد توليد الترحيلات باستخدام Alembic وراجع النتائج قبل الترقية.
 
+## Cleanup: Removed Old Admin Company Management
+- Deleted all templates related to admin company management (companies.html, company_details.html, etc.).
+- Removed all /admin/companies routes and related functions from routes_companies.py and routes.py.
+- Cleaned imports of Company model and mailer functions from admin modules.
+- Prepared project for clean reimplementation of company management with Codex.
+
 ## موارد إضافية
 - وثائق Flask: <https://flask.palletsprojects.com/>
 - وثائق Alembic: <https://alembic.sqlalchemy.org/>
