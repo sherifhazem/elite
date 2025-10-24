@@ -53,28 +53,6 @@ class Company(db.Model):
 
         return f"<Company {self.name}>"
 
-    # The Company model now enforces lowercase normalized status values.
-    # This ensures consistent filtering and template rendering across the admin panel.
-    def set_status(self, new_status: str):
-        """
-        Safely set the company's status, enforcing lowercase normalization.
-        Allowed values: pending, active, correction, suspended.
-
-        Legacy alias: ``approved`` is normalized to ``active`` to preserve
-        backwards compatibility with older records.
-        """
-
-        valid_statuses = {"pending", "active", "correction", "suspended"}
-        legacy_aliases = {"approved": "active"}
-
-        normalized = (new_status or "pending").strip().lower()
-        normalized = legacy_aliases.get(normalized, normalized)
-
-        if normalized not in valid_statuses:
-            normalized = "pending"
-
-        self.status = normalized
-
     def notification_settings(self) -> Dict[str, Any]:
         """Return notification preferences while ensuring a dictionary output."""
 

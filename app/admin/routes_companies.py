@@ -88,7 +88,7 @@ def view_company_details(company_id: int) -> str:
 def approve_company(company_id):
     """Approve a pending company application."""
     company = Company.query.get_or_404(company_id)
-    company.set_status("active")
+    company.status = "active"
     db.session.commit()
     log_admin_action(g.current_user, company, "approve")
 
@@ -108,7 +108,7 @@ def request_correction(company_id):
     company = Company.query.get_or_404(company_id)
     notes = request.form.get("admin_notes", "").strip()
     company.admin_notes = notes
-    company.set_status("correction")
+    company.status = "correction"
     db.session.commit()
     log_admin_action(g.current_user, company, "request_correction", notes)
 
@@ -133,7 +133,7 @@ def suspend_company(company_id):
     company = Company.query.get_or_404(company_id)
 
     # Normalize and update status
-    company.set_status("suspended")
+    company.status = "suspended"
     db.session.commit()
     log_admin_action(g.current_user, company, "suspend")
 
@@ -153,7 +153,7 @@ def reactivate_company(company_id):
     company = Company.query.get_or_404(company_id)
 
     # Normalize and update status
-    company.set_status("active")
+    company.status = "active"
     db.session.commit()
     log_admin_action(g.current_user, company, "reactivate")
 

@@ -79,7 +79,7 @@ def create_company():
         return jsonify({"error": "name is required."}), 400
 
     company = Company(name=name, description=description)
-    company.set_status("pending")
+    company.status = "pending"
 
     owner_user_id = payload.get("owner_user_id")
     if owner_user_id is not None:
