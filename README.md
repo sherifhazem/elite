@@ -123,6 +123,12 @@ def secure_action():
 - No action buttons yet (to be added in next phase).
 - Compatible with /admin/companies route from Phase 1.
 
+## Phase 3: Admin Company Details Page
+- Added /admin/companies/<id> route for viewing company details.
+- Created new company_details.html template.
+- Displays all company info, links, and admin notes.
+- Prepares structure for management actions (Phase 4).
+
 ## موارد إضافية
 - وثائق Flask: <https://flask.palletsprojects.com/>
 - وثائق Alembic: <https://alembic.sqlalchemy.org/>
