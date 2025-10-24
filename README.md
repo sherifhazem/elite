@@ -112,6 +112,11 @@ def secure_action():
 - Cleaned imports of Company model and mailer functions from admin modules.
 - Prepared project for clean reimplementation of company management with Codex.
 
+## Phase 1: Basic Admin Company Management Routes
+- Added clean routes_companies.py for /admin/companies.
+- Supports status filtering (pending, approved, suspended, correction).
+- Returns companies.html with status tabs and counts.
+
 ## موارد إضافية
 - وثائق Flask: <https://flask.palletsprojects.com/>
 - وثائق Alembic: <https://alembic.sqlalchemy.org/>
