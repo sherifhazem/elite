@@ -160,6 +160,8 @@ def _normalize_company_status(company: Company) -> str:
     status = (company.status or "").strip().lower()
     if not status:
         return "pending"
+    if status == "approved":
+        return "active"
     return status
 
 
@@ -460,8 +462,11 @@ def manage_user_roles() -> str:
 def list_companies() -> str:
     """Render the company management interface filtered by status."""
 
-    requested_status = (request.args.get("status") or "pending").strip().lower()
-    valid_statuses = {"pending", "approved", "correction", "suspended"}
+    requested_status_raw = (request.args.get("status") or "pending").strip().lower()
+    status_aliases = {"approved": "active"}
+    requested_status = status_aliases.get(requested_status_raw, requested_status_raw)
+
+    valid_statuses = {"pending", "active", "correction", "suspended"}
     active_tab = requested_status if requested_status in valid_statuses else "pending"
 
     companies = Company.query.order_by(Company.created_at.desc()).all()
@@ -469,6 +474,7 @@ def list_companies() -> str:
 
     for company in companies:
         status = _normalize_company_status(company)
+        status = status_aliases.get(status, status)
         if status not in valid_statuses:
             grouped["pending"].append(company)
         else:

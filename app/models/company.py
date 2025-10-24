@@ -58,10 +58,17 @@ class Company(db.Model):
     def set_status(self, new_status: str):
         """
         Safely set the company's status, enforcing lowercase normalization.
-        Allowed values: pending, approved, correction, suspended.
+        Allowed values: pending, active, correction, suspended.
+
+        Legacy alias: ``approved`` is normalized to ``active`` to preserve
+        backwards compatibility with older records.
         """
-        valid_statuses = {"pending", "approved", "correction", "suspended"}
+
+        valid_statuses = {"pending", "active", "correction", "suspended"}
+        legacy_aliases = {"approved": "active"}
+
         normalized = (new_status or "pending").strip().lower()
+        normalized = legacy_aliases.get(normalized, normalized)
 
         if normalized not in valid_statuses:
             normalized = "pending"
