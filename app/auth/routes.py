@@ -435,13 +435,14 @@ def logout():
     return response
 
 def _dispatch_member_welcome_notification(user: User) -> None:
-    """إرسال إشعار الترحيب عند توفر خدمة الإشعارات دون التسبب في أخطاء."""
+    """Safely send welcome notification when available."""
 
-    if _send_welcome_notification is None:
+    notifier = _resolve_welcome_notifier()
+    if notifier is None:
         return
 
     try:
-        _send_welcome_notification(user)
+        notifier(user)
     except Exception:  # pragma: no cover - notifications are best-effort
         try:
             current_app.logger.exception("Failed to send welcome notification")
