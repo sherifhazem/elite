@@ -1,0 +1,70 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Companies Management{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Companies</h2>
+    <a href="{{ url_for('admin.dashboard_home') }}" class="btn btn-outline-secondary btn-sm">← Back</a>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3">
+    {% for s in ['pending', 'approved', 'suspended', 'correction'] %}
+      <li class="nav-item">
+        <a class="nav-link {% if active_tab == s %}active{% endif %}"
+           href="{{ url_for('admin.list_companies', status=s) }}">
+           {{ s|capitalize }}
+           {% if status_counts[s] %}
+             <span class="badge bg-secondary">{{ status_counts[s] }}</span>
+           {% endif %}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <!-- Companies Table -->
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      <table class="table table-striped table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>Industry</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for company in companies %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ company.name }}</td>
+              <td>{{ company.email }}</td>
+              <td>{{ company.contact_number or '—' }}</td>
+              <td>{{ company.city or '—' }}</td>
+              <td>{{ company.industry or '—' }}</td>
+              <td>{{ company.status|capitalize }}</td>
+              <td class="text-end text-muted small">
+                <!-- Placeholder for action buttons (next phase) -->
+                No actions yet
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="8" class="text-center text-muted py-4">
+                No companies found.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
