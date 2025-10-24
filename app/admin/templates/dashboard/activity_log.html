@@ -13,7 +13,7 @@
     <div class="card shadow-sm">
         <div class="card-body">
             <form method="get" class="row g-3 mb-4">
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <label class="form-label">Filter by Admin</label>
                     <select class="form-select" name="admin_id">
                         <option value="">All Admins</option>
@@ -24,18 +24,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">Filter by Company</label>
-                    <select class="form-select" name="company_id">
-                        <option value="">All Companies</option>
-                        {% for company in companies %}
-                            <option value="{{ company.id }}" {% if selected_company == company.id %}selected{% endif %}>
-                                {{ company.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-4 d-flex align-items-end">
+                <div class="col-md-6 d-flex align-items-end">
                     <button class="btn btn-primary w-100" type="submit">Apply Filters</button>
                 </div>
             </form>

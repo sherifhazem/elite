@@ -45,7 +45,6 @@ from sqlalchemy.exc import IntegrityError
 from flask_login import current_user, logout_user
 
 from .. import db
-from ..models.company import Company
 from ..models.offer import Offer
 from ..models.user import User
 from ..services.mailer import send_welcome_email
@@ -154,31 +153,18 @@ def _extract_value(*keys: str) -> str:
     return ""
 
 
-def _normalize_company_status(company: Company) -> str:
-    """Return the normalized status string for a company record."""
-
-    status = (company.status or "").strip().lower()
-    if not status:
-        return "pending"
-    if status == "approved":
-        return "active"
-    return status
-
-
 @admin_bp.route("/")
 @require_role("admin")
 def dashboard_home() -> str:
     """Render the admin dashboard landing page."""
 
     total_users = User.query.count()
-    total_companies = Company.query.count()
     total_offers = Offer.query.count()
 
     return render_template(
         "dashboard/index.html",
         section_title="Overview",
         total_users=total_users,
-        total_companies=total_companies,
         total_offers=total_offers,
     )
 
@@ -222,10 +208,8 @@ def view_user(user_id: int) -> str:
 def add_user() -> str:
     """Handle rendering and submission of the create-user form."""
 
-    companies = Company.query.order_by(Company.name).all()
     actor: User | None = getattr(g, "current_user", None)
     can_manage_roles = _can_manage_user_roles(actor)
-    can_link_company = bool(actor and actor.is_superadmin)
 
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -236,7 +220,6 @@ def add_user() -> str:
         )
         is_active = _parse_boolean(request.form.get("is_active"))
         desired_role = request.form.get("role", "member")
-        company_id_raw = request.form.get("company_id")
 
         if not username or not email or not password:
             flash("Username, email, and password are required to create a user.", "danger")
@@ -259,11 +242,7 @@ def add_user() -> str:
             except ValueError as error:
                 flash(str(error), "danger")
                 return redirect(url_for("admin.add_user"))
-            if can_link_company and company_id_raw:
-                try:
-                    user.company_id = int(company_id_raw)
-                except ValueError:
-                    user.company_id = None
+            user.company_id = None
         else:
             user.set_role("member")
             user.company_id = None
@@ -300,7 +279,6 @@ def add_user() -> str:
         user=None,
         role_choices=User.ROLE_CHOICES,
         membership_choices=User.MEMBERSHIP_LEVELS,
-        companies=companies,
     )
 
 
@@ -312,10 +290,8 @@ def edit_user(user_id: int) -> str:
     user = User.query.get_or_404(user_id)
     _guard_superadmin_modification(user)
 
-    companies = Company.query.order_by(Company.name).all()
     actor: User | None = getattr(g, "current_user", None)
     can_manage_roles = _can_manage_user_roles(actor)
-    can_link_company = bool(actor and actor.is_superadmin)
 
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -326,8 +302,6 @@ def edit_user(user_id: int) -> str:
         )
         is_active = _parse_boolean(request.form.get("is_active"))
         desired_role = request.form.get("role", user.role)
-        company_id_raw = request.form.get("company_id")
-
         if not username or not email:
             flash("Username and email are required.", "danger")
             return redirect(url_for("admin.edit_user", user_id=user_id))
@@ -353,13 +327,7 @@ def edit_user(user_id: int) -> str:
             except ValueError as error:
                 flash(str(error), "danger")
                 return redirect(url_for("admin.edit_user", user_id=user_id))
-            if can_link_company and company_id_raw:
-                try:
-                    user.company_id = int(company_id_raw)
-                except ValueError:
-                    user.company_id = None
-            else:
-                user.company_id = None
+            user.company_id = None
 
         try:
             db.session.commit()
@@ -377,7 +345,6 @@ def edit_user(user_id: int) -> str:
         user=user,
         role_choices=User.ROLE_CHOICES,
         membership_choices=User.MEMBERSHIP_LEVELS,
-        companies=companies,
     )
 
 
@@ -456,146 +423,6 @@ def manage_user_roles() -> str:
     )
 
 
-@admin_bp.route("/companies", methods=["GET"], endpoint="list_companies")
-@admin_bp.route("/companies", methods=["GET"], endpoint="dashboard_companies")
-@require_role("admin")
-def list_companies() -> str:
-    """Render the company management interface filtered by status."""
-
-    requested_status_raw = (request.args.get("status") or "pending").strip().lower()
-    status_aliases = {"approved": "active"}
-    requested_status = status_aliases.get(requested_status_raw, requested_status_raw)
-
-    valid_statuses = {"pending", "active", "correction", "suspended"}
-    active_tab = requested_status if requested_status in valid_statuses else "pending"
-
-    companies = Company.query.order_by(Company.created_at.desc()).all()
-    grouped: Dict[str, list[Company]] = {key: [] for key in valid_statuses}
-
-    for company in companies:
-        status = _normalize_company_status(company)
-        status = status_aliases.get(status, status)
-        if status not in valid_statuses:
-            grouped["pending"].append(company)
-        else:
-            grouped[status].append(company)
-
-    status_counts = {key: len(value) for key, value in grouped.items()}
-
-    return render_template(
-        "dashboard/companies.html",
-        section_title="Companies",
-        companies=grouped.get(active_tab, grouped["pending"]),
-        active_tab=active_tab,
-        status_counts=status_counts,
-    )
-
-
-@admin_bp.route("/companies/<int:company_id>", methods=["GET"])
-@admin_required
-def view_company(company_id):
-    """Display full company details for admin review and management."""
-    from app.models.company import Company
-
-    company = Company.query.get_or_404(company_id)
-    return render_template("dashboard/company_details.html", company=company)
-
-
-
-@admin_bp.route("/companies/review/<int:company_id>")
-@admin_required
-def review_company(company_id: int) -> str:
-    """Show the review workspace for a pending company."""
-
-    company = Company.query.get_or_404(company_id)
-    preferences = company.notification_settings()
-    return render_template(
-        "dashboard/company_review.html",
-        section_title="Review Company",
-        company=company,
-        preferences=preferences,
-        status=_normalize_company_status(company),
-    )
-
-@admin_bp.route("/companies/add", methods=["GET", "POST"])
-@require_role("admin")
-def add_company() -> str:
-    """Handle creation of a new company from admin input."""
-
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        description = request.form.get("description", "").strip()
-
-        if not name:
-            flash("Company name is required.", "danger")
-            return redirect(url_for("admin.add_company"))
-
-        company = Company(name=name, description=description)
-        db.session.add(company)
-        try:
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-            flash("Company name must be unique.", "danger")
-            return redirect(url_for("admin.add_company"))
-
-        if company.owner:
-            ensure_welcome_notification(company.owner, context="company")
-
-        flash(f"Company '{name}' created successfully.", "success")
-        return redirect(url_for("admin.dashboard_companies"))
-
-    return render_template(
-        "dashboard/company_form.html", section_title="Add Company", company=None
-    )
-
-
-@admin_bp.route("/companies/edit/<int:company_id>", methods=["GET", "POST"])
-@require_role("admin")
-def edit_company(company_id: int) -> str:
-    """Edit an existing company's details and persist the changes."""
-
-    company = Company.query.get_or_404(company_id)
-
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        description = request.form.get("description", "").strip()
-
-        if not name:
-            flash("Company name is required.", "danger")
-            return redirect(url_for("admin.edit_company", company_id=company_id))
-
-        company.name = name
-        company.description = description
-
-        try:
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-            flash("Unable to update company. Name may already be in use.", "danger")
-            return redirect(url_for("admin.edit_company", company_id=company_id))
-
-        flash("تم تحديث بيانات الشركة بنجاح.", "success")
-        return redirect(url_for("admin.dashboard_companies"))
-
-    return render_template(
-        "dashboard/company_form.html", section_title="Edit Company", company=company
-    )
-
-
-@admin_bp.route("/companies/delete/<int:company_id>", methods=["POST"])
-@require_role("admin")
-def delete_company(company_id: int) -> str:
-    """Remove the selected company from the database."""
-
-    company = Company.query.get_or_404(company_id)
-    company.remove_owner_account()
-    db.session.delete(company)
-    db.session.commit()
-    flash("تم حذف الشركة بنجاح.", "success")
-    return redirect(url_for("admin.dashboard_companies"))
-
-
 @admin_bp.route("/offers")
 @require_role("admin")
 def dashboard_offers() -> str:
@@ -622,13 +449,10 @@ def dashboard_offers() -> str:
 def add_offer() -> str:
     """Create a new offer tied to a company and persist it in the database."""
 
-    companies = Company.query.order_by(Company.name).all()
-
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         discount_raw = request.form.get("base_discount", "0").strip()
         valid_until_raw = request.form.get("valid_until", "").strip()
-        company_id_raw = request.form.get("company_id", "").strip()
 
         if not title or not discount_raw:
             flash("Title and base discount are required.", "danger")
@@ -648,16 +472,10 @@ def add_offer() -> str:
                 flash("Valid until must follow YYYY-MM-DD format.", "danger")
                 return redirect(url_for("admin.add_offer"))
 
-        company_id = int(company_id_raw) if company_id_raw else None
-        if company_id and Company.query.get(company_id) is None:
-            flash("Selected company does not exist.", "danger")
-            return redirect(url_for("admin.add_offer"))
-
         offer = Offer(
             title=title,
             base_discount=base_discount,
             valid_until=valid_until,
-            company_id=company_id,
         )
         db.session.add(offer)
         db.session.commit()
@@ -671,7 +489,6 @@ def add_offer() -> str:
     return render_template(
         "dashboard/offer_form.html",
         section_title="Add Offer",
-        companies=companies,
         offer=None,
     )
 
@@ -682,13 +499,10 @@ def manage_offer(offer_id: int) -> str:
     """Edit an existing offer's metadata and persist the updates."""
 
     offer = Offer.query.get_or_404(offer_id)
-    companies = Company.query.order_by(Company.name).all()
-
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         discount_raw = request.form.get("base_discount", "0").strip()
         valid_until_raw = request.form.get("valid_until", "").strip()
-        company_id_raw = request.form.get("company_id", "").strip()
 
         if not title or not discount_raw:
             flash("Title and base discount are required.", "danger")
@@ -711,10 +525,6 @@ def manage_offer(offer_id: int) -> str:
             offer.valid_until = None
 
         offer.title = title
-        offer.company_id = int(company_id_raw) if company_id_raw else None
-        if offer.company_id and Company.query.get(offer.company_id) is None:
-            flash("Selected company does not exist.", "danger")
-            return redirect(url_for("admin.manage_offer", offer_id=offer_id))
 
         db.session.commit()
         if request.form.get("send_notifications") and offer.base_discount != original_base_discount:
@@ -727,7 +537,6 @@ def manage_offer(offer_id: int) -> str:
         "dashboard/offer_form.html",
         section_title="Edit Offer",
         offer=offer,
-        companies=companies,
     )
 
 

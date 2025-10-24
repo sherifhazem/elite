@@ -5,7 +5,6 @@ from flask import Blueprint, render_template, request
 from app import db
 from app.models.activity_log import ActivityLog
 from app.models.user import User
-from app.models.company import Company
 from app.services.roles import admin_required
 
 activity_log_bp = Blueprint("activity_log_bp", __name__, url_prefix="/admin")
@@ -27,13 +26,10 @@ def activity_log():
 
     logs = query.all()
     admins = User.query.filter_by(role="admin").all()
-    companies = Company.query.order_by(Company.name.asc()).all()
-
     return render_template(
         "dashboard/activity_log.html",
         logs=logs,
         admins=admins,
-        companies=companies,
         selected_admin=admin_id,
         selected_company=company_id,
     )
