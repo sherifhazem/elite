@@ -39,6 +39,7 @@
         {% set admin_nav = [
             ('overview', 'admin.dashboard_home', 'Overview', '🏠'),
             ('users', 'admin.dashboard_users', 'Users', '👥'),
+            ('companies', 'admin.list_companies', 'Companies', '<i class="bi bi-building"></i>'),
             ('offers', 'admin.dashboard_offers', 'Offers', '🎁'),
             ('settings', 'admin.settings_home', 'إدارة القوائم', '⚙️'),
             ('communications', 'admin.communication_history', 'Communication Center', '✉️'),
@@ -146,7 +147,7 @@
                                     class="admin-nav-link {{ 'active' if resolved_active_page == key else '' }}"
                                     href="{{ url_for(endpoint) }}"
                                 >
-                                    <span class="icon" aria-hidden="true">{{ icon }}</span>
+                                    <span class="icon" aria-hidden="true">{{ icon | safe }}</span>
                                     <span>{{ label }}</span>
                                 </a>
                             {% endfor %}
@@ -176,7 +177,7 @@
                             <div class="admin-nav-divider">Company</div>
                             {% for key, endpoint, label, icon in company_nav %}
                                 <a class="admin-nav-link" href="{{ url_for(endpoint) }}">
-                                    <span class="icon" aria-hidden="true">{{ icon }}</span>
+                                    <span class="icon" aria-hidden="true">{{ icon | safe }}</span>
                                     <span>{{ label }}</span>
                                 </a>
                             {% endfor %}
@@ -225,7 +226,7 @@
                                 class="admin-nav-link {{ 'active' if resolved_active_page == key else '' }}"
                                 href="{{ url_for(endpoint) }}"
                             >
-                                <span class="icon" aria-hidden="true">{{ icon }}</span>
+                                <span class="icon" aria-hidden="true">{{ icon | safe }}</span>
                                 <span>{{ label }}</span>
                             </a>
                         {% endfor %}
@@ -255,7 +256,7 @@
                         <div class="admin-nav-divider">Company</div>
                         {% for key, endpoint, label, icon in company_nav %}
                             <a class="admin-nav-link" href="{{ url_for(endpoint) }}">
-                                <span class="icon" aria-hidden="true">{{ icon }}</span>
+                                <span class="icon" aria-hidden="true">{{ icon | safe }}</span>
                                 <span>{{ label }}</span>
                             </a>
                         {% endfor %}
