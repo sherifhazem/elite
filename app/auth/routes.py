@@ -11,12 +11,14 @@
 from __future__ import annotations
 
 from http import HTTPStatus
-from typing import Dict, Optional, Tuple
+from functools import lru_cache
+from typing import Callable, Dict, Optional, Tuple
 
 from flask import (
     Blueprint,
     flash,
     Response,
+    current_app,
     jsonify,
     redirect,
     render_template,
@@ -36,6 +38,26 @@ from .utils import confirm_token, create_token, decode_token, generate_token
 
 
 auth_bp = Blueprint("auth", __name__)
+
+
+WelcomeNotifier = Callable[[User], Optional[int]]
+
+_welcome_notifier_unavailable_logged = False
+
+
+@lru_cache(maxsize=1)
+def _resolve_welcome_notifier() -> Optional[WelcomeNotifier]:
+    """Return the welcome notification dispatcher when available."""
+
+    try:  # pragma: no cover - optional dependency graph in some deployments
+        from ..services.notifications import send_welcome_notification
+    except Exception:
+        return None
+
+    if not callable(send_welcome_notification):
+        return None
+
+    return send_welcome_notification
 
 
 def _extract_json() -> Dict[str, str]:
@@ -92,7 +114,7 @@ def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, in
     db.session.commit()
 
     send_member_welcome_email(user=user)
-    send_welcome_notification(user)
+    _dispatch_member_welcome_notification(user)
 
     token = create_token(user.id)
 
@@ -411,3 +433,26 @@ def logout():
     response.headers["Expires"] = "0"
     return response
 
+def _dispatch_member_welcome_notification(user: User) -> None:
+    """إرسال إشعار الترحيب عند توفر خدمة الإشعارات دون التسبب في أخطاء."""
+
+    notifier = _resolve_welcome_notifier()
+    if notifier is None:
+        global _welcome_notifier_unavailable_logged
+        if not _welcome_notifier_unavailable_logged:
+            try:
+                current_app.logger.debug(
+                    "Welcome notification service unavailable; skipping dispatch"
+                )
+            except Exception:
+                pass
+            _welcome_notifier_unavailable_logged = True
+        return
+
+    try:
+        notifier(user)
+    except Exception:  # pragma: no cover - notifications are best-effort
+        try:
+            current_app.logger.exception("Failed to send welcome notification")
+        except Exception:
+            pass
