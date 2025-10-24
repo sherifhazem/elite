@@ -33,3 +33,12 @@ def list_companies():
         active_tab=status,
         status_counts=status_counts,
     )
+
+
+@admin_bp.route("/companies/<int:company_id>", methods=["GET"])
+@admin_required
+def view_company(company_id):
+    """Show full company details."""
+    company = Company.query.get_or_404(company_id)
+    return render_template("dashboard/company_details.html", company=company)
+
