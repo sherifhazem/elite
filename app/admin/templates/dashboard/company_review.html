@@ -21,12 +21,13 @@
                             <dd class="col-sm-8">{{ company.name }}</dd>
                             <dt class="col-sm-4">Status</dt>
                             <dd class="col-sm-8">
-                                {% if status == 'approved' %}
-                                    Approved
-                                {% elif status == 'correction' %}
+                                {% set normalized_status = status if status != 'approved' else 'active' %}
+                                {% if normalized_status == 'active' %}
+                                    Active
+                                {% elif normalized_status == 'correction' %}
                                     Needs Correction
-                                {% elif status in ['rejected', 'suspended'] %}
-                                    {{ status|title }}
+                                {% elif normalized_status in ['rejected', 'suspended'] %}
+                                    {{ normalized_status|title }}
                                 {% else %}
                                     Pending Review
                                 {% endif %}

@@ -88,7 +88,7 @@ def view_company_details(company_id: int) -> str:
 def approve_company(company_id):
     """Approve a pending company application."""
     company = Company.query.get_or_404(company_id)
-    company.set_status("approved")
+    company.set_status("active")
     db.session.commit()
     log_admin_action(g.current_user, company, "approve")
 
@@ -97,8 +97,8 @@ def approve_company(company_id):
     except Exception as e:
         app.logger.warning(f"Failed to send approval email: {e}")
 
-    flash(f"Company '{company.name}' approved successfully.", "success")
-    return redirect(url_for("admin.list_companies", status="approved"))
+    flash(f"Company '{company.name}' activated successfully.", "success")
+    return redirect(url_for("admin.list_companies", status="active"))
 
 
 @admin_bp.route("/companies/<int:company_id>/request_correction", methods=["POST"])
@@ -153,7 +153,7 @@ def reactivate_company(company_id):
     company = Company.query.get_or_404(company_id)
 
     # Normalize and update status
-    company.set_status("approved")
+    company.set_status("active")
     db.session.commit()
     log_admin_action(g.current_user, company, "reactivate")
 
@@ -163,6 +163,6 @@ def reactivate_company(company_id):
         app.logger.warning(f"Failed to send reactivation email: {e}")
 
     flash(f"Company '{company.name}' has been reactivated successfully.", "success")
-    return redirect(url_for("admin.list_companies", status="approved"))
+    return redirect(url_for("admin.list_companies", status="active"))
 
 

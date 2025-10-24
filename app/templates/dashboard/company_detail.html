@@ -22,7 +22,10 @@ Added button labels and ensured correct endpoint binding and confirmation logic.
                             <li class="mb-2"><strong>Status:</strong>
                                 {% set normalized_status = (company.status or 'pending')|lower %}
                                 {% if normalized_status == 'approved' %}
-                                    Approved
+                                    {% set normalized_status = 'active' %}
+                                {% endif %}
+                                {% if normalized_status == 'active' %}
+                                    Active
                                 {% elif normalized_status == 'correction' %}
                                     Needs Correction
                                 {% elif normalized_status in ['rejected', 'suspended'] %}

@@ -20,6 +20,9 @@
                 {% set city = preferences.get('city') %}
                 {% set phone_number = preferences.get('contact_phone') %}
                 {% set normalized_status = (company.status or 'pending')|lower %}
+                {% if normalized_status == 'approved' %}
+                    {% set normalized_status = 'active' %}
+                {% endif %}
                 <tr>
                     <td>{{ company.id }}</td>
                     <td class="fw-semibold">
@@ -32,7 +35,7 @@
                     <td>
                         {% if normalized_status == 'pending' %}
                             <span class="badge bg-secondary">Pending</span>
-                        {% elif normalized_status == 'approved' %}
+                        {% elif normalized_status == 'active' %}
                             <span class="badge bg-success">Active</span>
                         {% elif normalized_status == 'suspended' %}
                             <span class="badge bg-danger">Suspended</span>
@@ -54,7 +57,7 @@
                                     Request Correction
                                 </button>
                             {% endif %}
-                            {% if normalized_status == 'approved' %}
+                            {% if normalized_status == 'active' %}
                                 <form action="{{ url_for('admin.suspend_company', company_id=company.id) }}" method="post" class="d-inline">
                                     <button type="submit" class="btn btn-warning btn-sm">Suspend</button>
                                 </form>
