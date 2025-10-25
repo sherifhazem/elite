@@ -60,7 +60,7 @@ def _parse_datetime(value):
         return None
 
 
-@offers.route("/", methods=["GET"])
+@offers.route("/", methods=["GET"], endpoint="list_offers")
 def list_offers():
     """Return all offers provided by registered companies."""
 
@@ -76,7 +76,7 @@ def list_offers():
     return jsonify([_serialize_offer(offer, membership_level) for offer in offers]), 200
 
 
-@offers.route("/", methods=["POST"])
+@offers.route("/", methods=["POST"], endpoint="create_offer")
 @require_role("admin")
 def create_offer():
     """Create a new offer from the provided JSON payload."""
@@ -119,7 +119,7 @@ def create_offer():
     return jsonify(_serialize_offer(offer, "Basic")), 201
 
 
-@offers.route("/<int:offer_id>", methods=["PUT"])
+@offers.route("/<int:offer_id>", methods=["PUT"], endpoint="update_offer")
 @require_role("admin")
 def update_offer(offer_id: int):
     """Update an existing offer identified by offer_id."""
@@ -161,7 +161,7 @@ def update_offer(offer_id: int):
     return jsonify(_serialize_offer(offer, "Basic")), 200
 
 
-@offers.route("/<int:offer_id>", methods=["DELETE"])
+@offers.route("/<int:offer_id>", methods=["DELETE"], endpoint="delete_offer")
 @require_role("admin")
 def delete_offer(offer_id: int):
     """Remove an offer from the database."""

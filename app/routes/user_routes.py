@@ -22,7 +22,7 @@ def _serialize_user(user: User) -> dict:
     }
 
 
-@users.route("/", methods=["GET"])
+@users.route("/", methods=["GET"], endpoint="list_users")
 @require_role("admin")
 def list_users():
     """Return all users in the system."""
@@ -31,7 +31,7 @@ def list_users():
     return jsonify([_serialize_user(user) for user in users]), 200
 
 
-@users.route("/", methods=["POST"])
+@users.route("/", methods=["POST"], endpoint="create_user")
 @require_role("admin")
 def create_user():
     """Create a new user from the provided JSON payload."""
@@ -59,7 +59,7 @@ def create_user():
     return jsonify(_serialize_user(user)), 201
 
 
-@users.route("/<int:user_id>", methods=["PUT"])
+@users.route("/<int:user_id>", methods=["PUT"], endpoint="update_user")
 @require_role("admin")
 def update_user(user_id: int):
     """Update an existing user identified by user_id."""
@@ -93,7 +93,7 @@ def update_user(user_id: int):
     return jsonify(_serialize_user(user)), 200
 
 
-@users.route("/<int:user_id>", methods=["DELETE"])
+@users.route("/<int:user_id>", methods=["DELETE"], endpoint="delete_user")
 @require_role("admin")
 def delete_user(user_id: int):
     """Remove a user from the database."""
@@ -107,7 +107,9 @@ def delete_user(user_id: int):
     return jsonify({"status": "deleted"}), 200
 
 
-@users.route("/<int:user_id>/membership", methods=["PATCH"])
+@users.route(
+    "/<int:user_id>/membership", methods=["PATCH"], endpoint="update_membership"
+)
 @require_role("admin")
 def update_membership(user_id: int):
     """Update the membership level for a specific user."""

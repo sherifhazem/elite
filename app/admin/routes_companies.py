@@ -18,7 +18,7 @@ from app.services.mailer import (
 # ==============================
 # List Companies
 # ==============================
-@admin.route("/companies", methods=["GET"])
+@admin.route("/companies", methods=["GET"], endpoint="list_companies")
 @admin_required
 def list_companies():
     status = request.args.get("status", "pending").lower()
@@ -40,7 +40,7 @@ def list_companies():
 # ==============================
 # View Company Details
 # ==============================
-@admin.route("/companies/<int:company_id>", methods=["GET"])
+@admin.route("/companies/<int:company_id>", methods=["GET"], endpoint="view_company")
 @admin_required
 def view_company(company_id):
     company = Company.query.get_or_404(company_id)
@@ -50,7 +50,9 @@ def view_company(company_id):
 # ==============================
 # Edit Company
 # ==============================
-@admin.route("/companies/<int:company_id>/edit", methods=["GET", "POST"])
+@admin.route(
+    "/companies/<int:company_id>/edit", methods=["GET", "POST"], endpoint="edit_company"
+)
 @admin_required
 def edit_company(company_id):
     company = Company.query.get_or_404(company_id)
@@ -68,7 +70,9 @@ def edit_company(company_id):
 # ==============================
 # Delete Company
 # ==============================
-@admin.route("/companies/<int:company_id>/delete", methods=["POST"])
+@admin.route(
+    "/companies/<int:company_id>/delete", methods=["POST"], endpoint="delete_company"
+)
 @admin_required
 def delete_company(company_id):
     company = Company.query.get_or_404(company_id)
@@ -81,7 +85,9 @@ def delete_company(company_id):
 # ==============================
 # Admin Actions
 # ==============================
-@admin.route("/companies/<int:company_id>/approve", methods=["POST"])
+@admin.route(
+    "/companies/<int:company_id>/approve", methods=["POST"], endpoint="approve_company"
+)
 @admin_required
 def approve_company(company_id):
     company = Company.query.get_or_404(company_id)
@@ -92,7 +98,9 @@ def approve_company(company_id):
     return redirect(url_for("admin.list_companies"))
 
 
-@admin.route("/companies/<int:company_id>/suspend", methods=["POST"])
+@admin.route(
+    "/companies/<int:company_id>/suspend", methods=["POST"], endpoint="suspend_company"
+)
 @admin_required
 def suspend_company(company_id):
     company = Company.query.get_or_404(company_id)
@@ -103,7 +111,9 @@ def suspend_company(company_id):
     return redirect(url_for("admin.list_companies"))
 
 
-@admin.route("/companies/<int:company_id>/reactivate", methods=["POST"])
+@admin.route(
+    "/companies/<int:company_id>/reactivate", methods=["POST"], endpoint="reactivate_company"
+)
 @admin_required
 def reactivate_company(company_id):
     company = Company.query.get_or_404(company_id)

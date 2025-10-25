@@ -23,7 +23,7 @@ reports = Blueprint(
 )
 
 
-@reports.route("/reports")
+@reports.route("/reports", endpoint="reports_home")
 @admin_required
 def reports_home() -> str:
     """Render the interactive reports dashboard."""
@@ -34,7 +34,7 @@ def reports_home() -> str:
     )
 
 
-@reports.route("/api/summary")
+@reports.route("/api/summary", endpoint="summary_api")
 @admin_required
 def summary_api() -> Any:
     """Return a JSON payload with aggregated platform statistics."""
@@ -53,7 +53,7 @@ def summary_api() -> Any:
     return jsonify(payload)
 
 
-@reports.route("/reports/export")
+@reports.route("/reports/export", endpoint="export_pdf")
 @admin_required
 def export_pdf() -> Any:
     """Generate a PDF report for download using the latest analytics."""
