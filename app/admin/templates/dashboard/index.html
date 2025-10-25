@@ -3,104 +3,223 @@
 {% set active_page = 'overview' %}
 
 {% block content %}
-    <!-- Quick metrics cards -->
     <div class="container-fluid py-4">
-        <div class="row g-4">
-            <div class="col-12 col-md-4">
-                <div class="card shadow-sm admin-card admin-stat-card h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="admin-stat-label">Total Users</div>
-                                <div class="admin-stat-value">{{ total_users|default(0) }}</div>
-                            </div>
-                            <span class="admin-stat-icon" aria-hidden="true">👥</span>
-                        </div>
-                        <p class="text-muted small mb-0 mt-3">
-                            Monitor community growth and ensure membership tiers stay aligned with Elite standards.
-                        </p>
-                    </div>
+        <!-- Hero banner -->
+        <section class="dashboard-hero mb-4">
+            <div class="dashboard-hero__content">
+                <h1 class="dashboard-hero__title">لوحة تحكم النخبة</h1>
+                <p class="dashboard-hero__subtitle">
+                    راقب نمو المجتمع، وحافظ على جودة الشراكات، وقُد الحملات الترويجية بروح متجددة.
+                </p>
+                <div class="dashboard-hero__meta">
+                    <span class="badge bg-soft-primary">{{ total_users|default(0) }} عضو</span>
+                    <span class="badge bg-soft-primary">{{ total_companies|default(0) }} شريك</span>
+                    <span class="badge bg-soft-primary">{{ total_offers|default(0) }} عرض نشط</span>
                 </div>
             </div>
-            <div class="col-12 col-md-4">
-                <div class="card shadow-sm admin-card admin-stat-card h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="admin-stat-label">Partner Companies</div>
-                                <div class="admin-stat-value">{{ total_companies|default(0) }}</div>
-                            </div>
-                            <span class="admin-stat-icon" aria-hidden="true">🏢</span>
-                        </div>
-                        <p class="text-muted small mb-0 mt-3">
-                            Keep the partner directory vibrant with accurate descriptions and polished branding.
-                        </p>
-                    </div>
-                </div>
+            <div class="dashboard-hero__cta">
+                <a class="btn btn-light btn-lg" href="{{ url_for('admin.dashboard_users') }}">
+                    إدارة الأعضاء
+                </a>
+                <a class="btn btn-outline-light btn-lg" href="{{ url_for('reports.reports_home') }}">
+                    التقارير التفاعلية
+                </a>
             </div>
-            <div class="col-12 col-md-4">
-                <div class="card shadow-sm admin-card admin-stat-card h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="admin-stat-label">Live Offers</div>
-                                <div class="admin-stat-value">{{ total_offers|default(0) }}</div>
-                            </div>
-                            <span class="admin-stat-icon" aria-hidden="true">🎁</span>
-                        </div>
-                        <p class="text-muted small mb-0 mt-3">
-                            Curate seasonal campaigns and keep the discounts pipeline full for Elite members.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </section>
 
-        <hr class="admin-divider">
-
-        <!-- Management shortcuts -->
-        <div class="row g-4">
-            <div class="col-12 col-lg-6">
-                <div class="card shadow-sm admin-card mb-4 mb-lg-0">
+        <!-- Stats grid -->
+        <section class="row g-4 mb-1 stat-grid" aria-label="مؤشرات سريعة">
+            <div class="col-12 col-lg-4 col-md-6">
+                <article class="card stat-card-modern gradient-blue h-100">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-start justify-content-between gap-3">
                             <div>
-                                <h2 class="h5 mb-1">Team Operations</h2>
-                                <p class="text-muted small mb-0">Invite administrators and resolve credential issues in seconds.</p>
+                                <span class="trend-label">النمو الشهري</span>
+                                <h2 class="stat-value">{{ total_users|default(0) }}</h2>
+                                <p class="stat-description">
+                                    أعضاء موثقون يتلقون امتيازات Elite الحصرية.
+                                </p>
                             </div>
-                            <a class="btn btn-primary" href="{{ url_for('admin.dashboard_users') }}">Open Users</a>
+                            <span class="icon-circle" aria-hidden="true">👥</span>
                         </div>
-                        <ul class="list-unstyled mb-0 small text-muted">
-                            <li class="mb-2">• Promote trusted members into admin or superadmin roles.</li>
-                            <li class="mb-2">• Reset passwords securely following Elite security guidance.</li>
-                            <li>• Track inactive accounts and archive them when needed.</li>
+                        <div class="progress mt-3" role="presentation">
+                            <div class="progress-bar" style="width: 68%" aria-hidden="true"></div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="col-12 col-lg-4 col-md-6">
+                <article class="card stat-card-modern gradient-sand h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between gap-3">
+                            <div>
+                                <span class="trend-label">شبكة الشركاء</span>
+                                <h2 class="stat-value">{{ total_companies|default(0) }}</h2>
+                                <p class="stat-description">
+                                    علامات تجارية منتقاة بعناية وبطاقات تعريف محدثة.
+                                </p>
+                            </div>
+                            <span class="icon-circle" aria-hidden="true">🏢</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mt-3 small">
+                            <span class="trend-pill trend-up">+3 شركاء هذا الأسبوع</span>
+                            <a class="link-light" href="{{ url_for('admin.list_companies') }}">عرض التفاصيل</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="col-12 col-lg-4 col-md-6">
+                <article class="card stat-card-modern gradient-violet h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between gap-3">
+                            <div>
+                                <span class="trend-label">عروض مفعلة</span>
+                                <h2 class="stat-value">{{ total_offers|default(0) }}</h2>
+                                <p class="stat-description">
+                                    باقات امتيازات محدثة للمشتركين ذوي الياقات الذهبية.
+                                </p>
+                            </div>
+                            <span class="icon-circle" aria-hidden="true">🎁</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mt-3 small">
+                            <span class="trend-pill trend-neutral">صلاحيات التحقق الآلي مفعلة</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Workflow cards -->
+        <section class="row g-4 mt-0" aria-label="التدفقات الرئيسية">
+            <div class="col-12 col-xl-4">
+                <article class="card workflow-card h-100">
+                    <div class="card-body">
+                        <h2 class="workflow-title">تشغيل فرق العمل</h2>
+                        <p class="workflow-description">
+                            تحكّم في صلاحيات المسؤولين، تابع طلبات الانضمام، واحرص على أن يكون مستوى الخدمة مواكباً لتوقعات Elite.
+                        </p>
+                        <ul class="workflow-list">
+                            <li>جدولة مراجعات أسبوعية لمراجعة الصلاحيات.</li>
+                            <li>تتبع الحسابات غير النشطة وإرسال تنبيهات استباقية.</li>
+                            <li>حل قضايا تسجيل الدخول من خلال قنوات الدعم.</li>
+                        </ul>
+                        <a class="btn btn-primary w-100" href="{{ url_for('admin.dashboard_users') }}">فتح لوحة المستخدمين</a>
+                    </div>
+                </article>
+            </div>
+            <div class="col-12 col-xl-4">
+                <article class="card workflow-card h-100">
+                    <div class="card-body">
+                        <h2 class="workflow-title">صحة السوق</h2>
+                        <p class="workflow-description">
+                            حافظ على تناغم عروض الشركاء مع توقعات الأعضاء من خلال مراقبة جودة المحتوى والأداء التجاري.
+                        </p>
+                        <div class="workflow-metrics">
+                            <div>
+                                <span class="metric-label">نسبة الامتثال</span>
+                                <span class="metric-value">94%</span>
+                            </div>
+                            <div>
+                                <span class="metric-label">عروض بحاجة لتحديث</span>
+                                <span class="metric-value">5</span>
+                            </div>
+                        </div>
+                        <a class="btn btn-outline-primary w-100" href="{{ url_for('reports.reports_home') }}">استعراض التقارير</a>
+                    </div>
+                </article>
+            </div>
+            <div class="col-12 col-xl-4">
+                <article class="card workflow-card h-100">
+                    <div class="card-body">
+                        <h2 class="workflow-title">تجارب الأعضاء</h2>
+                        <p class="workflow-description">
+                            اعمل على إبراز التفاعل مع العروض عبر متابعة سجل الاستردادات والتنبيهات الخاصة بالأعضاء المميزين.
+                        </p>
+                        <ul class="workflow-list">
+                            <li>راقب أداء القسائم عالية القيمة.</li>
+                            <li>فعّل حملات مخصصة حسب القطاعات.</li>
+                            <li>تابع شكاوى الدعم المباشرة.</li>
+                        </ul>
+                        <a class="btn btn-outline-secondary w-100" href="{{ url_for('admin.dashboard_offers') }}">إدارة العروض</a>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Activity & highlights -->
+        <section class="row g-4 mt-1" aria-label="التحديثات الأخيرة">
+            <div class="col-12 col-lg-7">
+                <article class="card highlight-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div>
+                                <h2 class="h5 mb-1">أنشطة حديثة</h2>
+                                <p class="text-muted small mb-0">لقطات سريعة من العمليات الجارية خلال آخر 24 ساعة.</p>
+                            </div>
+                            <a class="btn btn-sm btn-light" href="{{ url_for('admin.activity_log') }}">سجل النشاط</a>
+                        </div>
+                        <ul class="timeline">
+                            <li>
+                                <span class="timeline-dot bg-primary"></span>
+                                <div>
+                                    <strong>شركة جديدة قيد المراجعة</strong>
+                                    <p class="mb-0 text-muted">تأكيد هوية شركة شريك جديد لنطاق الضيافة.</p>
+                                    <small class="text-muted">قبل 30 دقيقة</small>
+                                </div>
+                            </li>
+                            <li>
+                                <span class="timeline-dot bg-success"></span>
+                                <div>
+                                    <strong>تحديث عرض</strong>
+                                    <p class="mb-0 text-muted">تفعيل خصم نهاية الأسبوع لـ Elite Gold.</p>
+                                    <small class="text-muted">قبل ساعة</small>
+                                </div>
+                            </li>
+                            <li>
+                                <span class="timeline-dot bg-warning"></span>
+                                <div>
+                                    <strong>طلب دعم</strong>
+                                    <p class="mb-0 text-muted">عضو طالب إعادة تعيين صلاحيات VIP.</p>
+                                    <small class="text-muted">قبل 3 ساعات</small>
+                                </div>
+                            </li>
                         </ul>
                     </div>
-                </div>
+                </article>
             </div>
-            <div class="col-12 col-lg-6">
-                <div class="card shadow-sm admin-card">
+            <div class="col-12 col-lg-5">
+                <article class="card highlight-card h-100">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div>
-                                <h2 class="h5 mb-1">Marketplace Health</h2>
-                                <p class="text-muted small mb-0">Balance partner onboarding with compelling offers for every tier.</p>
+                        <h2 class="h5 mb-3">لوحة الأهداف</h2>
+                        <div class="goal-list">
+                            <div class="goal-item">
+                                <div>
+                                    <strong>ترقية تجربة الانضمام</strong>
+                                    <p class="mb-0 text-muted">إطلاق رحلة تسجيل متدرجة للأعضاء الجدد.</p>
+                                </div>
+                                <span class="badge bg-soft-primary">قيد التنفيذ</span>
                             </div>
-                            <a class="btn btn-outline-primary" href="{{ url_for('reports.reports_home') }}">View Reports</a>
+                            <div class="goal-item">
+                                <div>
+                                    <strong>تحسين بيانات العروض</strong>
+                                    <p class="mb-0 text-muted">استكمال الحقول الوصفية لـ 12 عرضاً مفضلاً.</p>
+                                </div>
+                                <span class="badge bg-soft-primary">50%</span>
+                            </div>
+                            <div class="goal-item">
+                                <div>
+                                    <strong>رفع مستوى التفاعل</strong>
+                                    <p class="mb-0 text-muted">تهيئة رسائل دفع أسبوعية لأعضاء Elite Platinum.</p>
+                                </div>
+                                <span class="badge bg-soft-primary">قريباً</span>
+                            </div>
                         </div>
-                        <div class="row g-3 small text-muted">
-                            <div class="col-12 col-sm-6">
-                                <strong class="text-dark d-block mb-1">Partner Management</strong>
-                                <p class="mb-0">Audit company records, assign owners, and elevate standout brands.</p>
-                            </div>
-                            <div class="col-12 col-sm-6">
-                                <strong class="text-dark d-block mb-1">Offer Lifecycle</strong>
-                                <p class="mb-0">Schedule launches, monitor expirations, and refresh discounts seamlessly.</p>
-                            </div>
-                        </div>
+                        <a class="btn btn-link mt-3" href="{{ url_for('communications.broadcast_center') }}">
+                            التخطيط للحملة التالية ↗
+                        </a>
                     </div>
-                </div>
+                </article>
             </div>
-        </div>
+        </section>
     </div>
 {% endblock %}
