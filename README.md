@@ -13,6 +13,12 @@
 - PostgreSQL 13 أو أحدث
 - Redis متاح محليًا أو عبر خدمة خارجية
 
+## Fix: Resolved Admin Template Shadowing
+- Renamed admin base layout to dashboard/admin_base.html.
+- Updated all admin templates to extend "dashboard/admin_base.html".
+- Removed duplicate dashboard/base.html that conflicted with global template.
+- Restored correct sidebar and Companies tab visibility for admin and superadmin roles.
+
 ## التثبيت السريع
 1. أنشئ بيئة افتراضية ثم فعّلها:
    ```bash
