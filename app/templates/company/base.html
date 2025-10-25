@@ -36,26 +36,26 @@
             </button>
             <div class="company-nav-links" id="companyNavLinks">
                 <a
-                    class="company-nav-link {{ 'is-active' if current_path.startswith(url_for('company_portal_bp.dashboard')) else '' }}"
-                    href="{{ url_for('company_portal_bp.dashboard') }}"
+                    class="company-nav-link {{ 'is-active' if current_path.startswith(url_for('company_portal.dashboard')) else '' }}"
+                    href="{{ url_for('company_portal.dashboard') }}"
                 >
                     Dashboard
                 </a>
                 <a
-                    class="company-nav-link {{ 'is-active' if current_path.startswith(url_for('company_portal_bp.offers')) else '' }}"
-                    href="{{ url_for('company_portal_bp.offers') }}"
+                    class="company-nav-link {{ 'is-active' if current_path.startswith(url_for('company_portal.offers')) else '' }}"
+                    href="{{ url_for('company_portal.offers') }}"
                 >
                     Offers
                 </a>
                 <a
-                    class="company-nav-link {{ 'is-active' if current_path.startswith(url_for('company_portal_bp.redemptions')) else '' }}"
-                    href="{{ url_for('company_portal_bp.redemptions') }}"
+                    class="company-nav-link {{ 'is-active' if current_path.startswith(url_for('company_portal.redemptions')) else '' }}"
+                    href="{{ url_for('company_portal.redemptions') }}"
                 >
                     Redemptions
                 </a>
                 <a
-                    class="company-nav-link {{ 'is-active' if current_path.startswith(url_for('company_portal_bp.settings')) else '' }}"
-                    href="{{ url_for('company_portal_bp.settings') }}"
+                    class="company-nav-link {{ 'is-active' if current_path.startswith(url_for('company_portal.settings')) else '' }}"
+                    href="{{ url_for('company_portal.settings') }}"
                 >
                     Settings
                 </a>

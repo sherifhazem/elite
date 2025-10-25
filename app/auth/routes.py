@@ -277,7 +277,7 @@ def api_login() -> tuple:
 
     token = create_token(user.id)
     if user.role == "company":
-        redirect_url = url_for("company_portal_bp.dashboard")
+        redirect_url = url_for("company_portal.dashboard")
     elif user.role in {"admin", "superadmin"}:
         redirect_url = url_for("admin.dashboard_home")
     else:

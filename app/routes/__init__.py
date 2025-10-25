@@ -25,7 +25,7 @@ def index():
 
     role = getattr(user, "role", "member").strip().lower()
     if role == "company":
-        return redirect(url_for("company_portal_bp.dashboard"))
+        return redirect(url_for("company_portal.dashboard"))
     if role in {"admin", "superadmin"}:
         return redirect(url_for("admin.dashboard_home"))
     return redirect(url_for("portal.home"))

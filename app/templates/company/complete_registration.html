@@ -14,7 +14,7 @@
                     </p>
                 <form
                     method="post"
-                    action="{{ url_for('company_portal_bp.complete_registration', company_id=company.id) }}"
+                    action="{{ url_for('company_portal.complete_registration', company_id=company.id) }}"
                     novalidate
                 >
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

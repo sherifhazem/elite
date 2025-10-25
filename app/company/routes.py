@@ -17,14 +17,14 @@ from ..services.notifications import (
 from ..services.offers import list_company_offers
 from ..services.redemption import list_company_redemptions
 from ..services.roles import require_role, resolve_user_from_request
-from . import company_portal_bp
+from . import company_portal
 
-@company_portal_bp.before_request
+@company_portal.before_request
 def _prevent_suspended_company_access():
     endpoint = request.endpoint or ""
-    if not endpoint.startswith("company_portal_bp."):
+    if not endpoint.startswith("company_portal."):
         return None
-    if endpoint == "company_portal_bp.complete_registration":
+    if endpoint == "company_portal.complete_registration":
         return None
     user = getattr(g, "current_user", None) or flask_current_user
     if not getattr(user, "is_authenticated", False):
@@ -91,7 +91,7 @@ def _parse_offer_payload(data: Dict[str, str]) -> Tuple[Dict[str, object], str |
     return payload, None
 
 
-@company_portal_bp.route("/complete_registration/<int:company_id>", methods=["GET", "POST"])
+@company_portal.route("/complete_registration/<int:company_id>", methods=["GET", "POST"])
 def complete_registration(company_id: int):
     company = Company.query.get_or_404(company_id)
     preferences = company.notification_settings()
@@ -123,15 +123,15 @@ def complete_registration(company_id: int):
 
 # باقي المسارات (dashboard, offers, redemptions, settings)
 # تترك كما هي لأن الكود الحالي لها صحيح ووظيفي.
-@company_portal_bp.route("/")
+@company_portal.route("/")
 @require_role("company")
 def index() -> str:
     """Redirect root portal requests to the dashboard view."""
 
-    return redirect(url_for("company_portal_bp.dashboard"))
+    return redirect(url_for("company_portal.dashboard"))
 
 
-@company_portal_bp.route("/dashboard")
+@company_portal.route("/dashboard")
 @require_role("company")
 def dashboard() -> str:
     """Render the overview cards and latest redemption activity."""
@@ -179,7 +179,7 @@ def dashboard() -> str:
     )
 
 
-@company_portal_bp.route("/offers")
+@company_portal.route("/offers")
 @require_role("company")
 def offers() -> str:
     """Display the offer management table scoped to the current company."""
@@ -200,7 +200,7 @@ def offers() -> str:
     )
 
 
-@company_portal_bp.route("/offers/new")
+@company_portal.route("/offers/new")
 @require_role("company")
 def offer_new() -> str:
     """Render the offer creation form used inside the modal component."""
@@ -210,12 +210,12 @@ def offer_new() -> str:
         "company/offer_form.html",
         company=company,
         offer=None,
-        action_url=url_for("company_portal_bp.offer_create"),
+        action_url=url_for("company_portal.offer_create"),
         method="POST",
     )
 
 
-@company_portal_bp.route("/offers", methods=["POST"])
+@company_portal.route("/offers", methods=["POST"])
 @require_role("company")
 def offer_create():
     """Persist a new offer and optionally broadcast notifications."""
@@ -227,7 +227,7 @@ def offer_create():
         if request.is_json:
             return jsonify({"ok": False, "message": error}), HTTPStatus.BAD_REQUEST
         flash(error, "danger")
-        return redirect(url_for("company_portal_bp.offers"))
+        return redirect(url_for("company_portal.offers"))
 
     offer = Offer(
         title=payload["title"],
@@ -245,10 +245,10 @@ def offer_create():
     if request.is_json:
         return jsonify({"ok": True, "offer_id": offer.id})
     flash("Offer created successfully.", "success")
-    return redirect(url_for("company_portal_bp.offers"))
+    return redirect(url_for("company_portal.offers"))
 
 
-@company_portal_bp.route("/offers/<int:offer_id>/edit")
+@company_portal.route("/offers/<int:offer_id>/edit")
 @require_role("company")
 def offer_edit(offer_id: int) -> str:
     """Return the pre-filled offer form for modal editing."""
@@ -259,12 +259,12 @@ def offer_edit(offer_id: int) -> str:
         "company/offer_form.html",
         company=company,
         offer=offer,
-        action_url=url_for("company_portal_bp.offer_update", offer_id=offer_id),
+        action_url=url_for("company_portal.offer_update", offer_id=offer_id),
         method="PUT",
     )
 
 
-@company_portal_bp.route("/offers/<int:offer_id>", methods=["POST", "PUT"])
+@company_portal.route("/offers/<int:offer_id>", methods=["POST", "PUT"])
 @require_role("company")
 def offer_update(offer_id: int):
     """Update an existing offer ensuring it belongs to the current company."""
@@ -278,7 +278,7 @@ def offer_update(offer_id: int):
         if request.is_json:
             return jsonify({"ok": False, "message": error}), HTTPStatus.BAD_REQUEST
         flash(error, "danger")
-        return redirect(url_for("company_portal_bp.offers"))
+        return redirect(url_for("company_portal.offers"))
 
     offer.title = payload["title"]
     offer.description = payload["description"]
@@ -292,10 +292,10 @@ def offer_update(offer_id: int):
     if request.is_json:
         return jsonify({"ok": True, "offer_id": offer.id})
     flash("Offer updated successfully.", "success")
-    return redirect(url_for("company_portal_bp.offers"))
+    return redirect(url_for("company_portal.offers"))
 
 
-@company_portal_bp.route("/offers/<int:offer_id>/delete", methods=["POST", "DELETE"])
+@company_portal.route("/offers/<int:offer_id>/delete", methods=["POST", "DELETE"])
 @require_role("company")
 def offer_delete(offer_id: int):
     """Delete the specified offer owned by the current company."""
@@ -308,10 +308,10 @@ def offer_delete(offer_id: int):
     if request.is_json:
         return jsonify({"ok": True})
     flash("Offer removed successfully.", "success")
-    return redirect(url_for("company_portal_bp.offers"))
+    return redirect(url_for("company_portal.offers"))
 
 
-@company_portal_bp.route("/redemptions")
+@company_portal.route("/redemptions")
 @require_role("company")
 def redemptions() -> str:
     """Render the redemption history with contextual filters."""
@@ -362,7 +362,7 @@ def redemptions() -> str:
     )
 
 
-@company_portal_bp.route("/redemptions/data")
+@company_portal.route("/redemptions/data")
 @require_role("company")
 def redemptions_data():
     """Return company redemption history as JSON for live refreshing."""
@@ -419,7 +419,7 @@ def redemptions_data():
     return jsonify({"items": items})
 
 
-@company_portal_bp.route("/redemptions/verify", methods=["POST"])
+@company_portal.route("/redemptions/verify", methods=["POST"])
 @require_role("company")
 def verify_redemption():
     """Validate a redemption code or QR token for the current company."""
@@ -458,7 +458,7 @@ def verify_redemption():
     )
 
 
-@company_portal_bp.route("/redemptions/confirm", methods=["POST"])
+@company_portal.route("/redemptions/confirm", methods=["POST"])
 @require_role("company")
 def confirm_redemption():
     """Mark a verified redemption as redeemed after staff confirmation."""
@@ -497,7 +497,7 @@ def confirm_redemption():
     return jsonify({"ok": True, "status": redemption.status})
 
 
-@company_portal_bp.route("/settings", methods=["GET", "POST"])
+@company_portal.route("/settings", methods=["GET", "POST"])
 @require_role("company")
 def settings():
     """Display and persist company profile metadata."""
@@ -552,7 +552,7 @@ def settings():
                     HTTPStatus.OK,
                 )
             flash(message, "warning")
-            return redirect(url_for("company_portal_bp.settings"))
+            return redirect(url_for("company_portal.settings"))
 
         company.description = description or None
         company.logo_url = logo_url or None
@@ -566,7 +566,7 @@ def settings():
         if request.is_json:
             return jsonify({"ok": True, "message": success_message})
         flash(success_message, "success")
-        return redirect(url_for("company_portal_bp.settings"))
+        return redirect(url_for("company_portal.settings"))
 
     return render_template(
         "company/settings.html",
@@ -575,4 +575,4 @@ def settings():
     )
 
 
-__all__ = ["company_portal_bp"]
+__all__ = ["company_portal"]
