@@ -15,7 +15,7 @@ from flask import current_app, url_for
 from sqlalchemy.orm import joinedload
 
 from .. import app, celery, db, redis_client
-from ..models.notification import Notification
+from app.models import Notification
 from ..models.offer import Offer
 from ..models.user import User
 
@@ -559,6 +559,35 @@ def get_unread_count(user_id: int, sample_limit: int = 50) -> int:
     return unread
 
 
+def get_notifications_for_user(user_id: int, limit: int = 20) -> list[dict]:
+    """
+    Retrieve the most recent notifications for a given user.
+    Returns a list of serialized notification dicts.
+    """
+
+    if not user_id:
+        return []
+
+    notifications = (
+        Notification.query.filter_by(user_id=user_id)
+        .order_by(Notification.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        {
+            "id": n.id,
+            "title": n.title or "Notification",
+            "message": n.message or "",
+            "is_read": getattr(n, "is_read", False),
+            "ts": n.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "link": getattr(n, "link", None),
+        }
+        for n in notifications
+    ]
+
+
 def mark_all_read(user_id: int) -> None:
     """Mark all admin notifications as read for the specified administrator."""
 
@@ -580,5 +609,6 @@ __all__ = [
     "push_admin_notification",
     "list_admin_notifications",
     "get_unread_count",
+    "get_notifications_for_user",
     "mark_all_read",
 ]
