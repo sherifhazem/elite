@@ -2,12 +2,12 @@
 
 from flask import Blueprint, jsonify, redirect, url_for
 
-from .company_routes import company_routes
-from .offer_routes import offer_routes
-from .redemption_routes import redemption_bp
-from .notification_routes import notif_bp
-from .user_routes import user_routes
-from .user_portal_routes import portal_bp
+from .company_routes import companies
+from .offer_routes import offers
+from .redemption_routes import redemption
+from .notification_routes import notifications
+from .user_routes import users
+from .user_portal_routes import portal
 from ..services.roles import resolve_user_from_request
 
 
@@ -49,10 +49,10 @@ def health_check():
 
 __all__ = [
     "main",
-    "user_routes",
-    "company_routes",
-    "offer_routes",
-    "redemption_bp",
-    "portal_bp",
-    "notif_bp",
+    "users",
+    "companies",
+    "offers",
+    "redemption",
+    "portal",
+    "notifications",
 ]

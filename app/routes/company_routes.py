@@ -19,7 +19,7 @@ from ..services.notifications import send_welcome_notification
 from ..services.roles import require_role
 
 
-company_routes = Blueprint("company_routes", __name__)
+companies = Blueprint("companies", __name__)
 
 
 def _serialize_company(company: Company) -> dict:
@@ -47,7 +47,7 @@ def _serialize_owner(user: User) -> dict:
     }
 
 
-@company_routes.route("/register", methods=["POST"])
+@companies.route("/register", methods=["POST"])
 def register_company():
     """Public endpoint allowing a business to create its company account."""
 
@@ -58,7 +58,7 @@ def register_company():
     return jsonify(response), status
 
 
-@company_routes.route("/", methods=["GET"])
+@companies.route("/", methods=["GET"])
 def list_companies():
     """Return all companies collaborating with ELITE."""
 
@@ -66,7 +66,7 @@ def list_companies():
     return jsonify([_serialize_company(company) for company in companies]), 200
 
 
-@company_routes.route("/", methods=["POST"])
+@companies.route("/", methods=["POST"])
 @require_role("admin")
 def create_company():
     """Create a new company from the provided JSON payload."""
@@ -106,7 +106,7 @@ def create_company():
     return jsonify(_serialize_company(company)), 201
 
 
-@company_routes.route("/<int:company_id>", methods=["PUT"])
+@companies.route("/<int:company_id>", methods=["PUT"])
 @require_role("admin")
 def update_company(company_id: int):
     """Update the company identified by company_id."""
@@ -133,7 +133,7 @@ def update_company(company_id: int):
     return jsonify(_serialize_company(company)), 200
 
 
-@company_routes.route("/<int:company_id>", methods=["DELETE"])
+@companies.route("/<int:company_id>", methods=["DELETE"])
 @require_role("admin")
 def delete_company(company_id: int):
     """Remove a company from the database."""
@@ -148,4 +148,4 @@ def delete_company(company_id: int):
     return jsonify({"status": "deleted"}), 200
 
 
-__all__ = ["company_routes"]
+__all__ = ["companies"]

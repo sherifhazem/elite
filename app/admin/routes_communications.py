@@ -25,7 +25,7 @@ from ..models.user import User
 from ..services.notifications import send_admin_broadcast_notifications
 from ..services.roles import admin_required
 from ..services import email_service
-from .routes import admin_bp
+from .routes import admin
 
 
 CommunicationLogEntry = Dict[str, object]
@@ -165,7 +165,7 @@ def _log_communication(entry: CommunicationLogEntry) -> None:
     COMMUNICATION_HISTORY.appendleft(entry)
 
 
-@admin_bp.route("/communications")
+@admin.route("/communications")
 @admin_required
 def communication_history() -> str:
     """Render the administrative communication history ledger."""
@@ -180,7 +180,7 @@ def communication_history() -> str:
     )
 
 
-@admin_bp.route("/communications/new", methods=["GET", "POST"])
+@admin.route("/communications/new", methods=["GET", "POST"])
 @admin_required
 def compose_communication() -> str:
     """Render the compose form and dispatch messages on submission."""
@@ -278,7 +278,7 @@ def compose_communication() -> str:
     )
 
 
-@admin_bp.route("/communications/<string:entry_id>")
+@admin.route("/communications/<string:entry_id>")
 @admin_required
 def communication_detail(entry_id: str) -> str:
     """Render a detailed view of a single communication record."""
@@ -295,7 +295,7 @@ def communication_detail(entry_id: str) -> str:
     abort(404)
 
 
-@admin_bp.route("/communications/lookup")
+@admin.route("/communications/lookup")
 @admin_required
 def communication_lookup() -> Response:
     """Return JSON payloads used for recipient autocomplete search widgets."""

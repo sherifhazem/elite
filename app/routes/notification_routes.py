@@ -11,7 +11,7 @@ from ..auth.utils import get_user_from_token
 from ..models.notification import Notification
 from ..services.roles import _extract_token
 
-notif_bp = Blueprint("notifications", __name__, url_prefix="/api/notifications")
+notifications = Blueprint("notifications", __name__, url_prefix="/api/notifications")
 
 
 def _serialize_notification(notification: Notification) -> Dict[str, object]:
@@ -31,7 +31,7 @@ def _serialize_notification(notification: Notification) -> Dict[str, object]:
     }
 
 
-@notif_bp.before_request
+@notifications.before_request
 def _require_authentication():
     """Ensure the incoming request is tied to an authenticated user."""
 
@@ -43,7 +43,7 @@ def _require_authentication():
     return None
 
 
-@notif_bp.route("/", methods=["GET"])
+@notifications.route("/", methods=["GET"])
 def list_notifications():
     """Return a paginated list of notifications for the current user."""
 
@@ -81,7 +81,7 @@ def list_notifications():
     )
 
 
-@notif_bp.route("/<int:notification_id>/read", methods=["PUT"])
+@notifications.route("/<int:notification_id>/read", methods=["PUT"])
 def mark_notification_read(notification_id: int):
     """Mark a specific notification as read for the current user."""
 
@@ -98,7 +98,7 @@ def mark_notification_read(notification_id: int):
     return jsonify({"status": "updated", "notification": _serialize_notification(notification)}), 200
 
 
-@notif_bp.route("/read-all", methods=["PUT"])
+@notifications.route("/read-all", methods=["PUT"])
 def mark_all_notifications_read():
     """Mark all notifications for the current user as read."""
 
@@ -113,7 +113,7 @@ def mark_all_notifications_read():
     return jsonify({"status": "updated", "updated_count": int(updated)}), 200
 
 
-@notif_bp.route("/<int:notification_id>", methods=["DELETE"])
+@notifications.route("/<int:notification_id>", methods=["DELETE"])
 def delete_notification(notification_id: int):
     """Delete a notification belonging to the current user."""
 
@@ -129,4 +129,4 @@ def delete_notification(notification_id: int):
     return jsonify({"status": "deleted"}), 200
 
 
-__all__ = ["notif_bp"]
+__all__ = ["notifications"]

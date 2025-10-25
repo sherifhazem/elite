@@ -8,6 +8,7 @@
 # Updated templates to use endpoint-based url_for; README cleaned & synced with actual routes.
 
 """Authentication blueprint routes for registration, login, and profile retrieval."""
+
 from __future__ import annotations
 
 from http import HTTPStatus
@@ -38,7 +39,7 @@ from ..forms import CompanyRegistrationForm
 from .utils import confirm_token, create_token, decode_token, generate_token
 
 
-auth_bp = Blueprint("auth", __name__)
+auth = Blueprint("auth", __name__)
 
 
 WelcomeNotifier = Callable[[User], Optional[int]]
@@ -133,7 +134,7 @@ def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, in
     return jsonify(response), HTTPStatus.CREATED
 
 
-@auth_bp.route("/api/auth/register", methods=["GET", "POST"], endpoint="api_register")
+@auth.route("/api/auth/register", methods=["GET", "POST"], endpoint="api_register")
 def register() -> Response | tuple:
     """Register a new member account tailored for the mobile portal."""
 
@@ -155,7 +156,7 @@ def register() -> Response | tuple:
     return _register_member_from_payload(payload)
 
 
-@auth_bp.route("/register/select", methods=["GET"], endpoint="register_select")
+@auth.route("/register/select", methods=["GET"], endpoint="register_select")
 def register_select_page() -> Response:
     """Maintain legacy path by redirecting to the unified registration choice page."""
 
@@ -182,7 +183,7 @@ def _register_company_from_form(
     }
 
 
-@auth_bp.route("/register/member", methods=["GET", "POST"])
+@auth.route("/register/member", methods=["GET", "POST"])
 def register_member():
     """Render or process the member registration form for browser visitors."""
 
@@ -206,14 +207,14 @@ def register_member():
     return response, status
 
 
-@auth_bp.route("/auth/register/member", methods=["GET", "POST"])
+@auth.route("/auth/register/member", methods=["GET", "POST"])
 def register_member_legacy():
     """Preserve the historic /auth/register/member path."""
 
     return register_member()
 
 
-@auth_bp.route(
+@auth.route(
     "/register/company",
     methods=["GET", "POST"],
     endpoint="register_company",
@@ -248,7 +249,7 @@ def company_register_page():
     return render_template("auth/register_company.html", form=form), HTTPStatus.BAD_REQUEST
 
 
-@auth_bp.post("/api/auth/login", endpoint="api_login")
+@auth.post("/api/auth/login", endpoint="api_login")
 def api_login() -> tuple:
     """Authenticate a user and return a signed JWT token."""
 
@@ -296,7 +297,7 @@ def api_login() -> tuple:
     )
 
 
-@auth_bp.get("/api/auth/profile")
+@auth.get("/api/auth/profile")
 def profile() -> tuple:
     """Return the authenticated user's profile details."""
 
@@ -330,15 +331,15 @@ def profile() -> tuple:
     return jsonify(response), HTTPStatus.OK
 
 
-@auth_bp.route("/choose_membership")
+@auth.route("/choose_membership")
 def choose_membership() -> Response:
     """Preserve legacy path and forward visitors to the refreshed register chooser."""
 
     return redirect(url_for("auth.register_choice"))
 
 
-@auth_bp.route("/login", methods=["GET"], endpoint="login")
-@auth_bp.route("/login-page")
+@auth.route("/login", methods=["GET"], endpoint="login")
+@auth.route("/login-page")
 def login_page() -> str:
     """Render the browser-based login page."""
 
@@ -346,14 +347,14 @@ def login_page() -> str:
     return render_template("auth/login.html", logout_notice=logout_notice)
 
 
-@auth_bp.route("/register", methods=["GET"], endpoint="register_choice")
+@auth.route("/register", methods=["GET"], endpoint="register_choice")
 def register_choice() -> str:
     """عرض صفحة اختيار نوع التسجيل."""
 
     return render_template("auth/register_choice.html")
 
 
-@auth_bp.route("/api/auth/verify/<token>")
+@auth.route("/api/auth/verify/<token>")
 def verify_email(token: str):
     """Activate a user account when the email confirmation token is valid."""
 
@@ -373,7 +374,7 @@ def verify_email(token: str):
     return jsonify({"message": "Email verified successfully"}), HTTPStatus.OK
 
 
-@auth_bp.route("/api/auth/reset-request", methods=["POST"])
+@auth.route("/api/auth/reset-request", methods=["POST"])
 def request_password_reset():
     """Send a password reset email containing a one-time token link."""
 
@@ -395,7 +396,7 @@ def request_password_reset():
     return jsonify({"message": "Password reset email sent"}), HTTPStatus.OK
 
 
-@auth_bp.route("/api/auth/reset-password/<token>", methods=["POST"])
+@auth.route("/api/auth/reset-password/<token>", methods=["POST"])
 def reset_password(token: str):
     """Persist a new password when the provided reset token is valid."""
 
@@ -419,7 +420,7 @@ def reset_password(token: str):
     return jsonify({"message": "Password updated successfully"}), HTTPStatus.OK
 
 
-@auth_bp.route("/logout", methods=["GET", "POST"])
+@auth.route("/logout", methods=["GET", "POST"])
 def logout():
     """Clear stored authentication state and return to the login screen."""
 

@@ -60,17 +60,17 @@ from .models import Company, Offer, Permission, Redemption, User  # noqa: F401
 
 # Register blueprints after extensions
 from .routes import (
-    company_routes,
+    companies,
     main as main_blueprint,
-    notif_bp,
-    offer_routes,
-    redemption_bp,
-    user_routes,
+    notifications,
+    offers,
+    redemption,
+    users,
 )
-from .routes.user_portal_routes import portal_bp  # noqa: E402
-from .auth import auth_bp  # noqa: E402
-from .admin import admin_bp  # noqa: E402
-from .admin.routes_reports import reports_bp  # noqa: E402
+from .routes.user_portal_routes import portal  # noqa: E402
+from .auth import auth  # noqa: E402
+from .admin import admin  # noqa: E402
+from .admin.routes_reports import reports  # noqa: E402
 from .admin.routes_activity_log import activity_log_bp  # noqa: E402
 from .company import company_portal  # noqa: E402
 
@@ -205,15 +205,15 @@ def inject_user_context():
 app.logger.info("✅ Database connection configured for %s", app.config["SQLALCHEMY_DATABASE_URI"])
 
 app.register_blueprint(main_blueprint)
-app.register_blueprint(user_routes, url_prefix="/api/users")
-app.register_blueprint(company_routes, url_prefix="/api/companies")
-app.register_blueprint(offer_routes, url_prefix="/api/offers")
-app.register_blueprint(notif_bp)
-app.register_blueprint(redemption_bp)
-app.register_blueprint(auth_bp)
-app.register_blueprint(admin_bp)
-app.register_blueprint(reports_bp)
-app.register_blueprint(portal_bp)
+app.register_blueprint(admin)
+app.register_blueprint(auth)
 app.register_blueprint(company_portal)
+app.register_blueprint(portal)
+app.register_blueprint(reports)
+app.register_blueprint(offers, url_prefix="/api/offers")
+app.register_blueprint(companies, url_prefix="/api/companies")
+app.register_blueprint(users, url_prefix="/api/users")
+app.register_blueprint(redemption)
+app.register_blueprint(notifications)
 app.register_blueprint(activity_log_bp)
 

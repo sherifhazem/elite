@@ -2,7 +2,7 @@
 """Admin routes for managing companies (simple and clean)."""
 
 # Use the main admin blueprint already defined in routes.py
-from . routes import admin_bp
+from . routes import admin
 
 from flask import render_template, redirect, url_for, flash, request
 from app import db
@@ -18,7 +18,7 @@ from app.services.mailer import (
 # ==============================
 # List Companies
 # ==============================
-@admin_bp.route("/companies", methods=["GET"])
+@admin.route("/companies", methods=["GET"])
 @admin_required
 def list_companies():
     status = request.args.get("status", "pending").lower()
@@ -40,7 +40,7 @@ def list_companies():
 # ==============================
 # View Company Details
 # ==============================
-@admin_bp.route("/companies/<int:company_id>", methods=["GET"])
+@admin.route("/companies/<int:company_id>", methods=["GET"])
 @admin_required
 def view_company(company_id):
     company = Company.query.get_or_404(company_id)
@@ -50,7 +50,7 @@ def view_company(company_id):
 # ==============================
 # Edit Company
 # ==============================
-@admin_bp.route("/companies/<int:company_id>/edit", methods=["GET", "POST"])
+@admin.route("/companies/<int:company_id>/edit", methods=["GET", "POST"])
 @admin_required
 def edit_company(company_id):
     company = Company.query.get_or_404(company_id)
@@ -68,7 +68,7 @@ def edit_company(company_id):
 # ==============================
 # Delete Company
 # ==============================
-@admin_bp.route("/companies/<int:company_id>/delete", methods=["POST"])
+@admin.route("/companies/<int:company_id>/delete", methods=["POST"])
 @admin_required
 def delete_company(company_id):
     company = Company.query.get_or_404(company_id)
@@ -81,7 +81,7 @@ def delete_company(company_id):
 # ==============================
 # Admin Actions
 # ==============================
-@admin_bp.route("/companies/<int:company_id>/approve", methods=["POST"])
+@admin.route("/companies/<int:company_id>/approve", methods=["POST"])
 @admin_required
 def approve_company(company_id):
     company = Company.query.get_or_404(company_id)
@@ -92,7 +92,7 @@ def approve_company(company_id):
     return redirect(url_for("admin.list_companies"))
 
 
-@admin_bp.route("/companies/<int:company_id>/suspend", methods=["POST"])
+@admin.route("/companies/<int:company_id>/suspend", methods=["POST"])
 @admin_required
 def suspend_company(company_id):
     company = Company.query.get_or_404(company_id)
@@ -103,7 +103,7 @@ def suspend_company(company_id):
     return redirect(url_for("admin.list_companies"))
 
 
-@admin_bp.route("/companies/<int:company_id>/reactivate", methods=["POST"])
+@admin.route("/companies/<int:company_id>/reactivate", methods=["POST"])
 @admin_required
 def reactivate_company(company_id):
     company = Company.query.get_or_404(company_id)
