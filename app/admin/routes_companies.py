@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """Admin routes for managing companies (simple and clean)."""
 
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+# Use the main admin blueprint already defined in routes.py
+from . routes import admin_bp
+
+from flask import render_template, redirect, url_for, flash, request
 from app import db
 from app.models import Company
 from app.services.roles import admin_required
@@ -11,8 +14,6 @@ from app.services.mailer import (
     send_company_suspension_email,
     send_company_reactivation_email,
 )
-
-admin_bp = Blueprint("admin", __name__)
 
 # ==============================
 # List Companies
