@@ -131,7 +131,7 @@ def index() -> str:
     return redirect(url_for("company_portal.dashboard"))
 
 
-@company_portal.route("/dashboard")
+@company_portal.route("/dashboard", endpoint="dashboard")
 @require_role("company")
 def dashboard() -> str:
     """Render the overview cards and latest redemption activity."""
@@ -179,9 +179,9 @@ def dashboard() -> str:
     )
 
 
-@company_portal.route("/offers")
+@company_portal.route("/offers", methods=["GET"], endpoint="list_offers")
 @require_role("company")
-def offers() -> str:
+def list_offers() -> str:
     """Display the offer management table scoped to the current company."""
 
     company = _current_company()
@@ -227,7 +227,7 @@ def offer_create():
         if request.is_json:
             return jsonify({"ok": False, "message": error}), HTTPStatus.BAD_REQUEST
         flash(error, "danger")
-        return redirect(url_for("company_portal.offers"))
+        return redirect(url_for("company_portal.list_offers"))
 
     offer = Offer(
         title=payload["title"],
@@ -245,7 +245,7 @@ def offer_create():
     if request.is_json:
         return jsonify({"ok": True, "offer_id": offer.id})
     flash("Offer created successfully.", "success")
-    return redirect(url_for("company_portal.offers"))
+    return redirect(url_for("company_portal.list_offers"))
 
 
 @company_portal.route("/offers/<int:offer_id>/edit")
@@ -278,7 +278,7 @@ def offer_update(offer_id: int):
         if request.is_json:
             return jsonify({"ok": False, "message": error}), HTTPStatus.BAD_REQUEST
         flash(error, "danger")
-        return redirect(url_for("company_portal.offers"))
+        return redirect(url_for("company_portal.list_offers"))
 
     offer.title = payload["title"]
     offer.description = payload["description"]
@@ -292,7 +292,7 @@ def offer_update(offer_id: int):
     if request.is_json:
         return jsonify({"ok": True, "offer_id": offer.id})
     flash("Offer updated successfully.", "success")
-    return redirect(url_for("company_portal.offers"))
+    return redirect(url_for("company_portal.list_offers"))
 
 
 @company_portal.route("/offers/<int:offer_id>/delete", methods=["POST", "DELETE"])
@@ -308,10 +308,10 @@ def offer_delete(offer_id: int):
     if request.is_json:
         return jsonify({"ok": True})
     flash("Offer removed successfully.", "success")
-    return redirect(url_for("company_portal.offers"))
+    return redirect(url_for("company_portal.list_offers"))
 
 
-@company_portal.route("/redemptions")
+@company_portal.route("/redemptions", endpoint="redemptions")
 @require_role("company")
 def redemptions() -> str:
     """Render the redemption history with contextual filters."""
