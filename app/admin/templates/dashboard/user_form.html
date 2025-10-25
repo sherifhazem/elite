@@ -1,5 +1,5 @@
-<!-- Form for creating or editing a user record. -->
 {% extends "dashboard/base.html" %}
+<!-- Form for creating or editing a user record. -->
 
 {% block content %}
     {% set form_action = url_for('admin.edit_user', user_id=user.id) if user else url_for('admin.add_user') %}
