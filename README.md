@@ -24,6 +24,11 @@
 - Removed duplicate dashboard/base.html that conflicted with global template.
 - Restored correct sidebar and Companies tab visibility for admin and superadmin roles.
 
+## Fix: AnonymousUserMixin AttributeError in Notifications
+- Added @login_required decorator to /admin/api/notifications route.
+- Added explicit check for current_user.is_authenticated.
+- Prevented crashes when fetching notifications without a valid session.
+
 ## Fix: Unified Company Portal Blueprint Name
 - Renamed company_portal_bp → company_portal for clarity and consistency.
 - Updated registration in app/__init__.py.

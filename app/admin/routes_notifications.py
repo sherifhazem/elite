@@ -2,11 +2,11 @@
 """Admin notification API endpoints backed by Redis."""
 
 from flask import jsonify, request
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 from app.admin import admin
 from app.services.notifications import (
-    list_admin_notifications,
+    get_notifications_for_user,
     get_unread_count,
     mark_all_read,
 )
@@ -14,14 +14,19 @@ from app.services.roles import admin_required
 
 
 @admin.route("/api/notifications", methods=["GET"])
+@login_required
 @admin_required
 def api_notifications_list():
-    """Return recent notifications alongside the unread count."""
+    """Return a list of recent admin notifications with unread count."""
 
-    limit = int(request.args.get("limit", 20))
-    data = list_admin_notifications(limit=limit)
+    limit = request.args.get("limit", default=20, type=int)
+
+    if not current_user.is_authenticated:
+        return jsonify({"unread": 0, "items": []}), 200
+
     unread = get_unread_count(current_user.id, sample_limit=limit)
-    return jsonify({"items": data, "unread": unread})
+    items = get_notifications_for_user(current_user.id, limit=limit)
+    return jsonify({"unread": unread, "items": items}), 200
 
 
 @admin.route("/api/notifications/read", methods=["POST"])
