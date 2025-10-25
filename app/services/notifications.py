@@ -45,7 +45,7 @@ WELCOME_NOTIFICATION_TEMPLATES: Dict[str, Dict[str, Optional[str]]] = {
             "يمكنكم الآن إدارة عروضكم ومتابعة تفاعلات الأعضاء بسهولة من لوحة التحكم الخاصة بكم."
         ),
         "type": "welcome_company",
-        "link_endpoint": "company_portal_bp.dashboard",
+        "link_endpoint": "company_portal.dashboard",
     },
     "staff": {
         "title": "👋 مرحبًا بك في فريق ELITE الإداري!",
@@ -330,7 +330,7 @@ def notify_offer_redemption_activity(
                 message=(
                     f"العضو #{redemption.user_id} أنشأ كود {redemption.redemption_code} للعرض"
                 ),
-                link_url=url_for("company_portal_bp.redemptions"),
+                link_url=url_for("company_portal.redemptions"),
                 metadata=metadata,
             )
         except Exception:  # pragma: no cover - defensive notification guard
@@ -365,7 +365,7 @@ def notify_offer_feedback(
                 type="offer_feedback",
                 title="تفاعل جديد مع العرض",
                 message="أحد الأعضاء تفاعل مع أحد عروضك.",
-                link_url=url_for("company_portal_bp.offers"),
+                link_url=url_for("company_portal.offers"),
                 metadata=metadata,
             )
         except Exception:  # pragma: no cover - defensive notification guard

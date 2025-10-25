@@ -19,6 +19,11 @@
 - Removed duplicate dashboard/base.html that conflicted with global template.
 - Restored correct sidebar and Companies tab visibility for admin and superadmin roles.
 
+## Fix: Unified Company Portal Blueprint Name
+- Renamed company_portal_bp → company_portal for clarity and consistency.
+- Updated registration in app/__init__.py.
+- Fixed all url_for calls to use 'company_portal.dashboard'.
+
 ## Security Fix: Unified Admin Route Protection
 - Applied @admin_required decorator to all admin routes (companies, offers, users, reports, communications).
 - Ensured consistent enforcement of admin-only access.
