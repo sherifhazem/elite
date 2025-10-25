@@ -365,7 +365,7 @@ def notify_offer_feedback(
                 type="offer_feedback",
                 title="تفاعل جديد مع العرض",
                 message="أحد الأعضاء تفاعل مع أحد عروضك.",
-                link_url=url_for("company_portal.offers"),
+                link_url=url_for("company_portal.list_offers"),
                 metadata=metadata,
             )
         except Exception:  # pragma: no cover - defensive notification guard

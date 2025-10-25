@@ -42,8 +42,8 @@
                     Dashboard
                 </a>
                 <a
-                    class="company-nav-link {{ 'is-active' if current_path.startswith(url_for('company_portal.offers')) else '' }}"
-                    href="{{ url_for('company_portal.offers') }}"
+                    class="company-nav-link {{ 'is-active' if current_path.startswith(url_for('company_portal.list_offers')) else '' }}"
+                    href="{{ url_for('company_portal.list_offers') }}"
                 >
                     Offers
                 </a>

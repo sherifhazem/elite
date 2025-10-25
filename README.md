@@ -24,6 +24,11 @@
 - Updated registration in app/__init__.py.
 - Fixed all url_for calls to use 'company_portal.dashboard'.
 
+## Fix: Restored Company Portal Endpoint Compatibility
+- Added endpoint="list_offers" to /company/offers route.
+- Ensured url_for('company_portal.list_offers') resolves correctly.
+- Unified endpoint names (dashboard, offers, redemptions) across company_portal blueprint.
+
 ## Refactor: Unified Blueprint Naming Across ELITE
 - Standardized all blueprint names (removed "_bp" suffix).
 - Updated registrations in app/__init__.py.
