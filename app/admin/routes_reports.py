@@ -14,7 +14,7 @@ from ..services.analytics import (
     get_recent_activity,
     get_user_summary,
 )
-from ..services.roles import require_role
+from ..services.roles import admin_required
 
 reports_bp = Blueprint(
     "reports",
@@ -24,7 +24,7 @@ reports_bp = Blueprint(
 
 
 @reports_bp.route("/reports")
-@require_role("admin")
+@admin_required
 def reports_home() -> str:
     """Render the interactive reports dashboard."""
 
@@ -35,7 +35,7 @@ def reports_home() -> str:
 
 
 @reports_bp.route("/api/summary")
-@require_role("admin")
+@admin_required
 def summary_api() -> Any:
     """Return a JSON payload with aggregated platform statistics."""
 
@@ -54,7 +54,7 @@ def summary_api() -> Any:
 
 
 @reports_bp.route("/reports/export")
-@require_role("admin")
+@admin_required
 def export_pdf() -> Any:
     """Generate a PDF report for download using the latest analytics."""
 
