@@ -24,6 +24,13 @@
 - Updated registration in app/__init__.py.
 - Fixed all url_for calls to use 'company_portal.dashboard'.
 
+## Refactor: Unified Blueprint Naming Across ELITE
+- Standardized all blueprint names (removed "_bp" suffix).
+- Updated registrations in app/__init__.py.
+- Updated all url_for() references across templates and routes.
+- Ensured consistent naming convention:
+  admin, auth, company_portal, portal, reports, offers, companies, users, redemption, notifications.
+
 ## Security Fix: Unified Admin Route Protection
 - Applied @admin_required decorator to all admin routes (companies, offers, users, reports, communications).
 - Ensured consistent enforcement of admin-only access.

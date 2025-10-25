@@ -1,5 +1,5 @@
 """Authentication blueprint initialization."""
 
-from .routes import auth_bp
+from .routes import auth
 
-__all__ = ["auth_bp"]
+__all__ = ["auth"]

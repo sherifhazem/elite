@@ -1,5 +1,4 @@
 """User CRUD blueprint providing JSON endpoints secured by RBAC."""
-
 from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
@@ -8,7 +7,7 @@ from ..models.user import User
 from ..services.roles import require_role
 
 
-user_routes = Blueprint("user_routes", __name__)
+users = Blueprint("users", __name__)
 
 
 def _serialize_user(user: User) -> dict:
@@ -23,7 +22,7 @@ def _serialize_user(user: User) -> dict:
     }
 
 
-@user_routes.route("/", methods=["GET"])
+@users.route("/", methods=["GET"])
 @require_role("admin")
 def list_users():
     """Return all users in the system."""
@@ -32,7 +31,7 @@ def list_users():
     return jsonify([_serialize_user(user) for user in users]), 200
 
 
-@user_routes.route("/", methods=["POST"])
+@users.route("/", methods=["POST"])
 @require_role("admin")
 def create_user():
     """Create a new user from the provided JSON payload."""
@@ -60,7 +59,7 @@ def create_user():
     return jsonify(_serialize_user(user)), 201
 
 
-@user_routes.route("/<int:user_id>", methods=["PUT"])
+@users.route("/<int:user_id>", methods=["PUT"])
 @require_role("admin")
 def update_user(user_id: int):
     """Update an existing user identified by user_id."""
@@ -94,7 +93,7 @@ def update_user(user_id: int):
     return jsonify(_serialize_user(user)), 200
 
 
-@user_routes.route("/<int:user_id>", methods=["DELETE"])
+@users.route("/<int:user_id>", methods=["DELETE"])
 @require_role("admin")
 def delete_user(user_id: int):
     """Remove a user from the database."""
@@ -108,7 +107,7 @@ def delete_user(user_id: int):
     return jsonify({"status": "deleted"}), 200
 
 
-@user_routes.route("/<int:user_id>/membership", methods=["PATCH"])
+@users.route("/<int:user_id>/membership", methods=["PATCH"])
 @require_role("admin")
 def update_membership(user_id: int):
     """Update the membership level for a specific user."""
@@ -128,4 +127,4 @@ def update_membership(user_id: int):
     return jsonify(_serialize_user(user)), 200
 
 
-__all__ = ["user_routes"]
+__all__ = ["users"]

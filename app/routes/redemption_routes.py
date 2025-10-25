@@ -31,7 +31,7 @@ from ..services.redemption import (
 )
 from ..services.roles import resolve_user_from_request
 
-redemption_bp = Blueprint("redemptions", __name__, url_prefix="/api/redemptions")
+redemption = Blueprint("redemption", __name__, url_prefix="/api/redemptions")
 
 
 def _current_user():
@@ -77,12 +77,12 @@ def _serialize_response(redemption: Redemption, data: dict) -> dict:
             "expires_at", redemption.expires_at.isoformat() if redemption.expires_at else None
         )
     payload["qr_url"] = url_for(
-        "redemptions.get_qrcode_image", code=payload.get("code") or redemption.redemption_code, _external=True
+        "redemption.get_qrcode_image", code=payload.get("code") or redemption.redemption_code, _external=True
     )
     return payload
 
 
-@redemption_bp.route("/", methods=["POST"])
+@redemption.route("/", methods=["POST"])
 def create_redemption_endpoint():
     """Create a new redemption code for the authenticated member."""
 
@@ -124,7 +124,7 @@ def create_redemption_endpoint():
     return jsonify(response), HTTPStatus.CREATED
 
 
-@redemption_bp.route("/<string:code>", methods=["GET"])
+@redemption.route("/<string:code>", methods=["GET"])
 def redemption_status(code: str):
     """Return the redemption status for the requested code."""
 
@@ -156,7 +156,7 @@ def redemption_status(code: str):
     return jsonify(response), HTTPStatus.OK
 
 
-@redemption_bp.route("/<string:code>/confirm", methods=["PUT"])
+@redemption.route("/<string:code>/confirm", methods=["PUT"])
 def confirm_redemption(code: str):
     """Confirm redemption usage for the company linked to the authenticated user."""
 
@@ -243,7 +243,7 @@ def confirm_redemption(code: str):
     return jsonify(response), HTTPStatus.OK
 
 
-@redemption_bp.route("/<string:code>/qrcode", methods=["GET"])
+@redemption.route("/<string:code>/qrcode", methods=["GET"])
 def get_qrcode_image(code: str):
     """Return the QR code image associated with the redemption code."""
 
@@ -273,4 +273,4 @@ def get_qrcode_image(code: str):
     return send_from_directory(directory, filename, mimetype="image/png")
 
 
-__all__ = ["redemption_bp"]
+__all__ = ["redemption"]

@@ -15,7 +15,7 @@ from ..services.notifications import broadcast_new_offer
 from ..services.roles import require_role
 
 
-offer_routes = Blueprint("offer_routes", __name__)
+offers = Blueprint("offers", __name__)
 
 
 def _extract_bearer_token() -> str | None:
@@ -60,7 +60,7 @@ def _parse_datetime(value):
         return None
 
 
-@offer_routes.route("/", methods=["GET"])
+@offers.route("/", methods=["GET"])
 def list_offers():
     """Return all offers provided by registered companies."""
 
@@ -76,7 +76,7 @@ def list_offers():
     return jsonify([_serialize_offer(offer, membership_level) for offer in offers]), 200
 
 
-@offer_routes.route("/", methods=["POST"])
+@offers.route("/", methods=["POST"])
 @require_role("admin")
 def create_offer():
     """Create a new offer from the provided JSON payload."""
@@ -119,7 +119,7 @@ def create_offer():
     return jsonify(_serialize_offer(offer, "Basic")), 201
 
 
-@offer_routes.route("/<int:offer_id>", methods=["PUT"])
+@offers.route("/<int:offer_id>", methods=["PUT"])
 @require_role("admin")
 def update_offer(offer_id: int):
     """Update an existing offer identified by offer_id."""
@@ -161,7 +161,7 @@ def update_offer(offer_id: int):
     return jsonify(_serialize_offer(offer, "Basic")), 200
 
 
-@offer_routes.route("/<int:offer_id>", methods=["DELETE"])
+@offers.route("/<int:offer_id>", methods=["DELETE"])
 @require_role("admin")
 def delete_offer(offer_id: int):
     """Remove an offer from the database."""
@@ -175,4 +175,4 @@ def delete_offer(offer_id: int):
     return jsonify({"status": "deleted"}), 200
 
 
-__all__ = ["offer_routes"]
+__all__ = ["offers"]

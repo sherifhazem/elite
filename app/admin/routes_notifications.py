@@ -4,7 +4,7 @@
 from flask import jsonify, request
 from flask_login import current_user
 
-from app.admin import admin_bp
+from app.admin import admin
 from app.services.notifications import (
     list_admin_notifications,
     get_unread_count,
@@ -13,7 +13,7 @@ from app.services.notifications import (
 from app.services.roles import admin_required
 
 
-@admin_bp.route("/api/notifications", methods=["GET"])
+@admin.route("/api/notifications", methods=["GET"])
 @admin_required
 def api_notifications_list():
     """Return recent notifications alongside the unread count."""
@@ -24,7 +24,7 @@ def api_notifications_list():
     return jsonify({"items": data, "unread": unread})
 
 
-@admin_bp.route("/api/notifications/read", methods=["POST"])
+@admin.route("/api/notifications/read", methods=["POST"])
 @admin_required
 def api_notifications_mark_read():
     """Mark all notifications as read for the current admin user."""

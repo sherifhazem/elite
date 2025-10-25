@@ -16,14 +16,14 @@ from ..services.analytics import (
 )
 from ..services.roles import admin_required
 
-reports_bp = Blueprint(
+reports = Blueprint(
     "reports",
     __name__,
     url_prefix="/admin",
 )
 
 
-@reports_bp.route("/reports")
+@reports.route("/reports")
 @admin_required
 def reports_home() -> str:
     """Render the interactive reports dashboard."""
@@ -34,7 +34,7 @@ def reports_home() -> str:
     )
 
 
-@reports_bp.route("/api/summary")
+@reports.route("/api/summary")
 @admin_required
 def summary_api() -> Any:
     """Return a JSON payload with aggregated platform statistics."""
@@ -53,7 +53,7 @@ def summary_api() -> Any:
     return jsonify(payload)
 
 
-@reports_bp.route("/reports/export")
+@reports.route("/reports/export")
 @admin_required
 def export_pdf() -> Any:
     """Generate a PDF report for download using the latest analytics."""

@@ -25,7 +25,7 @@ from ..services.notifications import (
 from ..services.offers import get_company_brief, get_portal_offers_with_company
 from ..services.redemption import list_user_redemptions_with_context
 
-portal_bp = Blueprint("portal", __name__, url_prefix="/portal")
+portal = Blueprint("portal", __name__, url_prefix="/portal")
 
 
 def _redirect_to_login() -> Response:
@@ -40,7 +40,7 @@ def _redirect_to_login() -> Response:
     return redirect(login_url)
 
 
-@portal_bp.after_request
+@portal.after_request
 def _portal_no_cache(response: Response) -> Response:
     """Prevent caching of member portal views to avoid stale authenticated content."""
 
@@ -110,7 +110,7 @@ def _membership_card_payload(user: Optional[User], membership_level: str) -> Dic
 
 
 # Render the portal home view summarizing the member's benefits.
-@portal_bp.route("/", methods=["GET"])
+@portal.route("/", methods=["GET"])
 def home():
     user, membership_level = _resolve_user_context()
     if user is None:
@@ -127,7 +127,7 @@ def home():
     )
 
 
-@portal_bp.route("/home", methods=["GET"])
+@portal.route("/home", methods=["GET"])
 def home_alias():
     """Legacy alias to keep historic /portal/home links operational."""
 
@@ -135,7 +135,7 @@ def home_alias():
 
 
 # Display the personalized offers list calculated for the user's tier.
-@portal_bp.route("/offers", methods=["GET"])
+@portal.route("/offers", methods=["GET"])
 def offers():
     user, membership_level = _resolve_user_context()
     if user is None:
@@ -153,7 +153,7 @@ def offers():
 
 
 # Present the member's profile details and upgrade prompts.
-@portal_bp.route("/profile", methods=["GET"])
+@portal.route("/profile", methods=["GET"])
 def profile():
     user, membership_level = _resolve_user_context()
     if user is None:
@@ -186,7 +186,7 @@ def profile():
     )
 
 
-@portal_bp.route("/activations", methods=["GET"])
+@portal.route("/activations", methods=["GET"])
 def user_activations():
     """Return the authenticated member's activations as JSON payload."""
 
@@ -211,7 +211,7 @@ def user_activations():
     return jsonify({"items": normalized})
 
 
-@portal_bp.route("/offers/<int:offer_id>/feedback", methods=["POST"])
+@portal.route("/offers/<int:offer_id>/feedback", methods=["POST"])
 def offer_feedback(offer_id: int):
     """Handle lightweight feedback interactions for the given offer."""
 
@@ -234,7 +234,7 @@ def offer_feedback(offer_id: int):
     return jsonify({"ok": True, "action": action})
 
 
-@portal_bp.route("/companies/<int:company_id>", methods=["GET"])
+@portal.route("/companies/<int:company_id>", methods=["GET"])
 def company_brief(company_id: int):
     """Return a lightweight company profile for the portal modal."""
 
@@ -247,7 +247,7 @@ def company_brief(company_id: int):
     return jsonify(company)
 
 
-@portal_bp.route("/notifications", methods=["GET"])
+@portal.route("/notifications", methods=["GET"])
 def notifications():
     """Render the notifications center view for the authenticated member."""
 
@@ -275,7 +275,7 @@ def notifications():
     )
 
 
-@portal_bp.route("/upgrade", methods=["POST"])
+@portal.route("/upgrade", methods=["POST"])
 def upgrade_membership():
     """Upgrade the authenticated user's membership level when permitted."""
 
