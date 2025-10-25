@@ -135,6 +135,10 @@ def secure_action():
 - Integrated email notifications for status changes.
 - Simplified routes and templates for clean maintainability.
 
+## Verification: Unified Admin Base Template
+- Confirmed all admin templates extend "dashboard/base.html".
+- Ensured sidebar and navbar visibility for admin and superadmin roles.
+
 ## موارد إضافية
 - وثائق Flask: <https://flask.palletsprojects.com/>
 - وثائق Alembic: <https://alembic.sqlalchemy.org/>
