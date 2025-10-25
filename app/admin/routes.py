@@ -52,7 +52,7 @@ from ..services.notifications import (
     broadcast_new_offer,
     ensure_welcome_notification,
 )
-from ..services.roles import admin_required, require_role
+from ..services.roles import admin_required
 from ..services import settings_service
 
 admin_bp = Blueprint(
@@ -154,7 +154,7 @@ def _extract_value(*keys: str) -> str:
 
 
 @admin_bp.route("/")
-@require_role("admin")
+@admin_required
 def dashboard_home() -> str:
     """Render the admin dashboard landing page."""
 
@@ -170,7 +170,7 @@ def dashboard_home() -> str:
 
 
 @admin_bp.route("/dashboard")
-@require_role("admin")
+@admin_required
 def dashboard_alias() -> Response:
     """Preserve backwards compatibility for /admin/dashboard links."""
 
@@ -178,7 +178,7 @@ def dashboard_alias() -> Response:
 
 
 @admin_bp.route("/users")
-@require_role("admin")
+@admin_required
 def dashboard_users() -> str:
     """Render the user management interface with a table of all users."""
 
@@ -191,7 +191,7 @@ def dashboard_users() -> str:
 
 
 @admin_bp.route("/users/view/<int:user_id>")
-@require_role("admin")
+@admin_required
 def view_user(user_id: int) -> str:
     """Display read-only details for the requested user."""
 
@@ -204,7 +204,7 @@ def view_user(user_id: int) -> str:
 
 
 @admin_bp.route("/users/add", methods=["GET", "POST"])
-@require_role("admin")
+@admin_required
 def add_user() -> str:
     """Handle rendering and submission of the create-user form."""
 
@@ -283,7 +283,7 @@ def add_user() -> str:
 
 
 @admin_bp.route("/users/edit/<int:user_id>", methods=["GET", "POST"])
-@require_role("admin")
+@admin_required
 def edit_user(user_id: int) -> str:
     """Edit an existing user's details after validating input."""
 
@@ -349,7 +349,7 @@ def edit_user(user_id: int) -> str:
 
 
 @admin_bp.route("/users/delete/<int:user_id>", methods=["POST"])
-@require_role("admin")
+@admin_required
 def delete_user(user_id: int) -> str:
     """Delete the specified user and redirect back to the listing."""
 
@@ -371,7 +371,7 @@ def delete_user(user_id: int) -> str:
 
 
 @admin_bp.route("/users-roles", methods=["GET", "POST"])
-@require_role("admin")
+@admin_required
 def manage_user_roles() -> str:
     """Allow administrators to review and update user roles and activation state."""
 
@@ -424,7 +424,7 @@ def manage_user_roles() -> str:
 
 
 @admin_bp.route("/offers")
-@require_role("admin")
+@admin_required
 def dashboard_offers() -> str:
     """Render the offer management view with dynamic membership discount previews."""
 
@@ -445,7 +445,7 @@ def dashboard_offers() -> str:
 
 
 @admin_bp.route("/offers/add", methods=["GET", "POST"])
-@require_role("admin")
+@admin_required
 def add_offer() -> str:
     """Create a new offer tied to a company and persist it in the database."""
 
@@ -494,7 +494,7 @@ def add_offer() -> str:
 
 
 @admin_bp.route("/offers/manage/<int:offer_id>", methods=["GET", "POST"])
-@require_role("admin")
+@admin_required
 def manage_offer(offer_id: int) -> str:
     """Edit an existing offer's metadata and persist the updates."""
 
@@ -541,7 +541,7 @@ def manage_offer(offer_id: int) -> str:
 
 
 @admin_bp.route("/offers/edit/<int:offer_id>", methods=["GET", "POST"])
-@require_role("admin")
+@admin_required
 def edit_offer_discount(offer_id: int) -> str:
     """Allow administrators to adjust the base discount for a specific offer."""
 
@@ -581,7 +581,7 @@ def edit_offer_discount(offer_id: int) -> str:
 
 
 @admin_bp.route("/offers/delete/<int:offer_id>", methods=["POST"])
-@require_role("admin")
+@admin_required
 def delete_offer(offer_id: int) -> str:
     """Delete an offer and redirect back to the offers table."""
 
@@ -593,7 +593,7 @@ def delete_offer(offer_id: int) -> str:
 
 
 @admin_bp.route("/offers/<int:offer_id>/notify", methods=["POST"])
-@require_role("admin")
+@admin_required
 def trigger_offer_notification(offer_id: int) -> str:
     """Queue a broadcast notification for the specified offer."""
 
@@ -604,7 +604,7 @@ def trigger_offer_notification(offer_id: int) -> str:
 
 
 @admin_bp.route("/settings", endpoint="settings_home")
-@require_role("admin")
+@admin_required
 def settings_home() -> str:
     """Render the consolidated site settings management experience."""
 
@@ -618,7 +618,7 @@ def settings_home() -> str:
 
 
 @admin_bp.route("/settings/update/<section>", methods=["POST"])
-@require_role("admin")
+@admin_required
 def update_site_settings(section: str) -> Response:
     """Persist updates for dropdown or general configuration sections."""
 
@@ -744,7 +744,7 @@ def save_site_settings_roles() -> Response:
 
 
 @admin_bp.route("/settings/cities", methods=["GET"])
-@require_role("admin")
+@admin_required
 def fetch_cities() -> Response:
     """Return the list of managed cities as JSON."""
 
@@ -752,7 +752,7 @@ def fetch_cities() -> Response:
 
 
 @admin_bp.route("/settings/industries", methods=["GET"])
-@require_role("admin")
+@admin_required
 def fetch_industries() -> Response:
     """Return the list of managed industries as JSON."""
 
@@ -796,7 +796,7 @@ def _handle_delete_item(list_type: str, item_id: str) -> Response:
 
 
 @admin_bp.route("/settings/cities/add", methods=["POST"])
-@require_role("admin")
+@admin_required
 def add_city() -> Response:
     """Add a new city entry to the managed list via JSON."""
 
@@ -804,7 +804,7 @@ def add_city() -> Response:
 
 
 @admin_bp.route("/settings/industries/add", methods=["POST"])
-@require_role("admin")
+@admin_required
 def add_industry() -> Response:
     """Add a new industry entry to the managed list via JSON."""
 
@@ -812,7 +812,7 @@ def add_industry() -> Response:
 
 
 @admin_bp.route("/settings/cities/update/<path:item_id>", methods=["POST"])
-@require_role("admin")
+@admin_required
 def update_city(item_id: str) -> Response:
     """Rename a city entry."""
 
@@ -820,7 +820,7 @@ def update_city(item_id: str) -> Response:
 
 
 @admin_bp.route("/settings/industries/update/<path:item_id>", methods=["POST"])
-@require_role("admin")
+@admin_required
 def update_industry(item_id: str) -> Response:
     """Rename an industry entry."""
 
@@ -828,7 +828,7 @@ def update_industry(item_id: str) -> Response:
 
 
 @admin_bp.route("/settings/cities/delete/<path:item_id>", methods=["POST"])
-@require_role("admin")
+@admin_required
 def delete_city(item_id: str) -> Response:
     """Remove a city entry."""
 
@@ -836,7 +836,7 @@ def delete_city(item_id: str) -> Response:
 
 
 @admin_bp.route("/settings/industries/delete/<path:item_id>", methods=["POST"])
-@require_role("admin")
+@admin_required
 def delete_industry(item_id: str) -> Response:
     """Remove an industry entry."""
 

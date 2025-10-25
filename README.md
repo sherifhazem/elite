@@ -19,6 +19,12 @@
 - Removed duplicate dashboard/base.html that conflicted with global template.
 - Restored correct sidebar and Companies tab visibility for admin and superadmin roles.
 
+## Security Fix: Unified Admin Route Protection
+- Applied @admin_required decorator to all admin routes (companies, offers, users, reports, communications).
+- Ensured consistent enforcement of admin-only access.
+- Verified admin_required decorator imported from app.services.roles.
+- Prevented non-admin users from accessing /admin/* routes.
+
 ## التثبيت السريع
 1. أنشئ بيئة افتراضية ثم فعّلها:
    ```bash
