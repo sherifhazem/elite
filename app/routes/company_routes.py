@@ -47,7 +47,7 @@ def _serialize_owner(user: User) -> dict:
     }
 
 
-@companies.route("/register", methods=["POST"])
+@companies.route("/register", methods=["POST"], endpoint="register_company")
 def register_company():
     """Public endpoint allowing a business to create its company account."""
 
@@ -58,7 +58,7 @@ def register_company():
     return jsonify(response), status
 
 
-@companies.route("/", methods=["GET"])
+@companies.route("/", methods=["GET"], endpoint="list_companies")
 def list_companies():
     """Return all companies collaborating with ELITE."""
 
@@ -66,7 +66,7 @@ def list_companies():
     return jsonify([_serialize_company(company) for company in companies]), 200
 
 
-@companies.route("/", methods=["POST"])
+@companies.route("/", methods=["POST"], endpoint="create_company")
 @require_role("admin")
 def create_company():
     """Create a new company from the provided JSON payload."""
@@ -106,7 +106,9 @@ def create_company():
     return jsonify(_serialize_company(company)), 201
 
 
-@companies.route("/<int:company_id>", methods=["PUT"])
+@companies.route(
+    "/<int:company_id>", methods=["PUT"], endpoint="update_company"
+)
 @require_role("admin")
 def update_company(company_id: int):
     """Update the company identified by company_id."""
@@ -133,7 +135,9 @@ def update_company(company_id: int):
     return jsonify(_serialize_company(company)), 200
 
 
-@companies.route("/<int:company_id>", methods=["DELETE"])
+@companies.route(
+    "/<int:company_id>", methods=["DELETE"], endpoint="delete_company"
+)
 @require_role("admin")
 def delete_company(company_id: int):
     """Remove a company from the database."""

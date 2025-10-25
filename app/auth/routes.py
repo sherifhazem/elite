@@ -183,7 +183,7 @@ def _register_company_from_form(
     }
 
 
-@auth.route("/register/member", methods=["GET", "POST"])
+@auth.route("/register/member", methods=["GET", "POST"], endpoint="register_member")
 def register_member():
     """Render or process the member registration form for browser visitors."""
 
@@ -207,7 +207,9 @@ def register_member():
     return response, status
 
 
-@auth.route("/auth/register/member", methods=["GET", "POST"])
+@auth.route(
+    "/auth/register/member", methods=["GET", "POST"], endpoint="register_member_legacy"
+)
 def register_member_legacy():
     """Preserve the historic /auth/register/member path."""
 
@@ -297,7 +299,7 @@ def api_login() -> tuple:
     )
 
 
-@auth.get("/api/auth/profile")
+@auth.get("/api/auth/profile", endpoint="profile")
 def profile() -> tuple:
     """Return the authenticated user's profile details."""
 
@@ -331,7 +333,7 @@ def profile() -> tuple:
     return jsonify(response), HTTPStatus.OK
 
 
-@auth.route("/choose_membership")
+@auth.route("/choose_membership", endpoint="choose_membership")
 def choose_membership() -> Response:
     """Preserve legacy path and forward visitors to the refreshed register chooser."""
 
@@ -339,7 +341,7 @@ def choose_membership() -> Response:
 
 
 @auth.route("/login", methods=["GET"], endpoint="login")
-@auth.route("/login-page")
+@auth.route("/login-page", endpoint="login_page")
 def login_page() -> str:
     """Render the browser-based login page."""
 
@@ -354,7 +356,7 @@ def register_choice() -> str:
     return render_template("auth/register_choice.html")
 
 
-@auth.route("/api/auth/verify/<token>")
+@auth.route("/api/auth/verify/<token>", endpoint="verify_email")
 def verify_email(token: str):
     """Activate a user account when the email confirmation token is valid."""
 
@@ -374,7 +376,7 @@ def verify_email(token: str):
     return jsonify({"message": "Email verified successfully"}), HTTPStatus.OK
 
 
-@auth.route("/api/auth/reset-request", methods=["POST"])
+@auth.route("/api/auth/reset-request", methods=["POST"], endpoint="request_password_reset")
 def request_password_reset():
     """Send a password reset email containing a one-time token link."""
 
@@ -396,7 +398,11 @@ def request_password_reset():
     return jsonify({"message": "Password reset email sent"}), HTTPStatus.OK
 
 
-@auth.route("/api/auth/reset-password/<token>", methods=["POST"])
+@auth.route(
+    "/api/auth/reset-password/<token>",
+    methods=["POST"],
+    endpoint="reset_password",
+)
 def reset_password(token: str):
     """Persist a new password when the provided reset token is valid."""
 
@@ -420,7 +426,7 @@ def reset_password(token: str):
     return jsonify({"message": "Password updated successfully"}), HTTPStatus.OK
 
 
-@auth.route("/logout", methods=["GET", "POST"])
+@auth.route("/logout", methods=["GET", "POST"], endpoint="logout")
 def logout():
     """Clear stored authentication state and return to the login screen."""
 

@@ -42,6 +42,11 @@
 - Verified admin_required decorator imported from app.services.roles.
 - Prevented non-admin users from accessing /admin/* routes.
 
+## Refactor: Unified Endpoint Naming Convention
+- Added explicit endpoint names across all blueprints.
+- Standardized endpoint naming by module:  admin.*, auth.*, company_portal.*, portal.*, reports.*, offers.*, users.*.
+- Eliminated all ambiguous endpoints to prevent BuildError exceptions.
+
 ## التثبيت السريع
 1. أنشئ بيئة افتراضية ثم فعّلها:
    ```bash

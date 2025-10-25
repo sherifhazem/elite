@@ -110,7 +110,7 @@ def _membership_card_payload(user: Optional[User], membership_level: str) -> Dic
 
 
 # Render the portal home view summarizing the member's benefits.
-@portal.route("/", methods=["GET"])
+@portal.route("/", methods=["GET"], endpoint="home")
 def home():
     user, membership_level = _resolve_user_context()
     if user is None:
@@ -127,7 +127,7 @@ def home():
     )
 
 
-@portal.route("/home", methods=["GET"])
+@portal.route("/home", methods=["GET"], endpoint="home_alias")
 def home_alias():
     """Legacy alias to keep historic /portal/home links operational."""
 
@@ -135,7 +135,7 @@ def home_alias():
 
 
 # Display the personalized offers list calculated for the user's tier.
-@portal.route("/offers", methods=["GET"])
+@portal.route("/offers", methods=["GET"], endpoint="offers")
 def offers():
     user, membership_level = _resolve_user_context()
     if user is None:
@@ -153,7 +153,7 @@ def offers():
 
 
 # Present the member's profile details and upgrade prompts.
-@portal.route("/profile", methods=["GET"])
+@portal.route("/profile", methods=["GET"], endpoint="profile")
 def profile():
     user, membership_level = _resolve_user_context()
     if user is None:
@@ -186,7 +186,7 @@ def profile():
     )
 
 
-@portal.route("/activations", methods=["GET"])
+@portal.route("/activations", methods=["GET"], endpoint="activations")
 def user_activations():
     """Return the authenticated member's activations as JSON payload."""
 
@@ -211,7 +211,11 @@ def user_activations():
     return jsonify({"items": normalized})
 
 
-@portal.route("/offers/<int:offer_id>/feedback", methods=["POST"])
+@portal.route(
+    "/offers/<int:offer_id>/feedback",
+    methods=["POST"],
+    endpoint="offer_feedback",
+)
 def offer_feedback(offer_id: int):
     """Handle lightweight feedback interactions for the given offer."""
 
@@ -234,7 +238,9 @@ def offer_feedback(offer_id: int):
     return jsonify({"ok": True, "action": action})
 
 
-@portal.route("/companies/<int:company_id>", methods=["GET"])
+@portal.route(
+    "/companies/<int:company_id>", methods=["GET"], endpoint="company_brief"
+)
 def company_brief(company_id: int):
     """Return a lightweight company profile for the portal modal."""
 
@@ -247,7 +253,7 @@ def company_brief(company_id: int):
     return jsonify(company)
 
 
-@portal.route("/notifications", methods=["GET"])
+@portal.route("/notifications", methods=["GET"], endpoint="notifications")
 def notifications():
     """Render the notifications center view for the authenticated member."""
 
@@ -275,7 +281,7 @@ def notifications():
     )
 
 
-@portal.route("/upgrade", methods=["POST"])
+@portal.route("/upgrade", methods=["POST"], endpoint="upgrade_membership")
 def upgrade_membership():
     """Upgrade the authenticated user's membership level when permitted."""
 

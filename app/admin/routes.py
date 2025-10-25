@@ -153,7 +153,7 @@ def _extract_value(*keys: str) -> str:
     return ""
 
 
-@admin.route("/")
+@admin.route("/", endpoint="dashboard_home")
 @admin_required
 def dashboard_home() -> str:
     """Render the admin dashboard landing page."""
@@ -169,7 +169,7 @@ def dashboard_home() -> str:
     )
 
 
-@admin.route("/dashboard")
+@admin.route("/dashboard", endpoint="dashboard_alias")
 @admin_required
 def dashboard_alias() -> Response:
     """Preserve backwards compatibility for /admin/dashboard links."""
@@ -177,7 +177,7 @@ def dashboard_alias() -> Response:
     return redirect(url_for("admin.dashboard_home"))
 
 
-@admin.route("/users")
+@admin.route("/users", endpoint="dashboard_users")
 @admin_required
 def dashboard_users() -> str:
     """Render the user management interface with a table of all users."""
@@ -190,7 +190,7 @@ def dashboard_users() -> str:
     )
 
 
-@admin.route("/users/view/<int:user_id>")
+@admin.route("/users/view/<int:user_id>", endpoint="view_user")
 @admin_required
 def view_user(user_id: int) -> str:
     """Display read-only details for the requested user."""
@@ -203,7 +203,7 @@ def view_user(user_id: int) -> str:
     )
 
 
-@admin.route("/users/add", methods=["GET", "POST"])
+@admin.route("/users/add", methods=["GET", "POST"], endpoint="add_user")
 @admin_required
 def add_user() -> str:
     """Handle rendering and submission of the create-user form."""
@@ -282,7 +282,7 @@ def add_user() -> str:
     )
 
 
-@admin.route("/users/edit/<int:user_id>", methods=["GET", "POST"])
+@admin.route("/users/edit/<int:user_id>", methods=["GET", "POST"], endpoint="edit_user")
 @admin_required
 def edit_user(user_id: int) -> str:
     """Edit an existing user's details after validating input."""
@@ -348,7 +348,7 @@ def edit_user(user_id: int) -> str:
     )
 
 
-@admin.route("/users/delete/<int:user_id>", methods=["POST"])
+@admin.route("/users/delete/<int:user_id>", methods=["POST"], endpoint="delete_user")
 @admin_required
 def delete_user(user_id: int) -> str:
     """Delete the specified user and redirect back to the listing."""
@@ -370,7 +370,7 @@ def delete_user(user_id: int) -> str:
     return redirect(url_for("admin.dashboard_users"))
 
 
-@admin.route("/users-roles", methods=["GET", "POST"])
+@admin.route("/users-roles", methods=["GET", "POST"], endpoint="manage_user_roles")
 @admin_required
 def manage_user_roles() -> str:
     """Allow administrators to review and update user roles and activation state."""
@@ -423,7 +423,7 @@ def manage_user_roles() -> str:
     )
 
 
-@admin.route("/offers")
+@admin.route("/offers", endpoint="dashboard_offers")
 @admin_required
 def dashboard_offers() -> str:
     """Render the offer management view with dynamic membership discount previews."""
@@ -444,7 +444,7 @@ def dashboard_offers() -> str:
     )
 
 
-@admin.route("/offers/add", methods=["GET", "POST"])
+@admin.route("/offers/add", methods=["GET", "POST"], endpoint="add_offer")
 @admin_required
 def add_offer() -> str:
     """Create a new offer tied to a company and persist it in the database."""
@@ -493,7 +493,9 @@ def add_offer() -> str:
     )
 
 
-@admin.route("/offers/manage/<int:offer_id>", methods=["GET", "POST"])
+@admin.route(
+    "/offers/manage/<int:offer_id>", methods=["GET", "POST"], endpoint="manage_offer"
+)
 @admin_required
 def manage_offer(offer_id: int) -> str:
     """Edit an existing offer's metadata and persist the updates."""
@@ -540,7 +542,9 @@ def manage_offer(offer_id: int) -> str:
     )
 
 
-@admin.route("/offers/edit/<int:offer_id>", methods=["GET", "POST"])
+@admin.route(
+    "/offers/edit/<int:offer_id>", methods=["GET", "POST"], endpoint="edit_offer_discount"
+)
 @admin_required
 def edit_offer_discount(offer_id: int) -> str:
     """Allow administrators to adjust the base discount for a specific offer."""
@@ -580,7 +584,7 @@ def edit_offer_discount(offer_id: int) -> str:
     )
 
 
-@admin.route("/offers/delete/<int:offer_id>", methods=["POST"])
+@admin.route("/offers/delete/<int:offer_id>", methods=["POST"], endpoint="delete_offer")
 @admin_required
 def delete_offer(offer_id: int) -> str:
     """Delete an offer and redirect back to the offers table."""
@@ -592,7 +596,9 @@ def delete_offer(offer_id: int) -> str:
     return redirect(url_for("admin.dashboard_offers"))
 
 
-@admin.route("/offers/<int:offer_id>/notify", methods=["POST"])
+@admin.route(
+    "/offers/<int:offer_id>/notify", methods=["POST"], endpoint="trigger_offer_notification"
+)
 @admin_required
 def trigger_offer_notification(offer_id: int) -> str:
     """Queue a broadcast notification for the specified offer."""
@@ -617,7 +623,9 @@ def settings_home() -> str:
     )
 
 
-@admin.route("/settings/update/<section>", methods=["POST"])
+@admin.route(
+    "/settings/update/<section>", methods=["POST"], endpoint="update_site_settings"
+)
 @admin_required
 def update_site_settings(section: str) -> Response:
     """Persist updates for dropdown or general configuration sections."""
@@ -693,7 +701,7 @@ def site_settings_roles() -> str:
     )
 
 
-@admin.route("/settings/roles/save", methods=["POST"])
+@admin.route("/settings/roles/save", methods=["POST"], endpoint="save_site_settings_roles")
 @admin_required
 def save_site_settings_roles() -> Response:
     """Persist role permission selections to Redis for the Superadmin."""
@@ -743,7 +751,7 @@ def save_site_settings_roles() -> Response:
     )
 
 
-@admin.route("/settings/cities", methods=["GET"])
+@admin.route("/settings/cities", methods=["GET"], endpoint="fetch_cities")
 @admin_required
 def fetch_cities() -> Response:
     """Return the list of managed cities as JSON."""
@@ -751,7 +759,9 @@ def fetch_cities() -> Response:
     return _settings_success_response("cities")
 
 
-@admin.route("/settings/industries", methods=["GET"])
+@admin.route(
+    "/settings/industries", methods=["GET"], endpoint="fetch_industries"
+)
 @admin_required
 def fetch_industries() -> Response:
     """Return the list of managed industries as JSON."""
@@ -795,7 +805,7 @@ def _handle_delete_item(list_type: str, item_id: str) -> Response:
     return _settings_success_response(list_type, "✅ تم تحديث القائمة بنجاح")
 
 
-@admin.route("/settings/cities/add", methods=["POST"])
+@admin.route("/settings/cities/add", methods=["POST"], endpoint="add_city")
 @admin_required
 def add_city() -> Response:
     """Add a new city entry to the managed list via JSON."""
@@ -803,7 +813,7 @@ def add_city() -> Response:
     return _handle_add_item("cities")
 
 
-@admin.route("/settings/industries/add", methods=["POST"])
+@admin.route("/settings/industries/add", methods=["POST"], endpoint="add_industry")
 @admin_required
 def add_industry() -> Response:
     """Add a new industry entry to the managed list via JSON."""
@@ -811,7 +821,11 @@ def add_industry() -> Response:
     return _handle_add_item("industries")
 
 
-@admin.route("/settings/cities/update/<path:item_id>", methods=["POST"])
+@admin.route(
+    "/settings/cities/update/<path:item_id>",
+    methods=["POST"],
+    endpoint="update_city",
+)
 @admin_required
 def update_city(item_id: str) -> Response:
     """Rename a city entry."""
@@ -819,7 +833,11 @@ def update_city(item_id: str) -> Response:
     return _handle_update_item("cities", item_id)
 
 
-@admin.route("/settings/industries/update/<path:item_id>", methods=["POST"])
+@admin.route(
+    "/settings/industries/update/<path:item_id>",
+    methods=["POST"],
+    endpoint="update_industry",
+)
 @admin_required
 def update_industry(item_id: str) -> Response:
     """Rename an industry entry."""
@@ -827,7 +845,11 @@ def update_industry(item_id: str) -> Response:
     return _handle_update_item("industries", item_id)
 
 
-@admin.route("/settings/cities/delete/<path:item_id>", methods=["POST"])
+@admin.route(
+    "/settings/cities/delete/<path:item_id>",
+    methods=["POST"],
+    endpoint="delete_city",
+)
 @admin_required
 def delete_city(item_id: str) -> Response:
     """Remove a city entry."""
@@ -835,7 +857,11 @@ def delete_city(item_id: str) -> Response:
     return _handle_delete_item("cities", item_id)
 
 
-@admin.route("/settings/industries/delete/<path:item_id>", methods=["POST"])
+@admin.route(
+    "/settings/industries/delete/<path:item_id>",
+    methods=["POST"],
+    endpoint="delete_industry",
+)
 @admin_required
 def delete_industry(item_id: str) -> Response:
     """Remove an industry entry."""

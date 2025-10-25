@@ -91,7 +91,11 @@ def _parse_offer_payload(data: Dict[str, str]) -> Tuple[Dict[str, object], str |
     return payload, None
 
 
-@company_portal.route("/complete_registration/<int:company_id>", methods=["GET", "POST"])
+@company_portal.route(
+    "/complete_registration/<int:company_id>",
+    methods=["GET", "POST"],
+    endpoint="complete_registration",
+)
 def complete_registration(company_id: int):
     company = Company.query.get_or_404(company_id)
     preferences = company.notification_settings()
@@ -123,7 +127,7 @@ def complete_registration(company_id: int):
 
 # باقي المسارات (dashboard, offers, redemptions, settings)
 # تترك كما هي لأن الكود الحالي لها صحيح ووظيفي.
-@company_portal.route("/")
+@company_portal.route("/", endpoint="index")
 @require_role("company")
 def index() -> str:
     """Redirect root portal requests to the dashboard view."""
@@ -200,7 +204,7 @@ def list_offers() -> str:
     )
 
 
-@company_portal.route("/offers/new")
+@company_portal.route("/offers/new", endpoint="offer_new")
 @require_role("company")
 def offer_new() -> str:
     """Render the offer creation form used inside the modal component."""
@@ -215,7 +219,7 @@ def offer_new() -> str:
     )
 
 
-@company_portal.route("/offers", methods=["POST"])
+@company_portal.route("/offers", methods=["POST"], endpoint="offer_create")
 @require_role("company")
 def offer_create():
     """Persist a new offer and optionally broadcast notifications."""
@@ -248,7 +252,9 @@ def offer_create():
     return redirect(url_for("company_portal.list_offers"))
 
 
-@company_portal.route("/offers/<int:offer_id>/edit")
+@company_portal.route(
+    "/offers/<int:offer_id>/edit", endpoint="offer_edit"
+)
 @require_role("company")
 def offer_edit(offer_id: int) -> str:
     """Return the pre-filled offer form for modal editing."""
@@ -264,7 +270,9 @@ def offer_edit(offer_id: int) -> str:
     )
 
 
-@company_portal.route("/offers/<int:offer_id>", methods=["POST", "PUT"])
+@company_portal.route(
+    "/offers/<int:offer_id>", methods=["POST", "PUT"], endpoint="offer_update"
+)
 @require_role("company")
 def offer_update(offer_id: int):
     """Update an existing offer ensuring it belongs to the current company."""
@@ -295,7 +303,11 @@ def offer_update(offer_id: int):
     return redirect(url_for("company_portal.list_offers"))
 
 
-@company_portal.route("/offers/<int:offer_id>/delete", methods=["POST", "DELETE"])
+@company_portal.route(
+    "/offers/<int:offer_id>/delete",
+    methods=["POST", "DELETE"],
+    endpoint="offer_delete",
+)
 @require_role("company")
 def offer_delete(offer_id: int):
     """Delete the specified offer owned by the current company."""
@@ -362,7 +374,7 @@ def redemptions() -> str:
     )
 
 
-@company_portal.route("/redemptions/data")
+@company_portal.route("/redemptions/data", endpoint="redemptions_data")
 @require_role("company")
 def redemptions_data():
     """Return company redemption history as JSON for live refreshing."""
@@ -419,7 +431,9 @@ def redemptions_data():
     return jsonify({"items": items})
 
 
-@company_portal.route("/redemptions/verify", methods=["POST"])
+@company_portal.route(
+    "/redemptions/verify", methods=["POST"], endpoint="verify_redemption"
+)
 @require_role("company")
 def verify_redemption():
     """Validate a redemption code or QR token for the current company."""
@@ -458,7 +472,9 @@ def verify_redemption():
     )
 
 
-@company_portal.route("/redemptions/confirm", methods=["POST"])
+@company_portal.route(
+    "/redemptions/confirm", methods=["POST"], endpoint="confirm_redemption"
+)
 @require_role("company")
 def confirm_redemption():
     """Mark a verified redemption as redeemed after staff confirmation."""
@@ -497,7 +513,7 @@ def confirm_redemption():
     return jsonify({"ok": True, "status": redemption.status})
 
 
-@company_portal.route("/settings", methods=["GET", "POST"])
+@company_portal.route("/settings", methods=["GET", "POST"], endpoint="settings")
 @require_role("company")
 def settings():
     """Display and persist company profile metadata."""
