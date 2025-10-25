@@ -49,9 +49,15 @@
                             <a class="nav-link" href="{{ url_for('portal.home') }}">Member Portal</a>
                         </li>
                     </ul>
-                    {% if user_status_label %}
-                        <div class="text-end small text-muted px-3">
-                            {{ user_status_label }}
+                    {% if (current_user and current_user.is_authenticated) or user_status_label %}
+                        <div class="ms-auto text-end text-white px-3">
+                            {% if current_user and current_user.is_authenticated %}
+                                <div class="fw-semibold">{{ current_user.username }}</div>
+                                <div class="small text-white-50 text-uppercase">{{ current_user.role|replace('_', ' ')|title }}</div>
+                            {% endif %}
+                            {% if user_status_label %}
+                                <div class="small text-muted">{{ user_status_label }}</div>
+                            {% endif %}
                         </div>
                     {% endif %}
                 </div>
