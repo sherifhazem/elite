@@ -19,11 +19,6 @@
 - Removed duplicate dashboard/base.html that conflicted with global template.
 - Restored correct sidebar and Companies tab visibility for admin and superadmin roles.
 
-## UI Fix: Unified Admin Dashboard Layout
-- Updated admin dashboard template to extend "dashboard/admin_base.html".
-- Removed redundant HTML structure and CSS references.
-- Ensured consistent styling and layout across all admin pages.
-
 ## Fix: Unified Company Portal Blueprint Name
 - Renamed company_portal_bp → company_portal for clarity and consistency.
 - Updated registration in app/__init__.py.
