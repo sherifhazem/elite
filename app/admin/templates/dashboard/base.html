@@ -68,63 +68,27 @@
                 </div>
                 <div class="d-flex align-items-center ms-auto">
                     {% if current_user and current_user.is_authenticated %}
-<<<<<<< HEAD
                         <ul class="navbar-nav flex-row align-items-center gap-3 mb-0">
-                            <li class="nav-item dropdown">
-                                <a
-                                    class="nav-link position-relative text-white"
-                                    href="#"
-                                    id="notifDropdown"
-                                    role="button"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false"
-                                >
-                                    <i class="bi bi-bell"></i>
-                                    <span
-                                        id="notifBadge"
-                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none"
-                                    >0</span>
-                                </a>
-                                <ul
-                                    class="dropdown-menu dropdown-menu-end"
-                                    aria-labelledby="notifDropdown"
-                                    style="min-width: 360px;"
-                                >
-                                    <li class="dropdown-header fw-semibold">Notifications</li>
-                                    <div id="notifList">
-                                        <li class="px-3 py-2 text-muted">Loading...</li>
-                                    </div>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li class="px-3 pb-2">
-                                        <button
-                                            id="markAllReadBtn"
-                                            class="btn btn-sm btn-outline-secondary w-100"
-                                            type="button"
-                                        >
-                                            Mark all as read
-                                        </button>
-                                    </li>
-                                </ul>
-                            </li>
                             <li class="nav-item">
-                                <!-- FIX: Logout, Current User, Role Access, Membership Dropdown – Desktop Admin Context. -->
-                                <span class="text-white user-pill mb-0">Welcome, {{ current_user.username }}</span>
+                                <span class="text-white user-pill mb-0">
+                                    Welcome, {{ current_user.username }}
+                                    {% if current_user.is_superadmin %}
+                                        <span class="badge bg-warning text-dark ms-1">Superadmin</span>
+                                    {% elif current_user.is_admin %}
+                                        <span class="badge bg-light text-dark ms-1">Admin</span>
+                                    {% elif current_user.has_role('company') %}
+                                        <span class="badge bg-info text-dark ms-1">Company</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary text-light ms-1">Member</span>
+                                    {% endif %}
+                                </span>
                             </li>
                             <li class="nav-item">
                                 <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-outline-light btn-sm">
-                                    <i class="fa-solid fa-right-from-bracket me-1"></i>
-                                    Logout
+                                    <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
                                 </a>
                             </li>
                         </ul>
-=======
-                        <!-- FIX: Logout, Current User, Role Access, Membership Dropdown – Desktop Admin Context. -->
-                        <span class="text-white user-pill mb-0">مرحبًا، {{ current_user.username }}</span>
-                        <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-outline-light btn-sm ms-2">
-                            <i class="fa-solid fa-right-from-bracket me-1"></i>
-                            Logout
-                        </a>
->>>>>>> parent of 6b8d0ef (Translate admin dashboard templates to English (#62))
                     {% endif %}
                 </div>
             </div>
