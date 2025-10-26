@@ -29,6 +29,12 @@
 - Unified all communication links under Admin blueprint.
 - Verified dashboard and navigation templates.
 
+## Fix: Resolved Broken Template url_for() References
+- Corrected admin.add_company → admin.list_companies
+- Updated company_portal.create_offer → company_portal.offer_create
+- Updated company_portal.edit_offer → company_portal.offer_edit
+- Verified using template URL consistency checker.
+
 ## Fix: AnonymousUserMixin AttributeError in Notifications
 - Added @login_required decorator to /admin/api/notifications route.
 - Added explicit check for current_user.is_authenticated.
