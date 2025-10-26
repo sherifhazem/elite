@@ -616,7 +616,7 @@ def settings_home() -> str:
 
     settings_payload = settings_service.get_all_settings()
     return render_template(
-        "admin/settings/home.html",
+        "dashboard/settings.html",
         section_title="Site Settings",
         active_page="settings",
         settings=settings_payload,
@@ -690,7 +690,7 @@ def site_settings_roles() -> str:
     permissions_catalog = sorted(catalog_from_defaults | catalog_from_storage)
 
     return render_template(
-        "admin/settings/roles.html",
+        "dashboard/users_roles.html",
         section_title="Role Permissions",
         active_page="settings",
         active_tab="roles",
