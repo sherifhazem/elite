@@ -25,131 +25,123 @@
 
 ---
 
-## 🔀 الـ Endpoints حسب الـ Blueprint
+## 🔀 الـ Endpoints حسب الـ Blueprint (محدَّثة)
 
 ### 🔹 main (`app/routes/__init__.py`)
-- `main.index`
-- `main.about`
-- `main.health_check`
+- main.index → app/routes/__init__.py
+- main.about → app/routes/__init__.py
+- main.health_check → app/routes/__init__.py
 
 ### 🔹 auth (`app/auth/routes.py`)
-- `auth.api_register`
-- `auth.register_select`
-- `auth.register_member`
-- `auth.register_member_legacy`
-- `auth.register_company`
-- `auth.api_login`
-- `auth.profile`
-- `auth.choose_membership`
-- `auth.login`
-- `auth.login_page`
-- `auth.register_choice`
-- `auth.verify_email`
-- `auth.request_password_reset`
-- `auth.reset_password`
-- `auth.logout`
+- auth.api_register → app/auth/routes.py
+- auth.register_select → app/auth/routes.py
+- auth.register_member → app/auth/routes.py
+- auth.register_member_legacy → app/auth/routes.py
+- auth.register_company → app/auth/routes.py
+- auth.api_login → app/auth/routes.py
+- auth.profile → app/auth/routes.py
+- auth.choose_membership → app/auth/routes.py
+- auth.login → app/auth/routes.py
+- auth.login_page → app/auth/routes.py
+- auth.register_choice → app/auth/routes.py
+- auth.verify_email → app/auth/routes.py
+- auth.request_password_reset → app/auth/routes.py
+- auth.reset_password → app/auth/routes.py
+- auth.logout → app/auth/routes.py
 
-### 🔹 admin (الوحدة الرئيسية + الوحدات الفرعية)
-- `admin.dashboard_home`
-- `admin.dashboard_users`
-- `admin.view_user`
-- `admin.add_user`
-- `admin.edit_user`
-- `admin.delete_user`
-- `admin.dashboard_offers`
-- `admin.add_offer`
-- `admin.manage_offer`
-- `admin.edit_offer_discount`
-- `admin.delete_offer`
-- `admin.trigger_offer_notification`
-- `admin.list_companies`
-- `admin.view_company`
-- `admin.edit_company`
-- `admin.delete_company`
-- `admin.approve_company`
-- `admin.suspend_company`
-- `admin.reactivate_company`
-- `admin.settings_home`
-- `admin.update_site_settings`
-- `admin.site_settings_roles`
-- `admin.save_site_settings_roles`
-- `admin.fetch_cities`
-- `admin.fetch_industries`
-- `admin.add_city`
-- `admin.add_industry`
-- `admin.update_city`
-- `admin.update_industry`
-- `admin.delete_city`
-- `admin.delete_industry`
-- `admin.communication_history`
-- `admin.compose_communication`
-- `admin.communication_detail`
-- `admin.communication_lookup`
-- `admin.api_notifications_list`
-- `admin.api_notifications_mark_read`
-- `admin.activity_log` → `app/admin/routes.py`
-- `admin.admin_logout`
+### 🔹 admin (`app/admin/routes.py`)
+- admin.admin_logout → app/admin/routes.py
+- admin.dashboard_home → app/admin/routes.py
+- admin.dashboard_alias → app/admin/routes.py
+- admin.dashboard_users → app/admin/routes.py
+- admin.view_user → app/admin/routes.py
+- admin.add_user → app/admin/routes.py
+- admin.edit_user → app/admin/routes.py
+- admin.delete_user → app/admin/routes.py
+- admin.manage_user_roles → app/admin/routes.py
+- admin.dashboard_offers → app/admin/routes.py
+- admin.add_offer → app/admin/routes.py
+- admin.manage_offer → app/admin/routes.py
+- admin.edit_offer_discount → app/admin/routes.py
+- admin.delete_offer → app/admin/routes.py
+- admin.trigger_offer_notification → app/admin/routes.py
+- admin.settings_home → app/admin/routes.py
+- admin.update_site_settings → app/admin/routes.py
+- admin.site_settings_roles → app/admin/routes.py
+- admin.save_site_settings_roles → app/admin/routes.py
+- admin.fetch_cities → app/admin/routes.py
+- admin.fetch_industries → app/admin/routes.py
+- admin.add_city → app/admin/routes.py
+- admin.add_industry → app/admin/routes.py
+- admin.update_city → app/admin/routes.py
+- admin.update_industry → app/admin/routes.py
+- admin.delete_city → app/admin/routes.py
+- admin.delete_industry → app/admin/routes.py
+- admin.activity_log → app/admin/routes.py
 
 ### 🔹 reports (`app/admin/routes_reports.py`)
-- `reports.reports_home`
-- `reports.summary_api`
-- `reports.export_pdf`
+- reports.reports_home → app/admin/routes_reports.py
+- reports.summary_api → app/admin/routes_reports.py
+- reports.export_pdf → app/admin/routes_reports.py
 
 ### 🔹 company_portal (`app/company/routes.py`)
-- `company_portal.complete_registration`
-- `company_portal.dashboard`
-- `company_portal.list_offers`
-- `company_portal.offer_create`
-- `company_portal.offer_edit`
-- `company_portal.offer_update`
-- `company_portal.offer_delete`
-- `company_portal.redemptions`
-- `company_portal.verify_redemption`
-- `company_portal.confirm_redemption`
-- `company_portal.settings`
+- company_portal.complete_registration → app/company/routes.py
+- company_portal.index → app/company/routes.py
+- company_portal.dashboard → app/company/routes.py
+- company_portal.list_offers → app/company/routes.py
+- company_portal.offer_new → app/company/routes.py
+- company_portal.offer_create → app/company/routes.py
+- company_portal.offer_edit → app/company/routes.py
+- company_portal.offer_update → app/company/routes.py
+- company_portal.offer_delete → app/company/routes.py
+- company_portal.redemptions → app/company/routes.py
+- company_portal.redemptions_data → app/company/routes.py
+- company_portal.verify_redemption → app/company/routes.py
+- company_portal.confirm_redemption → app/company/routes.py
+- company_portal.settings → app/company/routes.py
 
 ### 🔹 portal (`app/routes/user_portal_routes.py`)
-- `portal.home`
-- `portal.home_alias`
-- `portal.offers`
-- `portal.profile`
-- `portal.activations`
-- `portal.offer_feedback`
-- `portal.company_brief`
-- `portal.notifications`
-- `portal.upgrade_membership`
+- portal.home → app/routes/user_portal_routes.py
+- portal.home_alias → app/routes/user_portal_routes.py
+- portal.offers → app/routes/user_portal_routes.py
+- portal.profile → app/routes/user_portal_routes.py
+- portal.activations → app/routes/user_portal_routes.py
+- portal.offer_feedback → app/routes/user_portal_routes.py
+- portal.company_brief → app/routes/user_portal_routes.py
+- portal.notifications → app/routes/user_portal_routes.py
+- portal.upgrade_membership → app/routes/user_portal_routes.py
 
 ### 🔹 offers (`app/routes/offer_routes.py`)
-- `offers.list_offers`
-- `offers.create_offer`
-- `offers.update_offer`
-- `offers.delete_offer`
+- offers.list_offers → app/routes/offer_routes.py
+- offers.create_offer → app/routes/offer_routes.py
+- offers.update_offer → app/routes/offer_routes.py
+- offers.delete_offer → app/routes/offer_routes.py
 
 ### 🔹 companies (`app/routes/company_routes.py`)
-- `companies.register_company`
-- `companies.list_companies`
-- `companies.create_company`
-- `companies.update_company`
-- `companies.delete_company`
+- companies.register_company → app/routes/company_routes.py
+- companies.list_companies → app/routes/company_routes.py
+- companies.create_company → app/routes/company_routes.py
+- companies.update_company → app/routes/company_routes.py
+- companies.delete_company → app/routes/company_routes.py
 
 ### 🔹 users (`app/routes/user_routes.py`)
-- `users.list_users`
-- `users.create_user`
-- `users.update_user`
-- `users.delete_user`
-- `users.update_membership`
+- users.list_users → app/routes/user_routes.py
+- users.create_user → app/routes/user_routes.py
+- users.update_user → app/routes/user_routes.py
+- users.delete_user → app/routes/user_routes.py
+- users.update_membership → app/routes/user_routes.py
 
 ### 🔹 redemption (`app/routes/redemption_routes.py`)
-- `redemption.create_redemption_endpoint`
-- `redemption.redemption_status`
-- `redemption.confirm_redemption`
-- `redemption.get_qrcode_image`
+- redemption.create_redemption_endpoint → app/routes/redemption_routes.py
+- redemption.redemption_status → app/routes/redemption_routes.py
+- redemption.confirm_redemption → app/routes/redemption_routes.py
+- redemption.get_qrcode_image → app/routes/redemption_routes.py
 
 ### 🔹 notifications (`app/routes/notification_routes.py`)
-- `notifications.list_notifications`
-- `notifications.mark_notification_read`
-- `notifications.mark_all_notifications_read`
-- `notifications.delete_notification`
+- notifications.list_notifications → app/routes/notification_routes.py
+- notifications.mark_notification_read → app/routes/notification_routes.py
+- notifications.mark_all_notifications_read → app/routes/notification_routes.py
+- notifications.delete_notification → app/routes/notification_routes.py
 
 ---
 
