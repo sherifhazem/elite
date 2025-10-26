@@ -39,6 +39,12 @@
 - Ensured url_for('company_portal.list_offers') resolves correctly.
 - Unified endpoint names (dashboard, offers, redemptions) across company_portal blueprint.
 
+## Refactor: Merged Activity Log into Admin Blueprint
+- Merged all activity_log_bp routes into admin_bp.
+- Added endpoint admin.activity_log (GET /admin/activity-log).
+- Removed redundant blueprint registration and file.
+- Updated templates to use url_for('admin.activity_log').
+
 ## Refactor: Unified Blueprint Naming Across ELITE
 - Standardized all blueprint names (removed "_bp" suffix).
 - Updated registrations in app/__init__.py.
