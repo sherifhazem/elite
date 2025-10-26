@@ -1,3 +1,8 @@
+## UI Update: Admin Dashboard Design Alignment
+- Updated dashboard/home.html to inherit admin_base.html properly.
+- Improved responsiveness for desktop and tablets.
+- Standardized all components with admin.css styles.
+
 # ELITE Backend
 
 إصدار مبسّط يوضح كيفية إعداد وتشغيل خادم ELITE المسؤول عن إدارة العروض، الشركات، وأدوار المستخدمين. يوفر المشروع هيكل Flask منظمًا، تكاملًا مع PostgreSQL وRedis، ونقاط نهاية جاهزة لمتابعة الصحة وإدارة الحسابات.
