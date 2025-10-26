@@ -43,7 +43,7 @@ def _require_authentication():
     return None
 
 
-@notifications.route("/", methods=["GET"])
+@notifications.route("/", methods=["GET"], endpoint="list_notifications")
 def list_notifications():
     """Return a paginated list of notifications for the current user."""
 
@@ -81,7 +81,9 @@ def list_notifications():
     )
 
 
-@notifications.route("/<int:notification_id>/read", methods=["PUT"])
+@notifications.route(
+    "/<int:notification_id>/read", methods=["PUT"], endpoint="mark_notification_read"
+)
 def mark_notification_read(notification_id: int):
     """Mark a specific notification as read for the current user."""
 
@@ -98,7 +100,7 @@ def mark_notification_read(notification_id: int):
     return jsonify({"status": "updated", "notification": _serialize_notification(notification)}), 200
 
 
-@notifications.route("/read-all", methods=["PUT"])
+@notifications.route("/read-all", methods=["PUT"], endpoint="mark_all_notifications_read")
 def mark_all_notifications_read():
     """Mark all notifications for the current user as read."""
 
@@ -113,7 +115,7 @@ def mark_all_notifications_read():
     return jsonify({"status": "updated", "updated_count": int(updated)}), 200
 
 
-@notifications.route("/<int:notification_id>", methods=["DELETE"])
+@notifications.route("/<int:notification_id>", methods=["DELETE"], endpoint="delete_notification")
 def delete_notification(notification_id: int):
     """Delete a notification belonging to the current user."""
 

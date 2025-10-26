@@ -63,6 +63,12 @@
 - Standardized endpoint naming by module:  admin.*, auth.*, company_portal.*, portal.*, reports.*, offers.*, users.*.
 - Eliminated all ambiguous endpoints to prevent BuildError exceptions.
 
+## Refactor: Unified Endpoint Naming Policy
+- Added explicit endpoint="..." to all routes missing it.
+- Standardized naming convention across all blueprints:
+  admin.*, company_portal.*, portal.*, reports.*, offers.*, users.*, companies.*, notifications.*
+- Updated PROJECT_MAP.md to reflect the new endpoint mapping.
+
 ## التثبيت السريع
 1. أنشئ بيئة افتراضية ثم فعّلها:
    ```bash
