@@ -26,7 +26,6 @@ from http import HTTPStatus
 from typing import Dict
 
 from flask import (
-    Blueprint,
     Response,
     abort,
     current_app,
@@ -44,9 +43,10 @@ from sqlalchemy.exc import IntegrityError
 
 from flask_login import current_user, logout_user
 
-from .. import db
-from ..models.offer import Offer
-from ..models.user import User
+from . import admin
+from app import db
+from app.models.offer import Offer
+from app.models.user import User
 from ..models.activity_log import ActivityLog
 from ..services.mailer import send_welcome_email
 from ..services.notifications import (
@@ -55,13 +55,6 @@ from ..services.notifications import (
 )
 from ..services.roles import admin_required
 from ..services import settings_service
-
-admin = Blueprint(
-    "admin",
-    __name__,
-    url_prefix="/admin",
-    template_folder="templates",
-)
 
 
 @admin.route("/logout", endpoint="admin_logout")
@@ -160,12 +153,20 @@ def dashboard_home() -> str:
     """Render the admin dashboard landing page."""
 
     total_users = User.query.count()
+    total_companies = (
+        db.session.query(User.company_id)
+        .filter(User.company_id.isnot(None))
+        .distinct()
+        .count()
+    )
     total_offers = Offer.query.count()
 
     return render_template(
         "dashboard/index.html",
         section_title="Overview",
+        active_page="overview",
         total_users=total_users,
+        total_companies=total_companies,
         total_offers=total_offers,
     )
 
