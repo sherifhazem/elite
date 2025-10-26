@@ -87,7 +87,7 @@
 - `admin.communication_lookup`
 - `admin.api_notifications_list`
 - `admin.api_notifications_mark_read`
-- `admin.activity_log` ✅ *(بديل عن `activity_log_bp` السابق)*
+- `admin.activity_log` → `app/admin/routes.py`
 - `admin.admin_logout`
 
 ### 🔹 reports (`app/admin/routes_reports.py`)

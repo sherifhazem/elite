@@ -47,6 +47,7 @@ from flask_login import current_user, logout_user
 from .. import db
 from ..models.offer import Offer
 from ..models.user import User
+from ..models.activity_log import ActivityLog
 from ..services.mailer import send_welcome_email
 from ..services.notifications import (
     broadcast_new_offer,
@@ -867,6 +868,33 @@ def delete_industry(item_id: str) -> Response:
     """Remove an industry entry."""
 
     return _handle_delete_item("industries", item_id)
+
+
+@admin.route("/activity-log", methods=["GET"], endpoint="activity_log")
+@admin_required
+def activity_log() -> str:
+    """Display admin activity log entries inside Admin Panel."""
+
+    admin_id = request.args.get("admin_id", type=int)
+    company_id = request.args.get("company_id", type=int)
+
+    query = ActivityLog.query.order_by(ActivityLog.timestamp.desc())
+
+    if admin_id:
+        query = query.filter(ActivityLog.admin_id == admin_id)
+    if company_id:
+        query = query.filter(ActivityLog.company_id == company_id)
+
+    logs = query.all()
+    admins = User.query.filter_by(role="admin").all()
+
+    return render_template(
+        "dashboard/activity_log.html",
+        logs=logs,
+        admins=admins,
+        selected_admin=admin_id,
+        selected_company=company_id,
+    )
 
 
 __all__ = ["admin"]

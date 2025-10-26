@@ -71,7 +71,6 @@ from .routes.user_portal_routes import portal  # noqa: E402
 from .auth import auth  # noqa: E402
 from .admin import admin  # noqa: E402
 from .admin.routes_reports import reports  # noqa: E402
-from .admin.routes_activity_log import activity_log_bp  # noqa: E402
 from .company import company_portal  # noqa: E402
 
 # JWT authentication temporarily disabled during web testing phase.
@@ -215,5 +214,4 @@ app.register_blueprint(companies, url_prefix="/api/companies")
 app.register_blueprint(users, url_prefix="/api/users")
 app.register_blueprint(redemption)
 app.register_blueprint(notifications)
-app.register_blueprint(activity_log_bp)
 
