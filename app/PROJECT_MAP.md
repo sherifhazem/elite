@@ -51,8 +51,8 @@
 
 ### 🔹 admin (`app/admin/routes.py`)
 - admin.admin_logout → app/admin/routes.py
-- admin.dashboard_home → app/admin/routes.py
-- admin.dashboard_alias → app/admin/routes.py
+- admin.dashboard_home → GET /admin/
+- admin.dashboard_alias → GET /admin/dashboard (redirect)
 - admin.dashboard_users → app/admin/routes.py
 - admin.view_user → app/admin/routes.py
 - admin.add_user → app/admin/routes.py
