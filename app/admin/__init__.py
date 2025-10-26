@@ -1,12 +1,22 @@
-# ADDED: Admin Communication Center – bulk/group message system (no DB schema change).
+# -*- coding: utf-8 -*-
 """Admin blueprint package initialization for dashboard routes."""
-# This file exposes the admin blueprint for convenient imports.
 
-from .routes import admin
+from flask import Blueprint
 
-# Import communication routes so they register with the shared blueprint.
-from . import routes_communications  # noqa: F401
-from . import routes_notifications  # noqa: F401
-from . import routes_companies  # ensure company routes are loaded
+# تعريف Blueprint الأدمن بمسارات صحيحة للقوالب والملفات الثابتة
+admin = Blueprint(
+    "admin",
+    __name__,
+    url_prefix="/admin",
+    template_folder="templates",   # يشير إلى app/admin/templates
+    static_folder="../static"      # يستخدم ملفات CSS/JS من app/static
+)
+
+# تحميل المسارات الفرعية وربطها بنفس Blueprint
+from . import routes  # المسارات العامة للأدمن
+from . import routes_communications  # مركز الرسائل
+from . import routes_notifications   # الإشعارات
+from . import routes_companies       # إدارة الشركات
+from . import routes_reports         # التقارير
 
 __all__ = ["admin"]

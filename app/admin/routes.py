@@ -56,12 +56,16 @@ from ..services.notifications import (
 from ..services.roles import admin_required
 from ..services import settings_service
 
-admin = Blueprint(
-    "admin",
-    __name__,
-    url_prefix="/admin",
-    template_folder="templates",
-)
+from flask import render_template, redirect, url_for, flash, request
+from app import db
+from . import admin  # ✅ هذا هو الـ Blueprint الصحيح القادم من __init__.py
+
+# admin = Blueprint(
+#     "admin",
+#     __name__,
+#     url_prefix="/admin",
+#     template_folder="templates",
+# )
 
 
 @admin.route("/logout", endpoint="admin_logout")

@@ -202,9 +202,9 @@ def inject_user_context():
 
 
 app.logger.info("✅ Database connection configured for %s", app.config["SQLALCHEMY_DATABASE_URI"])
-
+# Register blueprints
 app.register_blueprint(main_blueprint)
-app.register_blueprint(admin)
+app.register_blueprint(admin)  # ← الآن يستخدم تعريف blueprint الصحيح من app/admin/__init__.py
 app.register_blueprint(auth)
 app.register_blueprint(company_portal)
 app.register_blueprint(portal)
