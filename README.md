@@ -24,6 +24,11 @@
 - Removed duplicate dashboard/base.html that conflicted with global template.
 - Restored correct sidebar and Companies tab visibility for admin and superadmin roles.
 
+## Fix: Corrected Legacy Communication Endpoint References
+- Replaced url_for('communications.broadcast_center') with admin.communication_history.
+- Unified all communication links under Admin blueprint.
+- Verified dashboard and navigation templates.
+
 ## Fix: AnonymousUserMixin AttributeError in Notifications
 - Added @login_required decorator to /admin/api/notifications route.
 - Added explicit check for current_user.is_authenticated.
