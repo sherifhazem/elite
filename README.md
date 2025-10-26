@@ -189,3 +189,10 @@ def secure_action():
 - وثائق Redis: <https://redis.io/docs/>
 
 > آخر تحديث: أكتوبر 2025
+
+## Cleanup: Removed Legacy Admin Settings Templates
+- Deleted folder app/templates/admin/settings/ (home.html, index.html, roles.html).
+- Unified all admin settings pages under app/admin/templates/dashboard/.
+- Ensured all pages extend dashboard/admin_base.html.
+- Reduced template duplication and namespace confusion.
+- Updated on: 2025-10-26 05:43 UTC.
