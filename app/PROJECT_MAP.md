@@ -1,183 +1,245 @@
-# خريطة مشروع ELITE (محدَّثة)
+# 🧭 خريطة مشروع ELITE (نسخة مصححة v13.2)
 
-تم توليد هذه الخريطة بعد مراجعة بنية التطبيق وفق التعليمات. تُستخدم كمرجع رئيسي لأي تعديل مستقبلي.
+تم إنشاء هذا الملف بعد مراجعة شاملة للبنية الفعلية للمشروع.  
+يُعد المرجع البنيوي الرئيسي لأي تعديل مستقبلي من قبل Codex أو أي مطوّر آخر.
+
+---
 
 ## 📦 الـ Blueprints المسجَّلة
-- **main** (`/`) – `app/routes/__init__.py`
-- **auth** (`/auth`) – `app/auth/routes.py`
-- **admin** (`/admin`) – `app/admin/routes.py` + الوحدات الفرعية ضمن `app/admin/`
-- **reports** (`/admin`) – `app/admin/routes_reports.py`
-- **activity_log_bp** (`/admin`) – `app/admin/routes_activity_log.py`
-- **company_portal** (`/company`) – `app/company/routes.py`
-- **portal** (`/portal`) – `app/routes/user_portal_routes.py`
-- **offers** (`/api/offers`) – `app/routes/offer_routes.py`
-- **companies** (`/api/companies`) – `app/routes/company_routes.py`
-- **users** (`/api/users`) – `app/routes/user_routes.py`
-- **redemption** (`/api/redemptions`) – `app/routes/redemption_routes.py`
-- **notifications** (`/api/notifications`) – `app/routes/notification_routes.py`
-- **notifications API للأدمن** (`/admin/api/notifications`) – `app/admin/routes_notifications.py`
 
-## 🔀 جميع الـ Endpoints حسب الـ Blueprint
-### main (app/routes/__init__.py)
-- `main.index` → `app/routes/__init__.py`
-- `main.about` → `app/routes/__init__.py`
-- `main.health_check` → `app/routes/__init__.py`
+| الاسم | المسار (url_prefix) | موقع التعريف | الغرض |
+|--------|--------------------|----------------|--------|
+| **main** | `/` | `app/routes/__init__.py` | الواجهة العامة للموقع |
+| **auth** | `/auth` | `app/auth/routes.py` | التسجيل وتسجيل الدخول والخروج |
+| **admin** | `/admin` | `app/admin/routes.py` | لوحة تحكم الأدمن، وتشمل كل الوحدات الفرعية |
+| **reports** | `/admin/reports` | `app/admin/routes_reports.py` | عرض تقارير النظام والإحصاءات |
+| **company_portal** | `/company` | `app/company/routes.py` | واجهة الشركات (العروض، الإحصاءات، الإعدادات) |
+| **portal** | `/portal` | `app/routes/user_portal_routes.py` | بوابة المستخدمين (العروض، الملف الشخصي) |
+| **offers** | `/api/offers` | `app/routes/offer_routes.py` | واجهات API الخاصة بالعروض |
+| **companies** | `/api/companies` | `app/routes/company_routes.py` | واجهات API للشركات |
+| **users** | `/api/users` | `app/routes/user_routes.py` | واجهات API للمستخدمين |
+| **redemption** | `/api/redemptions` | `app/routes/redemption_routes.py` | نظام تفعيل العروض QR |
+| **notifications** | `/api/notifications` | `app/routes/notification_routes.py` | إدارة الإشعارات العامة |
 
-### auth (app/auth/routes.py)
-- `auth.api_register` → `app/auth/routes.py`
-- `auth.register_select` → `app/auth/routes.py`
-- `auth.register_member` → `app/auth/routes.py`
-- `auth.register_member_legacy` → `app/auth/routes.py`
-- `auth.register_company` → `app/auth/routes.py`
-- `auth.api_login` → `app/auth/routes.py`
-- `auth.profile` → `app/auth/routes.py`
-- `auth.choose_membership` → `app/auth/routes.py`
-- `auth.login` → `app/auth/routes.py`
-- `auth.login_page` → `app/auth/routes.py`
-- `auth.register_choice` → `app/auth/routes.py`
-- `auth.verify_email` → `app/auth/routes.py`
-- `auth.request_password_reset` → `app/auth/routes.py`
-- `auth.reset_password` → `app/auth/routes.py`
-- `auth.logout` → `app/auth/routes.py`
+✅ تمت إزالة Blueprint القديمة `activity_log_bp` ودمجها ضمن `admin`.
 
-### admin (app/admin/routes.py)
-- `admin.admin_logout` → `app/admin/routes.py`
-- `admin.dashboard_home` → `app/admin/routes.py`
-- `admin.dashboard_alias` → `app/admin/routes.py`
-- `admin.dashboard_users` → `app/admin/routes.py`
-- `admin.view_user` → `app/admin/routes.py`
-- `admin.add_user` → `app/admin/routes.py`
-- `admin.edit_user` → `app/admin/routes.py`
-- `admin.delete_user` → `app/admin/routes.py`
-- `admin.manage_user_roles` → `app/admin/routes.py`
-- `admin.dashboard_offers` → `app/admin/routes.py`
-- `admin.add_offer` → `app/admin/routes.py`
-- `admin.manage_offer` → `app/admin/routes.py`
-- `admin.edit_offer_discount` → `app/admin/routes.py`
-- `admin.delete_offer` → `app/admin/routes.py`
-- `admin.trigger_offer_notification` → `app/admin/routes.py`
-- `admin.settings_home` → `app/admin/routes.py`
-- `admin.update_site_settings` → `app/admin/routes.py`
-- `admin.site_settings_roles` → `app/admin/routes.py`
-- `admin.save_site_settings_roles` → `app/admin/routes.py`
-- `admin.fetch_cities` → `app/admin/routes.py`
-- `admin.fetch_industries` → `app/admin/routes.py`
-- `admin.add_city` → `app/admin/routes.py`
-- `admin.add_industry` → `app/admin/routes.py`
-- `admin.update_city` → `app/admin/routes.py`
-- `admin.update_industry` → `app/admin/routes.py`
-- `admin.delete_city` → `app/admin/routes.py`
-- `admin.delete_industry` → `app/admin/routes.py`
+---
 
-### admin (الوحدات الفرعية)
-- `admin.list_companies` → `app/admin/routes_companies.py`
-- `admin.view_company` → `app/admin/routes_companies.py`
-- `admin.edit_company` → `app/admin/routes_companies.py`
-- `admin.delete_company` → `app/admin/routes_companies.py`
-- `admin.approve_company` → `app/admin/routes_companies.py`
-- `admin.suspend_company` → `app/admin/routes_companies.py`
-- `admin.reactivate_company` → `app/admin/routes_companies.py`
-- `admin.communication_history` → `app/admin/routes_communications.py`
-- `admin.compose_communication` → `app/admin/routes_communications.py`
-- `admin.communication_detail` → `app/admin/routes_communications.py`
-- `admin.communication_lookup` → `app/admin/routes_communications.py`
-- `admin.api_notifications_list` → `app/admin/routes_notifications.py`
-- `admin.api_notifications_mark_read` → `app/admin/routes_notifications.py`
+## 🔀 الـ Endpoints حسب الـ Blueprint
 
-### reports (app/admin/routes_reports.py)
-- `reports.reports_home` → `app/admin/routes_reports.py`
-- `reports.summary_api` → `app/admin/routes_reports.py`
-- `reports.export_pdf` → `app/admin/routes_reports.py`
+### 🔹 main (`app/routes/__init__.py`)
+- `main.index`
+- `main.about`
+- `main.health_check`
 
-### activity_log_bp (app/admin/routes_activity_log.py)
-- `activity_log_bp.activity_log` → `app/admin/routes_activity_log.py`
+### 🔹 auth (`app/auth/routes.py`)
+- `auth.api_register`
+- `auth.register_select`
+- `auth.register_member`
+- `auth.register_member_legacy`
+- `auth.register_company`
+- `auth.api_login`
+- `auth.profile`
+- `auth.choose_membership`
+- `auth.login`
+- `auth.login_page`
+- `auth.register_choice`
+- `auth.verify_email`
+- `auth.request_password_reset`
+- `auth.reset_password`
+- `auth.logout`
 
-### company_portal (app/company/routes.py)
-- `company_portal.complete_registration` → `app/company/routes.py`
-- `company_portal.index` → `app/company/routes.py`
-- `company_portal.dashboard` → `app/company/routes.py`
-- `company_portal.list_offers` → `app/company/routes.py`
-- `company_portal.offer_new` → `app/company/routes.py`
-- `company_portal.offer_create` → `app/company/routes.py`
-- `company_portal.offer_edit` → `app/company/routes.py`
-- `company_portal.offer_update` → `app/company/routes.py`
-- `company_portal.offer_delete` → `app/company/routes.py`
-- `company_portal.redemptions` → `app/company/routes.py`
-- `company_portal.redemptions_data` → `app/company/routes.py`
-- `company_portal.verify_redemption` → `app/company/routes.py`
-- `company_portal.confirm_redemption` → `app/company/routes.py`
-- `company_portal.settings` → `app/company/routes.py`
+### 🔹 admin (الوحدة الرئيسية + الوحدات الفرعية)
+- `admin.dashboard_home`
+- `admin.dashboard_users`
+- `admin.view_user`
+- `admin.add_user`
+- `admin.edit_user`
+- `admin.delete_user`
+- `admin.dashboard_offers`
+- `admin.add_offer`
+- `admin.manage_offer`
+- `admin.edit_offer_discount`
+- `admin.delete_offer`
+- `admin.trigger_offer_notification`
+- `admin.list_companies`
+- `admin.view_company`
+- `admin.edit_company`
+- `admin.delete_company`
+- `admin.approve_company`
+- `admin.suspend_company`
+- `admin.reactivate_company`
+- `admin.settings_home`
+- `admin.update_site_settings`
+- `admin.site_settings_roles`
+- `admin.save_site_settings_roles`
+- `admin.fetch_cities`
+- `admin.fetch_industries`
+- `admin.add_city`
+- `admin.add_industry`
+- `admin.update_city`
+- `admin.update_industry`
+- `admin.delete_city`
+- `admin.delete_industry`
+- `admin.communication_history`
+- `admin.compose_communication`
+- `admin.communication_detail`
+- `admin.communication_lookup`
+- `admin.api_notifications_list`
+- `admin.api_notifications_mark_read`
+- `admin.activity_log` ✅ *(بديل عن `activity_log_bp` السابق)*
+- `admin.admin_logout`
 
-### portal (app/routes/user_portal_routes.py)
-- `portal.home` → `app/routes/user_portal_routes.py`
-- `portal.home_alias` → `app/routes/user_portal_routes.py`
-- `portal.offers` → `app/routes/user_portal_routes.py`
-- `portal.profile` → `app/routes/user_portal_routes.py`
-- `portal.activations` → `app/routes/user_portal_routes.py`
-- `portal.offer_feedback` → `app/routes/user_portal_routes.py`
-- `portal.company_brief` → `app/routes/user_portal_routes.py`
-- `portal.notifications` → `app/routes/user_portal_routes.py`
-- `portal.upgrade_membership` → `app/routes/user_portal_routes.py`
+### 🔹 reports (`app/admin/routes_reports.py`)
+- `reports.reports_home`
+- `reports.summary_api`
+- `reports.export_pdf`
 
-### offers API (app/routes/offer_routes.py)
-- `offers.list_offers` → `app/routes/offer_routes.py`
-- `offers.create_offer` → `app/routes/offer_routes.py`
-- `offers.update_offer` → `app/routes/offer_routes.py`
-- `offers.delete_offer` → `app/routes/offer_routes.py`
+### 🔹 company_portal (`app/company/routes.py`)
+- `company_portal.complete_registration`
+- `company_portal.dashboard`
+- `company_portal.list_offers`
+- `company_portal.offer_create`
+- `company_portal.offer_edit`
+- `company_portal.offer_update`
+- `company_portal.offer_delete`
+- `company_portal.redemptions`
+- `company_portal.verify_redemption`
+- `company_portal.confirm_redemption`
+- `company_portal.settings`
 
-### companies API (app/routes/company_routes.py)
-- `companies.register_company` → `app/routes/company_routes.py`
-- `companies.list_companies` → `app/routes/company_routes.py`
-- `companies.create_company` → `app/routes/company_routes.py`
-- `companies.update_company` → `app/routes/company_routes.py`
-- `companies.delete_company` → `app/routes/company_routes.py`
+### 🔹 portal (`app/routes/user_portal_routes.py`)
+- `portal.home`
+- `portal.home_alias`
+- `portal.offers`
+- `portal.profile`
+- `portal.activations`
+- `portal.offer_feedback`
+- `portal.company_brief`
+- `portal.notifications`
+- `portal.upgrade_membership`
 
-### users API (app/routes/user_routes.py)
-- `users.list_users` → `app/routes/user_routes.py`
-- `users.create_user` → `app/routes/user_routes.py`
-- `users.update_user` → `app/routes/user_routes.py`
-- `users.delete_user` → `app/routes/user_routes.py`
-- `users.update_membership` → `app/routes/user_routes.py`
+### 🔹 offers (`app/routes/offer_routes.py`)
+- `offers.list_offers`
+- `offers.create_offer`
+- `offers.update_offer`
+- `offers.delete_offer`
 
-### redemption API (app/routes/redemption_routes.py)
-- `redemption.create_redemption_endpoint` → `app/routes/redemption_routes.py`
-- `redemption.redemption_status` → `app/routes/redemption_routes.py`
-- `redemption.confirm_redemption` → `app/routes/redemption_routes.py`
-- `redemption.get_qrcode_image` → `app/routes/redemption_routes.py`
+### 🔹 companies (`app/routes/company_routes.py`)
+- `companies.register_company`
+- `companies.list_companies`
+- `companies.create_company`
+- `companies.update_company`
+- `companies.delete_company`
 
-### notifications API (app/routes/notification_routes.py)
-- `notifications.list_notifications` → `app/routes/notification_routes.py`
-- `notifications.mark_notification_read` → `app/routes/notification_routes.py`
-- `notifications.mark_all_notifications_read` → `app/routes/notification_routes.py`
-- `notifications.delete_notification` → `app/routes/notification_routes.py`
+### 🔹 users (`app/routes/user_routes.py`)
+- `users.list_users`
+- `users.create_user`
+- `users.update_user`
+- `users.delete_user`
+- `users.update_membership`
 
-## 🧩 وراثة القوالب
-- `dashboard/admin_base.html` ← جميع قوالب الأدمن داخل `app/admin/templates/dashboard/`
-- `base.html` ← القوالب العامة في `app/templates/` (مثل `index.html`, `portal/*`, `auth/*`)
-- `company/base.html` ← قوالب بوابة الشركات في `app/templates/company/`
-- `portal/base.html` ← واجهة الأعضاء في `app/templates/portal/`
-- `auth/base.html` ← صفحات المصادقة في `app/templates/auth/`
+### 🔹 redemption (`app/routes/redemption_routes.py`)
+- `redemption.create_redemption_endpoint`
+- `redemption.redemption_status`
+- `redemption.confirm_redemption`
+- `redemption.get_qrcode_image`
 
-## 🧠 معالجات السياق والتكوين
-- `inject_user_context` داخل `app/__init__.py` يزوّد القوالب بـ `current_user`, `role`, `user_permissions`, ووسم الحالة.
+### 🔹 notifications (`app/routes/notification_routes.py`)
+- `notifications.list_notifications`
+- `notifications.mark_notification_read`
+- `notifications.mark_all_notifications_read`
+- `notifications.delete_notification`
+
+---
+
+## 🧩 وراثة القوالب (Template Inheritance)
+
+| المسار | الاستخدام | الموروث من |
+|--------|-------------|-------------|
+| `app/admin/templates/dashboard/*` | جميع صفحات لوحة الأدمن | `dashboard/admin_base.html` |
+| `app/templates/*` | الصفحات العامة | `base.html` |
+| `app/templates/company/*` | واجهة الشركات | `company/base.html` |
+| `app/templates/portal/*` | واجهة الأعضاء | `portal/base.html` |
+| `app/templates/auth/*` | صفحات الدخول والتسجيل | `auth/base.html` |
+| `app/templates/dashboard/` | قوالب عامة مثل التقارير أو الإحصاءات | `base.html` أو `admin_base.html` حسب السياق |
+
+✅ تمت إزالة القوالب القديمة `app/templates/admin/settings/`.
+
+---
+
+## 🧠 معالجات السياق والتكوين (Context Processors & Config)
+
+- `inject_user_context` في `app/__init__.py` يوفر المتغيرات التالية في القوالب:  
+  `current_user`, `user_role`, `user_permissions`, `user_status_label`, `is_admin`, `is_superadmin`.
 - إعدادات التطبيق محمّلة من `app/config.py` عبر `app.config.from_object(Config)`.
 
+---
+
 ## 🔗 الخدمات (Services) والنماذج (Models)
-- `app/services/company_registration.py` ↔ يستخدم نماذج `User` و`Company` لإنشاء الحسابات ومزامنة المالك.
-- `app/services/notifications.py` ↔ يعمل مع نموذج `Notification` لإدارة الإشعارات وقنوات البث.
-- `app/services/roles.py` ↔ يعتمد على نموذج `User` والتحقق من الخصائص لتطبيق الزوار والمعرّفات.
-- `app/services/settings_service.py` ↔ يخزّن إعدادات القوائم داخل Redis (`redis_client`).
-- `app/services/offers.py` ↔ يجلب بيانات `Offer` ويرتبط بـ `Company` و`Redemption` لواجهات الإدارة والشركة.
-- `app/services/redemption.py` ↔ يعالج حالات `Redemption` ويرتبط بموديلات `Offer` و`User`.
-- `app/services/mailer.py` و`email_service.py` ↔ ترسل رسائل تخص مستخدمي `User` والشركات `Company`.
+
+| الملف | الوظيفة الأساسية |
+|--------|------------------|
+| `app/services/company_registration.py` | تسجيل الشركات ومراجعة طلباتها |
+| `app/services/notifications.py` | إدارة إشعارات المستخدمين (`get_unread_count`, `get_notifications_for_user`) |
+| `app/services/roles.py` | إدارة الديكوريتر `admin_required`, `company_required` |
+| `app/services/settings_service.py` | تخزين إعدادات المدن/الأنشطة في Redis |
+| `app/services/offers.py` | إدارة عروض الشركات للأعضاء |
+| `app/services/redemption.py` | معالجة عمليات استرداد العروض |
+| `app/services/mailer.py` | إرسال البريد الإلكتروني للمستخدمين والشركات |
+
+### النماذج (Models)
+| النموذج | العلاقات |
+|---------|-----------|
+| `User` | `company_id` → `Company` |
+| `Company` | `offers`, `users` |
+| `Offer` | `company_id`, `redemptions` |
+| `Redemption` | `user_id`, `offer_id` |
+| `Notification` | `user_id` |
+| `Permission` | `users` (many-to-many) |
+
+---
 
 ## 🔒 Decorators للأمان
-- `@admin_required` (داخل `app/services/roles.py`) – يحصر الوصول لمستخدمي الأدمن والسوبر أدمن.
-- `@require_role("company")` (داخل `app/services/roles.py`) – يؤمّن مسارات بوابة الشركة.
-- `@login_required` (من Flask-Login) – مستخدم في API الأدمن للإشعارات.
-- مسارات الشركة والأدمن تستفيد أيضًا من فحص `g.current_user` داخل `app/__init__.py` قبل كل طلب.
 
-## 🧾 المشاكل المصحَّحة حديثًا
-- ✅ **إزالة مجلد القوالب القديم**: تم حذف `app/templates/admin/settings/` (الملفات legacy) لصالح القوالب الموحدة داخل `app/admin/templates/dashboard/`.
-- ✅ توجيه مسارات الإعدادات الآن إلى `dashboard/settings.html` و `dashboard/users_roles.html` فقط لتقليل الازدواجية.
+| الديكوريتر | الموقع | الغرض |
+|-------------|----------|--------|
+| `@admin_required` | `app/services/roles.py` | تقييد الوصول لمستخدمي الأدمن والسوبر أدمن |
+| `@company_required` | `app/services/roles.py` | تأمين مسارات بوابة الشركات |
+| `@login_required` | `flask_login` | حماية عامة للمستخدمين المسجلين |
+| `g.current_user` | `app/__init__.py` | تحقق إضافي من الجلسة في الطلبات المحمية |
+
+---
+
+## 🧾 المشاكل المصححة حديثًا
+
+| رقم | المشكلة السابقة | الحالة |
+|------|------------------|----------|
+| 1 | تكرار `dashboard/base.html` | ✅ محذوف |
+| 2 | وراثة خاطئة لقوالب Communications | ✅ مصححة إلى `dashboard/admin_base.html` |
+| 3 | القوالب القديمة في `app/templates/admin/settings/` | ✅ محذوفة |
+| 4 | تضارب `activity_log_bp` | ✅ مدمجة داخل `admin.activity_log` |
+| 5 | BuildError في `company_portal.list_offers` | ✅ endpoint موحد |
+| 6 | ImportError في `notifications` | ✅ إضافة `get_notifications_for_user` |
+| 7 | AnonymousUserMixin.id | ✅ إضافة `@login_required` |
+| 8 | اختلاف تصميم Dashboard | ✅ توحيد الوراثة |
+| 9 | توحيد اللغة والتسميات داخل القوالب | ✅ الإنجليزية موحدة للوحة الأدمن |
+
+---
+
+## 🧭 تعليمات لـ Codex
+
+1. **اقرأ هذا الملف بالكامل قبل تنفيذ أي تعديل.**
+2. لا تُنشئ Blueprints أو Endpoints غير مذكورة هنا إلا بعد تحديث هذا الملف.
+3. حدّث هذا الملف بعد كل تعديل على المسارات أو القوالب أو النماذج.
+4. استخدم التسمية الموحدة: blueprint_name.endpoint_name
+مثال:  
+`admin.edit_user`, `company_portal.offer_create`, `portal.profile`.
+5. لا تُنشئ قوالب `base.html` أو `admin_base.html` جديدة.
+6. بعد كل تعديل، أضف ملخص التغيير في `README.md`.
+
+---
+
+**تاريخ آخر تحديث:** 2025-10-25  
+**الإصدار البنيوي:** ELITE v13.2  
 
