@@ -4,7 +4,7 @@
 {% block content %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">My Offers</h2>
-        <a class="btn btn-primary" href="{{ url_for('company_portal.create_offer') }}" {% if not company %}disabled{% endif %}>New Offer</a>
+        <a class="btn btn-primary" href="{{ url_for('company_portal.offer_create') }}" {% if not company %}disabled{% endif %}>New Offer</a>
     </div>
 
     {% if not company %}
@@ -27,7 +27,7 @@
                             <td>{{ offer.base_discount }}%</td>
                             <td>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'No expiry' }}</td>
                             <td class="text-end">
-                                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('company_portal.edit_offer', offer_id=offer.id) }}">Edit</a>
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('company_portal.offer_edit', offer_id=offer.id) }}">Edit</a>
                             </td>
                         </tr>
                     {% else %}
