@@ -78,6 +78,8 @@
 - admin.delete_city → app/admin/routes.py
 - admin.delete_industry → app/admin/routes.py
 - admin.activity_log → app/admin/routes.py
+- admin.communication_history → app/admin/routes_communications.py
+- admin.compose_communication → app/admin/routes_communications.py
 
 ### 🔹 reports (`app/admin/routes_reports.py`)
 - reports.reports_home → app/admin/routes_reports.py
