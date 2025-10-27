@@ -23,6 +23,12 @@ company_portal.jinja_loader = ChoiceLoader(
     ]
 )
 
-from . import routes  # noqa: E402,F401
+from .routes import (  # noqa: E402,F401
+    routes_dashboard,
+    routes_offers,
+    routes_redemptions,
+    routes_registration,
+    routes_settings,
+)
 
 __all__ = ["company_portal"]
