@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Elite Company Portal{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap"
+        rel="stylesheet"
+    >
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DT0QO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1Gq3h45p2QPRdhR+M3XwEnG7qqg=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/company.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="company-portal-body">
+    <nav class="navbar navbar-expand-lg navbar-dark company-navbar fixed-top shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('company_portal.dashboard') }}">
+                <span class="company-brand-icon d-inline-flex align-items-center justify-content-center rounded-circle">
+                    {% if company and company.logo_url %}
+                        <img src="{{ company.logo_url }}" alt="{{ company.name }}" class="company-brand-logo">
+                    {% else %}
+                        <span class="fw-semibold">{{ company.name[:1]|upper if company and company.name else 'C' }}</span>
+                    {% endif %}
+                </span>
+                <span class="fw-semibold">Company Portal</span>
+            </a>
+            <button
+                class="btn btn-outline-light d-lg-none"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#companySidebar"
+                aria-controls="companySidebar"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+            >
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="d-flex align-items-center gap-3">
+                {% if company %}
+                    <div class="text-white text-end small d-none d-md-block">
+                        <div class="fw-semibold">{{ company.name }}</div>
+                        <div class="text-white-50">{{ company.contact_number or '' }}</div>
+                    </div>
+                {% endif %}
+                {% if current_user and current_user.is_authenticated %}
+                    <div class="text-white text-end small">
+                        <div>{{ current_user.username }}</div>
+                        <div class="text-white-50">{{ current_user.email }}</div>
+                    </div>
+                    <a class="btn btn-outline-light btn-sm" href="{{ url_for('auth.logout') }}">
+                        <i class="fa-solid fa-right-from-bracket me-2"></i>
+                        <span>تسجيل الخروج</span>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    <div class="company-shell">
+        {% set current_path = request.path %}
+        <aside id="companySidebar" class="company-sidebar collapse d-lg-block show">
+            <div class="company-sidebar-inner py-4">
+                <div class="company-sidebar-profile text-center px-3 mb-4">
+                    <div class="company-avatar rounded-circle mx-auto mb-3">
+                        {% if company and company.logo_url %}
+                            <img src="{{ company.logo_url }}" alt="{{ company.name }}" class="img-fluid">
+                        {% else %}
+                            <span class="fw-semibold">{{ company.name[:1]|upper if company and company.name else 'C' }}</span>
+                        {% endif %}
+                    </div>
+                    <h2 class="h6 mb-1">{{ company.name if company else 'Company' }}</h2>
+                    <p class="text-muted small mb-0">Welcome to your company workspace.</p>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.dashboard')) %}active{% endif %}" href="{{ url_for('company_portal.dashboard') }}">
+                            <i class="fas fa-gauge-high me-2"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.list_offers')) %}active{% endif %}" href="{{ url_for('company_portal.list_offers') }}">
+                            <i class="fas fa-gift me-2"></i>
+                            <span>Offers</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.redemptions')) %}active{% endif %}" href="{{ url_for('company_portal.redemptions') }}">
+                            <i class="fas fa-receipt me-2"></i>
+                            <span>Redemptions</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.settings')) %}active{% endif %}" href="{{ url_for('company_portal.settings') }}">
+                            <i class="fas fa-gear me-2"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+        <div class="company-content flex-grow-1 d-flex flex-column">
+            <main class="company-main flex-grow-1">
+                <div class="container-fluid px-4 py-4">
+                    {% with messages = get_flashed_messages(with_categories=True) %}
+                        {% if messages %}
+                            <div class="mb-3">
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'info' if category in ['message', 'info'] else category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                    <header class="company-page-header d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+                        <div>
+                            <h1 class="h3 mb-1">{% block portal_title %}Company Portal{% endblock %}</h1>
+                            <p class="text-muted mb-0">{% block portal_subtitle %}Manage offers, customers, and communication preferences with ease.{% endblock %}</p>
+                        </div>
+                        {% block portal_header_actions %}{% endblock %}
+                    </header>
+                    <section class="company-page-content">
+                        {% block portal_content %}{% endblock %}
+                    </section>
+                </div>
+            </main>
+            <footer class="company-footer py-3 border-top">
+                <div class="container-fluid px-4">
+                    <small class="text-muted">&copy; Elite Rewards Platform. All rights reserved.</small>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var sidebar = document.getElementById("companySidebar");
+            if (!sidebar) {
+                return;
+            }
+
+            var toggles = document.querySelectorAll('[data-bs-target="#companySidebar"]');
+            toggles.forEach(function (toggle) {
+                toggle.addEventListener("click", function () {
+                    var isShown = sidebar.classList.contains("show");
+                    if (isShown) {
+                        sidebar.classList.remove("show");
+                        toggle.setAttribute("aria-expanded", "false");
+                    } else {
+                        sidebar.classList.add("show");
+                        toggle.setAttribute("aria-expanded", "true");
+                    }
+                });
+            });
+        });
+    </script>
+    {% block portal_scripts %}{% endblock %}
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

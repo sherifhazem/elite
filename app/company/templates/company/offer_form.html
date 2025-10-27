@@ -1,0 +1,32 @@
+<!-- Offer form partial reused for both creation and editing workflows. -->
+<!-- UPDATED: Responsive Company Portal with Restricted Editable Fields. -->
+<form id="offer-form" data-action="{{ action_url }}" data-method="{{ method }}">
+    <div class="mb-3">
+        <label for="offer-title" class="form-label">Title</label>
+        <input type="text" class="form-control" id="offer-title" name="title" value="{{ offer.title if offer else '' }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="offer-description" class="form-label">Description</label>
+        <textarea class="form-control" id="offer-description" name="description" rows="3">{{ offer.description if offer else '' }}</textarea>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label for="offer-base-discount" class="form-label">Base Discount (%)</label>
+            <input type="number" step="0.01" min="0" class="form-control" id="offer-base-discount" name="base_discount" value="{{ offer.base_discount if offer else '' }}" required>
+        </div>
+        <div class="col-md-4">
+            <label for="offer-valid-until" class="form-label">Valid Until</label>
+            <input type="date" class="form-control" id="offer-valid-until" name="valid_until" value="{{ offer.valid_until.strftime('%Y-%m-%d') if offer and offer.valid_until else '' }}">
+        </div>
+        <div class="col-md-4 d-flex align-items-center">
+            <div class="form-check mt-4">
+                <input class="form-check-input" type="checkbox" id="offer-send-notifications" name="send_notifications">
+                <label class="form-check-label" for="offer-send-notifications">Send notifications</label>
+            </div>
+        </div>
+    </div>
+    <div class="mt-4 d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-elite-outline" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-elite-primary">Save Offer</button>
+    </div>
+</form>
