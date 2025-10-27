@@ -8,11 +8,11 @@ from typing import Optional
 
 from flask import current_app, g, jsonify, render_template, request
 
-from .. import db
-from ..models import Redemption
-from ..services.offers import list_company_offers
-from ..services.redemption import list_company_redemptions
-from ..services.roles import require_role
+from ... import db
+from ...models import Redemption
+from ...services.offers import list_company_offers
+from ...services.redemption import list_company_redemptions
+from ...services.roles import require_role
 from . import company_portal
 from .helpers import _current_company
 

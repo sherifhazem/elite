@@ -6,8 +6,8 @@ from http import HTTPStatus
 
 from flask import flash, g, jsonify, redirect, render_template, request, url_for
 
-from .. import db
-from ..services.roles import require_role
+from ... import db
+from ...services.roles import require_role
 from . import company_portal
 from .helpers import _current_company
 

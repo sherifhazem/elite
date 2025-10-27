@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING
 
 from flask import abort, g
 
-from .. import db
-from ..models import Company
+from ... import db
+from ...models import Company
 
 if TYPE_CHECKING:  # pragma: no cover - hints only
-    from ..models import User  # noqa: F401
+    from ...models import User  # noqa: F401
 
 
 def _ensure_company(user) -> Company:

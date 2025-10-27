@@ -8,10 +8,10 @@ from typing import Dict, Tuple
 
 from flask import flash, jsonify, redirect, render_template, request, url_for
 
-from .. import db
-from ..models import Offer
-from ..services.notifications import broadcast_new_offer, fetch_offer_feedback_counts
-from ..services.roles import require_role
+from ... import db
+from ...models import Offer
+from ...services.notifications import broadcast_new_offer, fetch_offer_feedback_counts
+from ...services.roles import require_role
 from . import company_portal
 from .helpers import _current_company
 

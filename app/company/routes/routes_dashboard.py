@@ -7,8 +7,8 @@ from datetime import datetime
 from flask import redirect, render_template, url_for
 from sqlalchemy import func
 
-from ..models import Offer, Redemption
-from ..services.roles import require_role
+from ...models import Offer, Redemption
+from ...services.roles import require_role
 from . import company_portal
 from .helpers import _current_company
 
