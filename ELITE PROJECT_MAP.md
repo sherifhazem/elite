@@ -21,7 +21,7 @@ main	/	app/routes/__init__.py	الصفحة الرئيسية والمحتوى ا�
 auth	/auth	app/auth/routes.py	التسجيل / تسجيل الدخول / الخروج
 admin	/admin	app/admin/routes.py	لوحة التحكم الإدارية
 reports	/admin/reports	app/admin/routes_reports.py	تقارير النظام
-company_portal	/company	app/company/routes_portal.py	واجهة الشركات بعد التسجيل
+company_portal	/company	app/company/routes/__init__.py	واجهة الشركات بعد التسجيل (مقسمة إلى وحدات routes_*)
 notif_bp	/notifications	app/routes/notifications.py	إشعارات عامة (للمستخدمين)
 redemption_bp	/api/redemptions	app/routes/redemptions.py	نظام تفعيل العروض
 portal_bp	/portal	app/routes/user_portal_routes.py	واجهة المستخدم النهائي
@@ -54,20 +54,29 @@ admin.activity_log	GET	سجل النشاطات الإدارية	dashboard/activi
 url_for('admin.<endpoint_name>')
 
 🧭 Endpoints في بوابة الشركة (Company Portal)
-Endpoint	HTTP	القالب
-company_portal.dashboard	GET	company/dashboard.html
-company_portal.list_offers	GET	company/offers.html
-company_portal.offer_create	GET/POST	company/offer_create.html
-company_portal.offer_edit	GET/POST	company/offer_edit.html
-company_portal.redemptions	GET	company/redemptions.html
-company_portal.profile	GET/POST	company/profile.html
+Endpoint	HTTP	المخرجات	المصدر
+company_portal.index	GET	Redirect → dashboard	app/company/routes/routes_dashboard.py
+company_portal.dashboard	GET	company/dashboard.html	app/company/routes/routes_dashboard.py
+company_portal.complete_registration	GET/POST	company/complete_registration.html	app/company/routes/routes_registration.py
+company_portal.list_offers	GET	company/offers.html	app/company/routes/routes_offers.py
+company_portal.offer_new	GET	company/offer_form.html	app/company/routes/routes_offers.py
+company_portal.offer_create	POST	JSON / redirect	app/company/routes/routes_offers.py
+company_portal.offer_edit	GET	company/offer_form.html	app/company/routes/routes_offers.py
+company_portal.offer_update	POST/PUT	JSON / redirect	app/company/routes/routes_offers.py
+company_portal.offer_delete	POST/DELETE	JSON / redirect	app/company/routes/routes_offers.py
+company_portal.redemptions	GET	company/redemptions.html	app/company/routes/routes_redemptions.py
+company_portal.redemptions_data	GET	JSON	app/company/routes/routes_redemptions.py
+company_portal.verify_redemption	POST	JSON	app/company/routes/routes_redemptions.py
+company_portal.confirm_redemption	POST	JSON	app/company/routes/routes_redemptions.py
+company_portal.settings	GET/POST	company/settings.html	app/company/routes/routes_settings.py
 
 ✅ جميعها محمية بـ:
 
-@company_required or @login_required
+@require_role("company")
 
 
-وتم توحيد الأسماء بين الكود والقوالب.
+المسارات تنظم الآن ضمن app/company/routes/ حسب المجال الوظيفي.
+
 
 👥 Endpoints في واجهة المستخدم (Member Portal)
 Endpoint	HTTP	القالب
