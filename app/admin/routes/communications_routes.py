@@ -23,8 +23,8 @@ from app import db
 from app.models import User, Company, Offer, ActivityLog
 from app.services.roles import admin_required
 
-from ..services import email_service
-from ..services.notifications import send_admin_broadcast_notifications
+from ...services import email_service
+from ...services.notifications import send_admin_broadcast_notifications
 from .. import admin
 
 CommunicationLogEntry = Dict[str, object]

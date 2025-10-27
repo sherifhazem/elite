@@ -20,7 +20,7 @@ from app import db
 from app.models import User, Company, Offer, ActivityLog
 from app.services.roles import admin_required
 
-from ..services.notifications import broadcast_new_offer
+from ...services.notifications import broadcast_new_offer
 from .. import admin
 
 

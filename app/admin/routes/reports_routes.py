@@ -21,7 +21,7 @@ from app import db
 from app.models import User, Company, Offer, ActivityLog
 from app.services.roles import admin_required
 
-from ..services.analytics import (
+from ...services.analytics import (
     get_company_summary,
     get_membership_distribution,
     get_offer_summary,

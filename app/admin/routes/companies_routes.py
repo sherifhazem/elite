@@ -17,7 +17,7 @@ from app import db
 from app.models import User, Company, Offer, ActivityLog
 from app.services.roles import admin_required
 
-from ..services.mailer import (
+from ...services.mailer import (
     send_company_approval_email,
     send_company_correction_email,
     send_company_reactivation_email,

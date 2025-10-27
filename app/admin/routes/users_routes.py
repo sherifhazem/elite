@@ -21,8 +21,8 @@ from app import db
 from app.models import User, Company, Offer, ActivityLog
 from app.services.roles import admin_required
 
-from ..services.mailer import send_welcome_email
-from ..services.notifications import ensure_welcome_notification
+from ...services.mailer import send_welcome_email
+from ...services.notifications import ensure_welcome_notification
 from .. import admin
 
 

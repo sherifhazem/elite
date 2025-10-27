@@ -21,7 +21,7 @@ from app import db
 from app.models import User, Company, Offer, ActivityLog
 from app.services.roles import admin_required
 
-from ..services import settings_service
+from ...services import settings_service
 from .. import admin
 
 

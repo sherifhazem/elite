@@ -18,7 +18,7 @@ from app import db
 from app.models import User, Company, Offer, ActivityLog
 from app.services.roles import admin_required
 
-from ..services.notifications import (
+from ...services.notifications import (
     get_notifications_for_user,
     get_unread_count,
     mark_all_read,
