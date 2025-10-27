@@ -14,7 +14,7 @@ from ..services.offers import list_company_offers
 from ..services.redemption import list_company_redemptions
 from ..services.roles import require_role
 from . import company_portal
-from .helpers import _current_company
+from app.utils.company_context import _ensure_company, _current_company
 
 
 @company_portal.route("/redemptions", endpoint="redemptions")

@@ -9,7 +9,7 @@ from flask import flash, g, jsonify, redirect, render_template, request, url_for
 from .. import db
 from ..services.roles import require_role
 from . import company_portal
-from .helpers import _current_company
+from app.utils.company_context import _ensure_company, _current_company
 
 
 @company_portal.route("/settings", methods=["GET", "POST"], endpoint="settings")
