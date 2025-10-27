@@ -1,11 +1,25 @@
-"""Administrative reporting blueprint delivering analytics dashboards."""
+"""Admin routes: reporting dashboards, summaries, and exports."""
 
 from __future__ import annotations
 
 from io import BytesIO
 from typing import Any, Dict
 
-from flask import Blueprint, jsonify, render_template, send_file
+from flask import (
+    render_template,
+    redirect,
+    url_for,
+    flash,
+    request,
+    jsonify,
+    abort,
+    Response,
+    send_file,
+)
+
+from app import db
+from app.models import User, Company, Offer, ActivityLog
+from app.services.roles import admin_required
 
 from ..services.analytics import (
     get_company_summary,
@@ -14,16 +28,10 @@ from ..services.analytics import (
     get_recent_activity,
     get_user_summary,
 )
-from ..services.roles import admin_required
-
-reports = Blueprint(
-    "reports",
-    __name__,
-    url_prefix="/admin",
-)
+from .. import admin
 
 
-@reports.route("/reports", endpoint="reports_home")
+@admin.route("/reports", endpoint="reports_home")
 @admin_required
 def reports_home() -> str:
     """Render the interactive reports dashboard."""
@@ -34,7 +42,7 @@ def reports_home() -> str:
     )
 
 
-@reports.route("/api/summary", endpoint="summary_api")
+@admin.route("/api/summary", endpoint="summary_api")
 @admin_required
 def summary_api() -> Any:
     """Return a JSON payload with aggregated platform statistics."""
@@ -53,7 +61,7 @@ def summary_api() -> Any:
     return jsonify(payload)
 
 
-@reports.route("/reports/export", endpoint="export_pdf")
+@admin.route("/reports/export", endpoint="export_pdf")
 @admin_required
 def export_pdf() -> Any:
     """Generate a PDF report for download using the latest analytics."""

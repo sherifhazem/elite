@@ -1,5 +1,4 @@
-# ADDED: Admin Communication Center – bulk/group message system (no DB schema change).
-"""Administrative communication center routes for bulk outreach."""
+"""Admin routes: communication center history, compose, detail, and lookup."""
 
 from __future__ import annotations
 
@@ -8,31 +7,29 @@ from datetime import datetime
 from typing import Deque, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from flask import (
-    Response,
-    abort,
-    flash,
-    g,
-    jsonify,
-    redirect,
     render_template,
-    request,
+    redirect,
     url_for,
+    flash,
+    request,
+    jsonify,
+    abort,
+    Response,
 )
+from flask import g
 from sqlalchemy import or_
 
-from ..models.company import Company
-from ..models.user import User
-from ..services.notifications import send_admin_broadcast_notifications
-from ..services.roles import admin_required
-from ..services import email_service
-from .routes import admin
+from app import db
+from app.models import User, Company, Offer, ActivityLog
+from app.services.roles import admin_required
 
+from ..services import email_service
+from ..services.notifications import send_admin_broadcast_notifications
+from .. import admin
 
 CommunicationLogEntry = Dict[str, object]
 
-
 COMMUNICATION_HISTORY: Deque[CommunicationLogEntry] = deque(maxlen=200)
-
 
 AUDIENCE_LABELS: Dict[str, str] = {
     "all_users": "جميع المستخدمين",
@@ -238,7 +235,6 @@ def compose_communication() -> str:
             dispatch_results["emails"] = email_service.send_admin_broadcast_email(
                 [user.email for user in user_recipients if user.email],
                 subject=subject,
-                body=body,
                 sender=sender,
             )
 
@@ -342,4 +338,3 @@ def communication_lookup() -> Response:
             )
 
     return jsonify({"results": results})
-

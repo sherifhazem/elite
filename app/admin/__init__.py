@@ -1,22 +1,24 @@
-# -*- coding: utf-8 -*-
-"""Admin blueprint package initialization for dashboard routes."""
+"""Admin blueprint initialization and modular route aggregation."""
 
 from flask import Blueprint
 
-# تعريف Blueprint الأدمن بمسارات صحيحة للقوالب والملفات الثابتة
 admin = Blueprint(
     "admin",
     __name__,
     url_prefix="/admin",
-    template_folder="templates",   # يشير إلى app/admin/templates
-    static_folder="../static"      # يستخدم ملفات CSS/JS من app/static
+    template_folder="templates",
+    static_folder="static",
 )
 
-# تحميل المسارات الفرعية وربطها بنفس Blueprint
-from . import routes  # المسارات العامة للأدمن
-from . import routes_communications  # مركز الرسائل
-from . import routes_notifications   # الإشعارات
-from . import routes_companies       # إدارة الشركات
-from . import routes_reports         # التقارير
-
-__all__ = ["admin"]
+# Register all modular route files
+from .routes import (
+    dashboard_routes,
+    users_routes,
+    companies_routes,
+    offers_routes,
+    settings_routes,
+    communications_routes,
+    logs_routes,
+    notifications_routes,
+    reports_routes,
+)
