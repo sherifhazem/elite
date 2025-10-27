@@ -13,7 +13,7 @@ from ...models import Offer
 from ...services.notifications import broadcast_new_offer, fetch_offer_feedback_counts
 from ...services.roles import require_role
 from . import company_portal
-from .helpers import _current_company
+from app.utils.company_context import _ensure_company, _current_company
 
 
 def _parse_offer_payload(data: Dict[str, str]) -> Tuple[Dict[str, object], str | None]:

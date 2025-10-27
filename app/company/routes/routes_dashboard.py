@@ -10,7 +10,7 @@ from sqlalchemy import func
 from ...models import Offer, Redemption
 from ...services.roles import require_role
 from . import company_portal
-from .helpers import _current_company
+from app.utils.company_context import _ensure_company, _current_company
 
 
 @company_portal.route("/", endpoint="index")
