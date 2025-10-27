@@ -1,26 +1,36 @@
-# -*- coding: utf-8 -*-
-"""Admin routes for managing companies (simple and clean)."""
+"""Admin routes: company onboarding, approvals, and lifecycle management."""
 
-# Use the main admin blueprint already defined in routes.py
-from . routes import admin
+from __future__ import annotations
 
-from flask import render_template, redirect, url_for, flash, request
-from app import db
-from app.models import Company
-from app.services.roles import admin_required
-from app.services.mailer import (
-    send_company_approval_email,
-    send_company_correction_email,
-    send_company_suspension_email,
-    send_company_reactivation_email,
+from flask import (
+    render_template,
+    redirect,
+    url_for,
+    flash,
+    request,
+    jsonify,
+    abort,
+    Response,
 )
 
-# ==============================
-# List Companies
-# ==============================
+from app import db
+from app.models import User, Company, Offer, ActivityLog
+from app.services.roles import admin_required
+
+from ..services.mailer import (
+    send_company_approval_email,
+    send_company_correction_email,
+    send_company_reactivation_email,
+    send_company_suspension_email,
+)
+from .. import admin
+
+
 @admin.route("/companies", methods=["GET"], endpoint="list_companies")
 @admin_required
-def list_companies():
+def list_companies() -> str:
+    """Render a filtered list of companies by status with counts per tab."""
+
     status = request.args.get("status", "pending").lower()
     companies = Company.query.filter_by(status=status).all()
     status_counts = {
@@ -37,24 +47,22 @@ def list_companies():
     )
 
 
-# ==============================
-# View Company Details
-# ==============================
 @admin.route("/companies/<int:company_id>", methods=["GET"], endpoint="view_company")
 @admin_required
-def view_company(company_id):
+def view_company(company_id: int) -> str:
+    """Display company details for administrative review."""
+
     company = Company.query.get_or_404(company_id)
     return render_template("dashboard/company_details.html", company=company)
 
 
-# ==============================
-# Edit Company
-# ==============================
 @admin.route(
     "/companies/<int:company_id>/edit", methods=["GET", "POST"], endpoint="edit_company"
 )
 @admin_required
-def edit_company(company_id):
+def edit_company(company_id: int) -> str:
+    """Allow administrators to edit core company attributes."""
+
     company = Company.query.get_or_404(company_id)
     if request.method == "POST":
         company.name = request.form.get("name", company.name)
@@ -67,14 +75,13 @@ def edit_company(company_id):
     return render_template("dashboard/company_edit.html", company=company)
 
 
-# ==============================
-# Delete Company
-# ==============================
 @admin.route(
     "/companies/<int:company_id>/delete", methods=["POST"], endpoint="delete_company"
 )
 @admin_required
-def delete_company(company_id):
+def delete_company(company_id: int) -> str:
+    """Delete a company record and redirect to the listing view."""
+
     company = Company.query.get_or_404(company_id)
     db.session.delete(company)
     db.session.commit()
@@ -82,14 +89,13 @@ def delete_company(company_id):
     return redirect(url_for("admin.list_companies"))
 
 
-# ==============================
-# Admin Actions
-# ==============================
 @admin.route(
     "/companies/<int:company_id>/approve", methods=["POST"], endpoint="approve_company"
 )
 @admin_required
-def approve_company(company_id):
+def approve_company(company_id: int) -> str:
+    """Approve a pending company and send the appropriate notification."""
+
     company = Company.query.get_or_404(company_id)
     company.status = "approved"
     db.session.commit()
@@ -102,7 +108,9 @@ def approve_company(company_id):
     "/companies/<int:company_id>/suspend", methods=["POST"], endpoint="suspend_company"
 )
 @admin_required
-def suspend_company(company_id):
+def suspend_company(company_id: int) -> str:
+    """Suspend an existing company and notify relevant stakeholders."""
+
     company = Company.query.get_or_404(company_id)
     company.status = "suspended"
     db.session.commit()
@@ -112,13 +120,34 @@ def suspend_company(company_id):
 
 
 @admin.route(
-    "/companies/<int:company_id>/reactivate", methods=["POST"], endpoint="reactivate_company"
+    "/companies/<int:company_id>/reactivate",
+    methods=["POST"],
+    endpoint="reactivate_company",
 )
 @admin_required
-def reactivate_company(company_id):
+def reactivate_company(company_id: int) -> str:
+    """Reactivate a suspended company and send confirmation."""
+
     company = Company.query.get_or_404(company_id)
     company.status = "approved"
     db.session.commit()
     send_company_reactivation_email(company)
     flash("Company reactivated successfully.", "success")
+    return redirect(url_for("admin.list_companies"))
+
+
+@admin.route(
+    "/companies/<int:company_id>/correction",
+    methods=["POST"],
+    endpoint="request_company_correction",
+)
+@admin_required
+def request_company_correction(company_id: int) -> str:
+    """Move a company to correction status and notify for edits."""
+
+    company = Company.query.get_or_404(company_id)
+    company.status = "correction"
+    db.session.commit()
+    send_company_correction_email(company)
+    flash("Company moved to correction status.", "info")
     return redirect(url_for("admin.list_companies"))

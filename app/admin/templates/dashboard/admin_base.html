@@ -30,7 +30,7 @@
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard_home') }}">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard_users') }}">Users</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard_offers') }}">Offers</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('reports.reports_home') }}">Reports</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.reports_home') }}">Reports</a></li>
                     {% if current_user and current_user.is_authenticated %}
                     <li class="nav-item">
                         <a href="{{ url_for('admin.admin_logout') }}" class="nav-link text-danger d-flex align-items-center">
@@ -76,7 +76,7 @@
                     </li>
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if current_page == 'reports' %}active{% endif %}" href="{{ url_for('reports.reports_home') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Reports">
+                        <a class="nav-link d-flex align-items-center {% if current_page == 'reports' %}active{% endif %}" href="{{ url_for('admin.reports_home') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Reports">
                             <i class="fas fa-chart-line me-3"></i>
                             <span>Reports</span>
                         </a>

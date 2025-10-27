@@ -230,7 +230,7 @@ def confirm_redemption(code: str):
                     message=(
                         f"Company {company.name} confirmed redemption {updated.redemption_code}."
                     ),
-                    link_url=url_for("reports.reports_home"),
+                    link_url=url_for("admin.reports_home"),
                     metadata={
                         "offer_id": updated.offer_id,
                         "company_id": updated.company_id,
