@@ -44,7 +44,10 @@ migrations/__pycache__/
 *.gz
 *.rar
 *.7z
+ملفات اخري
 
 # Test or local configs
 test_*.py
 local_settings.py
+
+
