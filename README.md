@@ -229,3 +229,6 @@ def secure_action():
 - Ensured all pages extend dashboard/admin_base.html.
 - Reduced template duplication and namespace confusion.
 - Updated on: 2025-10-26 05:43 UTC.
+
+## واجهة الحضور والانصراف
+يوفر التطبيق واجهة رسومية بسيطة للموظف لتسجيل وقت الحضور والانصراف. عند كل عملية يتم التقاط صورة شاشة فورية للتوثيق مع حفظ البيانات محليًا لضمان متابعة دقيقة لحضور الموظفين.
