@@ -12,8 +12,8 @@ from cryptography.fernet import Fernet
 
 # Local application imports (planned)
 from . import config
-from local_storage import local_db
-from local_storage import encryptor
+from ..local_storage import encryptor
+from ..local_storage import local_db
 
 
 def start_sync_loop() -> None:
