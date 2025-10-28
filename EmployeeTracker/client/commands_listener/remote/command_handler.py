@@ -8,9 +8,9 @@ from typing import Any, Mapping
 
 LOGGER = logging.getLogger(__name__)
 
-_CAPTURE_MODULE = "screenshot_capture"
+_CAPTURE_MODULE = "EmployeeTracker.client.screenshot_capture"
 _CAPTURE_CALLABLE = "capture_screenshot"
-_STREAM_MODULE = "commands_listener.remote.live_stream"
+_STREAM_MODULE = f"{__package__}.live_stream"
 _STREAM_CALLABLE = "start_stream"
 
 
