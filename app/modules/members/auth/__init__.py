@@ -1,5 +1,9 @@
-"""Authentication blueprint initialization."""
+"""Authentication package helpers.
 
-from .routes import auth
+This module intentionally avoids importing the routes blueprint at import time
+to prevent circular imports when access-control utilities lazily import member
+services. Import the blueprint directly from ``app.modules.members.auth.routes``
+when needed.
+"""
 
-__all__ = ["auth"]
+__all__ = []
