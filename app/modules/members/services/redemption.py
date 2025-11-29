@@ -15,6 +15,21 @@ from sqlalchemy.orm import joinedload
 
 from app import db
 from app.models import Offer, Redemption, User
+from core.observability.logger import log_event
+
+
+def _log(function: str, event: str, message: str, details: Dict[str, object] | None = None, level: str = "INFO") -> None:
+    """Emit standardized observability events for redemption services."""
+
+    log_event(
+        level=level,
+        event=event,
+        source="service",
+        module=__name__,
+        function=function,
+        message=message,
+        details=details,
+    )
 
 
 def _generate_unique_code(length: int = 12) -> str:
@@ -67,13 +82,22 @@ def _serialize(redemption: Redemption) -> dict:
 def create_redemption(user_id: int, offer_id: int) -> Redemption:
     """Create a fresh redemption for the given user and offer combination."""
 
+    _log(
+        "create_redemption",
+        "service_start",
+        "Creating redemption",
+        {"user_id": user_id, "offer_id": offer_id},
+    )
     user = User.query.get(user_id)
     if user is None:
+        _log("create_redemption", "validation_failure", "User not found", {"user_id": user_id}, level="ERROR")
         raise ValueError("User not found.")
     offer = Offer.query.get(offer_id)
     if offer is None:
+        _log("create_redemption", "validation_failure", "Offer not found", {"offer_id": offer_id}, level="ERROR")
         raise ValueError("Offer not found.")
     if offer.company_id is None:
+        _log("create_redemption", "validation_failure", "Offer missing company", {"offer_id": offer_id}, level="ERROR")
         raise ValueError("Offer is not linked to a company.")
 
     latest = (
@@ -83,10 +107,19 @@ def create_redemption(user_id: int, offer_id: int) -> Redemption:
     )
     if latest is not None:
         if latest.status == "redeemed":
+            _log("create_redemption", "soft_failure", "Offer already redeemed", {"redemption_id": latest.id}, level="WARNING")
             raise ValueError("This offer has already been redeemed by the user.")
         if not latest.is_expired():
+            _log(
+                "create_redemption",
+                "soft_failure",
+                "Active redemption already exists",
+                {"redemption_id": latest.id},
+                level="WARNING",
+            )
             raise ValueError("An active redemption already exists for this offer.")
         latest.mark_expired()
+        _log("create_redemption", "service_checkpoint", "Expired previous redemption", {"redemption_id": latest.id})
 
     code = _generate_unique_code()
     redemption = Redemption(
@@ -100,19 +133,35 @@ def create_redemption(user_id: int, offer_id: int) -> Redemption:
     db.session.flush()
     generate_qr_token(code, commit=False)
     db.session.commit()
+    _log(
+        "create_redemption",
+        "db_write_success",
+        "Redemption created",
+        {"redemption_id": redemption.id, "code": code},
+    )
     return redemption
 
 
 def get_redemption_status(code: str) -> Optional[dict]:
     """Return the serialized redemption state for the provided code."""
 
+    _log("get_redemption_status", "service_start", "Fetching redemption status", {"code": code})
     redemption = Redemption.query.filter_by(redemption_code=code).first()
     if redemption is None:
+        _log("get_redemption_status", "soft_failure", "Redemption not found", {"code": code}, level="WARNING")
         return None
     changed = _refresh_expiration(redemption)
     if changed:
         db.session.commit()
-    return _serialize(redemption)
+        _log(
+            "get_redemption_status",
+            "service_checkpoint",
+            "Redemption expired during status fetch",
+            {"code": code},
+        )
+    payload = _serialize(redemption)
+    _log("get_redemption_status", "service_complete", "Redemption status returned", {"code": code, "status": redemption.status})
+    return payload
 
 
 def mark_redeemed(
@@ -123,25 +172,32 @@ def mark_redeemed(
 ) -> Redemption:
     """Mark a redemption as redeemed if it belongs to the provided company."""
 
+    _log("mark_redeemed", "service_start", "Marking redemption as redeemed", {"code": code, "company_id": company_id})
     redemption = Redemption.query.filter_by(redemption_code=code).first()
     if redemption is None:
+        _log("mark_redeemed", "validation_failure", "Redemption not found", {"code": code}, level="ERROR")
         raise LookupError("Redemption not found.")
 
     if company_id is not None and redemption.company_id != company_id:
+        _log("mark_redeemed", "validation_failure", "Company mismatch", {"code": code, "company_id": company_id}, level="ERROR")
         raise PermissionError("This redemption does not belong to the company.")
 
     if redemption.qr_token and qr_token and redemption.qr_token != qr_token:
+        _log("mark_redeemed", "validation_failure", "QR token mismatch", {"code": code}, level="ERROR")
         raise ValueError("QR token mismatch.")
 
     if _refresh_expiration(redemption):
         db.session.commit()
+        _log("mark_redeemed", "soft_failure", "Redemption expired before redeeming", {"code": code}, level="WARNING")
         raise ValueError("The redemption code has expired.")
 
     if redemption.status == "redeemed":
+        _log("mark_redeemed", "service_checkpoint", "Redemption already marked redeemed", {"code": code})
         return redemption
 
     redemption.mark_redeemed()
     db.session.commit()
+    _log("mark_redeemed", "db_write_success", "Redemption marked redeemed", {"code": code, "redemption_id": redemption.id})
     return redemption
 
 
@@ -153,8 +209,10 @@ def generate_qr_token(
 ) -> Redemption:
     """Generate (or reuse) a QR token and image for the provided code."""
 
+    _log("generate_qr_token", "service_start", "Generating QR token", {"code": code, "regenerate": regenerate})
     redemption = Redemption.query.filter_by(redemption_code=code).first()
     if redemption is None:
+        _log("generate_qr_token", "validation_failure", "Redemption not found", {"code": code}, level="ERROR")
         raise LookupError("Redemption not found.")
 
     if not redemption.qr_token or regenerate:
@@ -174,12 +232,19 @@ def generate_qr_token(
         db.session.commit()
     else:
         db.session.flush()
+    _log(
+        "generate_qr_token",
+        "db_write_success",
+        "QR token generated",
+        {"code": code, "qr_token": redemption.qr_token, "file_path": file_path},
+    )
     return redemption
 
 
 def list_user_redemptions(user_id: int) -> Iterable[Redemption]:
     """Return all redemptions for a user while synchronizing expiration state."""
 
+    _log("list_user_redemptions", "service_start", "Listing user redemptions", {"user_id": user_id})
     redemptions = (
         Redemption.query.filter_by(user_id=user_id)
         .order_by(Redemption.created_at.desc())
@@ -190,12 +255,20 @@ def list_user_redemptions(user_id: int) -> Iterable[Redemption]:
         changed = _refresh_expiration(redemption) or changed
     if changed:
         db.session.commit()
+        _log("list_user_redemptions", "service_checkpoint", "Expired redemptions refreshed", {"user_id": user_id})
+    _log("list_user_redemptions", "service_complete", "User redemptions listed", {"user_id": user_id, "count": len(redemptions)})
     return redemptions
 
 
 def list_user_redemptions_with_context(user_id: int) -> List[Dict[str, object]]:
     """Return member redemptions enriched with offer and company data."""
 
+    _log(
+        "list_user_redemptions_with_context",
+        "service_start",
+        "Listing user redemptions with context",
+        {"user_id": user_id},
+    )
     query = (
         Redemption.query.filter_by(user_id=user_id)
         .options(
@@ -234,6 +307,18 @@ def list_user_redemptions_with_context(user_id: int) -> List[Dict[str, object]]:
         )
     if changed:
         db.session.commit()
+        _log(
+            "list_user_redemptions_with_context",
+            "service_checkpoint",
+            "Expired redemptions refreshed with context",
+            {"user_id": user_id},
+        )
+    _log(
+        "list_user_redemptions_with_context",
+        "service_complete",
+        "User redemptions with context prepared",
+        {"user_id": user_id, "count": len(payload)},
+    )
     return payload
 
 
@@ -247,6 +332,12 @@ def list_company_redemptions(
 ) -> List[Redemption]:
     """Return company-scoped redemptions filtered by optional criteria."""
 
+    _log(
+        "list_company_redemptions",
+        "service_start",
+        "Listing company redemptions",
+        {"company_id": company_id, "offer_id": offer_id, "status": status},
+    )
     query = (
         Redemption.query.filter_by(company_id=company_id)
         .options(
@@ -274,6 +365,13 @@ def list_company_redemptions(
         changed = _refresh_expiration(redemption) or changed
     if changed:
         db.session.commit()
+        _log("list_company_redemptions", "service_checkpoint", "Expired company redemptions refreshed", {"company_id": company_id})
+    _log(
+        "list_company_redemptions",
+        "service_complete",
+        "Company redemptions listed",
+        {"company_id": company_id, "count": len(redemptions)},
+    )
     return redemptions
 
 

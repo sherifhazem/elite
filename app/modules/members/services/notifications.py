@@ -18,6 +18,7 @@ from app import app, celery, db, redis_client
 from app.models import Notification
 from app.models.offer import Offer
 from app.models.user import User
+from core.observability.logger import log_event
 
 
 # Redis-backed admin notification keys and defaults
@@ -26,6 +27,20 @@ ADMIN_NOTIF_LAST_SEEN_KEY = "admin:last_seen:{user_id}"
 
 MAX_LIST_SIZE = 500
 DEFAULT_TTL_DAYS = 14
+
+
+def _log(function: str, event: str, message: str, details: Dict[str, object] | None = None, level: str = "INFO") -> None:
+    """Emit standardized observability events for notification services."""
+
+    log_event(
+        level=level,
+        event=event,
+        source="service",
+        module=__name__,
+        function=function,
+        message=message,
+        details=details,
+    )
 
 
 WELCOME_NOTIFICATION_TEMPLATES: Dict[str, Dict[str, Optional[str]]] = {
@@ -70,7 +85,20 @@ def send_welcome_notification(
     """Persist a welcome notification for a new member or company account."""
 
     if user_or_company is None:
+        _log(
+            "send_welcome_notification",
+            "validation_failure",
+            "No user or company provided for welcome notification",
+            level="ERROR",
+        )
         return None
+
+    _log(
+        "send_welcome_notification",
+        "service_start",
+        "Preparing welcome notification",
+        {"context": context, "user_id": getattr(user_or_company, "id", None)},
+    )
 
     template_key = (context or "").strip().lower()
     target_user: Optional[User] = None
@@ -114,6 +142,13 @@ def send_welcome_notification(
 
     template = WELCOME_NOTIFICATION_TEMPLATES.get(template_key or "member")
     if not template or target_user is None:
+        _log(
+            "send_welcome_notification",
+            "soft_failure",
+            "No welcome template resolved",
+            {"context": template_key},
+            level="WARNING",
+        )
         return None
 
     recipient_name = (
@@ -141,6 +176,12 @@ def send_welcome_notification(
     if existing:
         metadata = existing.metadata_json or {}
         if metadata.get("message") == message:
+            _log(
+                "send_welcome_notification",
+                "service_checkpoint",
+                "Existing welcome notification reused",
+                {"notification_id": existing.id},
+            )
             return existing.id
 
     link_url: Optional[str] = None
@@ -167,10 +208,11 @@ def send_welcome_notification(
     )
     db.session.add(notification)
     db.session.commit()
-
-    current_app.logger.info(
+    _log(
+        "send_welcome_notification",
+        "db_write_success",
         "Welcome notification created",
-        extra={"user_id": target_user.id, "type": notification_type},
+        {"notification_id": notification.id, "user_id": target_user.id},
     )
     return notification.id
 
@@ -186,6 +228,12 @@ def queue_notification(
 ):
     """Queue a Celery task that persists a notification for the specified user."""
 
+    _log(
+        "queue_notification",
+        "service_start",
+        "Queueing notification for user",
+        {"user_id": user_id, "type": type},
+    )
     payload = {
         "type": type,
         "title": title,
@@ -193,13 +241,33 @@ def queue_notification(
         "link_url": link_url,
         "metadata": metadata or {},
     }
-    return create_notification_task.delay(user_id=user_id, payload=payload)
+    result = create_notification_task.delay(user_id=user_id, payload=payload)
+    _log(
+        "queue_notification",
+        "service_complete",
+        "Notification enqueued",
+        {"user_id": user_id, "task_id": getattr(result, "id", None)},
+    )
+    return result
 
 
 def broadcast_new_offer(offer_id: int):
     """Queue a background job to broadcast a new offer notification."""
 
-    return broadcast_offer_task.delay(offer_id=offer_id)
+    _log(
+        "broadcast_new_offer",
+        "service_start",
+        "Scheduling broadcast for new offer",
+        {"offer_id": offer_id},
+    )
+    result = broadcast_offer_task.delay(offer_id=offer_id)
+    _log(
+        "broadcast_new_offer",
+        "service_complete",
+        "Broadcast task queued",
+        {"offer_id": offer_id, "task_id": getattr(result, "id", None)},
+    )
+    return result
 
 
 def send_admin_broadcast_notifications(
@@ -213,8 +281,20 @@ def send_admin_broadcast_notifications(
 
     unique_ids: Set[int] = {int(user_id) for user_id in user_ids if user_id}
     if not unique_ids:
+        _log(
+            "send_admin_broadcast_notifications",
+            "validation_failure",
+            "No admin recipients provided",
+            level="WARNING",
+        )
         return 0
 
+    _log(
+        "send_admin_broadcast_notifications",
+        "service_start",
+        "Queueing admin broadcast notifications",
+        {"recipients": len(unique_ids)},
+    )
     metadata = {
         "subject": subject,
         "message": message,
@@ -233,8 +313,11 @@ def send_admin_broadcast_notifications(
         )
         created += 1
 
-    current_app.logger.info(
-        "Admin broadcast notifications queued for %s recipients", created
+    _log(
+        "send_admin_broadcast_notifications",
+        "service_complete",
+        "Admin broadcast notifications queued",
+        {"recipients": created},
     )
     return created
 
@@ -317,8 +400,12 @@ def notify_offer_redemption_activity(
             metadata=metadata,
         )
     except Exception:  # pragma: no cover - defensive notification guard
-        current_app.logger.exception(
-            "Failed to queue redemption notification for member", exc_info=True
+        _log(
+            "notify_offer_redemption_activity",
+            "request_error",
+            "Failed to queue redemption notification for member",
+            {"redemption_code": redemption.redemption_code},
+            level="ERROR",
         )
 
     for recipient_id in _company_recipient_ids(redemption.company_id):
@@ -334,8 +421,12 @@ def notify_offer_redemption_activity(
                 metadata=metadata,
             )
         except Exception:  # pragma: no cover - defensive notification guard
-            current_app.logger.exception(
-                "Failed to queue redemption notification for company", exc_info=True
+            _log(
+                "notify_offer_redemption_activity",
+                "request_error",
+                "Failed to queue redemption notification for company",
+                {"redemption_code": redemption.redemption_code, "recipient_id": recipient_id},
+                level="ERROR",
             )
 
 
@@ -369,8 +460,12 @@ def notify_offer_feedback(
                 metadata=metadata,
             )
         except Exception:  # pragma: no cover - defensive notification guard
-            current_app.logger.exception(
-                "Failed to queue offer feedback notification", exc_info=True
+            _log(
+                "notify_offer_feedback",
+                "request_error",
+                "Failed to queue offer feedback notification",
+                {"company_id": company_id, "offer_id": offer_id, "recipient_id": recipient_id},
+                level="ERROR",
             )
 
 
@@ -380,6 +475,12 @@ def fetch_offer_feedback_counts(company_id: int) -> Dict[int, int]:
     if not company_id:
         return {}
 
+    _log(
+        "fetch_offer_feedback_counts",
+        "service_start",
+        "Aggregating feedback counts",
+        {"company_id": company_id},
+    )
     notifications: Sequence[Notification] = (
         Notification.query.options(joinedload(Notification.user))
         .join(User, User.id == Notification.user_id)
@@ -400,6 +501,12 @@ def fetch_offer_feedback_counts(company_id: int) -> Dict[int, int]:
         if not offer_id:
             continue
         counts[offer_id] = counts.get(offer_id, 0) + 1
+    _log(
+        "fetch_offer_feedback_counts",
+        "service_complete",
+        "Feedback counts prepared",
+        {"company_id": company_id, "offer_count": len(counts)},
+    )
     return counts
 
 
@@ -408,6 +515,12 @@ def create_notification_task(user_id: int, payload: Dict[str, Any]):
     """Persist a notification record for the given user identifier."""
 
     with app.app_context():
+        _log(
+            "create_notification_task",
+            "service_start",
+            "Creating notification from Celery task",
+            {"user_id": user_id, "type": payload.get("type")},
+        )
         notification = Notification(
             user_id=user_id,
             type=payload.get("type"),
@@ -418,8 +531,11 @@ def create_notification_task(user_id: int, payload: Dict[str, Any]):
         )
         db.session.add(notification)
         db.session.commit()
-        current_app.logger.info(
-            "Notification created for user %s with type %s", user_id, notification.type
+        _log(
+            "create_notification_task",
+            "db_write_success",
+            "Notification created via Celery",
+            {"user_id": user_id, "notification_id": notification.id},
         )
         return notification.id
 
@@ -434,11 +550,21 @@ def broadcast_offer_task(offer_id: int, batch_size: int = 100):
     with app.app_context():
         offer = Offer.query.get(offer_id)
         if offer is None:
-            current_app.logger.warning(
-                "Skipping broadcast for missing offer_id=%s", offer_id
+            _log(
+                "broadcast_offer_task",
+                "soft_failure",
+                "Skipping broadcast for missing offer",
+                {"offer_id": offer_id},
+                level="WARNING",
             )
             return 0
 
+        _log(
+            "broadcast_offer_task",
+            "service_start",
+            "Broadcasting offer notifications",
+            {"offer_id": offer.id, "batch_size": batch_size},
+        )
         total_created = 0
         query = User.query.order_by(User.id)
         offset = 0
@@ -468,8 +594,11 @@ def broadcast_offer_task(offer_id: int, batch_size: int = 100):
             db.session.commit()
             offset += batch_size
 
-        current_app.logger.info(
-            "Broadcasted offer %s notifications to %s users", offer.id, total_created
+        _log(
+            "broadcast_offer_task",
+            "service_complete",
+            "Broadcasted offer notifications",
+            {"offer_id": offer.id, "total_created": total_created},
         )
         return total_created
 

@@ -13,6 +13,7 @@ from flask_login import current_user as flask_current_user
 from sqlalchemy import func
 
 from app.modules.members.auth.utils import get_user_from_token
+from core.observability.logger import log_event
 
 # Mapping of role requirements to the set of roles allowed to satisfy them.
 ROLE_ACCESS_MATRIX = {
@@ -32,6 +33,20 @@ PERMISSION_ROLE_MATRIX = {
 }
 
 
+def _log(function: str, event: str, message: str, details: dict | None = None, level: str = "INFO") -> None:
+    """Emit standardized observability events for member role services."""
+
+    log_event(
+        level=level,
+        event=event,
+        source="service",
+        module=__name__,
+        function=function,
+        message=message,
+        details=details,
+    )
+
+
 class SupportsRole(Protocol):
     """Structural protocol describing user objects used for role checks."""
 
@@ -45,38 +60,58 @@ class SupportsRole(Protocol):
 def _extract_token() -> Optional[str]:
     """Return a JWT token from Authorization header or cookie when provided."""
 
+    _log("_extract_token", "service_start", "Extracting token from request")
     authorization = request.headers.get("Authorization", "").strip()
     scheme, _, token = authorization.partition(" ")
     if scheme.lower() == "bearer" and token:
+        _log("_extract_token", "service_checkpoint", "Bearer token detected")
         return token
 
     cookie_token = request.cookies.get("elite_token")
     if cookie_token:
+        _log("_extract_token", "service_checkpoint", "Token extracted from cookie")
         return cookie_token
+    _log("_extract_token", "service_complete", "No token found in request")
     return None
 
 
 def resolve_user_from_request():
     """Return the authenticated user object for the current request if available."""
 
+    _log("resolve_user_from_request", "service_start", "Resolving user from incoming request")
     # First prefer explicit bearer tokens to support API and SPA use-cases.
     token = _extract_token()
     if token:
         user = get_user_from_token(token)
         if user is not None:
+            _log(
+                "resolve_user_from_request",
+                "validation_success",
+                "User resolved from bearer token",
+                {"user_id": getattr(user, "id", None)},
+            )
             return user
 
     # Fall back to Flask-Login's session-based user when available.
     if getattr(flask_current_user, "is_authenticated", False):
+        _log(
+            "resolve_user_from_request",
+            "service_checkpoint",
+            "Resolved user from Flask-Login session",
+            {"user_id": getattr(flask_current_user, "id", None)},
+        )
         return flask_current_user
 
+    _log("resolve_user_from_request", "soft_failure", "No authenticated user found", level="WARNING")
     return None
 
 
 def has_role(user: Optional[SupportsRole], role_name: str) -> bool:
     """Return True if the provided user holds (or supersedes) the role requirement."""
 
+    _log("has_role", "service_start", "Checking role access", {"role": role_name, "user_id": getattr(user, "id", None)})
     if user is None or not getattr(user, "is_active", False):
+        _log("has_role", "soft_failure", "Inactive or missing user", {"role": role_name}, level="WARNING")
         return False
 
     if hasattr(user, "has_role") and callable(getattr(user, "has_role")):
@@ -89,7 +124,14 @@ def has_role(user: Optional[SupportsRole], role_name: str) -> bool:
         user_role = user_role()
     if not user_role:
         user_role = getattr(user, "role", "member")
-    return str(user_role).strip().lower() in allowed_roles
+    result = str(user_role).strip().lower() in allowed_roles
+    _log(
+        "has_role",
+        "service_complete",
+        "Role check evaluated",
+        {"required_role": role_name, "user_role": user_role, "allowed": result},
+    )
+    return result
 
 
 def require_role(role_name: str) -> Callable:
@@ -148,7 +190,14 @@ def admin_required(view_func: Callable) -> Callable:
 def can_access(user: Optional[SupportsRole], permission: str) -> bool:
     """Return True when a user can access a named permission or feature."""
 
+    _log(
+        "can_access",
+        "service_start",
+        "Evaluating permission",
+        {"permission": permission, "user_id": getattr(user, "id", None)},
+    )
     if user is None or not getattr(user, "is_active", False):
+        _log("can_access", "soft_failure", "Inactive or missing user", {"permission": permission}, level="WARNING")
         return False
 
     normalized = (permission or "").strip().lower()
@@ -157,19 +206,39 @@ def can_access(user: Optional[SupportsRole], permission: str) -> bool:
 
     allowed_roles = PERMISSION_ROLE_MATRIX.get(normalized)
     if allowed_roles and getattr(user, "normalized_role", "member") in allowed_roles:
+        _log(
+            "can_access",
+            "validation_success",
+            "Permission granted via role matrix",
+            {"permission": permission, "role": getattr(user, "normalized_role", None)},
+        )
         return True
 
     from app.models.permission import Permission
 
     query = user.permissions if hasattr(user, "permissions") else None
     if query is not None:
-        return (
+        result = (
             query.filter(func.lower(Permission.name) == normalized)
             .with_entities(Permission.id)
             .limit(1)
             .count()
             > 0
         )
+        _log(
+            "can_access",
+            "service_complete",
+            "Permission check resolved",
+            {"permission": permission, "allowed": result},
+        )
+        return result
+    _log(
+        "can_access",
+        "soft_failure",
+        "Permissions relationship missing on user",
+        {"permission": permission},
+        level="WARNING",
+    )
     return False
 
 
@@ -182,6 +251,12 @@ def assign_permissions(user, permissions: Iterable[str]) -> None:
 
     user.grant_permissions(permissions)
     db.session.commit()
+    _log(
+        "assign_permissions",
+        "db_write_success",
+        "Permissions assigned to user",
+        {"user_id": getattr(user, "id", None), "permissions": list(permissions)},
+    )
 
 
 __all__ = [

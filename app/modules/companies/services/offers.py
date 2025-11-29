@@ -4,11 +4,26 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, List, Optional
 
 from sqlalchemy.orm import joinedload
 
 from app.models import Company, Offer
+from core.observability.logger import log_event
+
+
+def _log(function: str, event: str, message: str, details: Dict[str, object] | None = None, level: str = "INFO") -> None:
+    """Emit standardized observability events for offer services."""
+
+    log_event(
+        level=level,
+        event=event,
+        source="service",
+        module=__name__,
+        function=function,
+        message=message,
+        details=details,
+    )
 
 
 @dataclass
@@ -42,11 +57,23 @@ def get_portal_offers_with_company(
 ) -> List[OfferCompanyBundle]:
     """Return offer records enriched with linked company data for the portal."""
 
+    _log(
+        "get_portal_offers_with_company",
+        "service_start",
+        "Fetching offers with company metadata",
+        {"membership_level": membership_level},
+    )
     normalized_level = (membership_level or "Basic").strip().title() or "Basic"
-    offers: Iterable[Offer] = (
+    offers: List[Offer] = list(
         Offer.query.options(joinedload(Offer.company))
         .order_by(Offer.valid_until.asc())
         .all()
+    )
+    _log(
+        "get_portal_offers_with_company",
+        "db_query",
+        "Offers retrieved from database",
+        {"count": len(offers)},
     )
 
     results: List[OfferCompanyBundle] = []
@@ -67,31 +94,65 @@ def get_portal_offers_with_company(
             },
         )
         results.append(bundle)
+    _log(
+        "get_portal_offers_with_company",
+        "service_complete",
+        "Offers bundled for portal",
+        {"offers": len(results)},
+    )
     return results
 
 
 def get_company_brief(company_id: int) -> Optional[Dict[str, object]]:
     """Return a read-only snapshot of the company information for the portal."""
 
+    _log(
+        "get_company_brief",
+        "service_start",
+        "Loading company brief",
+        {"company_id": company_id},
+    )
     company = Company.query.get(company_id)
     if company is None:
+        _log(
+            "get_company_brief",
+            "soft_failure",
+            "Company not found",
+            {"company_id": company_id},
+            level="WARNING",
+        )
         return None
-    return {
+    payload = {
         "id": company.id,
         "name": company.name,
         "description": company.description or "",
         "summary": _summarize_company(company, length=220),
     }
+    _log("get_company_brief", "service_complete", "Company brief prepared", {"company_id": company_id})
+    return payload
 
 
 def list_company_offers(company_id: int) -> List[Offer]:
     """Return company-scoped offers ordered alphabetically for filters."""
 
-    return (
+    _log(
+        "list_company_offers",
+        "service_start",
+        "Listing company offers",
+        {"company_id": company_id},
+    )
+    offers = (
         Offer.query.filter_by(company_id=company_id)
         .order_by(Offer.title.asc())
         .all()
     )
+    _log(
+        "list_company_offers",
+        "service_complete",
+        "Company offers listed",
+        {"company_id": company_id, "count": len(offers)},
+    )
+    return offers
 
 
 __all__ = [
