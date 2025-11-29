@@ -154,7 +154,11 @@ class User(db.Model):
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         from app.services.access_control import ROLE_ACCESS_MATRIX
+=======
+        from ..services.roles import ROLE_ACCESS_MATRIX
+>>>>>>> parent of 1f30a6e (Update user.py)
 =======
         from ..services.roles import ROLE_ACCESS_MATRIX
 >>>>>>> parent of 1f30a6e (Update user.py)
