@@ -8,16 +8,6 @@ import json
 from typing import Dict, Iterable, List, Mapping, MutableMapping, Sequence
 
 from app import redis_client
-<<<<<<< HEAD
-from core.observability.logger import (
-    get_service_logger,
-    log_service_error,
-    log_service_start,
-    log_service_step,
-    log_service_success,
-)
-=======
->>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 
 _REDIS_KEY = "elite:site:settings"
 _ALLOWED_SECTIONS = {"cities", "industries", "general"}
@@ -32,39 +22,6 @@ _DEFAULT_SETTINGS: Dict[str, object] = {
 }
 
 
-<<<<<<< HEAD
-service_logger = get_service_logger(__name__)
-
-
-def _log(
-    function: str,
-    event: str,
-    message: str,
-    details: Dict[str, object] | None = None,
-    level: str = "INFO",
-) -> None:
-    """Emit standardized observability events for settings operations."""
-
-    normalized_level = level.upper()
-    if normalized_level == "ERROR" or event in {"soft_failure", "validation_failure"}:
-        log_service_error(__name__, function, message, details=details, event=event)
-    elif event == "service_start":
-        log_service_start(__name__, function, message, details)
-    elif event in {"service_complete", "service_success"}:
-        log_service_success(__name__, function, message, details=details, event=event)
-    else:
-        log_service_step(
-            __name__,
-            function,
-            message,
-            details=details,
-            event=event,
-            level=level,
-        )
-
-
-=======
->>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 def _ensure_defaults() -> None:
     """Seed Redis with default settings if the key does not exist."""
 

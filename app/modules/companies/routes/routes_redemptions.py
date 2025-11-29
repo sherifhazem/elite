@@ -13,7 +13,6 @@ from app.models import Redemption
 from app.modules.companies.services.offers import list_company_offers
 from app.modules.members.services.redemption import list_company_redemptions
 from app.services.access_control import require_role
-from core.observability.logger import log_event
 from . import company_portal
 from app.utils.company_context import _ensure_company, _current_company
 

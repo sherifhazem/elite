@@ -18,32 +18,6 @@ from app.models.company import Company
 from app.models.user import User
 from app.services.mailer import send_email
 from app.modules.members.services.notifications import push_admin_notification, queue_notification
-<<<<<<< HEAD
-from core.observability.logger import (
-    get_service_logger,
-    log_service_error,
-    log_service_start,
-    log_service_step,
-    log_service_success,
-)
-
-service_logger = get_service_logger(__name__)
-
-
-def _log(function: str, event: str, message: str, details: Dict[str, object] | None = None, level: str = "INFO") -> None:
-    """Emit standardized observability events for company registration services."""
-
-    normalized_level = level.upper()
-    if normalized_level == "ERROR" or event in {"soft_failure", "validation_failure"}:
-        log_service_error(__name__, function, message, details=details, event=event)
-    elif event == "service_start":
-        log_service_start(__name__, function, message, details)
-    elif event in {"service_complete", "service_success"}:
-        log_service_success(__name__, function, message, details=details, event=event)
-    else:
-        log_service_step(__name__, function, message, details=details, event=event, level=level)
-=======
->>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 
 
 def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object], HTTPStatus]:
@@ -121,10 +95,6 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
             and not associated_company_exists
             and not owns_company
         ):
-            current_app.logger.info(
-                "Removed orphaned company user before re-registering the company.",
-                extra={"email": existing_user.email},
-            )
             db.session.delete(existing_user)
             db.session.flush()
         else:
@@ -249,12 +219,7 @@ def notify_admin_of_company_request(
         .all()
     )
 
-    if not admin_users:
-        current_app.logger.warning(
-            "Company registration pending but no admin recipients found.",
-            extra={"company_id": company.id},
-        )
-    else:
+    if admin_users:
         message = (
             f"تم استلام طلب تسجيل شركة جديدة: {company.name}.\n"
             f"المدينة: {city}.\n"

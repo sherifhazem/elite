@@ -35,7 +35,6 @@ from app.modules.companies.services.company_registration import register_company
 from app.services.mailer import send_email, send_member_welcome_email
 from app.modules.members.services.notifications import send_welcome_notification
 from app.modules.companies.forms.module_forms import CompanyRegistrationForm
-from core.observability.logger import log_event
 from .utils import confirm_token, create_token, decode_token, generate_token
 
 
@@ -483,15 +482,5 @@ def _dispatch_member_welcome_notification(user: "User") -> None:
     try:
         notifier(user)
     except Exception:  # pragma: no cover - notifications are best-effort
-        try:
-            log_event(
-                level="ERROR",
-                event="route_error",
-                source="route",
-                module=__name__,
-                function="_dispatch_member_welcome_notification",
-                message="Failed to send welcome notification",
-            )
-        except Exception:
-            pass
+        pass
 
