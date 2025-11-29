@@ -16,7 +16,7 @@ from app.models.user import User
 from app.modules.companies.services.company_registration import register_company_account
 from app.services.mailer import send_company_welcome_email
 from app.modules.members.services.notifications import send_welcome_notification
-from app.modules.members.services.roles import require_role
+from app.services.access_control import require_role
 
 
 companies = Blueprint("companies", __name__)

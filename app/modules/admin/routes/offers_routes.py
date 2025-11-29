@@ -18,7 +18,7 @@ from flask import (
 
 from app import db
 from app.models import User, Company, Offer, ActivityLog
-from app.modules.members.services.roles import admin_required
+from app.services.access_control import admin_required
 
 from app.modules.members.services.notifications import broadcast_new_offer
 from .. import admin

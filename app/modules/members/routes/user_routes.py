@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.models.user import User
-from app.modules.members.services.roles import require_role
+from app.services.access_control import require_role
 
 
 users = Blueprint("users", __name__)

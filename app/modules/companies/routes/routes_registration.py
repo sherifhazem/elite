@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.models import Company
-from app.modules.members.services.roles import resolve_user_from_request
+from app.services.access_control import resolve_user_from_request
 from . import company_portal
 
 

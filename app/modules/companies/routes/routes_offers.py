@@ -14,7 +14,7 @@ from app.modules.members.services.notifications import (
     broadcast_new_offer,
     fetch_offer_feedback_counts,
 )
-from app.modules.members.services.roles import require_role
+from app.services.access_control import require_role
 from . import company_portal
 from app.utils.company_context import _ensure_company, _current_company
 

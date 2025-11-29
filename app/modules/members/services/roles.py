@@ -13,7 +13,13 @@ from flask_login import current_user as flask_current_user
 from sqlalchemy import func
 
 from app.modules.members.auth.utils import get_user_from_token
-from core.observability.logger import log_event
+from core.observability.logger import (
+    get_service_logger,
+    log_service_error,
+    log_service_start,
+    log_service_step,
+    log_service_success,
+)
 
 # Mapping of role requirements to the set of roles allowed to satisfy them.
 ROLE_ACCESS_MATRIX = {
@@ -33,18 +39,28 @@ PERMISSION_ROLE_MATRIX = {
 }
 
 
+service_logger = get_service_logger(__name__)
+
+
 def _log(function: str, event: str, message: str, details: dict | None = None, level: str = "INFO") -> None:
     """Emit standardized observability events for member role services."""
 
-    log_event(
-        level=level,
-        event=event,
-        source="service",
-        module=__name__,
-        function=function,
-        message=message,
-        details=details,
-    )
+    normalized_level = level.upper()
+    if normalized_level == "ERROR" or event in {"soft_failure", "validation_failure"}:
+        log_service_error(__name__, function, message, details=details, event=event)
+    elif event == "service_start":
+        log_service_start(__name__, function, message, details)
+    elif event in {"service_complete", "service_success"}:
+        log_service_success(__name__, function, message, details=details, event=event)
+    else:
+        log_service_step(
+            __name__,
+            function,
+            message,
+            details=details,
+            event=event,
+            level=level,
+        )
 
 
 class SupportsRole(Protocol):

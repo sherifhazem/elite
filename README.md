@@ -23,9 +23,12 @@ flask run
 
 ## Observability Layer (Local Monitoring System)
 - **Goal:** Provide local-only, JSON-based logging and tracing for backend and frontend flows without external services.
-- **Files:** Central logic under `core/observability/` (logger, middleware, utilities, frontend handlers) with request hooks wired in `app/__init__.py`.
-- **How it works:** A middleware issues a `request_id` for every request, records start/end/duration events, and injects the ID into responses. Service functions log structured events via the shared logger. Frontend scripts add global error listeners, a traced `fetch` wrapper, and UI event logging targeting new endpoints.
-- **Error tracking:** Browser errors post to `/log/frontend-error`; API traces post to `/log/api-trace`; UI interactions post to `/log/ui-event`. All payloads are captured with the `request_id` and standardized schema.
+- **Files:** Central logic under `core/observability/` (logger, middleware, utilities, frontend handlers, ingestion routes) with request hooks wired in `app/__init__.py`.
+- **Middleware:** `init_observability` registers `before_request`/`after_request` hooks to guarantee a `request_id` for every request, measure duration, and return the ID in the configurable header (`OBSERVABILITY_CONFIG.REQUEST_ID_HEADER`, default `X-Request-ID`).
+- **Config:** A dedicated `OBSERVABILITY_CONFIG` section in `app/config.py` centralizes log paths, log levels, handler options, and request-id settings; all observability utilities consume this single source of truth.
+- **Service logging:** Services use the shared helpers `log_service_start`, `log_service_step`, `log_service_error`, and `log_service_success` for consistent event names and automatic `request_id` propagation.
+- **Ingestion endpoints:** App-level routes under the `/log/*` blueprint accept frontend error logs, API traces, and UI events for every module, keeping middleware coverage and CSRF exemptions centralized.
+- **Frontend tracing:** Browser scripts rely on the traced `fetch` wrapper, UI event logger, and global error handler; every call is sent through the `/log/frontend-error`, `/log/api-trace`, and `/log/ui-event` endpoints.
 - **Log storage:** Plain-text JSON files are created under `/logs/` (`backend.log.json`, `backend-error.log.json`, `frontend-errors.log.json`, `frontend-api.log.json`, `ui-events.log.json`).
 
 ## Database and migrations

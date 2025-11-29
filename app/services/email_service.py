@@ -10,6 +10,13 @@ from typing import Iterable, Optional, Sequence
 from flask import current_app
 
 from .mailer import send_email
+from core.observability.logger import (
+    get_service_logger,
+    log_service_error,
+    log_service_start,
+    log_service_step,
+    log_service_success,
+)
 
 
 def _normalize_recipients(recipients: Iterable[str]) -> Sequence[str]:
@@ -26,6 +33,36 @@ def _normalize_recipients(recipients: Iterable[str]) -> Sequence[str]:
         seen.add(normalized)
         unique.append(normalized)
     return unique
+
+
+service_logger = get_service_logger(__name__)
+
+
+def _log(
+    function: str,
+    event: str,
+    message: str,
+    details: Optional[dict] = None,
+    level: str = "INFO",
+) -> None:
+    """Emit standardized logs for the email service layer."""
+
+    normalized_level = level.upper()
+    if normalized_level == "ERROR" or event in {"service_error", "validation_failure"}:
+        log_service_error(__name__, function, message, details=details, event=event)
+    elif event == "service_start":
+        log_service_start(__name__, function, message, details)
+    elif event in {"service_complete", "service_success"}:
+        log_service_success(__name__, function, message, details=details, event=event)
+    else:
+        log_service_step(
+            __name__,
+            function,
+            message,
+            details=details,
+            event=event,
+            level=level,
+        )
 
 
 def send_admin_broadcast_email(
@@ -52,7 +89,12 @@ def send_admin_broadcast_email(
     }
 
     if current_app.config.get("MAIL_SUPPRESS_SEND"):
-        current_app.logger.info("Broadcast email suppressed: %s", metadata)
+        _log(
+            "send_admin_broadcast_email",
+            "service_checkpoint",
+            "Broadcast email suppressed",
+            metadata,
+        )
         return len(recipient_list)
 
     delivered = 0
@@ -65,13 +107,21 @@ def send_admin_broadcast_email(
                 {"subject": safe_subject, "message_html": html_body},
             )
         except Exception:  # pragma: no cover - mail transport guard
-            current_app.logger.exception("Failed to send broadcast email to %s", email)
+            _log(
+                "send_admin_broadcast_email",
+                "service_error",
+                "Failed to send broadcast email",
+                {"recipient": email},
+                level="ERROR",
+            )
             continue
         delivered += 1
 
-    current_app.logger.info(
-        "Broadcast email sent to %s recipients via Admin Communication Center.",
-        delivered,
+    _log(
+        "send_admin_broadcast_email",
+        "service_success",
+        "Broadcast email sent",
+        {"delivered": delivered, "subject": safe_subject},
     )
     return delivered
 

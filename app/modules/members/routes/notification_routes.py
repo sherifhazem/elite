@@ -9,7 +9,7 @@ from flask import Blueprint, jsonify, request, g
 from app import db
 from app.modules.members.auth.utils import get_user_from_token
 from app.models.notification import Notification
-from app.modules.members.services.roles import _extract_token
+from app.services.access_control import _extract_token
 
 notifications = Blueprint("notifications", __name__, url_prefix="/api/notifications")
 

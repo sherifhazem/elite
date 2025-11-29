@@ -6,5 +6,6 @@ Currently the module templates live under `core/templates/` and the shared stati
 
 ## Observability Layer (Local Monitoring System)
 - Core observability code lives under `core/observability/` (config, logger, middleware, frontend handlers, utils).
-- Request IDs are injected via middleware in `app/__init__.py` and logged through the standardized schema for backend and frontend events.
+- Request IDs are injected via middleware in `app/__init__.py` (header name configurable via `OBSERVABILITY_CONFIG`) and logged through the standardized schema for backend and frontend events.
 - Local JSON logs are emitted to `/logs/` for backend (`backend*.log.json`) and frontend (`frontend-*.log.json`, `ui-events.log.json`) traces.
+- App-level ingestion routes live in `core/observability/routes.py`, exposing `/log/frontend-error`, `/log/api-trace`, and `/log/ui-event` for every module.
