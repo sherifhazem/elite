@@ -5,6 +5,7 @@
 # - Forced is_authenticated=True for JWT-based users.
 # - Ensured user_status_label and logout button visibility are consistent.
 
+import os
 from http import HTTPStatus
 from flask import Flask, abort, g, request
 from flask_login import LoginManager, current_user as flask_login_current_user
@@ -14,6 +15,7 @@ from flask_migrate import Migrate
 from flask_mail import Mail
 from celery import Celery
 from redis import Redis
+from jinja2 import ChoiceLoader, FileSystemLoader
 # ======================================================
 # Scoped CSRF Protection — applies only to form routes
 # ======================================================
@@ -21,9 +23,18 @@ from flask_wtf.csrf import CSRFProtect
 
 from .config import Config
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="../core/templates", static_folder="../core/static")
 app.config.from_object(Config)
 app.secret_key = app.config["SECRET_KEY"]
+
+app.jinja_loader = ChoiceLoader(
+    [
+        FileSystemLoader(os.path.join(app.root_path, "modules", "members", "templates")),
+        FileSystemLoader(os.path.join(app.root_path, "modules", "companies", "templates")),
+        FileSystemLoader(os.path.join(app.root_path, "modules", "admin", "templates")),
+        app.jinja_loader,
+    ]
+)
 
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
@@ -59,18 +70,18 @@ mail = Mail(app)
 from .models import Company, Offer, Permission, Redemption, User  # noqa: F401
 
 # Register blueprints after extensions
-from .routes import (
-    companies,
+from app.modules.members.routes import (
     main as main_blueprint,
     notifications,
     offers,
     redemption,
     users,
 )
-from .routes.user_portal_routes import portal  # noqa: E402
-from .auth import auth  # noqa: E402
-from .admin import admin  # noqa: E402
-from .company import company_portal  # noqa: E402
+from app.modules.members.routes.user_portal_routes import portal  # noqa: E402
+from app.modules.members.auth import auth  # noqa: E402
+from app.modules.admin import admin  # noqa: E402
+from app.modules.companies import company_portal  # noqa: E402
+from app.modules.companies.routes.api_routes import companies  # noqa: E402
 
 # JWT authentication temporarily disabled during web testing phase.
 # To re-enable, restore imports from flask_jwt_extended.
