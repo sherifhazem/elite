@@ -101,7 +101,7 @@ def load_user(user_id: str):
 @app.before_request
 def attach_current_user() -> None:
     """Resolve the current user from JWT credentials and guard protected areas."""
-    from .services.roles import resolve_user_from_request
+    from app.modules.members.services.roles import resolve_user_from_request
 
     current = resolve_user_from_request()
     g.current_user = current
