@@ -2,7 +2,7 @@
 """Model for logging admin activities related to company management."""
 
 from datetime import datetime
-from app import db
+from app.core.database import db
 
 
 class ActivityLog(db.Model):

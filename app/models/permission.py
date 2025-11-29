@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .. import db
+from app.core.database import db
 
 
 class Permission(db.Model):

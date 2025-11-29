@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, request
 
 from sqlalchemy.orm import joinedload
 
-from app import db
+from app.core.database import db
 from app.modules.members.auth.utils import get_user_from_token
 from app.models.company import Company
 from app.models.offer import Offer

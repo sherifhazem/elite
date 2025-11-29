@@ -31,5 +31,9 @@ flask run
 - **Frontend tracing:** Browser scripts rely on the traced `fetch` wrapper, UI event logger, and global error handler; every call is sent through the `/log/frontend-error`, `/log/api-trace`, and `/log/ui-event` endpoints.
 - **Log storage:** Plain-text JSON files are created under `/logs/` (`backend.log.json`, `backend-error.log.json`, `frontend-errors.log.json`, `frontend-api.log.json`, `ui-events.log.json`).
 
-## Database and migrations
-Database configuration remains unchanged. No migrations were created as part of this restructuring.
+## Database initialization and circular import fix
+- **Issue:** The SQLAlchemy instance was created inside `app/__init__.py` and imported directly by models and routes. This caused circular imports whenever the application factory pulled in models while they simultaneously imported `db` from the app package.
+- **Solution:** A dedicated database module now lives at `app/core/database.py` and exposes a single shared `db = SQLAlchemy()` instance. The application factory binds it with `db.init_app(app)` so the database is only activated inside `create_app()`.
+- **Correct imports:** Use `from app.core.database import db` in models, routes, services, and utilities. Do not import `db` from `app` or construct `SQLAlchemy(app)` directly.
+- **Factory usage:** Initialize the application with `create_app()` (as shown in `run.py` and the tooling scripts) so extensions, blueprints, Redis, Celery, and Mail are configured in one place.
+- **No migrations or binaries:** The change isolates initialization only; no binary artifacts or database migrations were introduced.

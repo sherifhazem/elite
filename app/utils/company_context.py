@@ -3,7 +3,7 @@ from http import HTTPStatus
 
 from flask import abort, g
 
-from .. import db
+from app.core.database import db
 from ..models import Company
 
 

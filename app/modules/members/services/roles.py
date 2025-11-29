@@ -263,7 +263,7 @@ def assign_permissions(user, permissions: Iterable[str]) -> None:
 
     if user is None:
         return
-    from app import db
+    from app.core.database import db
 
     user.grant_permissions(permissions)
     db.session.commit()

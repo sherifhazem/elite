@@ -4,7 +4,7 @@
 
 from datetime import datetime
 
-from .. import db
+from app.core.database import db
 
 
 class Notification(db.Model):

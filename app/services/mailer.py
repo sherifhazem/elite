@@ -6,10 +6,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from flask import current_app as app, render_template
+from flask import current_app, render_template
 from flask_mail import Message
 
-from app import app as flask_app, mail
+from app import mail
 from core.observability.logger import (
     get_service_logger,
     log_service_error,
@@ -112,7 +112,7 @@ def _dispatch_email(recipient: str, subject: str, html_body: str) -> bool:
     """Send an HTML email using the configured SMTP settings."""
 
     msg = Message(subject, recipients=[recipient])
-    msg.sender = app.config.get("MAIL_DEFAULT_SENDER")
+    msg.sender = current_app.config.get("MAIL_DEFAULT_SENDER")
     msg.html = html_body
     return safe_send(msg)
 
@@ -131,25 +131,24 @@ def _send_company_status_email(company, subject: str, html_body: str) -> bool:
         )
         return False
 
-    with flask_app.app_context():
-        if app.config.get("MAIL_SUPPRESS_SEND", False):
-            _log(
-                "_send_company_status_email",
-                "service_checkpoint",
-                "Company status email suppressed by configuration",
-                {"recipient": recipient, "subject": subject},
-            )
-            return True
+    if current_app.config.get("MAIL_SUPPRESS_SEND", False):
+        _log(
+            "_send_company_status_email",
+            "service_checkpoint",
+            "Company status email suppressed by configuration",
+            {"recipient": recipient, "subject": subject},
+        )
+        return True
 
-        if not _dispatch_email(recipient, subject, html_body):
-            _log(
-                "_send_company_status_email",
-                "service_error",
-                "Company status email failed",
-                {"recipient": recipient, "subject": subject},
-                level="ERROR",
-            )
-            return False
+    if not _dispatch_email(recipient, subject, html_body):
+        _log(
+            "_send_company_status_email",
+            "service_error",
+            "Company status email failed",
+            {"recipient": recipient, "subject": subject},
+            level="ERROR",
+        )
+        return False
 
     _log(
         "_send_company_status_email",
@@ -179,27 +178,26 @@ def send_email(
 
     safe_context = dict(context or {})
 
-    with flask_app.app_context():
-        html_body = render_template(template, **safe_context)
+    html_body = render_template(template, **safe_context)
 
-        if app.config.get("MAIL_SUPPRESS_SEND", False):
-            _log(
-                "send_email",
-                "service_checkpoint",
-                "Email suppressed by configuration",
-                {"recipient": recipient, "subject": subject, "context": safe_context},
-            )
-            return True
+    if current_app.config.get("MAIL_SUPPRESS_SEND", False):
+        _log(
+            "send_email",
+            "service_checkpoint",
+            "Email suppressed by configuration",
+            {"recipient": recipient, "subject": subject, "context": safe_context},
+        )
+        return True
 
-        if not _dispatch_email(recipient, subject, html_body):
-            _log(
-                "send_email",
-                "service_error",
-                "Email delivery failed",
-                {"recipient": recipient, "subject": subject},
-                level="ERROR",
-            )
-            return False
+    if not _dispatch_email(recipient, subject, html_body):
+        _log(
+            "send_email",
+            "service_error",
+            "Email delivery failed",
+            {"recipient": recipient, "subject": subject},
+            level="ERROR",
+        )
+        return False
 
     _log(
         "send_email",

@@ -9,7 +9,7 @@ from typing import Dict, List
 
 from sqlalchemy import func
 
-from app import db
+from app.core.database import db
 from app.models.company import Company
 from app.models.offer import Offer
 from app.models.user import User

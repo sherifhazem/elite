@@ -11,10 +11,11 @@ import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
 
-from flask import current_app, url_for
+from flask import url_for
 from sqlalchemy.orm import joinedload
 
-from app import app, celery, db, redis_client
+from app import celery, redis_client
+from app.core.database import db
 from app.models import Notification
 from app.models.offer import Offer
 from app.models.user import User
@@ -530,30 +531,29 @@ def fetch_offer_feedback_counts(company_id: int) -> Dict[int, int]:
 def create_notification_task(user_id: int, payload: Dict[str, Any]):
     """Persist a notification record for the given user identifier."""
 
-    with app.app_context():
-        _log(
-            "create_notification_task",
-            "service_start",
-            "Creating notification from Celery task",
-            {"user_id": user_id, "type": payload.get("type")},
-        )
-        notification = Notification(
-            user_id=user_id,
-            type=payload.get("type"),
-            title=payload.get("title"),
-            message=payload.get("message"),
-            link_url=payload.get("link_url"),
-            metadata_json=(payload.get("metadata") or None),
-        )
-        db.session.add(notification)
-        db.session.commit()
-        _log(
-            "create_notification_task",
-            "db_write_success",
-            "Notification created via Celery",
-            {"user_id": user_id, "notification_id": notification.id},
-        )
-        return notification.id
+    _log(
+        "create_notification_task",
+        "service_start",
+        "Creating notification from Celery task",
+        {"user_id": user_id, "type": payload.get("type")},
+    )
+    notification = Notification(
+        user_id=user_id,
+        type=payload.get("type"),
+        title=payload.get("title"),
+        message=payload.get("message"),
+        link_url=payload.get("link_url"),
+        metadata_json=(payload.get("metadata") or None),
+    )
+    db.session.add(notification)
+    db.session.commit()
+    _log(
+        "create_notification_task",
+        "db_write_success",
+        "Notification created via Celery",
+        {"user_id": user_id, "notification_id": notification.id},
+    )
+    return notification.id
 
 
 @celery.task(name="notifications.broadcast_offer")
@@ -563,60 +563,59 @@ def broadcast_offer_task(offer_id: int, batch_size: int = 100):
     if batch_size <= 0:
         raise ValueError("batch_size must be greater than zero")
 
-    with app.app_context():
-        offer = Offer.query.get(offer_id)
-        if offer is None:
-            _log(
-                "broadcast_offer_task",
-                "soft_failure",
-                "Skipping broadcast for missing offer",
-                {"offer_id": offer_id},
-                level="WARNING",
+    offer = Offer.query.get(offer_id)
+    if offer is None:
+        _log(
+            "broadcast_offer_task",
+            "soft_failure",
+            "Skipping broadcast for missing offer",
+            {"offer_id": offer_id},
+            level="WARNING",
+        )
+        return 0
+
+    _log(
+        "broadcast_offer_task",
+        "service_start",
+        "Broadcasting offer notifications",
+        {"offer_id": offer.id, "batch_size": batch_size},
+    )
+    total_created = 0
+    query = User.query.order_by(User.id)
+    offset = 0
+    while True:
+        users = query.offset(offset).limit(batch_size).all()
+        if not users:
+            break
+
+        for user in users:
+            notification = Notification(
+                user_id=user.id,
+                type="new_offer",
+                title=f"New offer: {offer.title}",
+                message=(
+                    f"{offer.title} now includes at least {offer.base_discount:.2f}% off."
+                ),
+                link_url=url_for("portal.offers"),
+                metadata_json={
+                    "offer_id": offer.id,
+                    "membership_level": user.membership_level,
+                    "base_discount": offer.base_discount,
+                },
             )
-            return 0
+            db.session.add(notification)
+            total_created += 1
 
-        _log(
-            "broadcast_offer_task",
-            "service_start",
-            "Broadcasting offer notifications",
-            {"offer_id": offer.id, "batch_size": batch_size},
-        )
-        total_created = 0
-        query = User.query.order_by(User.id)
-        offset = 0
-        while True:
-            users = query.offset(offset).limit(batch_size).all()
-            if not users:
-                break
+        db.session.commit()
+        offset += batch_size
 
-            for user in users:
-                notification = Notification(
-                    user_id=user.id,
-                    type="new_offer",
-                    title=f"New offer: {offer.title}",
-                    message=(
-                        f"{offer.title} now includes at least {offer.base_discount:.2f}% off."
-                    ),
-                    link_url=url_for("portal.offers"),
-                    metadata_json={
-                        "offer_id": offer.id,
-                        "membership_level": user.membership_level,
-                        "base_discount": offer.base_discount,
-                    },
-                )
-                db.session.add(notification)
-                total_created += 1
-
-            db.session.commit()
-            offset += batch_size
-
-        _log(
-            "broadcast_offer_task",
-            "service_complete",
-            "Broadcasted offer notifications",
-            {"offer_id": offer.id, "total_created": total_created},
-        )
-        return total_created
+    _log(
+        "broadcast_offer_task",
+        "service_complete",
+        "Broadcasted offer notifications",
+        {"offer_id": offer.id, "total_created": total_created},
+    )
+    return total_created
 
 
 def _now_iso() -> str:

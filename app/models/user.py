@@ -9,7 +9,7 @@ from typing import Iterable
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from .. import db
+from app.core.database import db
 
 # Association table linking users to fine-grained permissions.
 user_permissions = db.Table(

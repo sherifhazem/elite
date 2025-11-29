@@ -13,7 +13,7 @@ from flask import current_app
 from qrcode.constants import ERROR_CORRECT_H
 from sqlalchemy.orm import joinedload
 
-from app import db
+from app.core.database import db
 from app.models import Offer, Redemption, User
 from core.observability.logger import (
     get_service_logger,

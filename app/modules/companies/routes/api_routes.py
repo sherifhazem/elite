@@ -10,7 +10,7 @@
 from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
-from app import db
+from app.core.database import db
 from app.models.company import Company
 from app.models.user import User
 from app.modules.companies.services.company_registration import register_company_account

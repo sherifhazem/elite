@@ -8,8 +8,10 @@ in app/PROJECT_MAP.md to detect missing or duplicated routes.
 
 import re
 from pathlib import Path
+
 from flask import Flask
-from app import app  # استدعاء التطبيق الرئيسي بعد التهيئة
+
+from app import create_app
 
 def extract_documented_endpoints():
     """Read endpoints from PROJECT_MAP.md and return as a set."""
@@ -30,6 +32,7 @@ def list_actual_endpoints(flask_app: Flask):
 
 
 def main():
+    app = create_app()
     documented = extract_documented_endpoints()
     actual = list_actual_endpoints(app)
 

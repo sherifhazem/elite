@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from .. import db
+from app.core.database import db
 
 
 class Redemption(db.Model):
