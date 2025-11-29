@@ -39,3 +39,16 @@ def __getattr__(name: str) -> Any:  # pragma: no cover - shim for legacy imports
 
 
 __all__ = sorted(_LAZY_EXPORTS)
+
+
+# Eagerly populate exports for environments that do not support module-level
+# ``__getattr__`` during ``from ... import ...`` statements (e.g. Python < 3.7).
+# This preserves the lazy import behaviour while ensuring attributes are
+# available immediately when the module is imported.
+try:  # pragma: no cover - defensive; falls back to __getattr__ when needed
+    for _name in _LAZY_EXPORTS:
+        globals()[_name] = _get_attr(_name)
+except Exception:
+    # If the member roles module cannot be imported, defer to __getattr__ which
+    # will raise an informative error when the attribute is accessed.
+    pass
