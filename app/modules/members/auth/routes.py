@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from http import HTTPStatus
 from functools import lru_cache
-from typing import Callable, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Tuple
 
 from flask import (
     Blueprint,
@@ -31,7 +31,6 @@ from flask_login import current_user
 from sqlalchemy import or_
 
 from flask_sqlalchemy import SQLAlchemy
-from app.models.user import User
 from app.modules.companies.services.company_registration import register_company_account
 from app.services.mailer import send_email, send_member_welcome_email
 from app.modules.members.services.notifications import send_welcome_notification
@@ -48,7 +47,11 @@ auth = Blueprint(
 )
 
 
-WelcomeNotifier = Callable[[User], Optional[int]]
+if TYPE_CHECKING:  # pragma: no cover - used only for static analysis
+    from app.models.user import User
+
+
+WelcomeNotifier = Callable[["User"], Optional[int]]
 
 _welcome_notifier_unavailable_logged = False
 
@@ -57,6 +60,14 @@ def _get_db() -> SQLAlchemy:
     """Safely retrieve the configured SQLAlchemy instance without importing app."""
 
     return current_app.extensions["sqlalchemy"]
+
+
+def _get_user_model():
+    """Return the User model without triggering circular imports at import time."""
+
+    from app.models.user import User
+
+    return User
 
 
 @lru_cache(maxsize=1)
@@ -109,6 +120,7 @@ def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, in
             HTTPStatus.BAD_REQUEST,
         )
 
+    User = _get_user_model()
     existing_user = User.query.filter(
         or_(User.username == username, User.email == email)
     ).first()
@@ -278,6 +290,7 @@ def api_login() -> tuple:
             HTTPStatus.BAD_REQUEST,
         )
 
+    User = _get_user_model()
     user = User.query.filter_by(email=email).first()
     if not user or not user.check_password(password):
         return (
@@ -328,6 +341,7 @@ def profile() -> tuple:
     except ValueError as error:
         return jsonify({"error": str(error)}), HTTPStatus.UNAUTHORIZED
 
+    User = _get_user_model()
     user = User.query.get(user_id)
     if user is None:
         return (
@@ -379,6 +393,7 @@ def verify_email(token: str):
         return jsonify({"message": "Invalid or expired token"}), HTTPStatus.BAD_REQUEST
 
     # Locate the user account associated with the confirmation email.
+    User = _get_user_model()
     user = User.query.filter_by(email=email).first_or_404()
     if user.is_active:
         return jsonify({"message": "Account already verified"}), HTTPStatus.OK
@@ -396,6 +411,7 @@ def request_password_reset():
 
     data = request.get_json() or {}
     email = data.get("email")
+    User = _get_user_model()
     user = User.query.filter_by(email=email).first()
     if not user:
         return jsonify({"message": "Email not found"}), HTTPStatus.NOT_FOUND
@@ -434,6 +450,7 @@ def reset_password(token: str):
         )
 
     # Update the user's password with the provided credentials.
+    User = _get_user_model()
     user = User.query.filter_by(email=email).first_or_404()
     user.set_password(password)
     db = _get_db()
@@ -456,7 +473,7 @@ def logout():
     response.headers["Expires"] = "0"
     return response
 
-def _dispatch_member_welcome_notification(user: User) -> None:
+def _dispatch_member_welcome_notification(user: "User") -> None:
     """Safely send welcome notification when available."""
 
     notifier = _resolve_welcome_notifier()
