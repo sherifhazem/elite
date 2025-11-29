@@ -3,6 +3,105 @@
 (function () {
     "use strict";
 
+    (function setupObservability() {
+        const OBS_MODULE = "members-main";
+        const originalFetch = window.fetch.bind(window);
+
+        const send = (endpoint, payload) => {
+            const body = {
+                module: OBS_MODULE,
+                page_url: window.location.href,
+                timestamp: new Date().toISOString(),
+                ...payload,
+            };
+            return originalFetch(`/log/${endpoint}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+                credentials: "include",
+            }).catch(() => undefined);
+        };
+
+        const logUIEvent = (event, details = {}) => send("ui-event", { event, ...details });
+
+        const trackError = (message, meta = {}) =>
+            send("frontend-error", {
+                message,
+                module: OBS_MODULE,
+                ...meta,
+            });
+
+        const trackedFetch = async (url, options = {}) => {
+            const started = performance.now();
+            const method = options.method || "GET";
+            const targetUrl = typeof url === "string" ? url : url?.url || "";
+            try {
+                const response = await originalFetch(url, options);
+                send("api-trace", {
+                    event: "request_end",
+                    url: targetUrl,
+                    method,
+                    status: response.status,
+                    duration_ms: Math.round(performance.now() - started),
+                });
+                return response;
+            } catch (error) {
+                send("api-trace", {
+                    event: "request_error",
+                    url: targetUrl,
+                    method,
+                    status: "network_error",
+                    duration_ms: Math.round(performance.now() - started),
+                    message: error?.message,
+                });
+                throw error;
+            }
+        };
+
+        window.fetch = trackedFetch;
+        window.observability = window.observability || {};
+        window.observability[OBS_MODULE] = { fetch: trackedFetch, logUIEvent };
+
+        window.addEventListener("error", (event) => {
+            trackError(event.message, {
+                filename: event.filename,
+                line: event.lineno,
+                column: event.colno,
+                stack: event.error?.stack,
+                browser: navigator.userAgent,
+            });
+        });
+
+        window.addEventListener("unhandledrejection", (event) => {
+            trackError(event.reason?.message || "Unhandled promise rejection", {
+                stack: event.reason?.stack,
+                browser: navigator.userAgent,
+            });
+        });
+
+        logUIEvent("page_open", { path: window.location.pathname });
+        window.addEventListener("popstate", () => {
+            logUIEvent("navigation", { path: window.location.pathname });
+        });
+
+        document.addEventListener("click", (event) => {
+            const target = event.target?.closest("button, a");
+            if (target) {
+                logUIEvent("button_click", {
+                    label:
+                        target.innerText?.trim() ||
+                        target.getAttribute("aria-label") ||
+                        target.id ||
+                        target.className,
+                });
+            }
+        });
+
+        document.addEventListener("submit", (event) => {
+            logUIEvent("form_submit", { action: event.target?.action || window.location.pathname });
+        });
+    })();
+
     // Cache DOM references used across interactions.
     const shell = document.getElementById("app-shell");
     const headerTitle = document.getElementById("portal-page-title");

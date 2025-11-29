@@ -22,6 +22,7 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 from flask_wtf.csrf import CSRFProtect
 
 from .config import Config
+from core.observability.middleware import init_observability
 
 app = Flask(__name__, template_folder="../core/templates", static_folder="../core/static")
 app.config.from_object(Config)
@@ -37,6 +38,8 @@ app.jinja_loader = ChoiceLoader(
 )
 
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+init_observability(app)
 
 if app.config.get("RELAX_SECURITY_CONTROLS", False):
     class _DisabledCSRF:
