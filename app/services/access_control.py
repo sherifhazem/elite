@@ -18,16 +18,7 @@ def _get_attr(name: str):
     return getattr(_member_roles(), name)
 
 
-ROLE_ACCESS_MATRIX = _get_attr("ROLE_ACCESS_MATRIX")
-PERMISSION_ROLE_MATRIX = _get_attr("PERMISSION_ROLE_MATRIX")
-resolve_user_from_request = _get_attr("resolve_user_from_request")
-require_role = _get_attr("require_role")
-admin_required = _get_attr("admin_required")
-has_role = _get_attr("has_role")
-can_access = _get_attr("can_access")
-_extract_token = _get_attr("_extract_token")  # type: ignore
-
-__all__ = [
+_LAZY_EXPORTS = {
     "ROLE_ACCESS_MATRIX",
     "PERMISSION_ROLE_MATRIX",
     "resolve_user_from_request",
@@ -36,4 +27,15 @@ __all__ = [
     "has_role",
     "can_access",
     "_extract_token",
-]
+}
+
+
+def __getattr__(name: str) -> Any:  # pragma: no cover - shim for legacy imports
+    """Dynamically fetch access-control helpers to avoid circular imports."""
+
+    if name in _LAZY_EXPORTS:
+        return _get_attr(name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+__all__ = sorted(_LAZY_EXPORTS)
