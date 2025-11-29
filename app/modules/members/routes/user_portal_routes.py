@@ -13,7 +13,7 @@ from urllib.parse import quote
 
 from flask import Blueprint, Response, jsonify, redirect, render_template, request, url_for
 
-from app import db
+from app.core.database import db
 from app.modules.members.auth.utils import get_user_from_token
 from app.models.notification import Notification
 from app.models.offer import Offer

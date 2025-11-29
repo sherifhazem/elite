@@ -8,7 +8,7 @@ from typing import Optional
 
 from flask import current_app, g, jsonify, render_template, request
 
-from app import db
+from app.core.database import db
 from app.models import Redemption
 from app.modules.companies.services.offers import list_company_offers
 from app.modules.members.services.redemption import list_company_redemptions

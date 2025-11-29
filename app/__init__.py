@@ -10,7 +10,6 @@ from http import HTTPStatus
 from flask import Flask, abort, g, request
 from flask_login import LoginManager, current_user as flask_login_current_user
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_mail import Mail
 from celery import Celery
@@ -25,208 +24,226 @@ from .config import Config
 from core.observability.middleware import init_observability
 from core.observability.routes import observability as observability_blueprint
 from app.services.access_control import resolve_user_from_request
-
-app = Flask(__name__, template_folder="../core/templates", static_folder="../core/static")
-app.config.from_object(Config)
-app.secret_key = app.config["SECRET_KEY"]
-
-app.jinja_loader = ChoiceLoader(
-    [
-        FileSystemLoader(os.path.join(app.root_path, "modules", "members", "templates")),
-        FileSystemLoader(os.path.join(app.root_path, "modules", "companies", "templates")),
-        FileSystemLoader(os.path.join(app.root_path, "modules", "admin", "templates")),
-        app.jinja_loader,
-    ]
-)
-
-CORS(app, resources={r"/api/*": {"origins": "*"}})
-
-init_observability(app)
-
-if app.config.get("RELAX_SECURITY_CONTROLS", False):
-    class _DisabledCSRF:
-        """No-op CSRF handler used while protections are relaxed during development."""
-
-        @staticmethod
-        def exempt(view_func):
-            return view_func
-
-    csrf = _DisabledCSRF()
-    app.logger.warning("CSRF protection disabled for development and testing purposes.")
-else:
-    csrf = CSRFProtect()
-    csrf.init_app(app)
+from app.core.database import db
 
 login_manager = LoginManager()
-login_manager.login_view = "auth.login"
-login_manager.login_message_category = "info"
-login_manager.init_app(app)
-
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-redis_client = Redis.from_url(app.config["REDIS_URL"], decode_responses=True)
-
-celery = Celery(app.import_name, broker=app.config["CELERY_BROKER_URL"])
-celery.conf.update(app.config)
-
-mail = Mail(app)
-
-# Ensure models are registered
-from .models import Company, Offer, Permission, Redemption, User  # noqa: F401
-
-# Register blueprints after extensions
-from app.modules.members.routes import (
-    main as main_blueprint,
-    notifications,
-    offers,
-    redemption,
-    users,
-)
-from app.modules.members.routes.user_portal_routes import portal  # noqa: E402
-from app.modules.members.auth import auth  # noqa: E402
-from app.modules.admin import admin  # noqa: E402
-from app.modules.companies import company_portal  # noqa: E402
-from app.modules.companies.routes.api_routes import companies  # noqa: E402
+csrf = CSRFProtect()
+migrate = Migrate()
+mail = Mail()
+celery = Celery()
+redis_client: Redis | None = None
 
 # JWT authentication temporarily disabled during web testing phase.
 # To re-enable, restore imports from flask_jwt_extended.
-# from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request_optional
 get_jwt_identity = lambda: None
 verify_jwt_in_request_optional = lambda *a, **kw: None
 
-@login_manager.user_loader
-def load_user(user_id: str):
-    """Load a persisted user session for Flask-Login."""
 
-    from .models import User
+def create_app(config_class: type[Config] = Config) -> Flask:
+    app = Flask(__name__, template_folder="../core/templates", static_folder="../core/static")
+    app.config.from_object(config_class)
+    app.secret_key = app.config["SECRET_KEY"]
 
-    return User.query.get(int(user_id))
+    app.jinja_loader = ChoiceLoader(
+        [
+            FileSystemLoader(os.path.join(app.root_path, "modules", "members", "templates")),
+            FileSystemLoader(os.path.join(app.root_path, "modules", "companies", "templates")),
+            FileSystemLoader(os.path.join(app.root_path, "modules", "admin", "templates")),
+            app.jinja_loader,
+        ]
+    )
 
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-@app.before_request
-def attach_current_user() -> None:
-    """Resolve the current user from JWT credentials and guard protected areas."""
-    current = resolve_user_from_request()
-    g.current_user = current
-    normalized_role = "guest"
+    init_observability(app)
 
-    if current is not None:
-        normalized_role = (getattr(current, "role", "member") or "member").strip().lower()
-        # ضمان وجود خاصية is_authenticated
-        if getattr(current, "is_authenticated", None) is not True:
-            try:
-                current.is_authenticated = True
-            except AttributeError:
-                pass
+    csrf_extension = csrf
+    if app.config.get("RELAX_SECURITY_CONTROLS", False):
+        class _DisabledCSRF:
+            """No-op CSRF handler used while protections are relaxed during development."""
 
-    g.user_role = normalized_role
-    g.user_permissions = getattr(current, "permissions", None) if current else None
+            @staticmethod
+            def exempt(view_func):
+                return view_func
 
-    if not app.config.get("RELAX_SECURITY_CONTROLS", False):
-        protected_paths = ("/admin", "/company")
-        exempt_paths = (
-            "/",                          # homepage
-            "/auth/login",                # login
-            "/auth/register",             # register
-            "/company/complete_registration",  # correction/completion link
-            "/static",                    # static files
-            "/api",                       # public APIs
-        )
-
-        if request.path.startswith(protected_paths) and not any(
-            request.path.startswith(ex) for ex in exempt_paths
-        ):
-            if g.current_user is None:
-                abort(HTTPStatus.UNAUTHORIZED)
-            if hasattr(g.current_user, "is_active") and not g.current_user.is_active:
-                abort(HTTPStatus.FORBIDDEN)
-
-
-@app.context_processor
-def inject_user_context():
-    """Inject user and role context into all templates, including status labels."""
-    user = getattr(g, "current_user", None)
-    role = getattr(g, "user_role", "guest") or "guest"
-    permissions = getattr(g, "user_permissions", None)
-    username = "ضيف"
-
-    if user and getattr(user, "is_authenticated", False):
-        role = getattr(user, "role", role) or role
-        username = getattr(user, "username", username)
+        csrf_extension = _DisabledCSRF()
+        app.logger.warning("CSRF protection disabled for development and testing purposes.")
     else:
-        if getattr(flask_login_current_user, "is_authenticated", False):
-            user = flask_login_current_user
-            role = getattr(user, "role", "member") or "member"
-            permissions = getattr(user, "permissions", None)
+        csrf_extension.init_app(app)
+
+    login_manager.login_view = "auth.login"
+    login_manager.login_message_category = "info"
+    login_manager.init_app(app)
+
+    db.init_app(app)
+    migrate.init_app(app, db)
+
+    global redis_client
+    redis_client = Redis.from_url(app.config["REDIS_URL"], decode_responses=True)
+
+    celery.conf.update(app.config)
+    celery.conf.broker_url = app.config.get("CELERY_BROKER_URL", celery.conf.broker_url)
+    celery.conf.result_backend = app.config.get("CELERY_RESULT_BACKEND", celery.conf.result_backend)
+
+    class AppContextTask(celery.Task):
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return self.run(*args, **kwargs)
+
+    celery.Task = AppContextTask
+
+    mail.init_app(app)
+
+    @login_manager.user_loader
+    def load_user(user_id: str):
+        """Load a persisted user session for Flask-Login."""
+
+        from app.models import User
+
+        return User.query.get(int(user_id))
+
+    @app.before_request
+    def attach_current_user() -> None:
+        """Resolve the current user from JWT credentials and guard protected areas."""
+        current = resolve_user_from_request()
+        g.current_user = current
+        normalized_role = "guest"
+
+        if current is not None:
+            normalized_role = (getattr(current, "role", "member") or "member").strip().lower()
+            # ضمان وجود خاصية is_authenticated
+            if getattr(current, "is_authenticated", None) is not True:
+                try:
+                    current.is_authenticated = True
+                except AttributeError:
+                    pass
+
+        g.user_role = normalized_role
+        g.user_permissions = getattr(current, "permissions", None) if current else None
+
+        if not app.config.get("RELAX_SECURITY_CONTROLS", False):
+            protected_paths = ("/admin", "/company")
+            exempt_paths = (
+                "/",                          # homepage
+                "/auth/login",                # login
+                "/auth/register",             # register
+                "/company/complete_registration",  # correction/completion link
+                "/static",                    # static files
+                "/api",                       # public APIs
+            )
+
+            if request.path.startswith(protected_paths) and not any(
+                request.path.startswith(ex) for ex in exempt_paths
+            ):
+                if g.current_user is None:
+                    abort(HTTPStatus.UNAUTHORIZED)
+                if hasattr(g.current_user, "is_active") and not g.current_user.is_active:
+                    abort(HTTPStatus.FORBIDDEN)
+
+    @app.context_processor
+    def inject_user_context():
+        """Inject user and role context into all templates, including status labels."""
+        user = getattr(g, "current_user", None)
+        role = getattr(g, "user_role", "guest") or "guest"
+        permissions = getattr(g, "user_permissions", None)
+        username = "ضيف"
+
+        if user and getattr(user, "is_authenticated", False):
+            role = getattr(user, "role", role) or role
             username = getattr(user, "username", username)
-        elif verify_jwt_in_request_optional and get_jwt_identity:
-            try:
-                verify_jwt_in_request_optional()
-                identity = get_jwt_identity()
-            except Exception:
-                identity = None
-            if identity and not user:
-                fetched_user = User.query.get(identity)
-                if fetched_user:
-                    # تأكد من أن المستخدم قابل للعرض في القوالب
-                    try:
-                        fetched_user.is_authenticated = True
-                    except AttributeError:
-                        pass
-                    user = fetched_user
-                    role = getattr(fetched_user, "role", "member") or "member"
-                    permissions = getattr(fetched_user, "permissions", None)
-                    username = getattr(fetched_user, "username", username)
-
-    normalized_role = (role or "guest").strip().lower()
-    g.current_user = user
-    g.user_role = normalized_role
-    g.user_permissions = permissions
-
-    if user:
-        if getattr(user, "is_authenticated", None) is not True:
-            try:
-                user.is_authenticated = True
-            except AttributeError:
-                pass
-        if normalized_role == "superadmin":
-            user_status_label = f"🔑 Superadmin ({username})"
-        elif normalized_role == "admin":
-            user_status_label = f"🛡 Admin ({username})"
-        elif normalized_role == "company":
-            user_status_label = f"🏢 {username} (شركة)"
         else:
-            user_status_label = f"👤 {username}"
-    else:
-        user_status_label = "👥 تصفح كـ ضيف"
+            if getattr(flask_login_current_user, "is_authenticated", False):
+                user = flask_login_current_user
+                role = getattr(user, "role", "member") or "member"
+                permissions = getattr(user, "permissions", None)
+                username = getattr(user, "username", username)
+            elif verify_jwt_in_request_optional and get_jwt_identity:
+                try:
+                    verify_jwt_in_request_optional()
+                    identity = get_jwt_identity()
+                except Exception:
+                    identity = None
+                if identity and not user:
+                    from app.models import User
 
-    is_admin = normalized_role in {"admin", "superadmin"}
-    is_superadmin = normalized_role == "superadmin"
+                    fetched_user = User.query.get(identity)
+                    if fetched_user:
+                        # تأكد من أن المستخدم قابل للعرض في القوالب
+                        try:
+                            fetched_user.is_authenticated = True
+                        except AttributeError:
+                            pass
+                        user = fetched_user
+                        role = getattr(fetched_user, "role", "member") or "member"
+                        permissions = getattr(fetched_user, "permissions", None)
+                        username = getattr(fetched_user, "username", username)
 
-    return {
-        "current_user": user,
-        "role": normalized_role,  # <--- أُضيف لضمان عمل {{ role }} في القوالب
-        "user_role": normalized_role,
-        "user_permissions": permissions,
-        "user_status_label": user_status_label,
-        "is_admin": is_admin,
-        "is_superadmin": is_superadmin,
-    }
+        normalized_role = (role or "guest").strip().lower()
+        g.current_user = user
+        g.user_role = normalized_role
+        g.user_permissions = permissions
 
+        if user:
+            if getattr(user, "is_authenticated", None) is not True:
+                try:
+                    user.is_authenticated = True
+                except AttributeError:
+                    pass
+            if normalized_role == "superadmin":
+                user_status_label = f"🔑 Superadmin ({username})"
+            elif normalized_role == "admin":
+                user_status_label = f"🛡 Admin ({username})"
+            elif normalized_role == "company":
+                user_status_label = f"🏢 {username} (شركة)"
+            else:
+                user_status_label = f"👤 {username}"
+        else:
+            user_status_label = "👥 تصفح كـ ضيف"
 
-app.logger.info("✅ Database connection configured for %s", app.config["SQLALCHEMY_DATABASE_URI"])
-# Register blueprints
-csrf.exempt(observability_blueprint)
+        is_admin = normalized_role in {"admin", "superadmin"}
+        is_superadmin = normalized_role == "superadmin"
 
-app.register_blueprint(observability_blueprint)
-app.register_blueprint(main_blueprint)
-app.register_blueprint(admin)  # ← الآن يستخدم تعريف blueprint الصحيح من app/admin/__init__.py
-app.register_blueprint(auth)
-app.register_blueprint(company_portal)
-app.register_blueprint(portal)
-app.register_blueprint(offers, url_prefix="/api/offers")
-app.register_blueprint(companies, url_prefix="/api/companies")
-app.register_blueprint(users, url_prefix="/api/users")
-app.register_blueprint(redemption)
-app.register_blueprint(notifications)
+        return {
+            "current_user": user,
+            "role": normalized_role,  # <--- أُضيف لضمان عمل {{ role }} في القوالب
+            "user_role": normalized_role,
+            "user_permissions": permissions,
+            "user_status_label": user_status_label,
+            "is_admin": is_admin,
+            "is_superadmin": is_superadmin,
+        }
 
+    with app.app_context():
+        from app.models import Company, Offer, Permission, Redemption, User  # noqa: F401
+
+    app.logger.info("✅ Database connection configured for %s", app.config["SQLALCHEMY_DATABASE_URI"])
+    # Register blueprints
+    csrf_extension.exempt(observability_blueprint)
+
+    app.register_blueprint(observability_blueprint)
+
+    from app.modules.members.routes import (
+        main as main_blueprint,
+        notifications,
+        offers,
+        redemption,
+        users,
+    )
+    from app.modules.members.routes.user_portal_routes import portal  # noqa: E402
+    from app.modules.members.auth import auth  # noqa: E402
+    from app.modules.admin import admin  # noqa: E402
+    from app.modules.companies import company_portal  # noqa: E402
+    from app.modules.companies.routes.api_routes import companies  # noqa: E402
+
+    app.register_blueprint(main_blueprint)
+    app.register_blueprint(admin)  # ← الآن يستخدم تعريف blueprint الصحيح من app/admin/__init__.py
+    app.register_blueprint(auth)
+    app.register_blueprint(company_portal)
+    app.register_blueprint(portal)
+    app.register_blueprint(offers, url_prefix="/api/offers")
+    app.register_blueprint(companies, url_prefix="/api/companies")
+    app.register_blueprint(users, url_prefix="/api/users")
+    app.register_blueprint(redemption)
+    app.register_blueprint(notifications)
+
+    return app

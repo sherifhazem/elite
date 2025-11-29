@@ -17,7 +17,7 @@ from flask import (
     url_for,
 )
 
-from app import db
+from app.core.database import db
 from app.models import Redemption, User
 from app.modules.members.services.notifications import (
     notify_offer_redemption_activity,

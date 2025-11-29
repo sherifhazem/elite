@@ -8,7 +8,7 @@ from typing import Dict, Tuple
 
 from flask import flash, jsonify, redirect, render_template, request, url_for
 
-from app import db
+from app.core.database import db
 from app.models import Offer
 from app.modules.members.services.notifications import (
     broadcast_new_offer,

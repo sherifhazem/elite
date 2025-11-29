@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from sqlalchemy.ext.mutable import MutableDict
 
-from .. import db
+from app.core.database import db
 
 
 class Company(db.Model):

@@ -12,7 +12,7 @@ from flask import (
 from flask_login import current_user as flask_current_user
 from sqlalchemy.exc import IntegrityError
 
-from app import db
+from app.core.database import db
 from app.models import Company
 from app.services.access_control import resolve_user_from_request
 from . import company_portal

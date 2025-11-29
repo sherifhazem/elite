@@ -13,7 +13,7 @@ from flask import (
     Response,
 )
 
-from app import db
+from app.core.database import db
 from app.models import User, Company, Offer, ActivityLog
 from app.services.access_control import admin_required
 

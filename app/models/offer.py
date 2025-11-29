@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from .. import db
+from app.core.database import db
 
 
 class Offer(db.Model):

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from flask import abort, g
 
-from app import db
+from app.core.database import db
 from app.models import Company
 
 if TYPE_CHECKING:  # pragma: no cover - hints only

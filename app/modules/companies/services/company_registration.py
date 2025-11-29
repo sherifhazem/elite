@@ -12,7 +12,7 @@ from flask import current_app, url_for
 from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
 
-from app import db
+from app.core.database import db
 from app.modules.companies.forms.module_forms import CITY_CHOICES, INDUSTRY_CHOICES
 from app.models.company import Company
 from app.models.user import User

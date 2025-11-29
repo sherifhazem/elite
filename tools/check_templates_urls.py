@@ -8,8 +8,10 @@ any url_for('endpoint') calls that reference endpoints not registered in Flask.
 
 import re
 from pathlib import Path
+
 from flask import Flask
-from app import app
+
+from app import create_app
 
 def extract_all_endpoints(flask_app: Flask):
     """Return a set of all registered Flask endpoints."""
@@ -23,6 +25,7 @@ def find_url_for_calls(template_text: str):
 def main():
     print("🔍 Scanning templates for broken url_for() references...\n")
 
+    app = create_app()
     all_endpoints = extract_all_endpoints(app)
     templates_root = Path(__file__).resolve().parent.parent / "app" / "templates"
 

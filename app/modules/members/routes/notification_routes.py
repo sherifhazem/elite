@@ -6,7 +6,7 @@ from typing import Dict
 
 from flask import Blueprint, jsonify, request, g
 
-from app import db
+from app.core.database import db
 from app.modules.members.auth.utils import get_user_from_token
 from app.models.notification import Notification
 from app.services.access_control import _extract_token
