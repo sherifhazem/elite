@@ -13,6 +13,7 @@ from app.core.database import db
 from app.models.company import Company
 from app.models.offer import Offer
 from app.models.user import User
+<<<<<<< HEAD
 from core.observability.logger import (
     get_service_logger,
     log_service_error,
@@ -36,6 +37,8 @@ def _log(function: str, event: str, message: str, details: Dict[str, object] | N
         log_service_success(__name__, function, message, details=details, event=event)
     else:
         log_service_step(__name__, function, message, details=details, event=event, level=level)
+=======
+>>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 
 
 def _normalize_membership(level: str | None) -> str:
@@ -50,14 +53,7 @@ def _normalize_membership(level: str | None) -> str:
 def get_user_summary() -> Dict[str, object]:
     """Return aggregated statistics for users and memberships."""
 
-    _log("get_user_summary", "service_start", "Collecting user analytics overview")
     total_users = db.session.query(func.count(User.id)).scalar() or 0
-    _log(
-        "get_user_summary",
-        "db_query",
-        "Total users queried",
-        {"total_users": int(total_users)},
-    )
 
     membership_counts: Dict[str, int] = {level: 0 for level in User.MEMBERSHIP_LEVELS}
     for level, count in (
@@ -66,12 +62,6 @@ def get_user_summary() -> Dict[str, object]:
         .all()
     ):
         membership_counts[_normalize_membership(level)] += int(count or 0)
-    _log(
-        "get_user_summary",
-        "service_checkpoint",
-        "Membership counts aggregated",
-        {"membership_counts": membership_counts},
-    )
 
     last_week = datetime.utcnow() - timedelta(days=7)
     new_users = (
@@ -80,33 +70,18 @@ def get_user_summary() -> Dict[str, object]:
         .scalar()
         or 0
     )
-    _log(
-        "get_user_summary",
-        "db_query",
-        "New users aggregated",
-        {"window_days": 7, "new_users": int(new_users)},
-    )
 
-    payload = {
+    return {
         "total_users": int(total_users),
         "new_last_7_days": int(new_users),
         "membership_counts": membership_counts,
     }
-    _log("get_user_summary", "service_complete", "User analytics prepared", payload)
-    return payload
 
 
 def get_company_summary() -> Dict[str, object]:
     """Return aggregated statistics for partner companies."""
 
-    _log("get_company_summary", "service_start", "Collecting company metrics")
     total_companies = db.session.query(func.count(Company.id)).scalar() or 0
-    _log(
-        "get_company_summary",
-        "db_query",
-        "Total companies queried",
-        {"total_companies": int(total_companies)},
-    )
 
     last_month = datetime.utcnow() - timedelta(days=30)
     new_companies = (
@@ -115,25 +90,16 @@ def get_company_summary() -> Dict[str, object]:
         .scalar()
         or 0
     )
-    _log(
-        "get_company_summary",
-        "db_query",
-        "New companies aggregated",
-        {"window_days": 30, "new_companies": int(new_companies)},
-    )
 
-    payload = {
+    return {
         "total_companies": int(total_companies),
         "new_last_30_days": int(new_companies),
     }
-    _log("get_company_summary", "service_complete", "Company metrics prepared", payload)
-    return payload
 
 
 def get_offer_summary() -> Dict[str, object]:
     """Return aggregated statistics for offers and discounts."""
 
-    _log("get_offer_summary", "service_start", "Collecting offer metrics")
     now = datetime.utcnow()
 
     active_offers = (
@@ -142,32 +108,14 @@ def get_offer_summary() -> Dict[str, object]:
         .scalar()
         or 0
     )
-    _log(
-        "get_offer_summary",
-        "db_query",
-        "Active offers counted",
-        {"active_offers": int(active_offers)},
-    )
     expired_offers = (
         db.session.query(func.count(Offer.id))
         .filter(Offer.valid_until.is_not(None), Offer.valid_until < now)
         .scalar()
         or 0
     )
-    _log(
-        "get_offer_summary",
-        "db_query",
-        "Expired offers counted",
-        {"expired_offers": int(expired_offers)},
-    )
 
     avg_discount = db.session.query(func.avg(Offer.base_discount)).scalar() or 0.0
-    _log(
-        "get_offer_summary",
-        "service_checkpoint",
-        "Average discount computed",
-        {"average_discount": float(round(avg_discount, 2))},
-    )
 
     trend_window = now - timedelta(days=90)
     offers_since_window = (
@@ -175,12 +123,6 @@ def get_offer_summary() -> Dict[str, object]:
         .with_entities(Offer.created_at)
         .order_by(Offer.created_at)
         .all()
-    )
-    _log(
-        "get_offer_summary",
-        "db_query",
-        "Offer trend window queried",
-        {"window_days": 90, "count": len(offers_since_window)},
     )
 
     weekly_totals: defaultdict[str, int] = defaultdict(int)
@@ -195,13 +137,6 @@ def get_offer_summary() -> Dict[str, object]:
     for week_start in sorted(weekly_totals.keys()):
         trend_data.append({"period_start": week_start, "count": weekly_totals[week_start]})
 
-    _log(
-        "get_offer_summary",
-        "service_checkpoint",
-        "Trend data prepared",
-        {"trend_points": len(trend_data)},
-    )
-
     latest_offers = [
         {
             "id": offer.id,
@@ -214,7 +149,7 @@ def get_offer_summary() -> Dict[str, object]:
         for offer in Offer.query.order_by(Offer.created_at.desc()).limit(5)
     ]
 
-    payload = {
+    return {
         "active_offers": int(active_offers),
         "expired_offers": int(expired_offers),
         "average_discount": float(round(avg_discount, 2)),
@@ -222,36 +157,20 @@ def get_offer_summary() -> Dict[str, object]:
         "trend": trend_data,
         "latest": latest_offers,
     }
-    _log("get_offer_summary", "service_complete", "Offer metrics prepared", payload)
-    return payload
 
 
 def get_membership_distribution() -> Dict[str, object]:
     """Return pie-chart friendly membership distribution data."""
 
-    _log("get_membership_distribution", "service_start", "Preparing membership distribution")
     counts = get_user_summary()["membership_counts"]  # type: ignore[index]
     labels = list(counts.keys())
     values = [counts[label] for label in labels]
-    payload = {"labels": labels, "values": values}
-    _log(
-        "get_membership_distribution",
-        "service_complete",
-        "Membership distribution ready",
-        {"labels": labels, "value_count": len(values)},
-    )
-    return payload
+    return {"labels": labels, "values": values}
 
 
 def get_recent_activity(days: int = 7) -> Dict[str, List[Dict[str, object]]]:
     """Return a chronological list of registrations within the supplied window."""
 
-    _log(
-        "get_recent_activity",
-        "service_start",
-        "Building recent activity timeline",
-        {"days": days},
-    )
     end_date = datetime.utcnow().date()
     start_date = end_date - timedelta(days=days - 1)
 
@@ -265,12 +184,6 @@ def get_recent_activity(days: int = 7) -> Dict[str, List[Dict[str, object]]]:
     ):
         key = joined_at.isoformat() if hasattr(joined_at, "isoformat") else str(joined_at)
         activity_lookup[key] = int(count or 0)
-    _log(
-        "get_recent_activity",
-        "db_query",
-        "Aggregated user registrations",
-        {"days": days, "data_points": len(activity_lookup)},
-    )
 
     timeline: List[Dict[str, object]] = []
     current = start_date
@@ -279,11 +192,4 @@ def get_recent_activity(days: int = 7) -> Dict[str, List[Dict[str, object]]]:
         timeline.append({"date": key, "registrations": activity_lookup.get(key, 0)})
         current += timedelta(days=1)
 
-    payload = {"timeline": timeline}
-    _log(
-        "get_recent_activity",
-        "service_complete",
-        "Recent activity timeline prepared",
-        {"days": days, "timeline_points": len(timeline)},
-    )
-    return payload
+    return {"timeline": timeline}

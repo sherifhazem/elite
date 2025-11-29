@@ -18,6 +18,7 @@ from app.models.company import Company
 from app.models.user import User
 from app.services.mailer import send_email
 from app.modules.members.services.notifications import push_admin_notification, queue_notification
+<<<<<<< HEAD
 from core.observability.logger import (
     get_service_logger,
     log_service_error,
@@ -41,17 +42,13 @@ def _log(function: str, event: str, message: str, details: Dict[str, object] | N
         log_service_success(__name__, function, message, details=details, event=event)
     else:
         log_service_step(__name__, function, message, details=details, event=event, level=level)
+=======
+>>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 
 
 def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object], HTTPStatus]:
     """Validate payload data, create company + owner, and notify admins."""
 
-    _log(
-        "register_company_account",
-        "service_start",
-        "Starting company registration",
-        {"email": payload.get("email"), "company": payload.get("company_name")},
-    )
     requested_username = (payload.get("username") or "").strip()
     email = (payload.get("email") or "").strip().lower()
     password = payload.get("password")
@@ -64,13 +61,6 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
     social_url = (payload.get("social_url") or "").strip()
 
     if not email or not password or not company_name:
-        _log(
-            "register_company_account",
-            "validation_failure",
-            "Missing required company registration fields",
-            {"email": email, "company_name": company_name},
-            level="ERROR",
-        )
         return (
             {
                 "error": "email, password, and company_name are required.",
@@ -79,13 +69,6 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
         )
 
     if not phone_number or len(phone_number) < 8:
-        _log(
-            "register_company_account",
-            "validation_failure",
-            "Phone number does not meet length requirements",
-            {"phone_number": phone_number},
-            level="ERROR",
-        )
         return (
             {"error": "A valid phone_number with at least 8 characters is required."},
             HTTPStatus.BAD_REQUEST,
@@ -94,25 +77,11 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
     allowed_industries = {choice for choice, _ in INDUSTRY_CHOICES if choice}
     allowed_cities = {choice for choice, _ in CITY_CHOICES if choice}
     if industry not in allowed_industries:
-        _log(
-            "register_company_account",
-            "validation_failure",
-            "Unsupported industry provided",
-            {"industry": industry},
-            level="ERROR",
-        )
         return (
             {"error": "industry is required and must be a supported choice."},
             HTTPStatus.BAD_REQUEST,
         )
     if city not in allowed_cities:
-        _log(
-            "register_company_account",
-            "validation_failure",
-            "Unsupported city provided",
-            {"city": city},
-            level="ERROR",
-        )
         return (
             {"error": "city is required and must be a supported choice."},
             HTTPStatus.BAD_REQUEST,
@@ -125,25 +94,11 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
         return bool(parsed.scheme in {"http", "https"} and parsed.netloc)
 
     if website_url and not _is_valid_url(website_url):
-        _log(
-            "register_company_account",
-            "validation_failure",
-            "Website URL failed validation",
-            {"website_url": website_url},
-            level="ERROR",
-        )
         return (
             {"error": "website_url must be a valid HTTP or HTTPS link."},
             HTTPStatus.BAD_REQUEST,
         )
     if not social_url or not _is_valid_url(social_url):
-        _log(
-            "register_company_account",
-            "validation_failure",
-            "Social URL failed validation",
-            {"social_url": social_url},
-            level="ERROR",
-        )
         return (
             {"error": "social_url must be a valid HTTP or HTTPS link."},
             HTTPStatus.BAD_REQUEST,
@@ -151,12 +106,6 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
 
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
-        _log(
-            "register_company_account",
-            "db_query",
-            "Existing user located by email",
-            {"user_id": existing_user.id},
-        )
         normalized_role = (existing_user.role or "").strip().lower()
         associated_company_exists = False
         if existing_user.company_id:
@@ -172,36 +121,19 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
             and not associated_company_exists
             and not owns_company
         ):
-            _log(
-                "register_company_account",
-                "soft_failure",
-                "Removed orphaned company user before re-registering",
-                {"email": existing_user.email},
-                level="WARNING",
+            current_app.logger.info(
+                "Removed orphaned company user before re-registering the company.",
+                extra={"email": existing_user.email},
             )
             db.session.delete(existing_user)
             db.session.flush()
         else:
-            _log(
-                "register_company_account",
-                "validation_failure",
-                "Email already in use",
-                {"email": email},
-                level="ERROR",
-            )
             return (
                 {"error": "A user with the provided email already exists."},
                 HTTPStatus.BAD_REQUEST,
             )
 
     if Company.query.filter_by(name=company_name).first():
-        _log(
-            "register_company_account",
-            "validation_failure",
-            "Company name already exists",
-            {"company_name": company_name},
-            level="ERROR",
-        )
         return (
             {"error": "A company with the provided name already exists."},
             HTTPStatus.BAD_REQUEST,
@@ -221,13 +153,6 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
     username = requested_username or _generate_username()
 
     if requested_username and User.query.filter_by(username=username).first():
-        _log(
-            "register_company_account",
-            "validation_failure",
-            "Username already in use",
-            {"username": username},
-            level="ERROR",
-        )
         return (
             {"error": "A user with the provided username already exists."},
             HTTPStatus.BAD_REQUEST,
@@ -259,21 +184,8 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
 
     try:
         db.session.commit()
-        _log(
-            "register_company_account",
-            "db_write_success",
-            "Company and owner persisted",
-            {"company_id": company.id, "owner_id": owner.id},
-        )
-    except IntegrityError as exc:
+    except IntegrityError:
         db.session.rollback()
-        _log(
-            "register_company_account",
-            "request_error",
-            "Database integrity error during company registration",
-            {"error": str(exc)},
-            level="ERROR",
-        )
         return (
             {"error": "Unable to register company with the provided details."},
             HTTPStatus.BAD_REQUEST,
@@ -295,12 +207,6 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
         industry=industry,
         city=city,
     )
-    _log(
-        "register_company_account",
-        "service_checkpoint",
-        "Admin notifications dispatched",
-        {"company_id": company.id},
-    )
 
     response = {
         "company": {
@@ -321,12 +227,6 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
         "message": "Company registration request received and pending review.",
         "redirect_url": url_for("auth.login_page"),
     }
-    _log(
-        "register_company_account",
-        "service_complete",
-        "Company registration completed",
-        {"company_id": company.id, "owner_id": owner.id},
-    )
     return response, HTTPStatus.CREATED
 
 
@@ -340,12 +240,6 @@ def notify_admin_of_company_request(
 ) -> None:
     """Send admin notifications and email summarizing the company request."""
 
-    _log(
-        "notify_admin_of_company_request",
-        "service_start",
-        "Preparing admin notifications for company request",
-        {"company_id": company.id, "owner_id": owner.id},
-    )
     admin_users = (
         User.query.filter(
             User.role.in_(["admin", "superadmin"]),
@@ -356,12 +250,9 @@ def notify_admin_of_company_request(
     )
 
     if not admin_users:
-        _log(
-            "notify_admin_of_company_request",
-            "soft_failure",
-            "Company registration pending but no admin recipients found",
-            {"company_id": company.id},
-            level="WARNING",
+        current_app.logger.warning(
+            "Company registration pending but no admin recipients found.",
+            extra={"company_id": company.id},
         )
     else:
         message = (
@@ -394,13 +285,6 @@ def notify_admin_of_company_request(
         or current_app.config.get("MAIL_USERNAME")
     )
     if not admin_email:
-        _log(
-            "notify_admin_of_company_request",
-            "soft_failure",
-            "No admin email configured for broadcast",
-            {"company_id": company.id},
-            level="WARNING",
-        )
         return
 
     subject = f"طلب تسجيل شركة جديد: {company.name}"
@@ -421,12 +305,6 @@ def notify_admin_of_company_request(
     message_html = "<br>".join(message_lines)
     context = {"subject": subject, "message_html": message_html}
     send_email(admin_email, subject, "emails/admin_broadcast.html", context)
-    _log(
-        "notify_admin_of_company_request",
-        "service_complete",
-        "Admin notification email sent",
-        {"company_id": company.id, "recipients": len(admin_users)},
-    )
 
 
 __all__ = ["register_company_account", "notify_admin_of_company_request"]

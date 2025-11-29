@@ -7,8 +7,11 @@
 - **Static:** `app/modules/companies/static/` holds company CSS and JS assets.
 
 The company portal blueprint lives in `app/modules/companies/__init__.py` with template and static folders scoped to this module.
+<<<<<<< HEAD
 
 ## Observability Layer (Local Monitoring System)
 - Company services (`app/modules/companies/services/`) log through `log_service_start`, `log_service_step`, `log_service_error`, and `log_service_success`, ensuring every step is tied to the centralized `X-Request-ID` header and JSON schema.
 - Frontend assets rely on the shared API wrapper, UI event logger, and global error handler, sending activity to the app-level `/log/frontend-error`, `/log/api-trace`, and `/log/ui-event` endpoints with the active request id.
 - Middleware injects the request id into responses and all traces stored under `/logs/frontend-*.log.json` alongside backend service logs.
+=======
+>>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))

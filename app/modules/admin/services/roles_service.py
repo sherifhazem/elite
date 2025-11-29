@@ -8,6 +8,7 @@ import json
 from typing import Dict, List
 
 from app import redis_client
+<<<<<<< HEAD
 from core.observability.logger import (
     get_service_logger,
     log_service_error,
@@ -15,6 +16,8 @@ from core.observability.logger import (
     log_service_step,
     log_service_success,
 )
+=======
+>>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 
 ROLES_KEY = "elite:settings:role_permissions"
 
@@ -31,6 +34,7 @@ DEFAULT_PERMISSIONS: Dict[str, List[str]] = {
 }
 
 
+<<<<<<< HEAD
 service_logger = get_service_logger(__name__)
 
 
@@ -61,72 +65,33 @@ def _log(
         )
 
 
+=======
+>>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 def get_all_roles() -> List[str]:
     """Return the list of known roles."""
 
-    _log("get_all_roles", "service_start", "Fetching all available roles")
-    roles = list(DEFAULT_PERMISSIONS.keys())
-    _log("get_all_roles", "service_complete", "Roles list prepared", {"count": len(roles)})
-    return roles
+    return list(DEFAULT_PERMISSIONS.keys())
 
 
 def get_role_permissions() -> Dict[str, List[str]]:
     """Return the configured role permissions, falling back to defaults."""
 
-    _log("get_role_permissions", "service_start", "Reading role permissions from Redis")
     data = redis_client.get(ROLES_KEY)
     if data:
         try:
             payload = json.loads(data)
             if isinstance(payload, dict):
-                _log(
-                    "get_role_permissions",
-                    "db_query",
-                    "Role permissions loaded",
-                    {"roles": list(payload.keys())},
-                )
                 return payload
         except json.JSONDecodeError:
-            _log(
-                "get_role_permissions",
-                "soft_failure",
-                "Invalid JSON detected in Redis role permissions",
-                {"raw": data},
-                level="WARNING",
-            )
+            pass
     redis_client.set(ROLES_KEY, json.dumps(DEFAULT_PERMISSIONS))
-    _log(
-        "get_role_permissions",
-        "db_write_success",
-        "Default role permissions restored to Redis",
-        {"roles": list(DEFAULT_PERMISSIONS.keys())},
-    )
-    restored = json.loads(json.dumps(DEFAULT_PERMISSIONS))
-    _log(
-        "get_role_permissions",
-        "service_complete",
-        "Role permissions ready",
-        {"roles": list(restored.keys())},
-    )
-    return restored
+    return json.loads(json.dumps(DEFAULT_PERMISSIONS))
 
 
 def save_role_permissions(new_data: Dict[str, List[str]]) -> None:
     """Persist the provided role-to-permissions mapping."""
 
-    _log(
-        "save_role_permissions",
-        "service_start",
-        "Persisting updated role permissions",
-        {"roles": list(new_data.keys())},
-    )
     redis_client.set(ROLES_KEY, json.dumps(new_data))
-    _log(
-        "save_role_permissions",
-        "db_write_success",
-        "Role permissions saved",
-        {"roles": list(new_data.keys())},
-    )
 
 
 __all__ = [

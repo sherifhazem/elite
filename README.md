@@ -19,6 +19,7 @@ flask run
 - Each module owns its templates and static files; shared base templates live under `core/templates/`.
 - The Flask app serves shared assets from `core/static` and wires additional template loaders for each module.
 - Services are grouped by module (admin, companies, members) with shared mail utilities retained in `app/services/`.
+<<<<<<< HEAD
 - Observability, request correlation, and frontend tracing now live under `core/observability/` with plain-text JSON logs written to `/logs/`.
 
 ## Observability Layer (Local Monitoring System)
@@ -30,6 +31,8 @@ flask run
 - **Ingestion endpoints:** App-level routes under the `/log/*` blueprint accept frontend error logs, API traces, and UI events for every module, keeping middleware coverage and CSRF exemptions centralized.
 - **Frontend tracing:** Browser scripts rely on the traced `fetch` wrapper, UI event logger, and global error handler; every call is sent through the `/log/frontend-error`, `/log/api-trace`, and `/log/ui-event` endpoints.
 - **Log storage:** Plain-text JSON files are created under `/logs/` (`backend.log.json`, `backend-error.log.json`, `frontend-errors.log.json`, `frontend-api.log.json`, `ui-events.log.json`).
+=======
+>>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 
 ## Database initialization and circular import fix
 - **Issue:** The SQLAlchemy instance was created inside `app/__init__.py` and imported directly by models and routes. This caused circular imports whenever the application factory pulled in models while they simultaneously imported `db` from the app package.

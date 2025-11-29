@@ -21,10 +21,42 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 from flask_wtf.csrf import CSRFProtect
 
 from .config import Config
+<<<<<<< HEAD
 from core.observability.middleware import init_observability
 from core.observability.routes import observability as observability_blueprint
 from app.services.access_control import resolve_user_from_request
 from app.core.database import db
+=======
+
+app = Flask(__name__, template_folder="../core/templates", static_folder="../core/static")
+app.config.from_object(Config)
+app.secret_key = app.config["SECRET_KEY"]
+
+app.jinja_loader = ChoiceLoader(
+    [
+        FileSystemLoader(os.path.join(app.root_path, "modules", "members", "templates")),
+        FileSystemLoader(os.path.join(app.root_path, "modules", "companies", "templates")),
+        FileSystemLoader(os.path.join(app.root_path, "modules", "admin", "templates")),
+        app.jinja_loader,
+    ]
+)
+
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+if app.config.get("RELAX_SECURITY_CONTROLS", False):
+    class _DisabledCSRF:
+        """No-op CSRF handler used while protections are relaxed during development."""
+
+        @staticmethod
+        def exempt(view_func):
+            return view_func
+
+    csrf = _DisabledCSRF()
+    app.logger.warning("CSRF protection disabled for development and testing purposes.")
+else:
+    csrf = CSRFProtect()
+    csrf.init_app(app)
+>>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 
 login_manager = LoginManager()
 csrf = CSRFProtect()

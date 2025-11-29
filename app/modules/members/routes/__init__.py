@@ -1,14 +1,22 @@
 """Blueprint definitions for the ELITE backend routes."""
 
+<<<<<<< HEAD
 from flask import Blueprint, jsonify, redirect, request, url_for
+=======
+from flask import Blueprint, jsonify, redirect, url_for
+>>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 
 from .offer_routes import offers
 from .redemption_routes import redemption
 from .notification_routes import notifications
 from .user_routes import users
 from .user_portal_routes import portal
+<<<<<<< HEAD
 from app.services.access_control import resolve_user_from_request
 
+=======
+from app.modules.members.services.roles import resolve_user_from_request
+>>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 
 
 main = Blueprint("main", __name__)
