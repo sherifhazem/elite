@@ -23,6 +23,8 @@ from flask_wtf.csrf import CSRFProtect
 
 from .config import Config
 from core.observability.middleware import init_observability
+from core.observability.routes import observability as observability_blueprint
+from app.services.access_control import resolve_user_from_request
 
 app = Flask(__name__, template_folder="../core/templates", static_folder="../core/static")
 app.config.from_object(Config)
@@ -104,8 +106,6 @@ def load_user(user_id: str):
 @app.before_request
 def attach_current_user() -> None:
     """Resolve the current user from JWT credentials and guard protected areas."""
-    from app.modules.members.services.roles import resolve_user_from_request
-
     current = resolve_user_from_request()
     g.current_user = current
     normalized_role = "guest"
@@ -216,6 +216,9 @@ def inject_user_context():
 
 app.logger.info("✅ Database connection configured for %s", app.config["SQLALCHEMY_DATABASE_URI"])
 # Register blueprints
+csrf.exempt(observability_blueprint)
+
+app.register_blueprint(observability_blueprint)
 app.register_blueprint(main_blueprint)
 app.register_blueprint(admin)  # ← الآن يستخدم تعريف blueprint الصحيح من app/admin/__init__.py
 app.register_blueprint(auth)

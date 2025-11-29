@@ -12,7 +12,7 @@ from app.modules.members.auth.utils import get_user_from_token
 from app.models.company import Company
 from app.models.offer import Offer
 from app.modules.members.services.notifications import broadcast_new_offer
-from app.modules.members.services.roles import require_role
+from app.services.access_control import require_role
 
 
 offers = Blueprint("offers", __name__)

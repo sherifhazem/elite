@@ -9,6 +9,6 @@
 The company portal blueprint lives in `app/modules/companies/__init__.py` with template and static folders scoped to this module.
 
 ## Observability Layer (Local Monitoring System)
-- Company services (`app/modules/companies/services/`) emit standardized JSON logs for validation, database access, and soft failures using the shared logger in `core/observability/`.
-- Frontend assets now include a global error listener, traced `fetch` wrapper, and UI event logging that post to `/log/frontend-error`, `/log/api-trace`, and `/log/ui-event` with the active `request_id`.
-- Request correlation is enabled via middleware, adding an `X-Request-ID` header to responses and persisting traces to `/logs/frontend-*.log.json` alongside backend service logs.
+- Company services (`app/modules/companies/services/`) log through `log_service_start`, `log_service_step`, `log_service_error`, and `log_service_success`, ensuring every step is tied to the centralized `X-Request-ID` header and JSON schema.
+- Frontend assets rely on the shared API wrapper, UI event logger, and global error handler, sending activity to the app-level `/log/frontend-error`, `/log/api-trace`, and `/log/ui-event` endpoints with the active request id.
+- Middleware injects the request id into responses and all traces stored under `/logs/frontend-*.log.json` alongside backend service logs.

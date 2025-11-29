@@ -29,7 +29,8 @@ from app.modules.members.services.redemption import (
     get_redemption_status,
     mark_redeemed,
 )
-from app.modules.members.services.roles import resolve_user_from_request
+from app.services.access_control import resolve_user_from_request
+from core.observability.logger import log_event
 
 redemption = Blueprint("redemption", __name__, url_prefix="/api/redemptions")
 
@@ -111,7 +112,15 @@ def create_redemption_endpoint():
         return jsonify({"error": str(exc)}), HTTPStatus.BAD_REQUEST
     except Exception as exc:  # pragma: no cover - defensive logging
         db.session.rollback()
-        current_app.logger.exception("Failed to create redemption", exc_info=True)
+        log_event(
+            level="ERROR",
+            event="route_error",
+            source="route",
+            module=__name__,
+            function="activate_offer",
+            message="Failed to create redemption",
+            details={"error": str(exc)},
+        )
         return jsonify({"error": "Unable to create redemption at this time."}), HTTPStatus.INTERNAL_SERVER_ERROR
 
     status_payload = get_redemption_status(redemption.redemption_code) or {}
@@ -190,7 +199,15 @@ def confirm_redemption(code: str):
     except ValueError as exc:
         return jsonify({"error": str(exc)}), HTTPStatus.BAD_REQUEST
     except Exception as exc:  # pragma: no cover - defensive logging
-        current_app.logger.exception("Failed to confirm redemption", exc_info=True)
+        log_event(
+            level="ERROR",
+            event="route_error",
+            source="route",
+            module=__name__,
+            function="confirm_redemption",
+            message="Failed to confirm redemption",
+            details={"error": str(exc)},
+        )
         return jsonify({"error": "Unable to confirm redemption."}), HTTPStatus.INTERNAL_SERVER_ERROR
 
     status_payload = get_redemption_status(updated.redemption_code) or {}
@@ -216,7 +233,14 @@ def confirm_redemption(code: str):
                 },
             )
         except Exception:  # pragma: no cover - notification failures should not break API
-            current_app.logger.exception("Failed to queue redemption notification for member", exc_info=True)
+            log_event(
+                level="ERROR",
+                event="route_error",
+                source="route",
+                module=__name__,
+                function="confirm_redemption",
+                message="Failed to queue redemption notification for member",
+            )
 
         admin_users = (
             User.query.filter(User.role.in_(["admin", "superadmin"]), User.is_active.is_(True)).all()
@@ -238,7 +262,15 @@ def confirm_redemption(code: str):
                     },
                 )
             except Exception:  # pragma: no cover - notification failures should not break API
-                current_app.logger.exception("Failed to queue admin redemption notification", exc_info=True)
+                log_event(
+                    level="ERROR",
+                    event="route_error",
+                    source="route",
+                    module=__name__,
+                    function="confirm_redemption",
+                    message="Failed to queue admin redemption notification",
+                    details={"admin_id": getattr(admin, "id", None)},
+                )
 
     return jsonify(response), HTTPStatus.OK
 
@@ -264,7 +296,15 @@ def get_qrcode_image(code: str):
         try:
             generate_qr_token(redemption.redemption_code, commit=False, regenerate=False)
         except Exception as exc:  # pragma: no cover - defensive logging
-            current_app.logger.exception("Failed to generate QR token", exc_info=True)
+            log_event(
+                level="ERROR",
+                event="route_error",
+                source="route",
+                module=__name__,
+                function="get_qrcode_image",
+                message="Failed to generate QR token",
+                details={"error": str(exc)},
+            )
             return jsonify({"error": "Unable to generate QR code."}), HTTPStatus.INTERNAL_SERVER_ERROR
 
     if not os.path.exists(file_path):

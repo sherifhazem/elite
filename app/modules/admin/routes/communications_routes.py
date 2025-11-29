@@ -21,7 +21,7 @@ from sqlalchemy import or_
 
 from app import db
 from app.models import User, Company, Offer, ActivityLog
-from app.modules.members.services.roles import admin_required
+from app.services.access_control import admin_required
 
 from app.services import email_service
 from app.modules.members.services.notifications import send_admin_broadcast_notifications

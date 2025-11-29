@@ -10,7 +10,7 @@ from typing import Any, Dict, Mapping
 
 from flask import g
 
-from .config import LOG_DIR
+from .config import LOG_DIR, REQUEST_ID_LENGTH
 
 
 def ensure_log_dir() -> None:
@@ -28,7 +28,10 @@ def current_timestamp() -> str:
 def generate_request_id() -> str:
     """Create a unique request identifier."""
 
-    return uuid.uuid4().hex
+    token = uuid.uuid4().hex
+    if REQUEST_ID_LENGTH and REQUEST_ID_LENGTH < len(token):
+        return token[:REQUEST_ID_LENGTH]
+    return token
 
 
 def get_request_id() -> str:

@@ -7,6 +7,7 @@ from typing import Any
 
 from flask import Response, g, request
 
+from .config import REQUEST_ID_HEADER
 from .logger import log_event
 from .utils import generate_request_id, get_request_id
 
@@ -16,6 +17,9 @@ def init_observability(app) -> None:  # type: ignore[override]
 
     @app.before_request
     def _start_request_logging() -> None:
+        incoming_request_id = request.headers.get(REQUEST_ID_HEADER)
+        if incoming_request_id:
+            g.request_id = incoming_request_id
         if not getattr(g, "request_id", None):
             g.request_id = generate_request_id()
         g.request_started_at = time.time()
@@ -36,7 +40,7 @@ def init_observability(app) -> None:  # type: ignore[override]
     @app.after_request
     def _finalize_request_logging(response: Response) -> Response:
         request_id = get_request_id()
-        response.headers["X-Request-ID"] = request_id
+        response.headers[REQUEST_ID_HEADER] = request_id
         duration_ms = None
         started_at = getattr(g, "request_started_at", None)
         if started_at:

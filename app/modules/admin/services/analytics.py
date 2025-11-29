@@ -13,21 +13,29 @@ from app import db
 from app.models.company import Company
 from app.models.offer import Offer
 from app.models.user import User
-from core.observability.logger import log_event
+from core.observability.logger import (
+    get_service_logger,
+    log_service_error,
+    log_service_start,
+    log_service_step,
+    log_service_success,
+)
+
+service_logger = get_service_logger(__name__)
 
 
 def _log(function: str, event: str, message: str, details: Dict[str, object] | None = None, level: str = "INFO") -> None:
     """Internal helper to emit standardized service logs."""
 
-    log_event(
-        level=level,
-        event=event,
-        source="service",
-        module=__name__,
-        function=function,
-        message=message,
-        details=details,
-    )
+    normalized_level = level.upper()
+    if normalized_level == "ERROR" or event in {"soft_failure", "validation_failure"}:
+        log_service_error(__name__, function, message, details=details, event=event)
+    elif event == "service_start":
+        log_service_start(__name__, function, message, details)
+    elif event in {"service_complete", "service_success"}:
+        log_service_success(__name__, function, message, details=details, event=event)
+    else:
+        log_service_step(__name__, function, message, details=details, event=event, level=level)
 
 
 def _normalize_membership(level: str | None) -> str:

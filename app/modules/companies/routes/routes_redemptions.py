@@ -12,7 +12,8 @@ from app import db
 from app.models import Redemption
 from app.modules.companies.services.offers import list_company_offers
 from app.modules.members.services.redemption import list_company_redemptions
-from app.modules.members.services.roles import require_role
+from app.services.access_control import require_role
+from core.observability.logger import log_event
 from . import company_portal
 from app.utils.company_context import _ensure_company, _current_company
 
@@ -216,8 +217,17 @@ def confirm_redemption():
     redemption.mark_redeemed()
     db.session.commit()
 
-    current_app.logger.info(
-        "Redemption %s confirmed by user %s", redemption.id, getattr(g, "current_user", None)
+    log_event(
+        level="INFO",
+        event="route_checkpoint",
+        source="route",
+        module=__name__,
+        function="validate_qr",  # function name from route definition
+        message="Redemption confirmed",
+        details={
+            "redemption_id": redemption.id,
+            "user_id": getattr(getattr(g, "current_user", None), "id", None),
+        },
     )
 
     return jsonify({"ok": True, "status": redemption.status})

@@ -6,7 +6,13 @@ import json
 import logging
 from typing import Any, Mapping, Optional
 
-from .config import BACKEND_ERROR_LOG_FILE, BACKEND_LOG_FILE
+from .config import (
+    BACKEND_ERROR_LOG_FILE,
+    BACKEND_LOG_FILE,
+    ERROR_LOG_LEVEL,
+    HANDLER_OPTIONS,
+    LOG_LEVEL,
+)
 from .utils import build_log_entry, ensure_log_dir, get_request_id
 
 _BASE_LOGGER_NAME = "observability.backend"
@@ -39,17 +45,23 @@ def _configure_logger() -> logging.Logger:
         return logger
 
     ensure_log_dir()
-    logger.setLevel(logging.INFO)
+    logger.setLevel(getattr(logging, str(LOG_LEVEL).upper(), logging.INFO))
     logger.propagate = False
 
     formatter = StructuredJsonFormatter()
 
-    backend_handler = logging.FileHandler(BACKEND_LOG_FILE, encoding="utf-8")
-    backend_handler.setLevel(logging.INFO)
+    backend_handler = logging.FileHandler(
+        BACKEND_LOG_FILE, **(HANDLER_OPTIONS or {"encoding": "utf-8"})
+    )
+    backend_handler.setLevel(getattr(logging, str(LOG_LEVEL).upper(), logging.INFO))
     backend_handler.setFormatter(formatter)
 
-    error_handler = logging.FileHandler(BACKEND_ERROR_LOG_FILE, encoding="utf-8")
-    error_handler.setLevel(logging.ERROR)
+    error_handler = logging.FileHandler(
+        BACKEND_ERROR_LOG_FILE, **(HANDLER_OPTIONS or {"encoding": "utf-8"})
+    )
+    error_handler.setLevel(
+        getattr(logging, str(ERROR_LOG_LEVEL).upper(), logging.ERROR)
+    )
     error_handler.setFormatter(formatter)
 
     logger.addHandler(backend_handler)
@@ -61,6 +73,14 @@ def get_logger() -> logging.Logger:
     """Return the configured backend logger instance."""
 
     return _configure_logger()
+
+
+def get_service_logger(module_override: Optional[str] = None) -> logging.LoggerAdapter:
+    """Return a logger adapter that injects module metadata and request IDs."""
+
+    base_logger = get_logger()
+    extra = {"module_override": module_override} if module_override else {}
+    return logging.LoggerAdapter(base_logger, extra)
 
 
 def log_event(
@@ -91,4 +111,82 @@ def log_event(
             "module_override": module,
             "function_override": function,
         },
+    )
+
+
+def log_service_start(module: str, function: str, message: str, details=None) -> None:
+    """Record the beginning of a service call."""
+
+    log_event(
+        level="INFO",
+        event="service_start",
+        source="service",
+        module=module,
+        function=function,
+        message=message,
+        details=details,
+    )
+
+
+def log_service_step(
+    module: str,
+    function: str,
+    message: str,
+    details=None,
+    *,
+    event: str = "service_step",
+    level: str = "INFO",
+) -> None:
+    """Record a significant step inside a service operation."""
+
+    log_event(
+        level=level,
+        event=event,
+        source="service",
+        module=module,
+        function=function,
+        message=message,
+        details=details,
+    )
+
+
+def log_service_error(
+    module: str,
+    function: str,
+    message: str,
+    details=None,
+    *,
+    event: str = "service_error",
+) -> None:
+    """Record an error within a service with structured context."""
+
+    log_event(
+        level="ERROR",
+        event=event,
+        source="service",
+        module=module,
+        function=function,
+        message=message,
+        details=details,
+    )
+
+
+def log_service_success(
+    module: str,
+    function: str,
+    message: str,
+    details=None,
+    *,
+    event: str = "service_success",
+) -> None:
+    """Record the successful completion of a service operation."""
+
+    log_event(
+        level="INFO",
+        event=event,
+        source="service",
+        module=module,
+        function=function,
+        message=message,
+        details=details,
     )

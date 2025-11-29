@@ -152,7 +152,7 @@ class User(db.Model):
     def has_role(self, required_role: str) -> bool:
         """Return True when the user matches the required role constraint."""
 
-        from app.modules.members.services.roles import ROLE_ACCESS_MATRIX
+        from app.services.access_control import ROLE_ACCESS_MATRIX
 
         normalized = (required_role or "member").strip().lower()
         allowed_roles = ROLE_ACCESS_MATRIX.get(normalized, {normalized})
