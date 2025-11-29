@@ -12,7 +12,6 @@ from sqlalchemy.engine.url import make_url
 # Load environment variables from .env file if it exists
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
-LOGS_DIR = PROJECT_ROOT / "logs"
 
 ENV_PATH = Path('.') / '.env'
 if ENV_PATH.exists():
@@ -71,19 +70,6 @@ class Config:
     MAIL_USERNAME = MAIL_USERNAME
     MAIL_PASSWORD = MAIL_PASSWORD
     MAIL_DEFAULT_SENDER = MAIL_DEFAULT_SENDER
-    OBSERVABILITY_CONFIG = {
-        "LOG_DIR": str(LOGS_DIR),
-        "BACKEND_LOG_FILE": str(LOGS_DIR / "backend.log.json"),
-        "BACKEND_ERROR_LOG_FILE": str(LOGS_DIR / "backend-error.log.json"),
-        "FRONTEND_ERROR_LOG_FILE": str(LOGS_DIR / "frontend-errors.log.json"),
-        "FRONTEND_API_LOG_FILE": str(LOGS_DIR / "frontend-api.log.json"),
-        "UI_EVENTS_LOG_FILE": str(LOGS_DIR / "ui-events.log.json"),
-        "LOG_LEVEL": os.getenv("OBSERVABILITY_LOG_LEVEL", "INFO"),
-        "ERROR_LOG_LEVEL": os.getenv("OBSERVABILITY_ERROR_LEVEL", "ERROR"),
-        "REQUEST_ID_HEADER": os.getenv("REQUEST_ID_HEADER", "X-Request-ID"),
-        "REQUEST_ID_LENGTH": int(os.getenv("REQUEST_ID_LENGTH", 32)),
-        "HANDLER_OPTIONS": {"encoding": "utf-8"},
-    }
 
 
 

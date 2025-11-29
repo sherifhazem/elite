@@ -19,16 +19,6 @@ from app.core.database import db
 from app.models import Notification
 from app.models.offer import Offer
 from app.models.user import User
-<<<<<<< HEAD
-from core.observability.logger import (
-    get_service_logger,
-    log_service_error,
-    log_service_start,
-    log_service_step,
-    log_service_success,
-)
-=======
->>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 
 
 # Redis-backed admin notification keys and defaults
@@ -39,33 +29,6 @@ MAX_LIST_SIZE = 500
 DEFAULT_TTL_DAYS = 14
 
 
-<<<<<<< HEAD
-service_logger = get_service_logger(__name__)
-
-
-def _log(function: str, event: str, message: str, details: Dict[str, object] | None = None, level: str = "INFO") -> None:
-    """Emit standardized observability events for notification services."""
-
-    normalized_level = level.upper()
-    if normalized_level == "ERROR" or event in {"soft_failure", "validation_failure"}:
-        log_service_error(__name__, function, message, details=details, event=event)
-    elif event == "service_start":
-        log_service_start(__name__, function, message, details)
-    elif event in {"service_complete", "service_success"}:
-        log_service_success(__name__, function, message, details=details, event=event)
-    else:
-        log_service_step(
-            __name__,
-            function,
-            message,
-            details=details,
-            event=event,
-            level=level,
-        )
-
-
-=======
->>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 WELCOME_NOTIFICATION_TEMPLATES: Dict[str, Dict[str, Optional[str]]] = {
     "member": {
         "title": "مرحبًا بك في ELITE",
@@ -206,10 +169,6 @@ def send_welcome_notification(
     db.session.add(notification)
     db.session.commit()
 
-    current_app.logger.info(
-        "Welcome notification created",
-        extra={"user_id": target_user.id, "type": notification_type},
-    )
     return notification.id
 
 
@@ -271,9 +230,6 @@ def send_admin_broadcast_notifications(
         )
         created += 1
 
-    current_app.logger.info(
-        "Admin broadcast notifications queued for %s recipients", created
-    )
     return created
 
 
@@ -355,9 +311,7 @@ def notify_offer_redemption_activity(
             metadata=metadata,
         )
     except Exception:  # pragma: no cover - defensive notification guard
-        current_app.logger.exception(
-            "Failed to queue redemption notification for member", exc_info=True
-        )
+        pass
 
     for recipient_id in _company_recipient_ids(redemption.company_id):
         try:
@@ -372,9 +326,7 @@ def notify_offer_redemption_activity(
                 metadata=metadata,
             )
         except Exception:  # pragma: no cover - defensive notification guard
-            current_app.logger.exception(
-                "Failed to queue redemption notification for company", exc_info=True
-            )
+            continue
 
 
 def notify_offer_feedback(
@@ -407,9 +359,7 @@ def notify_offer_feedback(
                 metadata=metadata,
             )
         except Exception:  # pragma: no cover - defensive notification guard
-            current_app.logger.exception(
-                "Failed to queue offer feedback notification", exc_info=True
-            )
+            continue
 
 
 def fetch_offer_feedback_counts(company_id: int) -> Dict[int, int]:
@@ -445,13 +395,6 @@ def fetch_offer_feedback_counts(company_id: int) -> Dict[int, int]:
 def create_notification_task(user_id: int, payload: Dict[str, Any]):
     """Persist a notification record for the given user identifier."""
 
-<<<<<<< HEAD
-    _log(
-        "create_notification_task",
-        "service_start",
-        "Creating notification from Celery task",
-        {"user_id": user_id, "type": payload.get("type")},
-    )
     notification = Notification(
         user_id=user_id,
         type=payload.get("type"),
@@ -462,30 +405,7 @@ def create_notification_task(user_id: int, payload: Dict[str, Any]):
     )
     db.session.add(notification)
     db.session.commit()
-    _log(
-        "create_notification_task",
-        "db_write_success",
-        "Notification created via Celery",
-        {"user_id": user_id, "notification_id": notification.id},
-    )
     return notification.id
-=======
-    with app.app_context():
-        notification = Notification(
-            user_id=user_id,
-            type=payload.get("type"),
-            title=payload.get("title"),
-            message=payload.get("message"),
-            link_url=payload.get("link_url"),
-            metadata_json=(payload.get("metadata") or None),
-        )
-        db.session.add(notification)
-        db.session.commit()
-        current_app.logger.info(
-            "Notification created for user %s with type %s", user_id, notification.type
-        )
-        return notification.id
->>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 
 
 @celery.task(name="notifications.broadcast_offer")
@@ -495,24 +415,10 @@ def broadcast_offer_task(offer_id: int, batch_size: int = 100):
     if batch_size <= 0:
         raise ValueError("batch_size must be greater than zero")
 
-<<<<<<< HEAD
     offer = Offer.query.get(offer_id)
     if offer is None:
-        _log(
-            "broadcast_offer_task",
-            "soft_failure",
-            "Skipping broadcast for missing offer",
-            {"offer_id": offer_id},
-            level="WARNING",
-        )
         return 0
 
-    _log(
-        "broadcast_offer_task",
-        "service_start",
-        "Broadcasting offer notifications",
-        {"offer_id": offer.id, "batch_size": batch_size},
-    )
     total_created = 0
     query = User.query.order_by(User.id)
     offset = 0
@@ -535,63 +441,15 @@ def broadcast_offer_task(offer_id: int, batch_size: int = 100):
                     "membership_level": user.membership_level,
                     "base_discount": offer.base_discount,
                 },
-=======
-    with app.app_context():
-        offer = Offer.query.get(offer_id)
-        if offer is None:
-            current_app.logger.warning(
-                "Skipping broadcast for missing offer_id=%s", offer_id
->>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
             )
             db.session.add(notification)
             total_created += 1
 
-<<<<<<< HEAD
         db.session.commit()
         offset += batch_size
 
-    _log(
-        "broadcast_offer_task",
-        "service_complete",
-        "Broadcasted offer notifications",
-        {"offer_id": offer.id, "total_created": total_created},
-    )
     return total_created
-=======
-        total_created = 0
-        query = User.query.order_by(User.id)
-        offset = 0
-        while True:
-            users = query.offset(offset).limit(batch_size).all()
-            if not users:
-                break
 
-            for user in users:
-                notification = Notification(
-                    user_id=user.id,
-                    type="new_offer",
-                    title=f"New offer: {offer.title}",
-                    message=(
-                        f"{offer.title} now includes at least {offer.base_discount:.2f}% off."
-                    ),
-                    link_url=url_for("portal.offers"),
-                    metadata_json={
-                        "offer_id": offer.id,
-                        "membership_level": user.membership_level,
-                        "base_discount": offer.base_discount,
-                    },
-                )
-                db.session.add(notification)
-                total_created += 1
-
-            db.session.commit()
-            offset += batch_size
-
-        current_app.logger.info(
-            "Broadcasted offer %s notifications to %s users", offer.id, total_created
-        )
-        return total_created
->>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
 
 
 def _now_iso() -> str:

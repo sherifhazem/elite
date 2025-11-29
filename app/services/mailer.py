@@ -10,13 +10,6 @@ from flask import current_app, render_template
 from flask_mail import Message
 
 from app import mail
-from core.observability.logger import (
-    get_service_logger,
-    log_service_error,
-    log_service_start,
-    log_service_step,
-    log_service_success,
-)
 
 WELCOME_EMAIL_SUBJECTS: Dict[str, str] = {
     "member": "مرحبًا بك في ELITE – عروضك المميزة بانتظارك!",
@@ -30,61 +23,15 @@ WELCOME_EMAIL_TEMPLATES: Dict[str, str] = {
     "staff": "emails/welcome_staff.html",
 }
 
-service_logger = get_service_logger(__name__)
-
-
-def _log(
-    function: str,
-    event: str,
-    message: str,
-    details: Optional[Dict[str, Any]] = None,
-    level: str = "INFO",
-) -> None:
-    """Emit structured logs for mailer operations using the observability layer."""
-
-    normalized_level = level.upper()
-    if normalized_level == "ERROR" or event in {"service_error", "soft_failure"}:
-        log_service_error(__name__, function, message, details=details, event=event)
-    elif event == "service_start":
-        log_service_start(__name__, function, message, details)
-    elif event in {"service_complete", "service_success"}:
-        log_service_success(__name__, function, message, details=details, event=event)
-    else:
-        log_service_step(
-            __name__,
-            function,
-            message,
-            details=details,
-            event=event,
-            level=level,
-        )
-
 
 def safe_send(msg: Message) -> bool:
-    """Safely send an email message and log results."""
+    """Safely send an email message."""
 
     try:
         mail.send(msg)
-    except Exception as exc:  # pragma: no cover - mail transport guard
-        _log(
-            "safe_send",
-            "service_error",
-            "Failed to send email",
-            {
-                "recipients": msg.recipients,
-                "subject": msg.subject,
-                "error": str(exc),
-            },
-            level="ERROR",
-        )
+    except Exception:  # pragma: no cover - mail transport guard
         return False
 
-    _log(
-        "safe_send",
-        "service_success",
-        "Email sent",
-        {"recipients": msg.recipients, "subject": msg.subject},
-    )
     return True
 
 
@@ -122,40 +69,14 @@ def _send_company_status_email(company, subject: str, html_body: str) -> bool:
 
     recipient = _company_primary_email(company)
     if not recipient:
-        _log(
-            "_send_company_status_email",
-            "soft_failure",
-            "Skipping company status email due to missing recipient",
-            {"company_id": getattr(company, "id", None), "subject": subject},
-            level="WARNING",
-        )
         return False
 
     if current_app.config.get("MAIL_SUPPRESS_SEND", False):
-        _log(
-            "_send_company_status_email",
-            "service_checkpoint",
-            "Company status email suppressed by configuration",
-            {"recipient": recipient, "subject": subject},
-        )
         return True
 
     if not _dispatch_email(recipient, subject, html_body):
-        _log(
-            "_send_company_status_email",
-            "service_error",
-            "Company status email failed",
-            {"recipient": recipient, "subject": subject},
-            level="ERROR",
-        )
         return False
 
-    _log(
-        "_send_company_status_email",
-        "service_success",
-        "Company status email delivered",
-        {"recipient": recipient, "subject": subject},
-    )
     return True
 
 
@@ -168,12 +89,6 @@ def send_email(
     """Render an email template and deliver it to the provided recipient."""
 
     if not recipient:
-        _log(
-            "send_email",
-            "validation_failure",
-            "Skipping email send due to missing recipient",
-            level="ERROR",
-        )
         return False
 
     safe_context = dict(context or {})
@@ -181,30 +96,11 @@ def send_email(
     html_body = render_template(template, **safe_context)
 
     if current_app.config.get("MAIL_SUPPRESS_SEND", False):
-        _log(
-            "send_email",
-            "service_checkpoint",
-            "Email suppressed by configuration",
-            {"recipient": recipient, "subject": subject, "context": safe_context},
-        )
         return True
 
     if not _dispatch_email(recipient, subject, html_body):
-        _log(
-            "send_email",
-            "service_error",
-            "Email delivery failed",
-            {"recipient": recipient, "subject": subject},
-            level="ERROR",
-        )
         return False
 
-    _log(
-        "send_email",
-        "service_success",
-        "Email delivered successfully",
-        {"recipient": recipient, "subject": subject},
-    )
     return True
 
 
@@ -389,13 +285,6 @@ def send_company_approval_email(company) -> bool:
 
     recipient = _resolve_company_recipient(company)
     if not recipient:
-        _log(
-            "send_company_approval_email",
-            "soft_failure",
-            "Skipping approval email due to missing recipient",
-            {"company_id": getattr(company, "id", None)},
-            level="WARNING",
-        )
         return False
 
     company_name = getattr(company, "name", "") or "your company"
@@ -414,13 +303,6 @@ def send_company_approval_email(company) -> bool:
             "Your Company Has Been Approved - Elite Program",
             html_body,
         ):
-            _log(
-                "send_company_approval_email",
-                "service_error",
-                "Failed to send company approval email",
-                {"company_id": getattr(company, "id", None)},
-                level="ERROR",
-            )
             return False
     return True
 
@@ -430,13 +312,6 @@ def send_company_correction_email(company, notes: str, correction_link: str) -> 
 
     recipient = _resolve_company_recipient(company)
     if not recipient:
-        _log(
-            "send_company_correction_email",
-            "soft_failure",
-            "Skipping correction email due to missing recipient",
-            {"company_id": getattr(company, "id", None)},
-            level="WARNING",
-        )
         return False
 
     company_name = getattr(company, "name", "") or "your company"
@@ -456,13 +331,6 @@ def send_company_correction_email(company, notes: str, correction_link: str) -> 
             "Correction Required for Your Company Application",
             html_body,
         ):
-            _log(
-                "send_company_correction_email",
-                "service_error",
-                "Failed to send company correction email",
-                {"company_id": getattr(company, "id", None)},
-                level="ERROR",
-            )
             return False
     return True
 
@@ -472,13 +340,6 @@ def send_company_suspension_email(company) -> bool:
 
     recipient = _resolve_company_recipient(company)
     if not recipient:
-        _log(
-            "send_company_suspension_email",
-            "soft_failure",
-            "Skipping suspension email due to missing recipient",
-            {"company_id": getattr(company, "id", None)},
-            level="WARNING",
-        )
         return False
 
     company_name = getattr(company, "name", "") or "your company"
@@ -495,13 +356,6 @@ def send_company_suspension_email(company) -> bool:
             "Your Account Has Been Suspended - Elite Discounts",
             html_body,
         ):
-            _log(
-                "send_company_suspension_email",
-                "service_error",
-                "Failed to send company suspension email",
-                {"company_id": getattr(company, "id", None)},
-                level="ERROR",
-            )
             return False
     return True
 
@@ -511,13 +365,6 @@ def send_company_reactivation_email(company) -> bool:
 
     recipient = _resolve_company_recipient(company)
     if not recipient:
-        _log(
-            "send_company_reactivation_email",
-            "soft_failure",
-            "Skipping reactivation email due to missing recipient",
-            {"company_id": getattr(company, "id", None)},
-            level="WARNING",
-        )
         return False
 
     company_name = getattr(company, "name", "") or "your company"
@@ -536,13 +383,6 @@ def send_company_reactivation_email(company) -> bool:
             "Your Company Account Has Been Reactivated",
             html_body,
         ):
-            _log(
-                "send_company_reactivation_email",
-                "service_error",
-                "Failed to send company reactivation email",
-                {"company_id": getattr(company, "id", None)},
-                level="ERROR",
-            )
             return False
     return True
 

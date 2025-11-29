@@ -15,48 +15,13 @@ from flask_mail import Mail
 from celery import Celery
 from redis import Redis
 from jinja2 import ChoiceLoader, FileSystemLoader
-# ======================================================
-# Scoped CSRF Protection — applies only to form routes
-# ======================================================
 from flask_wtf.csrf import CSRFProtect
 
 from .config import Config
-<<<<<<< HEAD
-from core.observability.middleware import init_observability
-from core.observability.routes import observability as observability_blueprint
 from app.services.access_control import resolve_user_from_request
 from app.core.database import db
-=======
-
-app = Flask(__name__, template_folder="../core/templates", static_folder="../core/static")
-app.config.from_object(Config)
-app.secret_key = app.config["SECRET_KEY"]
-
-app.jinja_loader = ChoiceLoader(
-    [
-        FileSystemLoader(os.path.join(app.root_path, "modules", "members", "templates")),
-        FileSystemLoader(os.path.join(app.root_path, "modules", "companies", "templates")),
-        FileSystemLoader(os.path.join(app.root_path, "modules", "admin", "templates")),
-        app.jinja_loader,
-    ]
-)
-
-CORS(app, resources={r"/api/*": {"origins": "*"}})
-
-if app.config.get("RELAX_SECURITY_CONTROLS", False):
-    class _DisabledCSRF:
-        """No-op CSRF handler used while protections are relaxed during development."""
-
-        @staticmethod
-        def exempt(view_func):
-            return view_func
-
-    csrf = _DisabledCSRF()
-    app.logger.warning("CSRF protection disabled for development and testing purposes.")
-else:
-    csrf = CSRFProtect()
-    csrf.init_app(app)
->>>>>>> parent of 29a5adb (Add local observability layer and structured logging (#168))
+from app.core.central_logger import logger as central_logger
+from app.core.central_middleware import register_central_middleware
 
 login_manager = LoginManager()
 csrf = CSRFProtect()
@@ -87,7 +52,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-    init_observability(app)
+    register_central_middleware(app)
 
     csrf_extension = csrf
     if app.config.get("RELAX_SECURITY_CONTROLS", False):
@@ -137,6 +102,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     @app.before_request
     def attach_current_user() -> None:
         """Resolve the current user from JWT credentials and guard protected areas."""
+
         current = resolve_user_from_request()
         g.current_user = current
         normalized_role = "guest"
@@ -247,12 +213,6 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     with app.app_context():
         from app.models import Company, Offer, Permission, Redemption, User  # noqa: F401
-
-    app.logger.info("✅ Database connection configured for %s", app.config["SQLALCHEMY_DATABASE_URI"])
-    # Register blueprints
-    csrf_extension.exempt(observability_blueprint)
-
-    app.register_blueprint(observability_blueprint)
 
     from app.modules.members.routes import (
         main as main_blueprint,
