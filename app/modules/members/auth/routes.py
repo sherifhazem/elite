@@ -30,7 +30,7 @@ from flask import (
 from flask_login import current_user
 from sqlalchemy import or_
 
-from app import db
+from flask_sqlalchemy import SQLAlchemy
 from app.models.user import User
 from app.modules.companies.services.company_registration import register_company_account
 from app.services.mailer import send_email, send_member_welcome_email
@@ -51,6 +51,12 @@ auth = Blueprint(
 WelcomeNotifier = Callable[[User], Optional[int]]
 
 _welcome_notifier_unavailable_logged = False
+
+
+def _get_db() -> SQLAlchemy:
+    """Safely retrieve the configured SQLAlchemy instance without importing app."""
+
+    return current_app.extensions["sqlalchemy"]
 
 
 @lru_cache(maxsize=1)
@@ -118,6 +124,7 @@ def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, in
     user.membership_level = "Basic"
     user.is_active = True
 
+    db = _get_db()
     db.session.add(user)
     db.session.commit()
 
@@ -378,6 +385,7 @@ def verify_email(token: str):
 
     # Mark the account as active so the user can sign in going forward.
     user.is_active = True
+    db = _get_db()
     db.session.commit()
     return jsonify({"message": "Email verified successfully"}), HTTPStatus.OK
 
@@ -428,6 +436,7 @@ def reset_password(token: str):
     # Update the user's password with the provided credentials.
     user = User.query.filter_by(email=email).first_or_404()
     user.set_password(password)
+    db = _get_db()
     db.session.commit()
     return jsonify({"message": "Password updated successfully"}), HTTPStatus.OK
 
