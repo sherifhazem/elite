@@ -19,7 +19,7 @@ def _generate_request_id() -> str:
 
 def _request_metadata() -> dict:
     return {
-        "module": request.endpoint or request.blueprint or "app",
+        "endpoint": request.endpoint or request.blueprint or "app",
         "path": request.path,
     }
 
