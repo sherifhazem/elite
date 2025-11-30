@@ -24,6 +24,7 @@ class JsonLogFormatter(logging.Formatter):
             "timestamp": timestamp,
             "level": record.levelname,
             "module": getattr(record, "module", record.name),
+            "endpoint": getattr(record, "endpoint", None),
             "path": getattr(record, "path", None),
             "request_id": getattr(record, "request_id", None),
             "message": record.getMessage(),
