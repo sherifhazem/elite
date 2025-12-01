@@ -1,0 +1,429 @@
+<!-- CLEANUP: Removed hardcoded sample data, preserved layout -->
+{% extends "admin/dashboard/admin_base.html" %}
+<!-- FIXED: Updated url_for() endpoints to match admin Blueprint -->
+{% set active_page = 'reports' %}
+{% block title %}Analytics Reports | Elite Admin Console{% endblock %}
+
+{% block extra_head %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="display-6 fw-bold text-primary">Analytics Overview</h1>
+                <p class="text-muted mb-0">Insights on engagement, adoption, and system reliability.</p>
+            </div>
+            <a href="{{ url_for('admin.export_pdf') }}" class="btn btn-primary btn-lg shadow-sm"><i class="fas fa-file-export me-2"></i>Export Report</a>
+        </div>
+        <p class="text-danger small" id="reportsErrorMessage" hidden>Unable to load analytics at this time.</p>
+
+        <div class="row g-4 mb-4">
+            <div class="col-xl-4 col-lg-6">
+                <div class="card mini-stat gradient-blue shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-uppercase text-light fw-semibold">Users Count</h6>
+                        <h2 class="fw-bold text-white mb-0" id="totalUsersMetric">—</h2>
+                        <span class="badge bg-light text-primary mt-2" id="userGrowthMetric">Awaiting data</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-lg-6">
+                <div class="card mini-stat gradient-gold shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-uppercase text-dark fw-semibold">Offers Active</h6>
+                        <h2 class="fw-bold text-dark mb-0" id="activeOffersMetric">—</h2>
+                        <span class="badge bg-primary text-white mt-2" id="offerDeltaMetric">Awaiting data</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-lg-6">
+                <div class="card mini-stat gradient-slate shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-uppercase text-light fw-semibold">Companies Total</h6>
+                        <h2 class="fw-bold text-white mb-0" id="totalCompaniesMetric">—</h2>
+                        <span class="badge bg-light text-dark mt-2" id="newCompaniesMetric">Awaiting data</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-xl-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white border-0">
+                        <h4 class="fw-semibold text-primary mb-0"><i class="fas fa-chart-pie me-2"></i>Offer Redemption Mix</h4>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="offerMixChart" height="220"></canvas>
+                        <p class="text-muted text-center small mt-3" id="offerMixPlaceholder">No data available</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white border-0">
+                        <h4 class="fw-semibold text-primary mb-0"><i class="fas fa-chart-line me-2"></i>Monthly Signups</h4>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="signupChart" height="220"></canvas>
+                        <p class="text-muted text-center small mt-3" id="signupPlaceholder">No data available</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white border-0">
+                        <h4 class="fw-semibold text-primary mb-0"><i class="fas fa-earth-asia me-2"></i>Regional Adoption</h4>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="regionalChart" height="220"></canvas>
+                        <p class="text-muted text-center small mt-3" id="regionalPlaceholder">No data available</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white border-0">
+                        <h4 class="fw-semibold text-primary mb-0"><i class="fas fa-gauge-high me-2"></i>System Health</h4>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="systemHealthChart" height="220"></canvas>
+                        <p class="text-muted text-center small mt-3" id="systemHealthPlaceholder">No data available</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        const summaryEndpoint = "{{ url_for('admin.summary_api') }}";
+        const charts = {};
+
+        function setTextContent(id, value, fallback = '—') {
+            const element = document.getElementById(id);
+            if (!element) {
+                return;
+            }
+            const text = value === undefined || value === null || value === '' ? fallback : value;
+            element.textContent = text;
+        }
+
+        function togglePlaceholder(id, hasData) {
+            const element = document.getElementById(id);
+            if (!element) {
+                return;
+            }
+            if (hasData) {
+                element.setAttribute('hidden', 'hidden');
+            } else {
+                element.removeAttribute('hidden');
+            }
+        }
+
+        function destroyChart(key) {
+            if (charts[key]) {
+                charts[key].destroy();
+                charts[key] = null;
+            }
+        }
+
+        function createOrUpdateChart(key, ctx, config) {
+            if (typeof Chart === 'undefined' || !ctx) {
+                return false;
+            }
+            if (charts[key]) {
+                charts[key].data = config.data;
+                charts[key].options = config.options;
+                charts[key].update();
+            } else {
+                charts[key] = new Chart(ctx, config);
+            }
+            return true;
+        }
+
+        function formatNumber(value) {
+            if (value === undefined || value === null || value === '') {
+                return '—';
+            }
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) {
+                return value;
+            }
+            return numeric.toLocaleString();
+        }
+
+        function renderStatCards(summary) {
+            const userStats = summary.users ?? {};
+            const companyStats = summary.companies ?? {};
+            const offerStats = summary.offers ?? {};
+
+            setTextContent('totalUsersMetric', formatNumber(userStats.total_users));
+            const newUsers = formatNumber(userStats.new_last_7_days ?? 0);
+            setTextContent('userGrowthMetric', userStats.growth_label ?? `Joined last 7 days: ${newUsers}`);
+
+            setTextContent('activeOffersMetric', formatNumber(offerStats.active_offers));
+            const expired = formatNumber(offerStats.expired_offers ?? 0);
+            setTextContent('offerDeltaMetric', offerStats.delta_label ?? `Expired: ${expired}`);
+
+            setTextContent('totalCompaniesMetric', formatNumber(companyStats.total_companies));
+            const newCompanies = formatNumber(companyStats.new_last_30_days ?? 0);
+            setTextContent('newCompaniesMetric', companyStats.growth_label ?? `Joined last 30 days: ${newCompanies}`);
+        }
+
+        function renderOfferMixChart(summary) {
+            const ctx = document.getElementById('offerMixChart');
+            const offerStats = summary.offers ?? {};
+            const mix = offerStats.mix ?? offerStats.redemption_mix ?? {};
+            let labels = [];
+            let values = [];
+
+            if (Array.isArray(mix)) {
+                labels = mix.map((entry) => entry.label ?? entry.name ?? '');
+                values = mix.map((entry) => Number(entry.value ?? entry.count ?? 0));
+            } else if (mix.labels && mix.values) {
+                labels = mix.labels;
+                values = mix.values.map((value) => Number(value ?? 0));
+            }
+
+            if (labels.length === 0) {
+                const active = Number(offerStats.active_offers ?? 0);
+                const expired = Number(offerStats.expired_offers ?? 0);
+                if (active || expired) {
+                    labels = ['Active', 'Expired'];
+                    values = [active, expired];
+                }
+            }
+
+            const hasData = labels.length > 0 && values.some((value) => value > 0);
+            if (!hasData) {
+                destroyChart('offerMix');
+                togglePlaceholder('offerMixPlaceholder', false);
+                return;
+            }
+
+            const rendered = createOrUpdateChart('offerMix', ctx, {
+                type: 'doughnut',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            data: values,
+                            backgroundColor: ['#4366a7', '#e0b341', '#7d889e', '#34a0a4', '#4b5563'],
+                            borderWidth: 0,
+                            hoverOffset: 10,
+                        },
+                    ],
+                },
+                options: {
+                    plugins: {
+                        legend: { position: 'bottom' },
+                    },
+                },
+            });
+            togglePlaceholder('offerMixPlaceholder', rendered);
+        }
+
+        function renderSignupChart(summary) {
+            const ctx = document.getElementById('signupChart');
+            const timeline = summary.recent_activity?.timeline ?? [];
+            const labels = timeline.map((entry) => entry.date ?? '');
+            const values = timeline.map((entry) => Number(entry.registrations ?? 0));
+            const hasData = labels.length > 0 && values.some((value) => value > 0);
+
+            if (!hasData) {
+                destroyChart('signup');
+                togglePlaceholder('signupPlaceholder', false);
+                return;
+            }
+
+            const rendered = createOrUpdateChart('signup', ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'New Users',
+                            data: values,
+                            borderColor: '#1f3b70',
+                            backgroundColor: 'rgba(31, 59, 112, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#e0b341',
+                        },
+                    ],
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                    },
+                    scales: {
+                        y: { beginAtZero: true },
+                    },
+                },
+            });
+            togglePlaceholder('signupPlaceholder', rendered);
+        }
+
+        function renderRegionalChart(summary) {
+            const ctx = document.getElementById('regionalChart');
+            const breakdown = summary.companies?.regional_breakdown ?? summary.companies?.regions ?? [];
+            let labels = [];
+            let values = [];
+
+            if (Array.isArray(breakdown)) {
+                labels = breakdown.map((entry) => entry.region ?? entry.label ?? '');
+                values = breakdown.map((entry) => Number(entry.count ?? entry.value ?? 0));
+            } else if (breakdown.labels && breakdown.values) {
+                labels = breakdown.labels;
+                values = breakdown.values.map((value) => Number(value ?? 0));
+            }
+
+            const hasData = labels.length > 0 && values.some((value) => value > 0);
+            if (!hasData) {
+                destroyChart('regional');
+                togglePlaceholder('regionalPlaceholder', false);
+                return;
+            }
+
+            const rendered = createOrUpdateChart('regional', ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Adoption',
+                            data: values,
+                            backgroundColor: '#e0b341',
+                            borderRadius: 8,
+                            barThickness: 40,
+                        },
+                    ],
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                    },
+                    scales: {
+                        y: { beginAtZero: true },
+                    },
+                },
+            });
+            togglePlaceholder('regionalPlaceholder', rendered);
+        }
+
+        function renderSystemHealthChart(summary) {
+            const ctx = document.getElementById('systemHealthChart');
+            const providedMetrics = summary.system_health ?? [];
+            let labels = [];
+            let values = [];
+
+            if (Array.isArray(providedMetrics) && providedMetrics.length > 0) {
+                labels = providedMetrics.map((metric) => metric.label ?? metric.name ?? '');
+                values = providedMetrics.map((metric) => Number(metric.value ?? metric.score ?? 0));
+            }
+
+            if (labels.length === 0) {
+                const userStats = summary.users ?? {};
+                const companyStats = summary.companies ?? {};
+                const offerStats = summary.offers ?? {};
+                labels = ['Active Offers', 'Expired Offers', 'New Users', 'New Companies', 'Average Discount'];
+                values = [
+                    Number(offerStats.active_offers ?? 0),
+                    Number(offerStats.expired_offers ?? 0),
+                    Number(userStats.new_last_7_days ?? 0),
+                    Number(companyStats.new_last_30_days ?? 0),
+                    Number(offerStats.average_discount ?? 0),
+                ];
+            }
+
+            const hasData = labels.length > 0 && values.some((value) => value > 0);
+            if (!hasData) {
+                destroyChart('systemHealth');
+                togglePlaceholder('systemHealthPlaceholder', false);
+                return;
+            }
+
+            const rendered = createOrUpdateChart('systemHealth', ctx, {
+                type: 'radar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Score',
+                            data: values,
+                            backgroundColor: 'rgba(224, 179, 65, 0.35)',
+                            borderColor: '#e0b341',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#1f3b70',
+                            pointBorderColor: '#fff',
+                            pointHoverRadius: 6,
+                        },
+                    ],
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { color: '#d0d4dc' },
+                            grid: { color: '#d0d4dc' },
+                            suggestedMin: 0,
+                        },
+                    },
+                },
+            });
+            togglePlaceholder('systemHealthPlaceholder', rendered);
+        }
+
+        function renderSummary(summary) {
+            renderStatCards(summary);
+            renderOfferMixChart(summary);
+            renderSignupChart(summary);
+            renderRegionalChart(summary);
+            renderSystemHealthChart(summary);
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('reportsErrorMessage');
+            if (!errorElement) {
+                return;
+            }
+            errorElement.textContent = message;
+            errorElement.removeAttribute('hidden');
+        }
+
+        async function loadSummary() {
+            try {
+                const response = await fetch(summaryEndpoint, {
+                    headers: { Accept: 'application/json' },
+                    credentials: 'include',
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load analytics (status ${response.status})`);
+                }
+
+                const payload = await response.json();
+                renderSummary(payload);
+            } catch (error) {
+                console.error(error);
+                showError('Unable to load analytics at this time.');
+                togglePlaceholder('offerMixPlaceholder', false);
+                togglePlaceholder('signupPlaceholder', false);
+                togglePlaceholder('regionalPlaceholder', false);
+                togglePlaceholder('systemHealthPlaceholder', false);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSummary();
+        });
+    </script>
+{% endblock %}

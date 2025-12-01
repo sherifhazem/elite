@@ -81,7 +81,7 @@ def complete_registration(company_id: int):
         return redirect(url_for("auth.login_page"))
 
     return render_template(
-        "company/complete_registration.html",
+        "companies/complete_registration.html",
         company=company,
         contact_number=contact_number,
     )

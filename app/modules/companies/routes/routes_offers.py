@@ -69,7 +69,7 @@ def list_offers() -> str:
     )
     feedback_totals = fetch_offer_feedback_counts(company.id)
     return render_template(
-        "company/offers.html",
+        "companies/offers.html",
         company=company,
         offers=offers,
         now=datetime.utcnow(),
@@ -84,7 +84,7 @@ def offer_new() -> str:
 
     company = _current_company()
     return render_template(
-        "company/offer_form.html",
+        "companies/offer_form.html",
         company=company,
         offer=None,
         action_url=url_for("company_portal.offer_create"),
@@ -136,7 +136,7 @@ def offer_edit(offer_id: int) -> str:
     company = _current_company()
     offer = Offer.query.filter_by(company_id=company.id, id=offer_id).first_or_404()
     return render_template(
-        "company/offer_form.html",
+        "companies/offer_form.html",
         company=company,
         offer=offer,
         action_url=url_for("company_portal.offer_update", offer_id=offer_id),

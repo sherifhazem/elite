@@ -86,7 +86,7 @@ def settings():
         return redirect(url_for("company_portal.settings"))
 
     return render_template(
-        "company/settings.html",
+        "companies/settings.html",
         company=company,
         preferences=company.notification_settings(),
     )

@@ -28,7 +28,7 @@ def dashboard_home() -> str:
     metrics = get_overview_metrics()
 
     return render_template(
-        "dashboard/index.html",
+        "admin/dashboard/index.html",
         section_title="Overview",
         active_page="overview",
         total_users=metrics["total_users"],

@@ -61,7 +61,7 @@ def redemptions() -> str:
     )
     available_offers = list_company_offers(company.id)
     return render_template(
-        "company/redemptions.html",
+        "companies/redemptions.html",
         company=company,
         filters=filters,
         available_offers=available_offers,

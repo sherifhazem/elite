@@ -1,0 +1,127 @@
+{% extends "admin/dashboard/admin_base.html" %}
+{% set active_page = 'overview' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="card shadow-sm admin-card mb-4">
+        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <h1 class="h4 mb-1 fw-bold">لوحة تحكم النخبة</h1>
+                <p class="text-muted mb-0">
+                    راقب نمو المجتمع، واحرص على جودة الشراكات والعروض النشطة ضمن منظومة Elite.
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('admin.dashboard_users') }}" class="btn btn-primary">
+                    <i class="fa-solid fa-users me-1"></i> إدارة الأعضاء
+                </a>
+                <a href="{{ url_for('admin.reports_home') }}" class="btn btn-outline-primary">
+                    <i class="fa-solid fa-chart-column me-1"></i> التقارير
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm admin-card h-100 text-center border-0">
+                <div class="card-body">
+                    <span class="icon-lg d-block mb-2">👥</span>
+                    <h5 class="fw-semibold">عدد الأعضاء</h5>
+                    <h2 class="fw-bold">{{ total_users|default(0) }}</h2>
+                    <p class="text-muted small">أعضاء موثقون يتمتعون بامتيازات Elite.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm admin-card h-100 text-center border-0">
+                <div class="card-body">
+                    <span class="icon-lg d-block mb-2">🏢</span>
+                    <h5 class="fw-semibold">الشركات النشطة</h5>
+                    <h2 class="fw-bold">{{ total_companies|default(0) }}</h2>
+                    <p class="text-muted small">شركاء معتمدون ضمن شبكة Elite.</p>
+                    <a href="{{ url_for('admin.list_companies') }}" class="btn btn-sm btn-outline-primary mt-2">
+                        عرض الشركات
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm admin-card h-100 text-center border-0">
+                <div class="card-body">
+                    <span class="icon-lg d-block mb-2">🎁</span>
+                    <h5 class="fw-semibold">العروض المفعلة</h5>
+                    <h2 class="fw-bold">{{ total_offers|default(0) }}</h2>
+                    <p class="text-muted small">باقات مميزة لأعضاء Gold وPlatinum.</p>
+                    <a href="{{ url_for('admin.dashboard_offers') }}" class="btn btn-sm btn-outline-secondary mt-2">
+                        إدارة العروض
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity and Goals -->
+    <div class="row g-3">
+        <!-- Recent Activity -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm admin-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="fw-semibold mb-0">الأنشطة الأخيرة</h5>
+                            <p class="text-muted small mb-0">آخر العمليات داخل النظام خلال 24 ساعة.</p>
+                        </div>
+                        <a href="{{ url_for('admin.activity_log') }}" class="btn btn-sm btn-outline-dark">سجل النشاط</a>
+                    </div>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3 border-bottom pb-2">
+                            <strong>شركة جديدة قيد المراجعة</strong><br>
+                            <small class="text-muted">تم استلام طلب انضمام لشركة جديدة ضمن قطاع الضيافة.</small><br>
+                            <small class="text-muted">قبل 30 دقيقة</small>
+                        </li>
+                        <li class="mb-3 border-bottom pb-2">
+                            <strong>تحديث عرض</strong><br>
+                            <small class="text-muted">تفعيل عرض جديد لفئة Elite Gold.</small><br>
+                            <small class="text-muted">قبل ساعة</small>
+                        </li>
+                        <li>
+                            <strong>طلب دعم</strong><br>
+                            <small class="text-muted">عضو طلب إعادة تفعيل حسابه.</small><br>
+                            <small class="text-muted">قبل 3 ساعات</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Goals -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm admin-card h-100">
+                <div class="card-body">
+                    <h5 class="fw-semibold mb-3">أهداف العمل</h5>
+                    <ul class="list-unstyled small mb-3">
+                        <li class="mb-2">
+                            <i class="fa-solid fa-rocket text-primary me-2"></i>
+                            <strong>ترقية تجربة الانضمام</strong> – تحسين واجهة تسجيل الشركات.
+                        </li>
+                        <li class="mb-2">
+                            <i class="fa-solid fa-database text-primary me-2"></i>
+                            <strong>تحسين جودة العروض</strong> – مراجعة العروض غير النشطة.
+                        </li>
+                        <li class="mb-2">
+                            <i class="fa-solid fa-bell text-primary me-2"></i>
+                            <strong>زيادة التفاعل</strong> – تفعيل حملات ترويج أسبوعية.
+                        </li>
+                    </ul>
+                    <a href="{{ url_for('admin.compose_communication') }}" class="btn btn-primary w-100">
+                        إنشاء حملة جديدة ↗
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

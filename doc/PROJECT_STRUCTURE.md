@@ -51,6 +51,8 @@ Each module represents a complete business domain with its own:
 
 Modules must remain **isolated and independent**.
 
+**Current alignment:** The `admin`, `companies`, and `members` modules now store their templates under `templates/<module>/` and static assets under `static/<module>/`, with redundant legacy folders removed.
+
 ---
 
 ### 3.3 `app/models/`

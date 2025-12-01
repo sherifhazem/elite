@@ -27,8 +27,8 @@ portal = Blueprint(
     "portal",
     __name__,
     url_prefix="/portal",
-    template_folder="../templates/portal",
-    static_folder="../static",
+    template_folder="../templates/members/portal",
+    static_folder="../static/members",
 )
 
 
@@ -121,7 +121,7 @@ def home():
         return _redirect_to_login()
     featured_offers = Offer.query.order_by(Offer.created_at.desc()).limit(6).all()
     return render_template(
-        "portal/home.html",
+        "members/portal/home.html",
         user=user,
         membership_level=membership_level,
         featured_offers=featured_offers,
@@ -146,7 +146,7 @@ def offers():
         return _redirect_to_login()
     offers_data = get_portal_offers_with_company(membership_level)
     return render_template(
-        "portal/offers.html",
+        "members/portal/offers.html",
         user=user,
         membership_level=membership_level,
         offers=offers_data,
@@ -177,7 +177,7 @@ def profile():
         activations = list_user_redemptions_with_context(user.id)
 
     return render_template(
-        "portal/profile.html",
+        "members/portal/profile.html",
         user=user,
         membership_level=membership_level,
         membership_card=_membership_card_payload(user, membership_level),
@@ -274,7 +274,7 @@ def notifications():
             .all()
         )
     return render_template(
-        "portal/notifications.html",
+        "members/portal/notifications.html",
         user=user,
         membership_level=membership_level,
         notifications=notifications_list,

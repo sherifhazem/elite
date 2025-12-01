@@ -1,0 +1,88 @@
+{% extends "admin/dashboard/admin_base.html" %}
+{% block title %}Companies Management{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Companies</h2>
+    <a href="{{ url_for('admin.dashboard_home') }}" class="btn btn-outline-secondary btn-sm">← Back</a>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3">
+    {% for s in ['pending', 'approved', 'suspended', 'correction'] %}
+      <li class="nav-item">
+        <a class="nav-link {% if active_tab == s %}active{% endif %}"
+           href="{{ url_for('admin.list_companies', status=s) }}">
+           {{ s|capitalize }}
+           {% if status_counts[s] %}
+             <span class="badge bg-secondary">{{ status_counts[s] }}</span>
+           {% endif %}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <!-- Companies Table -->
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      <table class="table table-striped table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>Industry</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for company in companies %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ company.name }}</td>
+              <td>{{ company.email }}</td>
+              <td>{{ company.contact_number or '—' }}</td>
+              <td>{{ company.city or '—' }}</td>
+              <td>{{ company.industry or '—' }}</td>
+              <td>{{ company.status|capitalize }}</td>
+              <td class="text-end">
+                <a href="{{ url_for('admin.view_company', company_id=company.id) }}" class="btn btn-outline-primary btn-sm">View</a>
+                <a href="{{ url_for('admin.edit_company', company_id=company.id) }}" class="btn btn-outline-secondary btn-sm">Edit</a>
+
+                <form method="post" action="{{ url_for('admin.delete_company', company_id=company.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this company?');">
+                  <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                </form>
+
+                {% if company.status == 'pending' %}
+                  <form method="post" action="{{ url_for('admin.approve_company', company_id=company.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-success btn-sm">Activate</button>
+                  </form>
+                {% elif company.status == 'approved' %}
+                  <form method="post" action="{{ url_for('admin.suspend_company', company_id=company.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-warning btn-sm">Suspend</button>
+                  </form>
+                {% elif company.status == 'suspended' %}
+                  <form method="post" action="{{ url_for('admin.reactivate_company', company_id=company.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-success btn-sm">Reactivate</button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="8" class="text-center text-muted py-4">
+                No companies found.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

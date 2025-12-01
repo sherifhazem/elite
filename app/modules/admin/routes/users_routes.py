@@ -68,7 +68,7 @@ def dashboard_users() -> str:
 
     users = User.query.order_by(User.id).all()
     return render_template(
-        "dashboard/users.html",
+        "admin/dashboard/users.html",
         section_title="Users",
         users=users,
     )
@@ -81,7 +81,7 @@ def view_user(user_id: int) -> str:
 
     user = User.query.get_or_404(user_id)
     return render_template(
-        "dashboard/user_detail.html",
+        "admin/dashboard/user_detail.html",
         section_title="View User",
         user=user,
     )
@@ -158,7 +158,7 @@ def add_user() -> str:
         return redirect(url_for("admin.dashboard_users"))
 
     return render_template(
-        "dashboard/user_form.html",
+        "admin/dashboard/user_form.html",
         section_title="Add User",
         user=None,
         role_choices=User.ROLE_CHOICES,
@@ -224,7 +224,7 @@ def edit_user(user_id: int) -> str:
         return redirect(url_for("admin.dashboard_users"))
 
     return render_template(
-        "dashboard/user_form.html",
+        "admin/dashboard/user_form.html",
         section_title="Edit User",
         user=user,
         role_choices=User.ROLE_CHOICES,
@@ -299,7 +299,7 @@ def manage_user_roles() -> str:
 
     users = User.query.order_by(User.id).all()
     return render_template(
-        "dashboard/users_roles.html",
+        "admin/dashboard/users_roles.html",
         section_title="Roles & Permissions",
         users=users,
         role_choices=User.ROLE_CHOICES,
