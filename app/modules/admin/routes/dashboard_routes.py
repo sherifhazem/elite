@@ -2,25 +2,12 @@
 
 from __future__ import annotations
 
-from flask import (
-    Response,
-    make_response,
-    render_template,
-    redirect,
-    url_for,
-    flash,
-    request,
-    jsonify,
-    abort,
-    session,
-)
-from flask_login import logout_user
+from flask import Response, render_template, redirect, url_for, flash
 
-from app.core.database import db
-from app.models import User, Company, Offer, ActivityLog
 from app.services.access_control import admin_required
 
 from .. import admin
+from ..services.dashboard_service import get_overview_metrics, process_logout
 
 
 @admin.route("/logout", endpoint="admin_logout")
@@ -28,16 +15,7 @@ from .. import admin
 def admin_logout() -> Response:
     """تسجيل خروج الأدمن مع مسح الكوكي والجلسة."""
 
-    logout_user()
-    session.clear()
-
-    resp = make_response(redirect(url_for("auth.login")))
-    resp.delete_cookie("elite_token", path="/")
-    resp.headers["Clear-Site-Data"] = '"storage"'
-    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    resp.headers["Pragma"] = "no-cache"
-    resp.headers["Expires"] = "0"
-
+    resp = process_logout()
     flash("تم تسجيل الخروج بنجاح ✅", "info")
     return resp
 
@@ -47,22 +25,15 @@ def admin_logout() -> Response:
 def dashboard_home() -> str:
     """Render the admin dashboard landing page."""
 
-    total_users = User.query.count()
-    total_companies = (
-        db.session.query(User.company_id)
-        .filter(User.company_id.isnot(None))
-        .distinct()
-        .count()
-    )
-    total_offers = Offer.query.count()
+    metrics = get_overview_metrics()
 
     return render_template(
         "dashboard/index.html",
         section_title="Overview",
         active_page="overview",
-        total_users=total_users,
-        total_companies=total_companies,
-        total_offers=total_offers,
+        total_users=metrics["total_users"],
+        total_companies=metrics["total_companies"],
+        total_offers=metrics["total_offers"],
     )
 
 

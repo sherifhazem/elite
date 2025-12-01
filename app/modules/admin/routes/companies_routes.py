@@ -2,28 +2,21 @@
 
 from __future__ import annotations
 
-from flask import (
-    render_template,
-    redirect,
-    url_for,
-    flash,
-    request,
-    jsonify,
-    abort,
-    Response,
-)
+from flask import flash, redirect, render_template, request, url_for
 
-from app.core.database import db
-from app.models import User, Company, Offer, ActivityLog
 from app.services.access_control import admin_required
 
-from app.services.mailer import (
-    send_company_approval_email,
-    send_company_correction_email,
-    send_company_reactivation_email,
-    send_company_suspension_email,
-)
 from .. import admin
+from ..services.company_management_service import (
+    approve_company as approve_company_record,
+    delete_company as delete_company_record,
+    fetch_companies_by_status,
+    get_company,
+    reactivate_company as reactivate_company_record,
+    request_correction as request_company_correction_record,
+    suspend_company as suspend_company_record,
+    update_company,
+)
 
 
 @admin.route("/companies", methods=["GET"], endpoint="list_companies")
@@ -32,13 +25,7 @@ def list_companies() -> str:
     """Render a filtered list of companies by status with counts per tab."""
 
     status = request.args.get("status", "pending").lower()
-    companies = Company.query.filter_by(status=status).all()
-    status_counts = {
-        "pending": Company.query.filter_by(status="pending").count(),
-        "approved": Company.query.filter_by(status="approved").count(),
-        "suspended": Company.query.filter_by(status="suspended").count(),
-        "correction": Company.query.filter_by(status="correction").count(),
-    }
+    companies, status_counts = fetch_companies_by_status(status)
     return render_template(
         "dashboard/companies.html",
         companies=companies,
@@ -52,7 +39,7 @@ def list_companies() -> str:
 def view_company(company_id: int) -> str:
     """Display company details for administrative review."""
 
-    company = Company.query.get_or_404(company_id)
+    company = get_company(company_id)
     return render_template("dashboard/company_details.html", company=company)
 
 
@@ -63,13 +50,17 @@ def view_company(company_id: int) -> str:
 def edit_company(company_id: int) -> str:
     """Allow administrators to edit core company attributes."""
 
-    company = Company.query.get_or_404(company_id)
+    company = get_company(company_id)
     if request.method == "POST":
-        company.name = request.form.get("name", company.name)
-        company.email = request.form.get("email", company.email)
-        company.city = request.form.get("city", company.city)
-        company.industry = request.form.get("industry", company.industry)
-        db.session.commit()
+        update_company(
+            company,
+            {
+                "name": request.form.get("name", company.name),
+                "email": request.form.get("email", company.email),
+                "city": request.form.get("city", company.city),
+                "industry": request.form.get("industry", company.industry),
+            },
+        )
         flash("Company updated successfully.", "success")
         return redirect(url_for("admin.view_company", company_id=company.id))
     return render_template("dashboard/company_edit.html", company=company)
@@ -82,9 +73,8 @@ def edit_company(company_id: int) -> str:
 def delete_company(company_id: int) -> str:
     """Delete a company record and redirect to the listing view."""
 
-    company = Company.query.get_or_404(company_id)
-    db.session.delete(company)
-    db.session.commit()
+    company = get_company(company_id)
+    delete_company_record(company)
     flash("Company deleted successfully.", "success")
     return redirect(url_for("admin.list_companies"))
 
@@ -96,10 +86,8 @@ def delete_company(company_id: int) -> str:
 def approve_company(company_id: int) -> str:
     """Approve a pending company and send the appropriate notification."""
 
-    company = Company.query.get_or_404(company_id)
-    company.status = "approved"
-    db.session.commit()
-    send_company_approval_email(company)
+    company = get_company(company_id)
+    approve_company_record(company)
     flash("Company activated successfully.", "success")
     return redirect(url_for("admin.list_companies"))
 
@@ -111,10 +99,8 @@ def approve_company(company_id: int) -> str:
 def suspend_company(company_id: int) -> str:
     """Suspend an existing company and notify relevant stakeholders."""
 
-    company = Company.query.get_or_404(company_id)
-    company.status = "suspended"
-    db.session.commit()
-    send_company_suspension_email(company)
+    company = get_company(company_id)
+    suspend_company_record(company)
     flash("Company suspended successfully.", "warning")
     return redirect(url_for("admin.list_companies"))
 
@@ -128,10 +114,8 @@ def suspend_company(company_id: int) -> str:
 def reactivate_company(company_id: int) -> str:
     """Reactivate a suspended company and send confirmation."""
 
-    company = Company.query.get_or_404(company_id)
-    company.status = "approved"
-    db.session.commit()
-    send_company_reactivation_email(company)
+    company = get_company(company_id)
+    reactivate_company_record(company)
     flash("Company reactivated successfully.", "success")
     return redirect(url_for("admin.list_companies"))
 
@@ -145,9 +129,7 @@ def reactivate_company(company_id: int) -> str:
 def request_company_correction(company_id: int) -> str:
     """Move a company to correction status and notify for edits."""
 
-    company = Company.query.get_or_404(company_id)
-    company.status = "correction"
-    db.session.commit()
-    send_company_correction_email(company)
+    company = get_company(company_id)
+    request_company_correction_record(company)
     flash("Company moved to correction status.", "info")
     return redirect(url_for("admin.list_companies"))
