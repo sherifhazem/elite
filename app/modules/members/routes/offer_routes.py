@@ -4,28 +4,16 @@
 from datetime import datetime
 
 from flask import Blueprint, jsonify, request
-
 from sqlalchemy.orm import joinedload
 
 from app.core.database import db
 from app.models import Company, Offer
-from app.modules.members.auth.utils import get_user_from_token
+from app.modules.members.auth.utils import extract_bearer_token, get_user_from_token
 from app.modules.members.services.notifications import broadcast_new_offer
 from app.services.access_control import require_role
 
 
 offers = Blueprint("offers", __name__)
-
-
-def _extract_bearer_token() -> str | None:
-    """Extract a bearer token from the Authorization header if provided."""
-
-    # Split the header on the first space to support the "Bearer <token>" format.
-    authorization = request.headers.get("Authorization", "").strip()
-    scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        return None
-    return token
 
 
 def _serialize_offer(offer: Offer, membership_level: str) -> dict:
@@ -65,7 +53,7 @@ def list_offers():
 
     # Default to the Basic tier when no authenticated user is available.
     membership_level = "Basic"
-    token = _extract_bearer_token()
+    token = extract_bearer_token(request.headers.get("Authorization", ""))
     if token:
         user = get_user_from_token(token)
         if user is not None:

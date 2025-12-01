@@ -1,8 +1,8 @@
 """Utility helpers for handling JWT creation and validation."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
 from importlib import import_module
+from typing import Any, Optional
 
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
@@ -19,6 +19,17 @@ def _load_jwt_module():
         raise RuntimeError(
             "PyJWT must be installed to generate or validate authentication tokens."
         ) from error
+
+
+def extract_bearer_token(header_value: str | None) -> Optional[str]:
+    """Extract a bearer token from the provided Authorization header."""
+
+    if not header_value:
+        return None
+    scheme, _, token = header_value.strip().partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        return None
+    return token
 
 
 

@@ -35,7 +35,13 @@ from app.modules.companies.services.company_registration import register_company
 from app.services.mailer import send_email, send_member_welcome_email
 from app.modules.members.services.notifications import send_welcome_notification
 from app.modules.companies.forms.company_registration_form import CompanyRegistrationForm
-from .utils import confirm_token, create_token, decode_token, generate_token
+from .utils import (
+    confirm_token,
+    create_token,
+    decode_token,
+    extract_bearer_token,
+    generate_token,
+)
 
 
 auth = Blueprint(
@@ -91,19 +97,6 @@ def _extract_json() -> Dict[str, str]:
     if isinstance(data, dict):
         return data
     return {}
-
-
-def _extract_bearer_token() -> Optional[str]:
-    """Extract a bearer token from the Authorization header if present."""
-
-    authorization = request.headers.get("Authorization", "").strip()
-    if not authorization:
-        return None
-
-    scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        return None
-    return token
 
 
 def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, int]:
@@ -328,7 +321,7 @@ def api_login() -> tuple:
 def profile() -> tuple:
     """Return the authenticated user's profile details."""
 
-    token = _extract_bearer_token()
+    token = extract_bearer_token(request.headers.get("Authorization", ""))
     if not token:
         return (
             jsonify({"error": "Authorization header with Bearer token is required."}),

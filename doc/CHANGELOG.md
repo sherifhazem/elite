@@ -209,3 +209,20 @@ All future changes must append new entries following the same structure.
 
 ### Documentation
 - Updated OBSERVABILITY.md, ARCHITECTURE_OVERVIEW.md, and PROJECT_STRUCTURE.md to reflect the active centralized observability design.
+
+## v0.1.7 — 2025-12-07
+### Added
+- None
+
+### Changed
+- Consolidated bearer token extraction into the members auth utilities to eliminate duplicated helpers in member routes.
+- Restored missing imports for analytics and company offer routes to keep services aligned with documented module dependencies.
+
+### Fixed
+- None
+
+### Removed
+- Deleted an unused company owner serializer helper from the companies API routes.
+
+### Documentation
+- None

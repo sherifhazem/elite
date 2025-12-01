@@ -34,18 +34,6 @@ def _serialize_company(company: Company) -> dict:
     }
 
 
-def _serialize_owner(user: User) -> dict:
-    """Return a minimal representation of the company owner."""
-
-    return {
-        "id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "role": user.role,
-        "is_active": user.is_active,
-    }
-
-
 @companies.route("/register", methods=["POST"], endpoint="register_company")
 def register_company():
     """Public endpoint allowing a business to create its company account."""
