@@ -34,15 +34,15 @@ from flask_sqlalchemy import SQLAlchemy
 from app.modules.companies.services.company_registration import register_company_account
 from app.services.mailer import send_email, send_member_welcome_email
 from app.modules.members.services.notifications import send_welcome_notification
-from app.modules.companies.forms.module_forms import CompanyRegistrationForm
+from app.modules.companies.forms.company_registration_form import CompanyRegistrationForm
 from .utils import confirm_token, create_token, decode_token, generate_token
 
 
 auth = Blueprint(
     "auth",
     __name__,
-    template_folder="../templates/auth",
-    static_folder="../static",
+    template_folder="../templates/members/auth",
+    static_folder="../static/members",
 )
 
 
@@ -212,7 +212,7 @@ def register_member():
     """Render or process the member registration form for browser visitors."""
 
     if request.method == "GET":
-        return render_template("auth/register.html")
+        return render_template("members/auth/register.html")
 
     payload = request.get_json(silent=True) or {
         "username": (request.form.get("username") or "").strip(),
@@ -250,7 +250,7 @@ def company_register_page():
 
     form = CompanyRegistrationForm()
     if request.method == "GET":
-        return render_template("auth/register_company.html", form=form)
+        return render_template("members/auth/register_company.html", form=form)
 
     if request.is_json:
         payload = request.get_json(silent=True) or {}
@@ -267,12 +267,12 @@ def company_register_page():
         error_message = result.get("error") if isinstance(result, dict) else None
         if error_message:
             flash(error_message, "danger")
-        return render_template("auth/register_company.html", form=form), status
+        return render_template("members/auth/register_company.html", form=form), status
 
     for field_errors in form.errors.values():
         for error in field_errors:
             flash(error, "danger")
-    return render_template("auth/register_company.html", form=form), HTTPStatus.BAD_REQUEST
+    return render_template("members/auth/register_company.html", form=form), HTTPStatus.BAD_REQUEST
 
 
 @auth.post("/api/auth/login", endpoint="api_login")
@@ -372,14 +372,14 @@ def login_page() -> str:
     """Render the browser-based login page."""
 
     logout_notice = session.pop("logout_notice", None)
-    return render_template("auth/login.html", logout_notice=logout_notice)
+    return render_template("members/auth/login.html", logout_notice=logout_notice)
 
 
 @auth.route("/register", methods=["GET"], endpoint="register_choice")
 def register_choice() -> str:
     """عرض صفحة اختيار نوع التسجيل."""
 
-    return render_template("auth/register_choice.html")
+    return render_template("members/auth/register_choice.html")
 
 
 @auth.route("/api/auth/verify/<token>", endpoint="verify_email")

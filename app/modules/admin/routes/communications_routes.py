@@ -169,7 +169,7 @@ def communication_history() -> str:
 
     _ensure_admin_context()
     return render_template(
-        "communications/index.html",
+        "admin/communications/index.html",
         section_title="Communication Center",
         active_page="communications",
         audience_labels=AUDIENCE_LABELS,
@@ -266,8 +266,8 @@ def compose_communication() -> str:
         )
         return redirect(url_for("admin.communication_history"))
 
-    return render_template(
-        "communications/compose.html",
+            return render_template(
+                "admin/communications/compose.html",
         section_title="Compose Message",
         active_page="communications",
         audience_labels=AUDIENCE_LABELS,
@@ -283,7 +283,7 @@ def communication_detail(entry_id: str) -> str:
     for entry in COMMUNICATION_HISTORY:
         if entry.get("id") == entry_id:
             return render_template(
-                "communications/detail.html",
+                "admin/communications/detail.html",
                 section_title=entry.get("subject", "Communication"),
                 active_page="communications",
                 entry=entry,

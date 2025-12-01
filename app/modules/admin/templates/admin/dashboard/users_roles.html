@@ -1,0 +1,99 @@
+{% extends "admin/dashboard/admin_base.html" %}
+<!-- Role and activation management table for administrators. -->
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Roles &amp; Permissions</h2>
+        <span class="text-muted">Manage user roles and activation status.</span>
+    </div>
+
+    <div class="alert alert-info">
+        {% if can_manage_roles %}
+            Use the controls below to promote, demote, or deactivate accounts. Changes are applied immediately.
+        {% else %}
+            You can review user roles but only super administrators are allowed to make changes.
+        {% endif %}
+    </div>
+
+    <div class="table-responsive bg-white shadow-sm rounded">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Username</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Current Role</th>
+                    <th scope="col">Active</th>
+                    <th scope="col" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    {% set disable_controls = (not can_manage_roles) or (user.is_superadmin and (not current_user or not current_user.is_superadmin)) %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <form class="row gy-2 align-items-center" action="{{ url_for('admin.manage_user_roles') }}" method="post">
+                                <input name="user_id" type="hidden" value="{{ user.id }}">
+                                <div class="col-sm-8">
+                                    <select class="form-select form-select-sm" name="role" {% if disable_controls %}disabled{% endif %}>
+                                        <!-- FIX: Logout, Current User, Role Access, Membership Dropdown – Desktop Admin Context. -->
+                                        {% for role in role_choices %}
+                                            {% set option_disabled = role == 'superadmin' and (not current_user or not current_user.is_superadmin) %}
+                                            <option value="{{ role }}" {% if user.role == role %}selected{% endif %} {% if option_disabled %}disabled{% endif %}>{{ role|capitalize }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-sm-4 text-sm-end text-start">
+                                    <div class="form-check form-switch">
+                                        <input
+                                            class="form-check-input"
+                                            id="is_active_{{ user.id }}"
+                                            name="is_active"
+                                            type="checkbox"
+                                            value="1"
+                                            {% if user.is_active %}checked{% endif %}
+                                            {% if disable_controls %}disabled{% endif %}
+                                        >
+                                        <label class="form-check-label" for="is_active_{{ user.id }}">Active</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 text-end">
+                                    <button class="btn btn-sm btn-primary" type="submit" {% if disable_controls %}disabled{% endif %}>
+                                        Update
+                                    </button>
+                                </div>
+                            </form>
+                        </td>
+                        <td>
+                            {% if user.is_active %}
+                                <span class="badge text-bg-success">Enabled</span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if current_user and current_user.is_superadmin and current_user.id != user.id %}
+                                <form
+                                    action="{{ url_for('admin.delete_user', user_id=user.id) }}"
+                                    method="post"
+                                    onsubmit="return confirm('Delete user {{ user.username }}?');"
+                                >
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                </form>
+                            {% else %}
+                                <span class="text-muted small">No destructive actions</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td class="text-center" colspan="6">No users available.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "members/auth/base_auth.html" %}
+{% block title %}تسجيل شركة جديدة | ELITE{% endblock %}
+
+{% block content %}
+<div class="auth-card mx-auto" style="max-width: 540px;" dir="rtl">
+  <div class="text-center mb-4">
+    <div class="mb-3">
+      <i class="fa-solid fa-building fa-3x text-gradient"></i>
+    </div>
+    <h2 class="fw-bold mb-2" style="color: var(--brand-primary);">تسجيل شركتك في ELITE</h2>
+    <p class="text-muted">املأ بيانات شركتك للانضمام إلى شركائنا وتقديم عروضك الخاصة.</p>
+  </div>
+
+  <form id="register-company-form" method="post" class="needs-validation text-end" novalidate>
+    {{ form.hidden_tag() }}
+
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label fw-semibold d-block text-end">اسم الشركة</label>
+        {{ form.company_name(class="form-control auth-input text-end", placeholder="اسم الشركة") }}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold d-block text-end">البريد الإلكتروني للشركة</label>
+        {{ form.email(class="form-control auth-input text-start", dir="ltr", placeholder="company@example.com") }}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold d-block text-end">رقم الهاتف</label>
+        {{ form.phone_number(class="form-control auth-input text-start", dir="ltr", placeholder="05xxxxxxxx") }}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold d-block text-end">مجال عمل الشركة</label>
+        {{ form.industry(class="form-select auth-input text-end") }}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold d-block text-end">اسم المدينة</label>
+        {{ form.city(class="form-select auth-input text-end") }}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold d-block text-end">رابط الموقع الإلكتروني</label>
+        {{ form.website_url(class="form-control auth-input text-start", dir="ltr", placeholder="https://example.com") }}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold d-block text-end">رابط التواصل الاجتماعي</label>
+        {{ form.social_url(class="form-control auth-input text-start", dir="ltr", placeholder="https://instagram.com/yourbrand") }}
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-semibold d-block text-end">كلمة المرور</label>
+        {{ form.password(class="form-control auth-input text-start", dir="ltr", placeholder="••••••••") }}
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-semibold d-block text-end">نبذة عن الشركة</label>
+        {{ form.description(class="form-control auth-input text-end", rows="3", dir="rtl", placeholder="أدخل وصفًا مختصرًا عن نشاط شركتك") }}
+      </div>
+    </div>
+
+    <div id="company-error" class="text-danger small mt-3 mb-2 text-end" role="alert"></div>
+
+    <button type="submit" id="register-company-submit" class="btn btn-gradient w-100 py-2 mt-2">
+      إرسال طلب الانضمام
+    </button>
+
+    <div class="text-center text-md-end mt-4">
+      <p class="text-muted mb-0 text-end">
+        لديك حساب بالفعل؟
+        <a href="{{ url_for('auth.login') }}" class="fw-semibold text-decoration-none text-primary">
+          تسجيل الدخول
+        </a>
+      </p>
+    </div>
+  </form>
+</div>
+
+<div class="toast-banner" id="company-toast" role="status" aria-live="polite">
+  <div class="me-2"><i class="fa-solid fa-check fa-lg"></i></div>
+  <span id="company-toast-message">تم إرسال طلب شركتك بنجاح!</span>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("register-company-form");
+  const submitButton = document.getElementById("register-company-submit");
+  const errorMessage = document.getElementById("company-error");
+  const toast = document.getElementById("company-toast");
+  const toastMessage = document.getElementById("company-toast-message");
+
+  if (!form) return;
+
+  const showToast = (message) => {
+    if (!toast || !toastMessage) return;
+    toastMessage.textContent = message || "تم إرسال الطلب بنجاح";
+    toast.dataset.visible = "true";
+    setTimeout(() => (toast.dataset.visible = "false"), 3200);
+  };
+
+  form.addEventListener("submit", (event) => {
+    if (!form.checkValidity()) {
+      event.preventDefault();
+      errorMessage.textContent = "يرجى تعبئة جميع الحقول المطلوبة بشكل صحيح.";
+      form.classList.add("was-validated");
+    } else {
+      errorMessage.textContent = "";
+      submitButton.disabled = true;
+      submitButton.textContent = "جاري الإرسال...";
+      showToast("تم إرسال طلب شركتك بنجاح! سيتم مراجعة الطلب قريبًا.");
+    }
+  });
+});
+</script>
+{% endblock %}

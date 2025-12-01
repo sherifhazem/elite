@@ -27,7 +27,7 @@ def list_companies() -> str:
     status = request.args.get("status", "pending").lower()
     companies, status_counts = fetch_companies_by_status(status)
     return render_template(
-        "dashboard/companies.html",
+        "admin/dashboard/companies.html",
         companies=companies,
         active_tab=status,
         status_counts=status_counts,
@@ -40,7 +40,7 @@ def view_company(company_id: int) -> str:
     """Display company details for administrative review."""
 
     company = get_company(company_id)
-    return render_template("dashboard/company_details.html", company=company)
+    return render_template("admin/dashboard/company_details.html", company=company)
 
 
 @admin.route(
@@ -63,7 +63,7 @@ def edit_company(company_id: int) -> str:
         )
         flash("Company updated successfully.", "success")
         return redirect(url_for("admin.view_company", company_id=company.id))
-    return render_template("dashboard/company_edit.html", company=company)
+    return render_template("admin/dashboard/company_edit.html", company=company)
 
 
 @admin.route(

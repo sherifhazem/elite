@@ -1,0 +1,160 @@
+<!-- LINKED: Shared Offers & Redemptions Integration (no schema changes) -->
+<!-- Redemption verification workspace with manual and QR scanning options. -->
+<!-- UPDATED: Responsive Company Portal with Restricted Editable Fields. -->
+{% extends "companies/base.html" %}
+
+{% block portal_title %}Redemptions{% endblock %}
+
+{% block portal_content %}
+    <section class="redemption-workspace">
+        <div class="redemption-tools">
+            <div class="card shadow-none redemption-card">
+                <div class="card-body">
+                    <h2 class="section-title">Verify redemption</h2>
+                    <p class="section-subtitle">Enter a code or scan a QR token to confirm member eligibility instantly.</p>
+                    <form id="redemption-verify-form" class="redemption-form" novalidate>
+                        <div class="form-control-group">
+                            <label for="redemption-code" class="form-label">Activation code</label>
+                            <div class="verify-input-group">
+                                <input
+                                    type="text"
+                                    id="redemption-code"
+                                    name="code"
+                                    class="form-control"
+                                    placeholder="ABC123"
+                                    required
+                                >
+                                <button type="submit" class="btn btn-elite-primary" id="redemption-verify-btn">
+                                    Verify
+                                </button>
+                            </div>
+                        </div>
+                        <div class="scan-actions">
+                            <button type="button" id="redemption-scan-btn" class="btn btn-elite-outline">Scan QR</button>
+                            <span class="scan-hint">Use your device camera to scan supported QR codes.</span>
+                        </div>
+                    </form>
+                    <div class="qr-wrapper" id="qr-scanner" hidden>
+                        <video id="qr-video" class="qr-video" autoplay muted playsinline></video>
+                        <button type="button" class="btn btn-sm btn-light qr-stop" id="qr-stop-btn">Stop</button>
+                    </div>
+                    <div class="verification-result" id="redemption-result"></div>
+                </div>
+            </div>
+        </div>
+        <div class="redemption-history">
+            <div class="card shadow-none redemption-card">
+                <div class="card-header bg-transparent">
+                    <h2 class="section-title">Recent activity</h2>
+                </div>
+                <div class="card-body">
+                    <form class="row g-3 redemption-filters mb-4" id="redemption-filter" data-redemption-filter>
+                        <div class="col-12 col-md-4">
+                            <label for="filter-offer" class="form-label">Offer</label>
+                            <select class="form-select" id="filter-offer" name="offer_id">
+                                <option value="">All offers</option>
+                                {% for offer in available_offers %}
+                                    <option value="{{ offer.id }}" {% if filters.offer_id == offer.id %}selected{% endif %}>{{ offer.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label for="filter-status" class="form-label">Status</label>
+                            <select class="form-select" id="filter-status" name="status">
+                                <option value="">All</option>
+                                {% for option in ['pending', 'redeemed', 'expired'] %}
+                                    <option value="{{ option }}" {% if filters.status == option %}selected{% endif %}>{{ option.title() }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label for="filter-start" class="form-label">From</label>
+                            <input type="date" class="form-control" id="filter-start" name="start_date" value="{{ filters.start_date }}">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label for="filter-end" class="form-label">To</label>
+                            <input type="date" class="form-control" id="filter-end" name="end_date" value="{{ filters.end_date }}">
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <button type="submit" class="btn btn-elite-primary w-100">Apply</button>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <button type="button" class="btn btn-outline-secondary w-100" id="redemption-refresh">Refresh</button>
+                        </div>
+                    </form>
+                    <div class="table-responsive redemption-table-wrapper">
+                        <table class="table align-middle mb-0" id="recent-redemptions" data-redemption-table>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Code</th>
+                                    <th scope="col">Member</th>
+                                    <th scope="col">Offer</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if recent_redemptions %}
+                                    {% for redemption in recent_redemptions %}
+                                        <tr>
+                                            <td>{{ redemption.redemption_code }}</td>
+                                            <td>
+                                                {% if redemption.user %}
+                                                    {{ redemption.user.username }}<br><small class="text-muted">{{ redemption.user.email }}</small>
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ redemption.offer.title if redemption.offer else '—' }}</td>
+                                            <td>{{ redemption.status }}</td>
+                                            <td>{{ redemption.created_at.strftime('%Y-%m-%d %H:%M') if redemption.created_at else '—' }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">No redemption attempts recorded.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="redemption-cards" aria-hidden="true" data-redemption-cards>
+                        {% if recent_redemptions %}
+                            {% for redemption in recent_redemptions %}
+                                <article class="redemption-card-item">
+                                    <div>
+                                        <span class="label">Code</span>
+                                        <span class="value">{{ redemption.redemption_code }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="label">Member</span>
+                                        <span class="value">{{ redemption.user.username if redemption.user else '—' }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="label">Offer</span>
+                                        <span class="value">{{ redemption.offer.title if redemption.offer else '—' }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="label">Status</span>
+                                        <span class="value">{{ redemption.status }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="label">Created</span>
+                                        <span class="value">{{ redemption.created_at.strftime('%Y-%m-%d %H:%M') if redemption.created_at else '—' }}</span>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted mb-0">No redemption attempts recorded.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="redemption-toast-container"></div>
+{% endblock %}
+
+{% block portal_scripts %}
+    <script src="{{ url_for('company_portal.static', filename='companies/js/redemptions.js') }}" defer></script>
+{% endblock %}

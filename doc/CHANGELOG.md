@@ -121,6 +121,23 @@ All future changes must append new entries following the same structure.
 ### Documentation
 - None
 
+## v0.1.3 — 2025-12-03
+### Added
+- None
+
+### Changed
+- Reorganized admin, companies, and members module assets under module-named templates and static directories to align with the official layout.
+- Simplified companies form imports by moving the company registration form to the module forms root.
+
+### Fixed
+- Removed duplicate and deprecated module files that were outside the approved structure.
+
+### Removed
+- Legacy helper and placeholder files no longer needed after the module reorganization.
+
+### Documentation
+- Updated structure documentation to reflect the cleaned module directories.
+
 ## v0.1.2 — 2025-12-02
 ### Added
 - None

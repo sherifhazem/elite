@@ -39,7 +39,7 @@ def activity_log() -> str:
     admins = User.query.filter_by(role="admin").all()
 
     return render_template(
-        "dashboard/activity_log.html",
+        "admin/dashboard/activity_log.html",
         logs=logs,
         admins=admins,
         selected_admin=admin_id,

@@ -37,7 +37,7 @@ def reports_home() -> str:
     """Render the interactive reports dashboard."""
 
     return render_template(
-        "dashboard/reports.html",
+        "admin/dashboard/reports.html",
         section_title="التقارير والتحليلات",
     )
 

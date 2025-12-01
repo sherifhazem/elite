@@ -1,0 +1,110 @@
+<!-- Company settings form for updating profile and notification preferences. -->
+<!-- UPDATED: Responsive Company Portal with Restricted Editable Fields. -->
+{% extends "companies/base.html" %}
+
+{% block portal_title %}Settings{% endblock %}
+
+{% block portal_content %}
+    {% set owner_email = company.owner.email if company and company.owner and company.owner.email else (current_user.email if current_user else '') %}
+    {% if company is not none and company.registration_number is defined %}
+        {% set registration_value = company.registration_number or '' %}
+    {% else %}
+        {% set registration_value = none %}
+    {% endif %}
+    <section class="settings-layout">
+        <form id="company-settings-form" data-action="{{ url_for('company_portal.settings') }}" class="settings-form" novalidate>
+            <fieldset class="settings-section">
+                <legend>Account overview</legend>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label for="company-name" class="form-label">Company name</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="company-name"
+                            name="name"
+                            value="{{ company.name }}"
+                            readonly
+                            data-restricted-field
+                        >
+                        <div class="form-text text-warning-emphasis">هذا الحقل لا يمكن تعديله إلا بموافقة الإدارة.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="company-email" class="form-label">Account email</label>
+                        <input
+                            type="email"
+                            class="form-control"
+                            id="company-email"
+                            name="account_email"
+                            value="{{ owner_email }}"
+                            readonly
+                            data-restricted-field
+                        >
+                        <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة.</div>
+                    </div>
+                    {% if registration_value is not none %}
+                        <div class="col-md-6">
+                            <label for="company-registration" class="form-label">Registration number</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="company-registration"
+                                name="registration_number"
+                                value="{{ registration_value }}"
+                                readonly
+                                data-restricted-field
+                            >
+                            <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة.</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </fieldset>
+            <fieldset class="settings-section">
+                <legend>Company profile</legend>
+                <div class="row g-4">
+                    <div class="col-12">
+                        <label for="company-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="company-description" name="description" rows="4" placeholder="Describe your company benefits">{{ company.description or '' }}</textarea>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="company-logo" class="form-label">Logo URL</label>
+                        <input
+                            type="url"
+                            class="form-control"
+                            id="company-logo"
+                            name="logo_url"
+                            value="{{ company.logo_url or '' }}"
+                            placeholder="https://example.com/logo.png"
+                        >
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset class="settings-section">
+                <legend>Notifications</legend>
+                <div class="row g-3">
+                    <div class="col-12 col-sm-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notify-email" name="notify_email" {% if preferences.email %}checked{% endif %}>
+                            <label class="form-check-label" for="notify-email">Email updates</label>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notify-sms" name="notify_sms" {% if preferences.sms %}checked{% endif %}>
+                            <label class="form-check-label" for="notify-sms">SMS alerts</label>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+            <div class="settings-actions">
+                <button type="reset" class="btn btn-elite-outline">Reset</button>
+                <button type="submit" class="btn btn-elite-primary" id="settings-submit-btn">Save changes</button>
+            </div>
+        </form>
+    </section>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="settings-toast-container"></div>
+{% endblock %}
+
+{% block portal_scripts %}
+    <script src="{{ url_for('company_portal.static', filename='companies/js/settings.js') }}" defer></script>
+{% endblock %}

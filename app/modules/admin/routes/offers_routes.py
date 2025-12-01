@@ -37,7 +37,7 @@ def dashboard_offers() -> str:
         "Premium": {"bg": "#6f42c1", "text": "text-white"},
     }
     return render_template(
-        "dashboard/offers.html",
+        "admin/dashboard/offers.html",
         section_title="Offers",
         offers=offers,
         tier_styles=tier_styles,
@@ -88,7 +88,7 @@ def add_offer() -> str:
         return redirect(url_for("admin.dashboard_offers"))
 
     return render_template(
-        "dashboard/offer_form.html",
+        "admin/dashboard/offer_form.html",
         section_title="Add Offer",
         offer=None,
     )
@@ -137,7 +137,7 @@ def manage_offer(offer_id: int) -> str:
         return redirect(url_for("admin.dashboard_offers"))
 
     return render_template(
-        "dashboard/offer_form.html",
+        "admin/dashboard/offer_form.html",
         section_title="Edit Offer",
         offer=offer,
     )
@@ -179,7 +179,7 @@ def edit_offer_discount(offer_id: int) -> str:
         return redirect(url_for("admin.dashboard_offers"))
 
     return render_template(
-        "dashboard/edit_offer_discount.html",
+        "admin/dashboard/edit_offer_discount.html",
         section_title="Edit Discount",
         offer=offer,
     )

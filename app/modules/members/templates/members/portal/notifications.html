@@ -1,0 +1,170 @@
+<!-- LINKED: Standardized conditional access checks across templates using current_user-based logic. -->
+<!-- FIXED: Mobile-First User Portal Design (Member-Only) -->
+{% extends 'members/portal/base.html' %}
+{% block title %}الإشعارات · ELITE{% endblock %}
+{% block page_heading %}الإشعارات{% endblock %}
+{% block content %}
+    <style>
+        .notifications-head {
+            background: linear-gradient(135deg, rgba(78, 43, 143, 0.9), rgba(140, 91, 255, 0.85));
+            border-radius: 26px;
+            padding: 24px;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: flex-start;
+            box-shadow: 0 24px 60px rgba(61, 40, 120, 0.3);
+        }
+
+        .notifications-head__title {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .notifications-head__subtitle {
+            margin: 8px 0 0;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .notifications-head__action {
+            border-radius: 16px;
+            border: none;
+            padding: 10px 16px;
+            font-weight: 600;
+            background: #fff;
+            color: #4e2b8f;
+            font-size: 0.9rem;
+        }
+
+        .notifications-list {
+            margin-top: 24px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .notification-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .notification-item__bubble {
+            flex: 1;
+            background: #fff;
+            border-radius: 18px 18px 18px 4px;
+            padding: 16px 18px;
+            box-shadow: 0 12px 32px rgba(17, 14, 42, 0.08);
+            position: relative;
+        }
+
+        .notification-item--unread .notification-item__bubble {
+            background: linear-gradient(135deg, rgba(247, 244, 255, 0.9), rgba(235, 226, 255, 0.92));
+        }
+
+        .notification-item__title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .notification-item__message {
+            margin: 8px 0;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--portal-text, #1a1533);
+        }
+
+        .notification-item__meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+            color: var(--portal-muted, #8f8ca6);
+        }
+
+        .notification-item__actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .notification-item__actions button,
+        .notification-item__actions a {
+            border-radius: 14px;
+            border: 1px solid rgba(78, 43, 143, 0.18);
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--portal-primary, #4e2b8f);
+            background: #fff;
+        }
+
+        .notification-item__actions button:disabled {
+            opacity: 0.6;
+        }
+    </style>
+    <section class="notifications-head" id="notification-center" data-unread-count="{{ unread_count }}">
+        <div>
+            <h1 class="notifications-head__title">إشعاراتك اليومية</h1>
+            <p class="notifications-head__subtitle">كل جديد عن العروض والعضوية سيصلك هنا مباشرة.</p>
+        </div>
+        <button
+            class="notifications-head__action"
+            type="button"
+            id="mark-all-read"
+            onclick="markAllNotificationsRead()"
+            {% if unread_count == 0 %}disabled{% endif %}
+        >
+            تعليم الكل كمقروء
+        </button>
+    </section>
+    <section>
+        {% if not current_user.is_authenticated %}
+            <div class="empty-state">
+                <p>قم بتسجيل الدخول لعرض الإشعارات الخاصة بك.</p>
+            </div>
+        {% elif notifications %}
+            <div class="notifications-list" role="list">
+                {% for notification in notifications %}
+                    <article
+                        class="notification-item {% if not notification.is_read %}notification-item--unread{% endif %}"
+                        data-notification-id="{{ notification.id }}"
+                        data-is-read="{{ 'true' if notification.is_read else 'false' }}"
+                        role="listitem"
+                    >
+                        <div class="notification-item__bubble">
+                            <h2 class="notification-item__title">{{ notification.title }}</h2>
+                            <p class="notification-item__message">{{ notification.message }}</p>
+                            {% if notification.link_url %}
+                                <a class="notification-thread__link" href="{{ notification.link_url }}">فتح التفاصيل</a>
+                            {% endif %}
+                            <div class="notification-item__meta">
+                                <span>{{ notification.created_at.strftime('%Y-%m-%d %H:%M') if notification.created_at else '—' }}</span>
+                                <span data-role="notification-status">{{ 'مقروء' if notification.is_read else 'غير مقروء' }}</span>
+                            </div>
+                            <div class="notification-item__actions">
+                                <button
+                                    type="button"
+                                    data-action="mark-read"
+                                    onclick="markNotificationRead({{ notification.id }})"
+                                    {% if notification.is_read %}disabled{% endif %}
+                                >
+                                    تأكيد القراءة
+                                </button>
+                                <a href="{{ notification.link_url if notification.link_url else url_for('portal.home') }}">فتح</a>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>لا توجد إشعارات جديدة حالياً.</p>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

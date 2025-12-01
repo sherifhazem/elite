@@ -60,7 +60,7 @@ def dashboard() -> str:
     )
 
     return render_template(
-        "company/dashboard.html",
+        "companies/dashboard.html",
         company=company,
         active_offers=active_offers,
         total_redeemed=total_redeemed,
