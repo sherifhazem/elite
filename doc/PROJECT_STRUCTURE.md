@@ -29,7 +29,7 @@ Contains shared logic used by all modules.
 **What goes here:**
 - Database instance (`database.py`)
 - Shared templates (layout + email templates) stored under `app/core/templates/core/`
-- Shared static assets
+- Shared static assets stored under `app/core/static/`
 - Utilities
 - Central logging + middleware (simple & non-intrusive)
 
@@ -51,7 +51,7 @@ Each module represents a complete business domain with its own:
 
 Modules must remain **isolated and independent**.
 
-**Current alignment:** The `admin`, `companies`, and `members` modules now store their templates under `templates/<module>/` and static assets under `static/<module>/`, with redundant legacy folders removed.
+**Current alignment:** The `admin`, `companies`, and `members` modules now store their templates under `templates/<module>/` and static assets under `static/<module>/`, with redundant legacy folders removed. Static files are served through the global `/static/<module>/...` endpoint, which mounts each module's `static/<module>/` folder without mixing assets between modules.
 
 ---
 

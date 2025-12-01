@@ -128,7 +128,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="offer-modal-body">
-                    <!-- Form content dynamically injected by offers.js -->
+                    <!-- Form content dynamically injected by company_offers.js -->
                 </div>
             </div>
         </div>
@@ -138,5 +138,5 @@
 {% endblock %}
 
 {% block portal_scripts %}
-    <script src="{{ url_for('company_portal.static', filename='companies/js/offers.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='companies/js/company_offers.js') }}" defer></script>
 {% endblock %}

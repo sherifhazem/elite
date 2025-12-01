@@ -32,7 +32,7 @@ def _generate_unique_code(length: int = 12) -> str:
 def _qr_storage_directory() -> str:
     """Return the absolute directory path used to store QR code images."""
 
-    static_root = os.path.join(current_app.root_path, "modules", "members", "static")
+    static_root = os.path.join(current_app.root_path, "modules", "members", "static", "members")
     qr_dir = os.path.join(static_root, "qrcodes")
     os.makedirs(qr_dir, exist_ok=True)
     return qr_dir
