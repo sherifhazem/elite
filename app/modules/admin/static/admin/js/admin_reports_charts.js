@@ -25,13 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function destroyChart(key) {
-        if (charts[key]) {
-            charts[key].destroy();
-            charts[key] = null;
-        }
-    }
-
     function createOrUpdateChart(key, ctx, config) {
         if (typeof Chart === 'undefined' || !ctx) {
             return false;
@@ -46,17 +39,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
-    function buildLineChartConfig(labels, dataPoints) {
+    function buildLineChartConfig(labels, dataPoints, label = 'Usage', color = '#1f3b70') {
         return {
             type: 'line',
             data: {
                 labels,
                 datasets: [
                     {
-                        label: 'Usage',
+                        label,
                         data: dataPoints,
                         fill: false,
-                        borderColor: '#1f3b70',
+                        borderColor: color,
                         tension: 0.2,
                     },
                 ],
@@ -70,14 +63,14 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    function buildBarChartConfig(labels, dataPoints) {
+    function buildBarChartConfig(labels, dataPoints, label = 'Count') {
         return {
             type: 'bar',
             data: {
                 labels,
                 datasets: [
                     {
-                        label: 'Count',
+                        label,
                         data: dataPoints,
                         backgroundColor: '#e0b341',
                         borderColor: '#c89a2f',
@@ -94,56 +87,113 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    function buildDoughnutConfig(labels, dataPoints) {
+        return {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        data: dataPoints,
+                        backgroundColor: ['#1f3b70', '#e0b341', '#6c757d', '#0d6efd', '#20c997'],
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+            },
+        };
+    }
+
     function updateCharts(data) {
-        const trafficCtx = document.getElementById('trafficChart');
+        const offerMixCtx = document.getElementById('offerMixChart');
+        const signupCtx = document.getElementById('signupChart');
         const regionalCtx = document.getElementById('regionalChart');
         const systemHealthCtx = document.getElementById('systemHealthChart');
 
-        const trafficLabels = data?.traffic?.map((item) => item.label) || [];
-        const trafficData = data?.traffic?.map((item) => item.value) || [];
-        const regionalLabels = data?.regional?.map((item) => item.label) || [];
-        const regionalData = data?.regional?.map((item) => item.value) || [];
-        const systemHealthLabels = data?.system_health?.map((item) => item.label) || [];
-        const systemHealthData = data?.system_health?.map((item) => item.value) || [];
+        const membership = data?.membership_distribution || {};
+        const offerMixLabels = membership.labels || [];
+        const offerMixValues = membership.values || [];
 
-        const hasTraffic = trafficLabels.length && trafficData.length;
-        const hasRegional = regionalLabels.length && regionalData.length;
-        const hasSystemHealth = systemHealthLabels.length && systemHealthData.length;
+        const activity = data?.recent_activity?.timeline || [];
+        const signupLabels = activity.map((item) => item.date);
+        const signupData = activity.map((item) => item.registrations);
 
-        togglePlaceholder('trafficPlaceholder', hasTraffic);
+        const companySummary = data?.companies || {};
+        const regionalLabels = ['Total Companies', 'New (30d)'];
+        const regionalData = [companySummary.total_companies || 0, companySummary.new_last_30_days || 0];
+
+        const offers = data?.offers || {};
+        const systemHealthLabels = ['Active Offers', 'Expired Offers'];
+        const systemHealthData = [offers.active_offers || 0, offers.expired_offers || 0];
+
+        const hasOfferMix = offerMixLabels.length && offerMixValues.length && offerMixValues.some((val) => val > 0);
+        const hasSignups = signupLabels.length && signupData.length;
+        const hasRegional = regionalData.some((val) => val > 0);
+        const hasSystemHealth = systemHealthData.some((val) => val > 0);
+
+        togglePlaceholder('offerMixPlaceholder', hasOfferMix);
+        togglePlaceholder('signupPlaceholder', hasSignups);
         togglePlaceholder('regionalPlaceholder', hasRegional);
         togglePlaceholder('systemHealthPlaceholder', hasSystemHealth);
 
-        const trafficConfig = buildLineChartConfig(trafficLabels, trafficData);
-        const regionalConfig = buildBarChartConfig(regionalLabels, regionalData);
-        const systemHealthConfig = buildBarChartConfig(systemHealthLabels, systemHealthData);
+        const offerMixConfig = buildDoughnutConfig(offerMixLabels, offerMixValues);
+        const signupConfig = buildLineChartConfig(signupLabels, signupData, 'Registrations', '#0d6efd');
+        const regionalConfig = buildBarChartConfig(regionalLabels, regionalData, 'Companies');
+        const systemHealthConfig = buildBarChartConfig(systemHealthLabels, systemHealthData, 'Offers');
 
-        createOrUpdateChart('traffic', trafficCtx, trafficConfig);
+        createOrUpdateChart('offerMix', offerMixCtx, offerMixConfig);
+        createOrUpdateChart('signup', signupCtx, signupConfig);
         createOrUpdateChart('regional', regionalCtx, regionalConfig);
         createOrUpdateChart('systemHealth', systemHealthCtx, systemHealthConfig);
     }
 
+    function formatGrowth(value) {
+        if (value === undefined || value === null) {
+            return 'Awaiting data';
+        }
+        const prefix = value >= 0 ? '+' : '';
+        return `${prefix}${value} last 7 days`;
+    }
+
     function updateSummary(data) {
-        setTextContent('companiesCount', data?.companies);
-        setTextContent('membersCount', data?.members);
-        setTextContent('offersCount', data?.offers);
-        setTextContent('redemptionsCount', data?.redemptions);
-        setTextContent('activeCampaigns', data?.active_campaigns);
-        setTextContent('pendingApprovals', data?.pending_approvals);
-        setTextContent('supportTickets', data?.support_tickets);
+        const users = data.users || {};
+        const companies = data.companies || {};
+        const offers = data.offers || {};
+
+        setTextContent('totalUsersMetric', users.total_users);
+        setTextContent('userGrowthMetric', formatGrowth(users.new_last_7_days));
+
+        setTextContent('activeOffersMetric', offers.active_offers);
+        setTextContent('offerDeltaMetric', `${offers.average_discount ?? '0'}% avg discount`);
+
+        setTextContent('totalCompaniesMetric', companies.total_companies);
+        setTextContent('newCompaniesMetric', `${companies.new_last_30_days ?? 0} new (30d)`);
     }
 
     async function loadReports() {
         if (!summaryEndpoint) {
             return;
         }
+        const errorMessage = document.getElementById('reportsErrorMessage');
         try {
             const response = await fetch(summaryEndpoint);
+            if (!response.ok) {
+                throw new Error(`Request failed with status ${response.status}`);
+            }
             const payload = await response.json();
-            updateSummary(payload.summary || {});
-            updateCharts(payload.charts || {});
+            updateSummary(payload);
+            updateCharts(payload);
+            if (errorMessage) {
+                errorMessage.setAttribute('hidden', 'hidden');
+            }
         } catch (error) {
             console.error('Failed to load admin reports', error);
+            if (errorMessage) {
+                errorMessage.removeAttribute('hidden');
+            }
         }
     }
 
