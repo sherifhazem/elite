@@ -159,7 +159,7 @@ def can_access(user: Optional[SupportsRole], permission: str) -> bool:
     if allowed_roles and getattr(user, "normalized_role", "member") in allowed_roles:
         return True
 
-    from app.models.permission import Permission
+    from app.models import Permission
 
     query = user.permissions if hasattr(user, "permissions") else None
     if query is not None:

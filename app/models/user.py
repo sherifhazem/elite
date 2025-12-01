@@ -31,6 +31,13 @@ class User(db.Model):
 
     #: List of supported roles ordered from least to most privileged.
     ROLE_CHOICES = ("member", "company", "admin", "superadmin")
+    #: Mapping of required roles to the allowed role set, kept local to avoid cross-layer imports.
+    ROLE_ACCESS_MATRIX = {
+        "member": {"member", "company", "admin", "superadmin"},
+        "company": {"company", "superadmin"},
+        "admin": {"admin", "superadmin"},
+        "superadmin": {"superadmin"},
+    }
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -152,10 +159,8 @@ class User(db.Model):
     def has_role(self, required_role: str) -> bool:
         """Return True when the user matches the required role constraint."""
 
-        from app.services.access_control import ROLE_ACCESS_MATRIX
-
         normalized = (required_role or "member").strip().lower()
-        allowed_roles = ROLE_ACCESS_MATRIX.get(normalized, {normalized})
+        allowed_roles = self.ROLE_ACCESS_MATRIX.get(normalized, {normalized})
         return self.normalized_role in allowed_roles
 
     def grant_permissions(self, permission_names: Iterable[str]) -> None:

@@ -122,6 +122,9 @@ app/models/
 
 from app.core.database import db
 
+### Current Status:
+- Models no longer depend on access-control services; role checks remain self-contained to avoid circular imports.
+
 ### Future Direction:
 A more organized domain-oriented model structure may be introduced later, but **only with explicit instruction**.
 

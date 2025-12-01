@@ -11,8 +11,7 @@ from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
 from app.core.database import db
-from app.models.company import Company
-from app.models.user import User
+from app.models import Company, User
 from app.modules.companies.services.company_registration import register_company_account
 from app.services.mailer import send_company_welcome_email
 from app.modules.members.services.notifications import send_welcome_notification

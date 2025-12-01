@@ -8,9 +8,8 @@ from flask import Blueprint, jsonify, request
 from sqlalchemy.orm import joinedload
 
 from app.core.database import db
+from app.models import Company, Offer
 from app.modules.members.auth.utils import get_user_from_token
-from app.models.company import Company
-from app.models.offer import Offer
 from app.modules.members.services.notifications import broadcast_new_offer
 from app.services.access_control import require_role
 
