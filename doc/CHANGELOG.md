@@ -103,3 +103,20 @@ v0.1.0 — Documentation Baseline Version
 # ✔ Future Entries Will Be Added Below
 
 All future changes must append new entries following the same structure.
+
+## v0.1.1 — 2025-12-01
+### Added
+- Added admin dashboard and company management service layers to host business logic.
+
+### Changed
+- Refactored admin dashboard routes to rely on services for logout handling and metrics preparation.
+- Slimmed admin company routes by delegating CRUD operations and status transitions to services.
+
+### Fixed
+- None
+
+### Removed
+- None
+
+### Documentation
+- None
