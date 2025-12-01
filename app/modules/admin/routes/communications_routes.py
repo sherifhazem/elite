@@ -266,7 +266,7 @@ def compose_communication() -> str:
         )
         return redirect(url_for("admin.communication_history"))
 
-            return render_template(
+        return render_template(
                 "admin/communications/compose.html",
         section_title="Compose Message",
         active_page="communications",
