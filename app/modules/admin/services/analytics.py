@@ -10,9 +10,7 @@ from typing import Dict, List
 from sqlalchemy import func
 
 from app.core.database import db
-from app.models.company import Company
-from app.models.offer import Offer
-from app.models.user import User
+from app.models import Company, Offer, User
 
 
 def _normalize_membership(level: str | None) -> str:

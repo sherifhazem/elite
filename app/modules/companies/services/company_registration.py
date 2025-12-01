@@ -14,8 +14,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.database import db
 from app.modules.companies.forms.module_forms import CITY_CHOICES, INDUSTRY_CHOICES
-from app.models.company import Company
-from app.models.user import User
+from app.models import Company, User
 from app.services.mailer import send_email
 from app.modules.members.services.notifications import push_admin_notification, queue_notification
 

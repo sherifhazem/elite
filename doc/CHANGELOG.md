@@ -120,3 +120,20 @@ All future changes must append new entries following the same structure.
 
 ### Documentation
 - None
+
+## v0.1.2 — 2025-12-02
+### Added
+- None
+
+### Changed
+- Standardized model imports across services and routes to use the central `app.models` aggregator for consistency.
+- Moved access-control resolution inside `create_app` to defer optional dependencies until after app creation.
+
+### Fixed
+- Eliminated the User model dependency on access-control services by embedding the role access matrix locally.
+
+### Removed
+- None
+
+### Documentation
+- Updated architecture notes to reflect the self-contained model role checks.

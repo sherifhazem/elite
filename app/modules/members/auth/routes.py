@@ -47,7 +47,7 @@ auth = Blueprint(
 
 
 if TYPE_CHECKING:  # pragma: no cover - used only for static analysis
-    from app.models.user import User
+    from app.models import User
 
 
 WelcomeNotifier = Callable[["User"], Optional[int]]
@@ -64,7 +64,7 @@ def _get_db() -> SQLAlchemy:
 def _get_user_model():
     """Return the User model without triggering circular imports at import time."""
 
-    from app.models.user import User
+    from app.models import User
 
     return User
 

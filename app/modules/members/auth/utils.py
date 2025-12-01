@@ -7,7 +7,7 @@ from importlib import import_module
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 
-from app.models.user import User
+from app.models import User
 
 
 def _load_jwt_module():

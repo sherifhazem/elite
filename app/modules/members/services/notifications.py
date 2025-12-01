@@ -17,8 +17,7 @@ from sqlalchemy.orm import joinedload
 from app import celery, redis_client
 from app.core.database import db
 from app.models import Notification
-from app.models.offer import Offer
-from app.models.user import User
+from app.models import Offer, User
 
 
 # Redis-backed admin notification keys and defaults

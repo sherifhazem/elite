@@ -18,7 +18,6 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 from flask_wtf.csrf import CSRFProtect
 
 from .config import Config
-from app.services.access_control import resolve_user_from_request
 from app.core.database import db
 from app.core.central_logger import logger as central_logger
 from app.core.central_middleware import register_central_middleware
@@ -98,6 +97,8 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         from app.models import User
 
         return User.query.get(int(user_id))
+
+    from app.services.access_control import resolve_user_from_request
 
     @app.before_request
     def attach_current_user() -> None:

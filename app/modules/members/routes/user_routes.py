@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
 from app.core.database import db
-from app.models.user import User
+from app.models import User
 from app.services.access_control import require_role
 
 

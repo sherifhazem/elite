@@ -14,10 +14,8 @@ from urllib.parse import quote
 from flask import Blueprint, Response, jsonify, redirect, render_template, request, url_for
 
 from app.core.database import db
+from app.models import Notification, Offer, User
 from app.modules.members.auth.utils import get_user_from_token
-from app.models.notification import Notification
-from app.models.offer import Offer
-from app.models.user import User
 from app.modules.members.services.notifications import (
     notify_membership_upgrade,
     notify_offer_feedback,
