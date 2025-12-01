@@ -189,3 +189,23 @@ All future changes must append new entries following the same structure.
 
 ### Documentation
 - Updated `PROJECT_STRUCTURE.md` and `MODULES_GUIDE.md` to reflect the shared template locations.
+
+---
+
+## v0.1.6 — 2025-12-06
+### Added
+- None
+
+### Changed
+- Simplified observability to rely solely on the centralized logger and middleware with unified JSON output.
+- Activated request lifecycle and error logging centrally from `app/__init__.py` without module-level hooks.
+- Removed configuration-time logging to keep observability activation centralized.
+
+### Fixed
+- None
+
+### Removed
+- Legacy logging calls tied to configuration and development-only warnings outside the central system.
+
+### Documentation
+- Updated OBSERVABILITY.md, ARCHITECTURE_OVERVIEW.md, and PROJECT_STRUCTURE.md to reflect the active centralized observability design.

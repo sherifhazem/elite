@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Configuration module responsible for loading environment variables and application settings."""
 
-import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -18,10 +17,6 @@ if ENV_PATH.exists():
     load_dotenv(dotenv_path=ENV_PATH)
 else:
     load_dotenv()
-
-# Configure basic logging for the application configuration
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
 
 # ======================================================
 # Helpers
@@ -73,21 +68,7 @@ class Config:
 
 
 
-logger.info(
-    "SQLALCHEMY_DATABASE_URI loaded from environment: %s",
-    Config.SQLALCHEMY_DATABASE_URI,
-)
-
 try:
     database_name = make_url(Config.SQLALCHEMY_DATABASE_URI).database or "unknown"
-except Exception as exc:  # pragma: no cover - defensive logging
-    logger.warning("Failed to parse database name from URI: %s", exc)
+except Exception:  # pragma: no cover - defensive logging
     database_name = "unknown"
-
-logger.info(
-    "Configuration loaded: DB=%s, Redis=%s, Timezone=%s",
-    Config.SQLALCHEMY_DATABASE_URI,
-    Config.REDIS_URL,
-    Config.TIMEZONE,
-)
-logger.info("✅ Database connected: PostgreSQL -> %s", database_name)

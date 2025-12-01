@@ -1,4 +1,3 @@
-
 # Project Structure — ELITE
 
 ## 1. Purpose of This Document
@@ -13,18 +12,62 @@ Any AI agent working on this repository must:
 ---
 
 ## 2. High-Level Directory Overview
-
 Below is the current official directory layout of the ELITE project:
 
-ELITE/ │ ├── app/ │   ├── core/ │   │   ├── init.py │   │   ├── database.py            # Central DB instance │   │   ├── central_logger.py      # (Planned) Simple centralized logger │   │   ├── central_middleware.py  # (Planned) Request logging middleware │   │   ├── templates/             # Shared templates (layout/shared UI) │   │   ├── static/                # Shared static assets (logo, base styles) │   │   └── utils/                 # Shared helper utilities │   │ │   ├── modules/ │   │   ├── admin/ │   │   │   ├── routes/            # Admin routes (blueprint) │   │   │   ├── templates/admin/   # Admin UI pages │   │   │   ├── static/admin/      # Admin JS/CSS/Assets │   │   │   ├── services/          # Admin business logic (to be expanded) │   │   │   └── forms/             # (Optional) Admin forms │   │   │ │   │   ├── companies/ │   │   │   ├── routes/ │   │   │   ├── templates/companies/ │   │   │   ├── static/companies/ │   │   │   ├── services/ │   │   │   └── forms/ │   │   │ │   │   ├── members/ │   │   │   ├── routes/ │   │   │   ├── templates/members/ │   │   │   ├── static/members/ │   │   │   ├── services/ │   │   │   └── forms/ │   │ │   ├── models/                    # SQLAlchemy models (independent of app) │   ├── config/                    # Application configuration files │   └── init.py                # Application factory + module registration │ ├── tools/                         # Helper scripts (seeding tools, utilities) │ ├── logs/                          # (Planned) Centralized JSON logs │ ├── docs/                          # Documentation folder (current file lives here) │   ├── PROJECT_OVERVIEW.md │   ├── ARCHITECTURE_OVERVIEW.md │   ├── PROJECT_STRUCTURE.md       # (this file) │   ├── MODULES_GUIDE.md           # (planned) │   ├── CODING_RULES.md            # (planned) │   ├── OBSERVABILITY.md           # (planned) │   ├── DEVELOPER_GUIDE_FOR_AI_AGENTS.md  # (planned) │   └── CHANGELOG.md               # (planned) │ ├── run.py                         # Application entry point ├── requirements.txt └── README.md
+```
+ELITE/
+├── app/
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── database.py                # Central DB instance
+│   │   ├── central_logger.py          # Simple centralized logger
+│   │   ├── central_middleware.py      # Request logging middleware
+│   │   ├── templates/                 # Shared templates (layout/shared UI)
+│   │   ├── static/                    # Shared static assets (logo, base styles)
+│   │   └── utils/                     # Shared helper utilities
+│   ├── modules/
+│   │   ├── admin/
+│   │   │   ├── routes/                # Admin routes (blueprint)
+│   │   │   ├── templates/admin/       # Admin UI pages
+│   │   │   ├── static/admin/          # Admin JS/CSS/Assets
+│   │   │   ├── services/              # Admin business logic (to be expanded)
+│   │   │   └── forms/                 # (Optional) Admin forms
+│   │   ├── companies/
+│   │   │   ├── routes/
+│   │   │   ├── templates/companies/
+│   │   │   ├── static/companies/
+│   │   │   ├── services/
+│   │   │   └── forms/
+│   │   ├── members/
+│   │   │   ├── routes/
+│   │   │   ├── templates/members/
+│   │   │   ├── static/members/
+│   │   │   ├── services/
+│   │   │   └── forms/
+│   ├── models/                        # SQLAlchemy models (independent of app)
+│   ├── config/                        # Application configuration files
+│   └── __init__.py                    # Application factory + module registration
+├── tools/                             # Helper scripts (seeding tools, utilities)
+├── logs/                              # Centralized JSON logs
+├── docs/                              # Documentation folder (current file lives here)
+│   ├── PROJECT_OVERVIEW.md
+│   ├── ARCHITECTURE_OVERVIEW.md
+│   ├── PROJECT_STRUCTURE.md           # (this file)
+│   ├── MODULES_GUIDE.md               # (planned)
+│   ├── CODING_RULES.md                # (planned)
+│   ├── OBSERVABILITY.md               # (planned)
+│   ├── DEVELOPER_GUIDE_FOR_AI_AGENTS.md  # (planned)
+│   └── CHANGELOG.md                   # (planned)
+├── run.py                             # Application entry point
+├── requirements.txt
+└── README.md
+```
 
 ---
 
 ## 3. Directory Responsibilities
-
 ### 3.1 `app/core/`
-The foundational layer of the entire system.
-Contains shared logic used by all modules.
+The foundational layer of the entire system. Contains shared logic used by all modules.
 
 **What goes here:**
 - Database instance (`database.py`)
@@ -59,10 +102,8 @@ Modules must remain **isolated and independent**.
 Houses global SQLAlchemy models.
 
 Rules:
-- Cannot import from `app` to avoid circular imports
-- Must import db from:
-
-from app.core.database import db
+- Cannot import Flask `app` directly (to avoid circular imports)
+- Must import db from: `from app.core.database import db`
 
 ---
 
@@ -73,7 +114,6 @@ Contains environment configurations.
 
 ### 3.5 `tools/`
 Utility scripts such as:
-
 - Database seeding tools
 - Admin creation tools
 - One-time setup scripts
@@ -83,7 +123,7 @@ Not part of application runtime.
 ---
 
 ### 3.6 `logs/`
-Will contain centralized JSON logs produced only via the logging system activated in `__init__.py`.
+Contains centralized JSON logs produced only via the logging system activated in `__init__.py`.
 
 No module writes logs directly.
 
@@ -97,9 +137,7 @@ All AI agents must read this directory before working on the project.
 ---
 
 ## 4. Allowed Future Expansions
-
 AI agents may only add folders to the project under these rules:
-
 1. A new module → must follow module structure exactly
 2. A new shared utility → must go into `/core/utils/`
 3. New documentation → must go inside `/docs/`
@@ -111,9 +149,7 @@ No arbitrary folder creation is allowed.
 ---
 
 ## 5. Forbidden Structural Changes
-
 AI agents must NOT:
-
 - Modify module boundaries
 - Move files out of their modules
 - Mix templates or static assets between modules
@@ -126,7 +162,6 @@ AI agents must NOT:
 
 ## 6. Guidance for AI Agents
 When updating or extending the project:
-
 1. **Follow this structure strictly.**
 2. If adding new files → place them in the correct folder.
 3. If updating module logic → remain inside the module boundaries.
