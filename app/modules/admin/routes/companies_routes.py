@@ -31,6 +31,7 @@ def list_companies() -> str:
         companies=companies,
         active_tab=status,
         status_counts=status_counts,
+        active_page="companies",
     )
 
 
@@ -40,7 +41,11 @@ def view_company(company_id: int) -> str:
     """Display company details for administrative review."""
 
     company = get_company(company_id)
-    return render_template("admin/dashboard/company_details.html", company=company)
+    return render_template(
+        "admin/dashboard/company_details.html",
+        company=company,
+        active_page="companies",
+    )
 
 
 @admin.route(
@@ -63,7 +68,11 @@ def edit_company(company_id: int) -> str:
         )
         flash("Company updated successfully.", "success")
         return redirect(url_for("admin.view_company", company_id=company.id))
-    return render_template("admin/dashboard/company_edit.html", company=company)
+    return render_template(
+        "admin/dashboard/company_edit.html",
+        company=company,
+        active_page="companies",
+    )
 
 
 @admin.route(
