@@ -31,7 +31,7 @@
     />
 
     <!-- CSS الخاص بواجهات Auth -->
-    <link rel="stylesheet" href="{{ url_for('auth.static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='members/css/auth_layout.css') }}">
 
     {% block extra_head %}{% endblock %}
   </head>
@@ -40,7 +40,7 @@
       <!-- شاشة الافتتاح (Splash Intro) -->
     <div id="splash-screen">
       <div class="splash-content">
-        <img src="{{ url_for('auth.static', filename='images/logo.png') }}" alt="ELITE" class="splash-logo">
+        <img src="{{ url_for('static', filename='members/images/logo.png') }}" alt="ELITE" class="splash-logo">
         <h2 class="splash-title">ELITE</h2>
       </div>
     </div>
@@ -83,30 +83,8 @@
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
       crossorigin="anonymous"
     ></script>
+    <script src="{{ url_for('static', filename='members/js/auth_splash.js') }}" defer></script>
     {% block extra_scripts %}{% endblock %}
-  <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const splash = document.getElementById("splash-screen");
-  if (!splash) return;
-
-  // تحقق من وجود العلامة في sessionStorage
-  const splashShown = sessionStorage.getItem("elite_splash_shown");
-
-  if (splashShown) {
-    // إذا ظهرت من قبل، احذفها فورًا بدون عرض
-    splash.remove();
-    return;
-  }
-
-  // عرض الشاشة لأول مرة فقط
-  sessionStorage.setItem("elite_splash_shown", "true");
-
-  setTimeout(() => {
-    splash.classList.add("fade-out");
-    setTimeout(() => splash.remove(), 700);
-  }, 1800); // مدة العرض الأولى
-});
-</script>
 
 
   </body>

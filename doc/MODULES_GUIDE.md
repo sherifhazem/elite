@@ -27,6 +27,8 @@ Every module follows the same directory structure:
 
 app/modules/<module_name>/ routes/ templates/<module_name>/ static/<module_name>/ services/ forms/ (optional)
 
+Static files for each module are served via the global `url_for('static', filename='<module>/<path>')` endpoint, which points to `app/modules/<module>/static/<module>/`. Shared assets belong only in `app/core/static/`.
+
 The `admin`, `companies`, and `members` modules now strictly follow this structure; keep new files inside their module folders only.
 
 Modules must **never** import logic or assets from each other.

@@ -7,7 +7,7 @@
         <p class="text-muted mb-0">أرسل رسائل بريدية أو تنبيهات داخلية إلى الشرائح المحددة من المستخدمين.</p>
     </div>
 
-    <form method="post" class="card shadow-sm">
+    <form method="post" class="card shadow-sm" id="composeForm" data-lookup-endpoint="{{ url_for('admin.communication_lookup') }}">
         <div class="card-body">
             <div class="row g-4">
                 <div class="col-12">
@@ -75,125 +75,5 @@
 
 {% block extra_scripts %}
     {{ super() }}
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const audienceField = document.getElementById('audience');
-            const searchContainer = document.getElementById('manualRecipientTools');
-            const searchInput = document.getElementById('recipientSearch');
-            const resultsContainer = document.getElementById('recipientResults');
-            const selectedContainer = document.getElementById('selectedRecipients');
-            const manualSearchLabel = document.getElementById('manualSearchLabel');
-
-            const selectedRecipients = new Map();
-
-            function audienceRequiresManualSelection(value) {
-                return value === 'selected_users' || value === 'selected_companies';
-            }
-
-            function currentLookupType(value) {
-                return value === 'selected_companies' ? 'company' : 'user';
-            }
-
-            function updateManualSelectionVisibility() {
-                const value = audienceField.value;
-                if (audienceRequiresManualSelection(value)) {
-                    searchContainer.classList.remove('d-none');
-                    manualSearchLabel.textContent = value === 'selected_companies' ? 'اختر الشركات' : 'اختر المستخدمين';
-                    searchInput.value = '';
-                    resultsContainer.innerHTML = '<span class="text-muted">ابدأ بالكتابة للبحث.</span>';
-                } else {
-                    searchContainer.classList.add('d-none');
-                    selectedRecipients.clear();
-                    selectedContainer.innerHTML = '';
-                    removeHiddenInputs();
-                }
-            }
-
-            function removeHiddenInputs() {
-                document.querySelectorAll('input[name="selected_users"], input[name="selected_companies"]').forEach((input) => input.remove());
-            }
-
-            function renderSelectedRecipients() {
-                selectedContainer.innerHTML = '';
-                selectedRecipients.forEach((item, key) => {
-                    const itemId = key;
-                    const badge = document.createElement('span');
-                    badge.className = 'badge text-bg-primary d-flex align-items-center gap-2';
-                    badge.textContent = item.label;
-
-                    const removeBtn = document.createElement('button');
-                    removeBtn.type = 'button';
-                    removeBtn.className = 'btn-close btn-close-white btn-sm ms-2';
-                    removeBtn.setAttribute('aria-label', 'إزالة');
-                    removeBtn.addEventListener('click', () => {
-                        selectedRecipients.delete(itemId);
-                        renderSelectedRecipients();
-                    });
-
-                    badge.appendChild(removeBtn);
-                    selectedContainer.appendChild(badge);
-                });
-
-                removeHiddenInputs();
-                const lookupType = currentLookupType(audienceField.value);
-                selectedRecipients.forEach((item, key) => {
-                    const hidden = document.createElement('input');
-                    hidden.type = 'hidden';
-                    hidden.name = lookupType === 'company' ? 'selected_companies' : 'selected_users';
-                    hidden.value = key;
-                    selectedContainer.appendChild(hidden);
-                });
-            }
-
-            async function performLookup(term) {
-                const lookupType = currentLookupType(audienceField.value);
-                const params = new URLSearchParams({ query: term, type: lookupType });
-                const response = await fetch(`{{ url_for('admin.communication_lookup') }}?${params.toString()}`);
-                if (!response.ok) {
-                    resultsContainer.innerHTML = '<span class="text-danger">تعذر تحميل النتائج.</span>';
-                    return;
-                }
-                const payload = await response.json();
-                if (!payload.results || payload.results.length === 0) {
-                    resultsContainer.innerHTML = '<span class="text-muted">لم يتم العثور على نتائج مطابقة.</span>';
-                    return;
-                }
-                resultsContainer.innerHTML = '';
-                payload.results.forEach((item) => {
-                    const button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
-                    button.textContent = item.label;
-                    button.addEventListener('click', () => {
-                        if (!selectedRecipients.has(item.id)) {
-                            selectedRecipients.set(item.id, item);
-                            renderSelectedRecipients();
-                        }
-                    });
-                    resultsContainer.appendChild(button);
-                });
-            }
-
-            audienceField.addEventListener('change', updateManualSelectionVisibility);
-
-            let lookupTimeout;
-            searchInput.addEventListener('input', (event) => {
-                const term = event.target.value.trim();
-                if (!audienceRequiresManualSelection(audienceField.value)) {
-                    return;
-                }
-                if (lookupTimeout) {
-                    clearTimeout(lookupTimeout);
-                }
-                if (term.length < 2) {
-                    resultsContainer.innerHTML = '<span class="text-muted">أدخل حرفين على الأقل للبحث.</span>';
-                    return;
-                }
-                resultsContainer.innerHTML = '<span class="text-muted">جاري البحث...</span>';
-                lookupTimeout = setTimeout(() => performLookup(term), 300);
-            });
-
-            updateManualSelectionVisibility();
-        });
-    </script>
+    <script src="{{ url_for('static', filename='admin/js/admin_communications_compose.js') }}" defer></script>
 {% endblock %}

@@ -19,8 +19,8 @@
             crossorigin="anonymous"
             referrerpolicy="no-referrer"
         />
-        <link rel="stylesheet" href="{{ url_for('portal.static', filename='css/style.css') }}?v=2" />
-        <link rel="icon" href="{{ url_for('portal.static', filename='images/logo.png') }}" type="image/png" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='members/css/portal_layout.css') }}" />
+        <link rel="icon" href="{{ url_for('static', filename='members/images/logo.png') }}" type="image/png" />
         <style>
             :root {
                 color-scheme: light;
@@ -263,6 +263,6 @@
             <span class="loading-indicator__label">Loading</span>
         </div>
 
-        <script src="{{ url_for('portal.static', filename='js/main.js') }}?v=2" defer></script>
+        <script src="{{ url_for('static', filename='members/js/portal_interactions.js') }}" defer></script>
     </body>
 </html>

@@ -201,7 +201,15 @@
     </div>
 
     <!-- إضافة عنصر -->
-    <div class="modal fade" id="addListModal" tabindex="-1" aria-labelledby="addListModalLabel" aria-hidden="true">
+    <div
+        class="modal fade"
+        id="addListModal"
+        tabindex="-1"
+        aria-labelledby="addListModalLabel"
+        aria-hidden="true"
+        data-add-city-action="{{ url_for('admin.add_city') }}"
+        data-add-industry-action="{{ url_for('admin.add_industry') }}"
+    >
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -230,7 +238,15 @@
     </div>
 
     <!-- تعديل عنصر -->
-    <div class="modal fade" id="editListModal" tabindex="-1" aria-labelledby="editListModalLabel" aria-hidden="true">
+    <div
+        class="modal fade"
+        id="editListModal"
+        tabindex="-1"
+        aria-labelledby="editListModalLabel"
+        aria-hidden="true"
+        data-update-city-action="{{ url_for('admin.update_city', item_id='__ID__') }}"
+        data-update-industry-action="{{ url_for('admin.update_industry', item_id='__ID__') }}"
+    >
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -261,57 +277,5 @@
 
 {% block extra_scripts %}
     {{ super() }}
-    <script>
-        const addListModal = document.getElementById('addListModal');
-        const editListModal = document.getElementById('editListModal');
-
-        const modalConfig = {
-            cities: {
-                addAction: '{{ url_for('admin.add_city') }}',
-                editAction: (id) => '{{ url_for('admin.update_city', item_id='__ID__') }}'.replace('__ID__', id)
-            },
-            industries: {
-                addAction: '{{ url_for('admin.add_industry') }}',
-                editAction: (id) => '{{ url_for('admin.update_industry', item_id='__ID__') }}'.replace('__ID__', id)
-            }
-        };
-
-        addListModal?.addEventListener('show.bs.modal', (event) => {
-            const trigger = event.relatedTarget;
-            if (!trigger) {
-                return;
-            }
-            const listType = trigger.getAttribute('data-list-type');
-            const modalTitle = trigger.getAttribute('data-modal-title');
-            const submitLabel = trigger.getAttribute('data-submit-label');
-
-            const form = document.getElementById('addListForm');
-            form.reset();
-            form.action = modalConfig[listType]?.addAction || '#';
-            document.getElementById('addItemActive').checked = true;
-            document.getElementById('addListModalLabel').textContent = modalTitle || 'إضافة عنصر';
-            document.getElementById('addListSubmit').textContent = submitLabel || 'حفظ';
-        });
-
-        editListModal?.addEventListener('show.bs.modal', (event) => {
-            const trigger = event.relatedTarget;
-            if (!trigger) {
-                return;
-            }
-            const listType = trigger.getAttribute('data-list-type');
-            const itemId = trigger.getAttribute('data-item-id');
-            const itemName = trigger.getAttribute('data-item-name');
-            const itemActive = trigger.getAttribute('data-item-active');
-            const modalTitle = trigger.getAttribute('data-modal-title');
-            const submitLabel = trigger.getAttribute('data-submit-label');
-
-            const form = document.getElementById('editListForm');
-            form.action = modalConfig[listType]?.editAction(itemId) || '#';
-            document.getElementById('editItemName').value = itemName || '';
-            const activeCheckbox = document.getElementById('editItemActive');
-            activeCheckbox.checked = itemActive === '1';
-            document.getElementById('editListModalLabel').textContent = modalTitle || 'تعديل عنصر';
-            document.getElementById('editListSubmit').textContent = submitLabel || 'حفظ';
-        });
-    </script>
+    <script src="{{ url_for('static', filename='admin/js/admin_settings_modals.js') }}" defer></script>
 {% endblock %}

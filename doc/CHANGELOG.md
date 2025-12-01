@@ -75,6 +75,25 @@ v0.1.0 — Documentation Baseline Version
 
 ---
 
+## v0.1.1 — 2025-12-01
+### Added
+- Added shared static middleware mappings to expose module assets through `/static/<module>/`.
+
+### Changed
+- Renamed module CSS and JS files with descriptive names and updated templates to reference them via `url_for('static', filename=...)`.
+- Moved inline JavaScript in admin, companies, and members templates into module-scoped static files.
+
+### Fixed
+- Aligned member QR code generation with the `static/members` directory used for serving assets.
+
+### Removed
+- Deleted unused member login static assets after consolidation.
+
+### Documentation
+- Updated PROJECT_STRUCTURE.md and MODULES_GUIDE.md to clarify static asset organization and routing.
+
+---
+
 ## v0.1.0 — 2025-01-01
 ### Added
 - Added `/docs/PROJECT_OVERVIEW.md`

@@ -16,6 +16,7 @@ from celery import Celery
 from redis import Redis
 from jinja2 import ChoiceLoader, FileSystemLoader
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.middleware.shared_data import SharedDataMiddleware
 
 from .config import Config
 from app.core.database import db
@@ -35,6 +36,30 @@ get_jwt_identity = lambda: None
 verify_jwt_in_request_optional = lambda *a, **kw: None
 
 
+def _mount_static_mappings(app: Flask) -> None:
+    """Serve module-specific static assets through the shared /static endpoint."""
+
+    static_roots = {
+        "admin": os.path.join(app.root_path, "modules", "admin", "static", "admin"),
+        "companies": os.path.join(app.root_path, "modules", "companies", "static", "companies"),
+        "members": os.path.join(app.root_path, "modules", "members", "static", "members"),
+        "core": os.path.join(app.root_path, "core", "static"),
+    }
+
+    mounts: dict[str, str] = {}
+    for module_key in ("admin", "companies", "members"):
+        module_path = static_roots[module_key]
+        if os.path.isdir(module_path):
+            mounts[f"/static/{module_key}"] = module_path
+
+    core_static = static_roots.get("core")
+    if core_static and os.path.isdir(core_static):
+        mounts["/static"] = core_static
+
+    if mounts:
+        app.wsgi_app = SharedDataMiddleware(app.wsgi_app, mounts)
+
+
 def create_app(config_class: type[Config] = Config) -> Flask:
     app = Flask(__name__, template_folder="../core/templates", static_folder="../core/static")
     app.config.from_object(config_class)
@@ -48,6 +73,8 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             app.jinja_loader,
         ]
     )
+
+    _mount_static_mappings(app)
 
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
