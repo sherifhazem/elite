@@ -12,7 +12,19 @@ LOG_FILE_PATH = "/logs/app.log.json"
 
 
 def _ensure_log_dir() -> None:
+    """Ensure the directory for the log file exists."""
+
     os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
+
+
+def _normalize_details(details: Any) -> Dict[str, Any] | None:
+    """Return a dictionary representation of details or None."""
+
+    if details is None:
+        return None
+    if isinstance(details, dict):
+        return details
+    return {"value": details}
 
 
 class JsonLogFormatter(logging.Formatter):
@@ -23,44 +35,20 @@ class JsonLogFormatter(logging.Formatter):
         payload: Dict[str, Any] = {
             "timestamp": timestamp,
             "level": record.levelname,
-            "module": getattr(record, "module", record.name),
-            "endpoint": getattr(record, "endpoint", None),
-            "path": getattr(record, "path", None),
             "request_id": getattr(record, "request_id", None),
+            "path": getattr(record, "path", None),
+            "method": getattr(record, "method", None),
+            "duration_ms": getattr(record, "duration_ms", None),
             "message": record.getMessage(),
+            "details": _normalize_details(getattr(record, "details", None)),
         }
-
-        for key, value in record.__dict__.items():
-            if key not in {
-                "name",
-                "msg",
-                "args",
-                "levelname",
-                "levelno",
-                "pathname",
-                "filename",
-                "module",
-                "exc_info",
-                "exc_text",
-                "stack_info",
-                "lineno",
-                "funcName",
-                "created",
-                "msecs",
-                "relativeCreated",
-                "thread",
-                "threadName",
-                "processName",
-                "process",
-                "path",
-                "request_id",
-            }:
-                payload.setdefault("extra", {})[key] = value
 
         return json.dumps(payload, ensure_ascii=False)
 
 
 def _configure_logger() -> logging.Logger:
+    """Configure and return the centralized logger instance."""
+
     _ensure_log_dir()
     logger = logging.getLogger("central_logger")
     if logger.handlers:

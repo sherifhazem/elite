@@ -25,7 +25,7 @@ The architecture is composed of:
 3. **Template Layer (modular + shared)**  
 4. **Static Layer (modular + shared)**  
 5. **Configuration Layer**  
-6. **Central Observability Layer (planned and partially implemented)**  
+6. **Central Observability Layer (centralized and active)**
 7. **Database + Models Layer**  
 
 Each layer has a defined purpose and must remain consistent.
@@ -131,25 +131,20 @@ A more organized domain-oriented model structure may be introduced later, but **
 ---
 
 ## 8. Observability Layer (Centralized Approach)
-The previous attempt at a distributed logging system was removed  
-because it introduced unnecessary complexity.
+The project uses a minimal, centralized observability system.
 
-The new agreed-upon approach:
-
-### Centralized Logging Only  
-- Activated from `app/__init__.py`  
-- No logging code inside modules (routes/services)  
-- A simple JSON logger  
-- A simple request middleware  
-- No distributed instrumentation in JS or Python  
+### Centralized Logging Only
+- Activated from `app/__init__.py` via the central middleware hooks.
+- No logging code inside modules (routes/services).
+- A simple JSON logger defined in `app/core/central_logger.py` that writes to `/logs/app.log.json`.
+- A request middleware in `app/core/central_middleware.py` that handles request start/end timing and unhandled errors.
+- No distributed instrumentation in JS or Python.
 
 ### Observability Responsibilities:
-- Log basic request lifecycle  
-- Log unhandled errors  
-- Provide a clean and minimal log format  
-- Never interfere with business modules  
-
-This will be implemented in a future iteration.
+- Log basic request lifecycle with `request_id`, path, method, and duration.
+- Log unhandled errors and return the `request_id` in error responses.
+- Provide a clean and minimal log format.
+- Never interfere with business modules.
 
 ---
 

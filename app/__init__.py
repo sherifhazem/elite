@@ -90,7 +90,6 @@ def create_app(config_class: type[Config] = Config) -> Flask:
                 return view_func
 
         csrf_extension = _DisabledCSRF()
-        app.logger.warning("CSRF protection disabled for development and testing purposes.")
     else:
         csrf_extension.init_app(app)
 
