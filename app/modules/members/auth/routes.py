@@ -421,7 +421,7 @@ def request_password_reset():
     send_email(
         user.email,
         "Reset Your Elite Discounts Password",
-        "emails/password_reset.html",
+        "core/emails/password_reset.html",
         {"reset_url": reset_url, "recipient_name": user.username or user.email},
     )
     return jsonify({"message": "Password reset email sent"}), HTTPStatus.OK

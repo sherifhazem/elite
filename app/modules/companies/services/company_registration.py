@@ -271,7 +271,7 @@ def notify_admin_of_company_request(
 
     message_html = "<br>".join(message_lines)
     context = {"subject": subject, "message_html": message_html}
-    send_email(admin_email, subject, "emails/admin_broadcast.html", context)
+    send_email(admin_email, subject, "core/emails/admin_broadcast.html", context)
 
 
 __all__ = ["register_company_account", "notify_admin_of_company_request"]

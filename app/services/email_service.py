@@ -54,7 +54,7 @@ def send_admin_broadcast_email(
             send_email(
                 email,
                 safe_subject,
-                "emails/admin_broadcast.html",
+                "core/emails/admin_broadcast.html",
                 {"subject": safe_subject, "message_html": html_body},
             )
         except Exception:  # pragma: no cover - mail transport guard

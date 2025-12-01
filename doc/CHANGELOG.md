@@ -154,3 +154,19 @@ All future changes must append new entries following the same structure.
 
 ### Documentation
 - Updated architecture notes to reflect the self-contained model role checks.
+
+## v0.1.4 — 2025-12-01
+### Added
+- Introduced a shared base layout under `app/core/templates/core/` for member-facing public views.
+
+### Changed
+- Relocated email templates to `app/core/templates/core/emails/` and updated all render paths to the shared location.
+
+### Fixed
+- Pointed member templates to the shared base layout to align with the standardized template loader.
+
+### Removed
+- None
+
+### Documentation
+- Updated `PROJECT_STRUCTURE.md` and `MODULES_GUIDE.md` to reflect the shared template locations.

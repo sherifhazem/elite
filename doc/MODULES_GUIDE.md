@@ -172,7 +172,7 @@ AI agents **must follow these rules without exception**:
 
 app/core/utils/
 
-- Shared templates (layout, header, footer) may only exist inside:
+- Shared templates (layout, header, footer, email layouts) may only exist inside:
 
 app/core/templates/
 
