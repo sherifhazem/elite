@@ -28,7 +28,7 @@ Contains shared logic used by all modules.
 
 **What goes here:**
 - Database instance (`database.py`)
-- Shared templates
+- Shared templates (layout + email templates) stored under `app/core/templates/core/`
 - Shared static assets
 - Utilities
 - Central logging + middleware (simple & non-intrusive)

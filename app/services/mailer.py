@@ -18,9 +18,9 @@ WELCOME_EMAIL_SUBJECTS: Dict[str, str] = {
 }
 
 WELCOME_EMAIL_TEMPLATES: Dict[str, str] = {
-    "member": "emails/welcome_user.html",
-    "company": "emails/welcome_company.html",
-    "staff": "emails/welcome_staff.html",
+    "member": "core/emails/welcome_user.html",
+    "company": "core/emails/welcome_company.html",
+    "staff": "core/emails/welcome_staff.html",
 }
 
 
