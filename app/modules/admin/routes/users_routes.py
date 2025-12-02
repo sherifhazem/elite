@@ -98,14 +98,13 @@ def add_user() -> str:
     can_manage_roles = _can_manage_user_roles(actor)
 
     if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        email = request.form.get("email", "").strip()
-        password = request.form.get("password", "")
-        membership_level = _resolve_membership_level(
-            request.form.get("membership_level", "Basic")
-        )
-        is_active = _parse_boolean(request.form.get("is_active"))
-        desired_role = request.form.get("role", "member")
+        cleaned = getattr(request, "cleaned", {}) or {}
+        username = (cleaned.get("username") or "").strip()
+        email = (cleaned.get("email") or "").strip()
+        password = cleaned.get("password") or ""
+        membership_level = _resolve_membership_level(cleaned.get("membership_level", "Basic"))
+        is_active = _parse_boolean(cleaned.get("is_active"))
+        desired_role = cleaned.get("role", "member")
 
         if not username or not email or not password:
             flash("Username, email, and password are required to create a user.", "danger")
@@ -180,14 +179,13 @@ def edit_user(user_id: int) -> str:
     can_manage_roles = _can_manage_user_roles(actor)
 
     if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        email = request.form.get("email", "").strip()
-        password = request.form.get("password", "")
-        membership_level = _resolve_membership_level(
-            request.form.get("membership_level", "Basic")
-        )
-        is_active = _parse_boolean(request.form.get("is_active"))
-        desired_role = request.form.get("role", user.role)
+        cleaned = getattr(request, "cleaned", {}) or {}
+        username = (cleaned.get("username") or "").strip()
+        email = (cleaned.get("email") or "").strip()
+        password = cleaned.get("password") or ""
+        membership_level = _resolve_membership_level(cleaned.get("membership_level", "Basic"))
+        is_active = _parse_boolean(cleaned.get("is_active"))
+        desired_role = cleaned.get("role", user.role)
         if not username or not email:
             flash("Username and email are required.", "danger")
             return redirect(url_for("admin.edit_user", user_id=user_id))
@@ -266,7 +264,8 @@ def manage_user_roles() -> str:
         if not _can_manage_user_roles(actor):
             abort(HTTPStatus.FORBIDDEN)
 
-        user_id_raw = request.form.get("user_id", "0")
+        cleaned = getattr(request, "cleaned", {}) or {}
+        user_id_raw = cleaned.get("user_id", "0")
         try:
             user_id = int(user_id_raw)
         except ValueError:
@@ -278,8 +277,8 @@ def manage_user_roles() -> str:
             flash("Only super administrators can modify this account.", "danger")
             return redirect(url_for("admin.manage_user_roles"))
 
-        new_role = request.form.get("role", target.role)
-        is_active = _parse_boolean(request.form.get("is_active"))
+        new_role = cleaned.get("role", target.role)
+        is_active = _parse_boolean(cleaned.get("is_active"))
 
         try:
             normalized_role = (new_role or target.role).strip().lower()

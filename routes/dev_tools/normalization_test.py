@@ -11,8 +11,9 @@ normalization_test = Blueprint("normalization_test", __name__)
 def run_normalization_probe():
     """Echo back received payloads after middleware normalization."""
 
-    form_payload = {key: request.form.getlist(key) for key in request.form.keys()}
-    json_payload = request.get_json(silent=True)
+    cleaned = getattr(request, "cleaned", {}) or {}
+    form_payload = cleaned.get("__original", {}).get("form", {}) if cleaned else {}
+    json_payload = cleaned.get("__original", {}).get("json") if cleaned else None
 
     return (
         jsonify(
@@ -20,6 +21,7 @@ def run_normalization_probe():
                 "message": "Normalization probe",
                 "form": form_payload,
                 "json": json_payload,
+                "cleaned": {k: v for k, v in cleaned.items() if not k.startswith("__")},
             }
         ),
         200,

@@ -187,12 +187,21 @@ def compose_communication() -> str:
     _ensure_admin_context()
 
     if request.method == "POST":
-        subject = (request.form.get("subject") or "").strip()
-        body = (request.form.get("body") or "").strip()
-        audience = (request.form.get("audience") or "all_users").strip().lower()
-        send_via = request.form.getlist("send_via")
-        selected_users = request.form.getlist("selected_users")
-        selected_companies = request.form.getlist("selected_companies")
+        cleaned = getattr(request, "cleaned", {}) or {}
+
+        def _as_list(value: object) -> list[str]:
+            if isinstance(value, list):
+                return [str(item) for item in value if item not in (None, "")]
+            if value in (None, ""):
+                return []
+            return [str(value)]
+
+        subject = (cleaned.get("subject") or "").strip()
+        body = (cleaned.get("body") or "").strip()
+        audience = (cleaned.get("audience") or "all_users").strip().lower()
+        send_via = _as_list(cleaned.get("send_via"))
+        selected_users = _as_list(cleaned.get("selected_users"))
+        selected_companies = _as_list(cleaned.get("selected_companies"))
 
         if not subject:
             flash("يرجى إدخال عنوان للرسالة قبل الإرسال.", "danger")

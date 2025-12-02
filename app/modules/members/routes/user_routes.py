@@ -36,7 +36,7 @@ def list_users():
 def create_user():
     """Create a new user from the provided JSON payload."""
 
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     username = payload.get("username")
     email = payload.get("email")
     password = payload.get("password")
@@ -68,7 +68,7 @@ def update_user(user_id: int):
     if user is None:
         return jsonify({"error": "User not found."}), 404
 
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
 
     username = payload.get("username")
     email = payload.get("email")
@@ -118,7 +118,7 @@ def update_membership(user_id: int):
     if user is None:
         return jsonify({"error": "User not found."}), 404
 
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     membership_level = payload.get("membership_level")
     if not membership_level:
         return jsonify({"error": "membership_level is required."}), 400

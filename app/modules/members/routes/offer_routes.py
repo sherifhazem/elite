@@ -70,7 +70,7 @@ def list_offers():
 def create_offer():
     """Create a new offer from the provided JSON payload."""
 
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     title = payload.get("title")
     base_discount = payload.get("base_discount")
     company_id = payload.get("company_id")
@@ -117,7 +117,7 @@ def update_offer(offer_id: int):
     if offer is None:
         return jsonify({"error": "Offer not found."}), 404
 
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
 
     if "title" in payload:
         offer.title = payload["title"]

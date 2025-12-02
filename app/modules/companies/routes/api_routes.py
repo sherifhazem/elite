@@ -45,7 +45,7 @@ def _serialize_company(company: Company) -> dict:
 def register_company():
     """Public endpoint allowing a business to create its company account."""
 
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     response, status = register_company_account(payload)
     # Register company account returns serialized owner/company payload already aligned
     # with auth registration flow.
@@ -65,7 +65,7 @@ def list_companies():
 def create_company():
     """Create a new company from the provided JSON payload."""
 
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     name = payload.get("name")
     description = payload.get("description")
 
@@ -111,7 +111,7 @@ def update_company(company_id: int):
     if company is None:
         return jsonify({"error": "Company not found."}), 404
 
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     name = payload.get("name")
     description = payload.get("description")
 

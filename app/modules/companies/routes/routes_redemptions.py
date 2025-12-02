@@ -145,7 +145,8 @@ def verify_redemption():
     """Validate a redemption code or QR token for the current company."""
 
     company = _current_company()
-    data = request.get_json() if request.is_json else request.form
+    cleaned = getattr(request, "cleaned", {}) or {}
+    data = {k: v for k, v in cleaned.items() if not k.startswith("__")}
     code = (data.get("code") or data.get("qr_token") or "").strip()
     if not code:
         return jsonify({"ok": False, "message": "Code is required."}), HTTPStatus.BAD_REQUEST
@@ -192,7 +193,8 @@ def confirm_redemption():
     """Mark a verified redemption as redeemed after staff confirmation."""
 
     company = _current_company()
-    data = request.get_json() if request.is_json else request.form
+    cleaned = getattr(request, "cleaned", {}) or {}
+    data = {k: v for k, v in cleaned.items() if not k.startswith("__")}
     redemption_id = data.get("redemption_id")
     code = (data.get("code") or "").strip()
 

@@ -42,16 +42,10 @@ def _settings_error_response(
 def _extract_value(*keys: str) -> str:
     """Return the first non-empty value for the provided keys from request data."""
 
-    payload = request.get_json(silent=True)
-    if isinstance(payload, dict):
-        for key in keys:
-            value = payload.get(key)
-            if value:
-                return str(value)
-
+    cleaned = getattr(request, "cleaned", {}) or {}
     for key in keys:
-        value = request.form.get(key)
-        if value:
+        value = cleaned.get(key)
+        if value not in (None, "", []):
             return str(value)
     return ""
 
@@ -59,7 +53,8 @@ def _extract_value(*keys: str) -> str:
 def _extract_tab() -> str:
     """Normalize the requested tab with a safe default."""
 
-    tab = (request.args.get("tab") or "").strip().lower()
+    cleaned = getattr(request, "cleaned", {}) or {}
+    tab = (cleaned.get("tab") or "").strip().lower()
     return tab if tab in {"cities", "industries"} else "cities"
 
 
@@ -236,7 +231,7 @@ def save_site_settings_roles() -> Response:
         save_role_permissions,
     )
 
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     updated_permissions = payload.get("role_permissions")
     if not isinstance(updated_permissions, dict):
         return _settings_error_response("صيغة البيانات غير صالحة.")

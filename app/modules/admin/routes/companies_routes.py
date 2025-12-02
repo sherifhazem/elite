@@ -57,13 +57,14 @@ def edit_company(company_id: int) -> str:
 
     company = get_company(company_id)
     if request.method == "POST":
+        cleaned = getattr(request, "cleaned", {}) or {}
         update_company(
             company,
             {
-                "name": request.form.get("name", company.name),
-                "email": request.form.get("email", company.email),
-                "city": request.form.get("city", company.city),
-                "industry": request.form.get("industry", company.industry),
+                "name": cleaned.get("name", company.name),
+                "email": cleaned.get("email", company.email),
+                "city": cleaned.get("city", company.city),
+                "industry": cleaned.get("industry", company.industry),
             },
         )
         flash("Company updated successfully.", "success")
