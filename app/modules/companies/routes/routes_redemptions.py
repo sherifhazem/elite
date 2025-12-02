@@ -10,16 +10,18 @@ from flask import current_app, g, jsonify, render_template, request
 
 from app.core.database import db
 from app.models import Redemption
-from app.modules.companies.services.offers import list_company_offers
-from app.modules.members.services.redemption import list_company_redemptions
+from app.modules.companies.services.company_offers_service import list_company_offers
+from app.modules.members.services.member_redemption_service import (
+    list_company_redemptions,
+)
 from app.services.access_control import require_role
 from . import company_portal
 from app.utils.company_context import _ensure_company, _current_company
 
 
-@company_portal.route("/redemptions", endpoint="redemptions")
+@company_portal.route("/redemptions", endpoint="company_redemptions_history")
 @require_role("company")
-def redemptions() -> str:
+def company_redemptions_history() -> str:
     """Render the redemption history with contextual filters."""
 
     company = _current_company()
@@ -61,7 +63,7 @@ def redemptions() -> str:
     )
     available_offers = list_company_offers(company.id)
     return render_template(
-        "companies/redemptions.html",
+        "companies/redemptions_history.html",
         company=company,
         filters=filters,
         available_offers=available_offers,
@@ -69,9 +71,9 @@ def redemptions() -> str:
     )
 
 
-@company_portal.route("/redemptions/data", endpoint="redemptions_data")
+@company_portal.route("/redemptions/data", endpoint="company_redemptions_data")
 @require_role("company")
-def redemptions_data():
+def company_redemptions_data():
     """Return company redemption history as JSON for live refreshing."""
 
     company = _current_company()

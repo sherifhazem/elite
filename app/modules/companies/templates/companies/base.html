@@ -25,7 +25,7 @@
 <body class="company-portal-body">
     <nav class="navbar navbar-expand-lg navbar-dark company-navbar fixed-top shadow-sm">
         <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('company_portal.dashboard') }}">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('company_portal.company_dashboard_overview') }}">
                 <span class="company-brand-icon d-inline-flex align-items-center justify-content-center rounded-circle">
                     {% if company and company.logo_url %}
                         <img src="{{ company.logo_url }}" alt="{{ company.name }}" class="company-brand-logo">
@@ -83,25 +83,25 @@
                 </div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.dashboard')) %}active{% endif %}" href="{{ url_for('company_portal.dashboard') }}">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_dashboard_overview')) %}active{% endif %}" href="{{ url_for('company_portal.company_dashboard_overview') }}">
                             <i class="fas fa-gauge-high me-2"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.list_offers')) %}active{% endif %}" href="{{ url_for('company_portal.list_offers') }}">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_offers_list')) %}active{% endif %}" href="{{ url_for('company_portal.company_offers_list') }}">
                             <i class="fas fa-gift me-2"></i>
                             <span>Offers</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.redemptions')) %}active{% endif %}" href="{{ url_for('company_portal.redemptions') }}">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_redemptions_history')) %}active{% endif %}" href="{{ url_for('company_portal.company_redemptions_history') }}">
                             <i class="fas fa-receipt me-2"></i>
                             <span>Redemptions</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.settings')) %}active{% endif %}" href="{{ url_for('company_portal.settings') }}">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_settings')) %}active{% endif %}" href="{{ url_for('company_portal.company_settings') }}">
                             <i class="fas fa-gear me-2"></i>
                             <span>Settings</span>
                         </a>

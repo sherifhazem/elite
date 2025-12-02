@@ -19,11 +19,11 @@ from flask import (
 
 from app.core.database import db
 from app.models import Redemption, User
-from app.modules.members.services.notifications import (
+from app.modules.members.services.member_notifications_service import (
     notify_offer_redemption_activity,
     queue_notification,
 )
-from app.modules.members.services.redemption import (
+from app.modules.members.services.member_redemption_service import (
     create_redemption,
     generate_qr_token,
     get_redemption_status,
@@ -206,7 +206,7 @@ def confirm_redemption(code: str):
                 type="offer_redeemed",
                 title="تم استخدام العرض بنجاح",
                 message=f"تم اعتماد الكود {updated.redemption_code} من قبل {company.name}.",
-                link_url=url_for("portal.profile"),
+                link_url=url_for("portal.member_portal_profile"),
                 metadata={
                     "offer_id": updated.offer_id,
                     "company_id": updated.company_id,

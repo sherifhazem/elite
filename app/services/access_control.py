@@ -9,7 +9,7 @@ from typing import Any
 def _member_roles() -> Any:
     """Lazily import the member roles module to avoid circular imports."""
 
-    return import_module("app.modules.members.services.roles")
+    return import_module("app.modules.members.services.member_roles_service")
 
 
 def _get_attr(name: str):

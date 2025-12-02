@@ -75,6 +75,26 @@ v0.1.0 — Documentation Baseline Version
 
 ---
 
+## v0.1.2 — 2025-12-01
+### Added
+- None
+
+### Changed
+- Renamed company and member portal endpoints to descriptive, module-scoped names and aligned references.
+- Updated company portal templates to clear, purpose-driven filenames matching their routes.
+- Standardized service module names across admin, companies, and members to use `_service.py` suffixes and updated imports.
+
+### Fixed
+- None
+
+### Removed
+- None
+
+### Documentation
+- Synced CODING_RULES.md and MODULES_GUIDE.md with the new naming conventions and refreshed project maps for the renamed routes/templates/services.
+
+---
+
 ## v0.1.1 — 2025-12-01
 ### Added
 - Added shared static middleware mappings to expose module assets through `/static/<module>/`.

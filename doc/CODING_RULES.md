@@ -206,6 +206,10 @@ app/init.py
 
 <feature>_routes.py <feature>_service.py <feature>_form.py <feature>.html
 
+- Service files **must** use the `_service.py` suffix within their module (e.g., `member_notifications_service.py`).
+- Route endpoints must be descriptive and module-scoped (e.g., `company_dashboard_overview`, `member_portal_profile`).
+- Template filenames must mirror the page purpose and align with the route naming (e.g., `offers_list.html`, `dashboard_overview.html`).
+
 ### Functions
 
 verb_object()        → create_offer() validate_()         → validate_member() get_()              → get_company_data()

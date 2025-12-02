@@ -97,10 +97,11 @@ This module represents the company-side functionality of the ELITE ecosystem.
 app/modules/companies/ routes/ templates/companies/ static/companies/ services/ forms/
 
 ### Routes Responsibilities
-- Company dashboard  
-- Create/update offers  
-- View performance  
-- Manage redemptions  
+- Company dashboard
+- Create/update offers
+- View performance
+- Manage redemptions
+- Use descriptive endpoint names prefixed with the module context (e.g., `company_dashboard_overview`, `company_redemptions_history`).
 
 ### Services Responsibilities
 - Offer logic  
@@ -110,8 +111,9 @@ app/modules/companies/ routes/ templates/companies/ static/companies/ services/ 
 - Business workflows  
 
 ### Templates Responsibilities
-- صفحات إدارة الشركة  
-- صفحات إضافة وعرض العروض  
+- صفحات إدارة الشركة
+- صفحات إضافة وعرض العروض
+- Templates under `templates/companies/` should mirror the route purpose (e.g., `dashboard_overview.html`, `offers_list.html`, `company_settings.html`).
 
 ### Static Responsibilities
 - JS/CSS الخاص بالشركات فقط  
@@ -142,10 +144,11 @@ app/modules/members/ routes/ templates/members/ static/members/ services/ forms/
 - Redemption actions  
 
 ### Services Responsibilities
-- حساب الأعضاء  
-- قواعد الاسترداد  
-- منطق تسجيل الحساب  
-- الربط بين العضو والعروض  
+- حساب الأعضاء
+- قواعد الاسترداد
+- منطق تسجيل الحساب
+- الربط بين العضو والعروض
+- Service modules must end with `_service.py` (e.g., `member_notifications_service.py`, `member_redemption_service.py`).
 
 ### Templates Responsibilities
 - صفحات العضو الرئيسية  

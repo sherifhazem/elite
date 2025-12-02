@@ -87,30 +87,30 @@
 - reports.export_pdf → app/modules/admin/routes/reports_routes.py
 
 ### 🔹 company_portal (`app/modules/companies/routes/__init__.py`)
+- company_portal.company_dashboard_redirect → app/modules/companies/routes/__init__.py
+- company_portal.company_dashboard_overview → app/modules/companies/routes/__init__.py
 - company_portal.complete_registration → app/modules/companies/routes/__init__.py
-- company_portal.index → app/modules/companies/routes/__init__.py
-- company_portal.dashboard → app/modules/companies/routes/__init__.py
-- company_portal.list_offers → app/modules/companies/routes/__init__.py
+- company_portal.company_offers_list → app/modules/companies/routes/__init__.py
 - company_portal.offer_new → app/modules/companies/routes/__init__.py
 - company_portal.offer_create → app/modules/companies/routes/__init__.py
 - company_portal.offer_edit → app/modules/companies/routes/__init__.py
 - company_portal.offer_update → app/modules/companies/routes/__init__.py
 - company_portal.offer_delete → app/modules/companies/routes/__init__.py
-- company_portal.redemptions → app/modules/companies/routes/__init__.py
-- company_portal.redemptions_data → app/modules/companies/routes/__init__.py
+- company_portal.company_redemptions_history → app/modules/companies/routes/__init__.py
+- company_portal.company_redemptions_data → app/modules/companies/routes/__init__.py
 - company_portal.verify_redemption → app/modules/companies/routes/__init__.py
 - company_portal.confirm_redemption → app/modules/companies/routes/__init__.py
-- company_portal.settings → app/modules/companies/routes/__init__.py
+- company_portal.company_settings → app/modules/companies/routes/__init__.py
 
 ### 🔹 portal (`app/modules/members/routes/user_portal_routes.py`)
-- portal.home → app/modules/members/routes/user_portal_routes.py
-- portal.home_alias → app/modules/members/routes/user_portal_routes.py
-- portal.offers → app/modules/members/routes/user_portal_routes.py
-- portal.profile → app/modules/members/routes/user_portal_routes.py
-- portal.activations → app/modules/members/routes/user_portal_routes.py
+- portal.member_portal_home → app/modules/members/routes/user_portal_routes.py
+- portal.member_portal_home_alias → app/modules/members/routes/user_portal_routes.py
+- portal.member_portal_offers → app/modules/members/routes/user_portal_routes.py
+- portal.member_portal_profile → app/modules/members/routes/user_portal_routes.py
+- portal.member_portal_activations → app/modules/members/routes/user_portal_routes.py
 - portal.offer_feedback → app/modules/members/routes/user_portal_routes.py
 - portal.company_brief → app/modules/members/routes/user_portal_routes.py
-- portal.notifications → app/modules/members/routes/user_portal_routes.py
+- portal.member_portal_notifications → app/modules/members/routes/user_portal_routes.py
 - portal.upgrade_membership → app/modules/members/routes/user_portal_routes.py
 
 ### 🔹 offers (`app/modules/members/routes/offer_routes.py`)
@@ -180,9 +180,9 @@
 
 | الملف | الوظيفة الأساسية |
 |--------|------------------|
-| `app/services/company_registration.py` | تسجيل الشركات ومراجعة طلباتها |
-| `app/services/notifications.py` | إدارة إشعارات المستخدمين (`get_unread_count`, `get_notifications_for_user`) |
-| `app/services/roles.py` | إدارة الديكوريتر `admin_required`, `company_required` |
+| `app/modules/companies/services/company_registration_service.py` | تسجيل الشركات ومراجعة طلباتها |
+| `app/modules/members/services/member_notifications_service.py` | إدارة إشعارات المستخدمين (`get_unread_count`, `get_notifications_for_user`) |
+| `app/services/access_control.py` | إدارة الديكوريتر `admin_required`, `company_required` |
 | `app/services/settings_service.py` | تخزين إعدادات المدن/الأنشطة في Redis |
 | `app/services/offers.py` | إدارة عروض الشركات للأعضاء |
 | `app/services/redemption.py` | معالجة عمليات استرداد العروض |

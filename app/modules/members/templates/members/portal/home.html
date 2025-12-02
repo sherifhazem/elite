@@ -198,8 +198,8 @@
             </p>
         </div>
         <div class="home-hero__actions">
-            <a class="home-hero__cta" href="{{ url_for('portal.offers') }}" data-nav-link data-nav-target="offers">استكشف العروض</a>
-            <a class="home-hero__secondary" href="{{ url_for('portal.profile') }}" data-nav-link data-nav-target="profile">عرض الملف</a>
+            <a class="home-hero__cta" href="{{ url_for('portal.member_portal_offers') }}" data-nav-link data-nav-target="offers">استكشف العروض</a>
+            <a class="home-hero__secondary" href="{{ url_for('portal.member_portal_profile') }}" data-nav-link data-nav-target="profile">عرض الملف</a>
         </div>
     </section>
     <section class="home-section">
@@ -210,7 +210,7 @@
                 type="button"
                 data-nav-link
                 data-nav-target="offers"
-                data-route="{{ url_for('portal.offers') }}"
+                data-route="{{ url_for('portal.member_portal_offers') }}"
             >
                 عرض الكل
             </button>
