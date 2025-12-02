@@ -1,70 +1,74 @@
 # Logging Guide
 
-## 1. Goals
-Provide a single, production-grade logging pipeline that is easy to reason about, produces structured JSON, and automatically captures request context.
+## Overview
+A single, centralized logging pipeline captures every request/response pair, errors, timings, and correlation metadata without any per-route code. Initialization is automatic through `initialize_logging(app)` and the global middleware stack.
 
-## 2. Entry Points
-- **Initialization:** `initialize_logging(app)` is called inside `app/__init__.py` during Flask app creation.
-- **Retrieval:** Use `from app.logging.logger import get_logger` anywhere logging is needed. No other configuration is required.
+## Architecture (ASCII)
+```
+[Flask WSGI]
+    |-> initialize_logging(app)
+    |-> register_logging_middleware(app)
+            |-> before_request: build context, request_id/trace_id, incoming payload capture
+            |-> route/blueprint execution (breadcrumbs + optional @trace_execution)
+            |-> after_request: response capture, validation probe, timing synthesis
+            |-> errorhandler: structured exception snapshot + breadcrumb
+            |-> RequestAwareFormatter -> JSON line (file + console, rotated daily)
+```
 
-## 3. Unified Logger Configuration
-- All messages from the **root**, **flask.app**, and **werkzeug** loggers are routed through the same handler stack.
-- Idempotent setup prevents duplicate handlers when the server reloads.
-- Compatibility shim `app/core/central_logger.py` now defers to `app/logging/logger.py` to avoid legacy divergence.
+## What gets captured (automatic)
+- **Incoming**: method, full path, query params, form data, JSON body (when available), headers (sensitive headers dropped), and file names/extensions → `request.meta.incoming_payload`.
+- **Outgoing**: status code, JSON body (if JSON), error payload (status ≥ 400), redirect target, response size → `request.meta.outgoing_payload`.
+- **Correlation**: `request_id`, `trace_id`, optional `parent_id`, resolved `user_id` (if authenticated) → injected into headers and logs.
+- **Tracing**: `request.meta.trace` accumulates breadcrumbs from middleware checkpoints, error handlers, and any optional `@trace_execution` service decorators.
+- **Validation**: client errors (400 / 422) automatically log missing fields, invalid fields, allowed values, received values, and a diagnostic message.
 
-## 4. Handler Strategy
-- **Console Handler:** Colorized, human-readable output for local development.
-- **JSON File Handler:** `logs/app.log.json`, rotated daily with a 4-day retention policy. Files are named `app.log.json.YYYY-MM-DD`.
-- Both handlers share the same request-aware formatting pipeline so fields stay consistent across outputs.
+## Breadcrumbs & execution tracing
+Breadcrumb entries carry file/function/line plus a human message. Middleware emits `before_request` and `after_request` checkpoints; the error handler appends failure breadcrumbs; services can opt into `@trace_execution` to capture service timing and call locations.
 
-## 5. Log Record Shape (JSON)
-Each log line contains:
-- `timestamp` (ISO 8601, UTC)
-- `level`
-- `message`
-- `file`
-- `function`
-- `line`
-- `request_id` (when available)
-- `user_id` (when available)
-- `path` and `method` (inside request context)
+## Timing model
+Each log includes a timing block:
+- `total_ms`: wall-clock time from middleware start to completion.
+- `middleware_ms`: summed time in before/after middleware hooks.
+- `route_ms`: time spent inside Flask routing/view execution.
+- `service_ms`: cumulative time recorded by `@trace_execution` decorators.
 
-**Example:**
+## Sensitive data masking
+Keys containing `password`, `token`, `authorization`, `cookie`, or `csrf_token` are masked or removed across incoming and outgoing payloads. Headers drop sensitive entries entirely. File logging keeps only filenames and extensions.
+
+## Error & validation logging
+- Exceptions emit structured entries with type, message, traceback string, source file/function/line, payload snapshot, breadcrumbs, correlation IDs, and elapsed time at failure.
+- Validation failures emit the `validation_failed` snapshot automatically; no route-level logging calls are required.
+
+## Unified log shape (JSON per line)
+Example (truncated for brevity):
 ```json
 {
   "timestamp": "2025-01-01T00:00:00Z",
   "level": "INFO",
-  "message": "request_completed",
-  "file": "central_middleware.py",
-  "function": "end_request_logging",
-  "line": 45,
-  "request_id": "5f2c3f5a",
+  "request_id": "ab12cd34",
+  "trace_id": "ef56",
+  "path": "/api/demo",
+  "method": "POST",
+  "incoming_payload": {"json": {"name": "Alice"}},
+  "outgoing_payload": {"status_code": 201, "json": {"ok": true}},
+  "breadcrumbs": [{"file": "app/logging/middleware.py", "function": "_start_observation", "line": 38, "message": "before_request:start"}],
+  "validation": {},
+  "timing": {"total_ms": 12, "middleware_ms": 3, "service_ms": 0, "route_ms": 9},
+  "response_status": 201,
   "user_id": 42,
-  "path": "/api/offers",
-  "method": "GET"
+  "file": "middleware.py",
+  "function": "_emit_final_log",
+  "line": 90
 }
 ```
 
-## 6. Request and Tracking Integration
-- `app/core/central_middleware.py` assigns a `request_id`, measures request duration, and emits lifecycle events through the centralized logger.
-- Flask request context enrichment happens inside the formatter, so custom log statements automatically inherit path, method, request ID, and user ID when present.
-- Tracking decorators or middleware should emit events via `get_logger()` to stay inside the centralized pipeline.
+## Rotation and access
+- File sink: `logs/app.log.json`, rotated nightly with 4 days retained.
+- Console sink: colorized output for local debugging.
+- Both use the same JSON formatter; the file sink is safe for ingestion via `jq`/ELK.
 
-## 7. Rotation and Retention
-- Daily rotation using `TimedRotatingFileHandler` keeps four days of history.
-- Old archives are pruned automatically after the 4-day window.
-- The log file is auto-created if it is missing; no manual setup is required.
-
-## 8. Extending the Logger
-- Add new metadata fields in `RequestAwareFormatter` to keep console and JSON outputs synchronized.
-- Avoid attaching new handlers in modules; instead, adjust `_build_handlers()` when a new sink is required.
-- Keep field names stable to avoid breaking downstream tooling that expects the current schema.
-
-## 9. Accessing Logs
-- Development tail: `tail -f logs/app.log.json`
-- Review rotated files: `ls logs/app.log.json.*`
-- Because logs are JSON-per-line, they can be streamed into tools like `jq` for quick inspection.
-
-## 10. Troubleshooting
-- Duplicate log lines usually mean a handler was added outside `initialize_logging`; ensure modules rely only on `get_logger()`.
-- If Flask or Werkzeug messages are missing, confirm their loggers propagate to the root (set during initialization).
+## Troubleshooting
+- **Duplicate logs**: ensure only `initialize_logging(app)` runs; the middleware is idempotent (`_structured_logging_installed`).
+- **Missing correlation IDs**: confirm proxy/load balancer is not stripping `X-Request-ID`/`X-Trace-ID`; middleware will generate them when absent.
+- **Unexpected fields**: adjust sanitizers in `app/logging/sanitizers.py` to add/remove masked keys.
+- **Large bodies**: payload capture is best-effort; non-JSON bodies fall back to size-only logging.
