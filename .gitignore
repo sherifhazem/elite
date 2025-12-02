@@ -49,5 +49,6 @@ migrations/__pycache__/
 # Test or local configs
 test_*.py
 local_settings.py
+logs/app.log.json
 
 
