@@ -94,7 +94,7 @@ def create_redemption_endpoint():
     if _normalize_role(user) not in {"member", "admin", "superadmin"}:
         return jsonify({"error": "Only members can activate offers."}), HTTPStatus.FORBIDDEN
 
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     offer_id = payload.get("offer_id")
     if offer_id in (None, ""):
         return jsonify({"error": "offer_id is required."}), HTTPStatus.BAD_REQUEST
@@ -177,7 +177,7 @@ def confirm_redemption(code: str):
     previous_status = redemption.status
     previous_redeemed_at = redemption.redeemed_at
 
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     qr_token = payload.get("qr_token") or payload.get("token")
 
     try:

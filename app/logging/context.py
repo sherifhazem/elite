@@ -29,6 +29,7 @@ class LoggingContext:
     breadcrumbs: List[Dict[str, Any]] = field(default_factory=list)
     incoming_payload: Dict[str, Any] = field(default_factory=dict)
     normalized_payload: Dict[str, Any] = field(default_factory=dict)
+    cleaned_payload: Dict[str, Any] = field(default_factory=dict)
     outgoing_payload: Dict[str, Any] = field(default_factory=dict)
     validation: Dict[str, Any] = field(default_factory=dict)
     normalization: List[Dict[str, Any]] = field(default_factory=list)
@@ -110,6 +111,7 @@ class LoggingContext:
             "method": request.method,
             "incoming_payload": self.incoming_payload,
             "normalized_payload": self.normalized_payload,
+            "cleaned_payload": self.cleaned_payload,
             "outgoing_payload": self.outgoing_payload,
             "breadcrumbs": self.breadcrumbs,
             "validation": self.validation,

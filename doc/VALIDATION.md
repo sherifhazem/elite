@@ -1,39 +1,37 @@
 # Validation Pipeline
 
-The validation layer consumes normalized URLs and registry-driven choices, emitting consistent diagnostics and breadcrumbs for every check.
+Validation runs after normalization and before any route handler executes. The middleware stores diagnostics on the request so services consume only cleaned, validated data.
 
-## Behavior Overview
-- **Normalized before checks:** Fields ending with `_url` (including `website_url` and `social_url`) reach forms and services with schemes added when needed.
-- **Missing schemes:** Automatically prefixed with `https://` when the value has a dot or begins with `www.`.
-- **Invalid URLs:** Strings without dots, invalid characters, or empty `netloc` remain unchanged and fail validation.
-- **Choice validation:** Cities and industries are validated against the central registry via `validate_choice`, recording `allowed_values`, `received_value`, and reasons.
-- **Raw vs validated:** Logs capture raw inputs under `incoming_payload` and the validated/clean variants under `normalized_payload` for debugging.
+## Steps
+1. **Choice validation** – `core.validation.validator.validate()` checks `city` and `industry` against `core.choices.registry` (`get_cities`/`get_industries`).
+2. **URL validation** – Any `*_url` field must parse as HTTP/HTTPS with a non-empty `netloc`.
+3. **Required fields** – If required keys (email, password, company_name, phone_number, industry, city, social_url) are present but empty, they are flagged.
+4. **Large text bounds** – Description/message fields over the configured limit emit `too_large` diagnostics.
+5. **Diagnostics** – Results live in `request.validation_info` and the logging context.
 
-## Rules Matrix (URLs)
-| Input | Normalized | Validation Outcome |
-| --- | --- | --- |
-| `www.example.com` | `https://www.example.com` | Accepted by URL validators |
-| `example.com` | `https://example.com` | Accepted |
-| `https://example.com` | `https://example.com` | Accepted |
-| `http://example.com` | `http://example.com` | Accepted |
-| `test` | `test` | Rejected (no domain) |
-| `bad url` | `bad url` | Rejected (invalid characters) |
+## Responses
+- Middleware blocks invalid requests automatically with HTTP 400 and a payload containing `message` and `errors` (missing fields, invalid URLs, choice failures, or oversize text).
+- Breadcrumbs: `validation:choices_validated`, `validation:url_validated`, `validation:detected_failure` (when errors exist).
 
-## Choice Validation
-- Uses `core.choices.validate_choice` for both `city` and `industry`.
-- Breadcrumbs: `validation:city_checked` and `validation:industry_checked` added automatically.
-- Diagnostic payloads live under `validation.failures` with `field`, `received_value`, `allowed_values`, `reason`, and `diagnostic` when available.
+## Data Exposure
+- `request.cleaned` is the only supported source for field access in routes/services.
+- Validation details are attached to logs under `validation` and returned to clients when blocked.
 
-## Before vs After
-- **Before:** Missing schemes often triggered "invalid URL" errors even when the domain was correct; city/industry lists were scattered.
-- **After:** Schemes are injected centrally and choices are enforced through a single registry, so only truly invalid data surfaces errors.
-
-## Logging & Tracking Integration
-- `incoming_payload` retains pre-normalization values for auditability.
-- `normalized_payload` shows the cleaned URLs and `normalized_fields` pairs; per-field deltas live under the `normalization` block and emit a `normalization:url_fixed` breadcrumb.
-- Validation snapshots reference the normalized payload so error reports align with the data that validators saw.
+## Error Shape
+```json
+{
+  "message": "Invalid request payload.",
+  "errors": [
+    {"missing_fields": ["email", "password"]},
+    {"invalid_urls": [{"field": "social_url", "reason": "invalid_url_format"}]},
+    {"invalid_choices": [{"field": "city", "allowed_values": ["الرياض", "جدة", "الدمام"]}]},
+    {"too_large": [{"field": "description", "limit": 2000, "length": 2450}]}
+  ],
+  "request_id": "..."
+}
+```
 
 ## Developer Notes
-- No per-route imports are required; normalization is wired inside `app/logging/middleware.py` and JSON normalization in `company_registration_service`.
-- Use `curl -X POST /test/normalizer -d 'website_url=www.example.com'` to observe normalization in action.
-- Inspect `/dev/choices` (non-production) to confirm allowed values during validation debugging.
+- Validators use normalized values, so whitespace/empty-string cleanup happens first.
+- The middleware always sets `request.validation_info` (even when valid) to keep logs and services in sync.
+- Add new required fields or text limits inside `core/validation/validator.py` to extend coverage centrally.

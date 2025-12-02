@@ -11,10 +11,16 @@ ELITE is a modular Flask platform with centralized observability baked in. The l
   - JSON file output at `logs/app.log.json` rotated nightly with 4-day retention.
 - **Idempotent:** Middleware and handler registration are guarded to avoid duplicates on reloads.
 
+## Request Cleaning Pipeline
+- **Centralized cleaning:** `core/cleaning/request_cleaner.py` extracts raw payloads, normalizes strings/URLs, and builds `request.cleaned` with diagnostics before any route executes.
+- **Automatic validation:** `core/validation/validator.py` runs in middleware to enforce required fields, registry choices, URL validity, and text limits; failures return HTTP 400 with structured errors.
+- **Canonical data:** Routes and services must read from `request.cleaned` (never `request.form`/`request.get_json`), ensuring every service operates on normalized input.
+- **Learn more:** See `doc/DATA_FLOW.md`, `doc/NORMALIZATION.md`, and `doc/VALIDATION.md` for the full lifecycle and rule tables.
+
 ## Auto URL Normalization
 - **Centralized module:** `core/normalization/url_normalizer.py` automatically normalizes any incoming field ending with `_url` (including `website_url` and `social_url`).
 - **Rules:** Preserves existing `http://`/`https://`, prefixes `https://` when a dot is present or the value starts with `www.`, trims whitespace, and returns raw values that cannot be parsed (invalid characters or missing `netloc`) so validation can surface errors.
-- **Middleware-owned:** Normalization runs in the global `app/logging/middleware.py` before validation so forms and WTForms validators receive already-normalized URLs without per-route imports; JSON payloads are normalized again in `company_registration_service` for API callers.
+- **Middleware-owned:** Normalization runs in the global `app/logging/middleware.py` before validation so forms, JSON payloads, and services all receive already-normalized URLs without any per-route helpers.
 - **Logging:** Logs include the raw payload in `incoming_payload`, the corrected values in `normalized_payload.normalized_values`, and before/after pairs in `normalized_payload.normalized_fields` with breadcrumb `normalization:url_fixed`.
 - **Developer probe:** POST to `/test/normalizer` (via `routes/dev_tools/normalization_test.py`) to observe normalized form/json echoes for manual testing.
 

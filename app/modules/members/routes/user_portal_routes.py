@@ -234,7 +234,7 @@ def offer_feedback(offer_id: int):
     offer = Offer.query.get_or_404(offer_id)
     if offer.company_id is None:
         return jsonify({"error": "Offer is not linked to a company."}), 400
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     action = (payload.get("action") or "like").strip().lower() or "like"
     note = (payload.get("note") or "").strip() or None
     notify_offer_feedback(
@@ -300,7 +300,7 @@ def upgrade_membership():
     if user is None:
         return jsonify({"error": "Unauthorized"}), 401
 
-    payload = request.get_json(silent=True) or {}
+    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     desired_level = payload.get("new_level", "")
     normalized_level = User.normalize_membership_level(desired_level)
     if not normalized_level:

@@ -1,55 +1,25 @@
-# URL Normalization
+# Normalization
 
-Centralized URL normalization runs globally before validation to ensure consistent handling of user-submitted URLs without requiring per-route helpers.
+All inbound request data is normalized once by the framework before any route or service sees it. The pipeline lives in `core/cleaning/request_cleaner.py` and runs inside the global logging middleware.
 
-## Rules
+## Scope & Order
+1. **Raw extraction** – `extract_raw_data(request)` copies JSON, form, querystring, and filtered headers into `request.raw_data`.
+2. **Normalization** – `normalize_data()` trims whitespace, converts empty strings to `None`, and normalizes URL fields.
+3. **Cleaned view** – `build_cleaned_data()` merges normalized values into `request.cleaned` while keeping `__original`, `__normalized`, and `__diagnostics` snapshots for debugging.
+
+## URL Rules
 - Preserve existing `http://` or `https://` schemes.
-- Trim whitespace automatically.
-- If a value starts with `www.` → prefix `https://`.
-- If a value has a dot but no scheme → prefix `https://`.
-- Empty input returns an empty string.
-- If the parsed URL has no `netloc` or contains invalid characters, return the raw input so validation can fail later.
+- Trim surrounding whitespace before processing.
+- If a value starts with `www.` or contains a dot and no scheme, prefix `https://`.
+- Empty input → `None` in `request.cleaned`.
+- If parsing fails (missing `netloc` or invalid characters), keep the original for validation to reject.
 
-## Behavior Table
-| Input | Normalized | Notes |
-| --- | --- | --- |
-| `www.example.com` | `https://www.example.com` | `www.` auto-prefixed |
-| `example.com` | `https://example.com` | dot triggers prefix |
-| `https://example.com` | `https://example.com` | untouched |
-| `http://example.com` | `http://example.com` | scheme preserved |
-| `  ftp://example.com  ` | `ftp://example.com` | whitespace trimmed, unsupported scheme left as-is for validation |
-| `bad url` | `bad url` | invalid characters keep raw for later rejection |
+## Breadcrumbs & Logging
+- Breadcrumbs: `cleaning:raw_extracted`, `cleaning:url_normalized`, `cleaning:cleaned_data_built`.
+- Structured log payload includes `incoming_payload` (raw), `normalized_payload`, `cleaned_payload`, and a `normalization` array of field-level deltas.
+- `request.cleaned` is the canonical source for all downstream code; metadata keys prefixed with `__` hold diagnostics.
 
-## Architecture (ASCII)
-```
-[Client]
-   |
-   v
-[Flask Request]
-   |
-   v
-[Logging Middleware]
-   |- capture incoming_payload (raw)
-   |- normalize form *_url fields
-   |- record normalization breadcrumb + deltas
-   |- capture normalized_payload (post-normalization)
-   v
-[Services (JSON + forms)]
-   |- additional JSON normalization for *_url payloads
-   v
-[Validation]
-   |
-   v
-[Structured Logs + Responses]
-```
-
-## Logging & Tracking
-- `incoming_payload`: shows raw URL values before normalization.
-- `normalized_payload`: shows post-normalization values plus `normalized_fields` as `[raw, normalized]` pairs for quick inspection.
-- `normalization`: array of per-field deltas (`field`, `from`, `to`).
-- Breadcrumb `normalization:url_fixed` is added when any field changes.
-
-## Developer Usage
-- Normalization is centralized in `core/normalization/url_normalizer.py` and wired via `app/logging/middleware.py` (forms) plus `company_registration_service` (JSON payloads).
-- Forms receive normalized data automatically because the middleware updates `request.form` before validators run.
-- Test quickly with `curl -X POST /test/normalizer -d 'social_url=www.example.com'` to see the normalized echo.
+## Developer Notes
+- No per-route imports are required; the middleware assigns `request.cleaned`, `request.raw_data`, and `request.normalized_data` automatically.
+- Normalization applies to any field ending with `_url` (including `website_url` and `social_url`).
+- Use `/test/normalizer` to view raw vs normalized echoes for manual verification.

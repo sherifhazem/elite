@@ -53,9 +53,10 @@ def add_offer() -> str:
     """Create a new offer tied to a company and persist it in the database."""
 
     if request.method == "POST":
-        title = request.form.get("title", "").strip()
-        discount_raw = request.form.get("base_discount", "0").strip()
-        valid_until_raw = request.form.get("valid_until", "").strip()
+        cleaned = getattr(request, "cleaned", {}) or {}
+        title = (cleaned.get("title") or "").strip()
+        discount_raw = (cleaned.get("base_discount") or "0").strip()
+        valid_until_raw = (cleaned.get("valid_until") or "").strip()
 
         if not title or not discount_raw:
             flash("Title and base discount are required.", "danger")
@@ -83,7 +84,7 @@ def add_offer() -> str:
         db.session.add(offer)
         db.session.commit()
 
-        if request.form.get("send_notifications"):
+        if cleaned.get("send_notifications"):
             broadcast_new_offer(offer.id)
 
         flash(f"Offer '{title}' created successfully.", "success")
@@ -105,9 +106,10 @@ def manage_offer(offer_id: int) -> str:
 
     offer = Offer.query.get_or_404(offer_id)
     if request.method == "POST":
-        title = request.form.get("title", "").strip()
-        discount_raw = request.form.get("base_discount", "0").strip()
-        valid_until_raw = request.form.get("valid_until", "").strip()
+        cleaned = getattr(request, "cleaned", {}) or {}
+        title = (cleaned.get("title") or "").strip()
+        discount_raw = (cleaned.get("base_discount") or "0").strip()
+        valid_until_raw = (cleaned.get("valid_until") or "").strip()
 
         if not title or not discount_raw:
             flash("Title and base discount are required.", "danger")
@@ -132,7 +134,7 @@ def manage_offer(offer_id: int) -> str:
         offer.title = title
 
         db.session.commit()
-        if request.form.get("send_notifications") and offer.base_discount != original_base_discount:
+        if cleaned.get("send_notifications") and offer.base_discount != original_base_discount:
             broadcast_new_offer(offer.id)
 
         flash(f"Offer '{title}' updated successfully.", "success")
@@ -155,7 +157,8 @@ def edit_offer_discount(offer_id: int) -> str:
     offer = Offer.query.get_or_404(offer_id)
 
     if request.method == "POST":
-        discount_raw = request.form.get("base_discount", "").strip()
+        cleaned = getattr(request, "cleaned", {}) or {}
+        discount_raw = (cleaned.get("base_discount") or "").strip()
 
         try:
             base_discount = float(discount_raw)
@@ -171,7 +174,7 @@ def edit_offer_discount(offer_id: int) -> str:
         offer.base_discount = base_discount
         db.session.commit()
 
-        if request.form.get("send_notifications") and offer.base_discount != original_base_discount:
+        if cleaned.get("send_notifications") and offer.base_discount != original_base_discount:
             broadcast_new_offer(offer.id)
 
         flash(

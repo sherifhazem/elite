@@ -8,29 +8,25 @@ from time import perf_counter
 from uuid import uuid4
 
 from flask import Flask, Response, g, jsonify, request
-from werkzeug.datastructures import MultiDict
 from werkzeug.exceptions import HTTPException
 
 from .context import build_logging_context
 from .enrichers import (
-    capture_incoming_request,
     capture_outgoing_response,
     extract_validation_state,
     serialize_exception,
     snapshot_payload,
 )
 from .logger import get_logger
-from core.normalization import normalize_url
+from .sanitizers import sanitize_payload
+from core.cleaning.request_cleaner import (
+    build_cleaned_data,
+    extract_raw_data,
+    normalize_data,
+)
+from core.validation.validator import validate
 
 logger = get_logger()
-
-
-_URL_FIELDS = {"website_url", "social_url"}
-
-
-def _should_normalize(key: str) -> bool:
-    normalized_key = key.lower()
-    return normalized_key in _URL_FIELDS or normalized_key.endswith("_url")
 
 
 def _merge_validation(existing: dict[str, object], extracted: dict[str, object]) -> dict[str, object]:
@@ -46,42 +42,6 @@ def _merge_validation(existing: dict[str, object], extracted: dict[str, object])
         merged[key] = merged.get(key) or value
 
     return merged
-
-
-def _normalize_form_fields() -> tuple[dict[str, list[str]], list[dict[str, str]], dict[str, list[list[str]]]]:
-    """Normalize URL fields inside form submissions and return the updated mapping."""
-
-    normalized_form: dict[str, list[str]] = {}
-    normalization_events: list[dict[str, str]] = []
-    normalized_fields: dict[str, list[list[str]]] = {}
-
-    if not request.form:
-        return normalized_form, normalization_events, normalized_fields
-
-    mutable_form = MultiDict()
-    for key, values in request.form.lists():
-        normalized_values: list[str] = []
-        field_pairs: list[list[str]] = []
-        for value in values:
-            normalized_value = value
-            if _should_normalize(key):
-                normalized_value = normalize_url(value)
-                if normalized_value != value:
-                    normalization_events.append({"field": key, "from": value, "to": normalized_value})
-                if value or normalized_value:
-                    field_pairs.append([value, normalized_value])
-            normalized_values.append(normalized_value)
-        for normalized_value in normalized_values:
-            mutable_form.add(key, normalized_value)
-        if _should_normalize(key):
-            normalized_form[key] = normalized_values
-            if field_pairs:
-                normalized_fields[key] = field_pairs
-
-    if normalization_events:
-        request._cached_form = mutable_form
-
-    return normalized_form, normalization_events, normalized_fields
 
 
 def _set_response_ids(response: Response, *, request_id: str, trace_id: str, parent_id: str | None) -> None:
@@ -107,24 +67,44 @@ def register_logging_middleware(app: Flask) -> None:
         ctx.add_breadcrumb("before_request:start")
         middleware_t0 = perf_counter()
 
-        raw_payload = capture_incoming_request()
-        normalized_form, normalization_events, normalized_fields = _normalize_form_fields()
-        if normalization_events:
-            ctx.add_breadcrumb("normalization:url_fixed")
-            ctx.normalization.extend(normalization_events)
+        raw_payload = extract_raw_data(request)
+        ctx.add_breadcrumb("cleaning:raw_extracted")
 
-        normalized_payload = capture_incoming_request()
-        if normalized_form:
-            normalized_payload.setdefault("normalized_values", {})
-            normalized_payload["normalized_values"].update(normalized_form)
-        if normalized_fields:
-            normalized_payload.setdefault("normalized_fields", {})
-            normalized_payload["normalized_fields"].update(normalized_fields)
+        normalized_payload = normalize_data(raw_payload)
+        ctx.add_breadcrumb("cleaning:url_normalized")
+        if normalized_payload.get("normalization"):
+            ctx.normalization.extend(normalized_payload.get("normalization", []))
 
-        ctx.incoming_payload.update(raw_payload)
-        ctx.normalized_payload.update(normalized_payload)
+        cleaned_payload = build_cleaned_data(raw_payload, normalized_payload)
+        ctx.add_breadcrumb("cleaning:cleaned_data_built")
+
+        request.raw_data = raw_payload
+        request.normalized_data = normalized_payload
+        request.cleaned = cleaned_payload
+
+        ctx.incoming_payload.update(sanitize_payload(raw_payload))
+        ctx.normalized_payload.update(sanitize_payload(normalized_payload))
+        ctx.cleaned_payload.update(sanitize_payload(cleaned_payload))
+
+        validation_info = validate(normalized_payload)
+        request.validation_info = validation_info
+        if validation_info:
+            ctx.validation = validation_info
+
         ctx.middleware_pre_ms += (perf_counter() - middleware_t0) * 1000
         ctx.route_started_at = perf_counter()
+
+        if validation_info and not validation_info.get("is_valid", True):
+            ctx.add_breadcrumb("validation:detected_failure")
+            response = _build_error_response(
+                {
+                    "message": "Invalid request payload.",
+                    "errors": validation_info.get("errors") or validation_info,
+                    "request_id": getattr(g, "request_id", None),
+                },
+                HTTPStatus.BAD_REQUEST,
+            )
+            return response
 
     @app.after_request
     def _finalize_logging(response: Response):
@@ -185,8 +165,12 @@ def register_logging_middleware(app: Flask) -> None:
         return response, status
 
 
-def _build_error_response(message: str, status: int) -> Response:
-    payload = {"message": message, "request_id": getattr(g, "request_id", None)}
+def _build_error_response(message: str | dict[str, object], status: int) -> Response:
+    if isinstance(message, dict):
+        payload = {**message}
+    else:
+        payload = {"message": message}
+    payload.setdefault("request_id", getattr(g, "request_id", None))
     response = jsonify(payload)
     response.status_code = int(status)
     return response

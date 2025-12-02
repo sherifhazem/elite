@@ -99,10 +99,8 @@ def _resolve_welcome_notifier() -> Optional[WelcomeNotifier]:
 def _extract_json() -> Dict[str, str]:
     """Return a JSON payload from the current request or an empty dict."""
 
-    data = request.get_json(silent=True)
-    if isinstance(data, dict):
-        return data
-    return {}
+    cleaned = getattr(request, "cleaned", {}) or {}
+    return {k: v for k, v in cleaned.items() if not k.startswith("__")}
 
 
 def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, int]:
@@ -192,17 +190,18 @@ def _register_company_from_form(
     """Normalize HTML form submissions for company registration."""
 
     active_form = form or CompanyRegistrationForm()
+    cleaned = getattr(request, "cleaned", {}) or {}
     return {
-        "company_name": (active_form.company_name.data or "").strip(),
-        "description": (active_form.description.data or "").strip() or None,
-        "email": (active_form.email.data or "").strip().lower(),
-        "password": active_form.password.data,
+        "company_name": (cleaned.get("company_name") or active_form.company_name.data or "").strip(),
+        "description": (cleaned.get("description") or active_form.description.data or "").strip() or None,
+        "email": (cleaned.get("email") or active_form.email.data or "").strip().lower(),
+        "password": cleaned.get("password") or active_form.password.data,
         "username": "",
-        "phone_number": (active_form.phone_number.data or "").strip(),
-        "industry": (active_form.industry.data or "").strip(),
-        "city": (active_form.city.data or "").strip(),
-        "website_url": (active_form.website_url.data or "").strip(),
-        "social_url": (active_form.social_url.data or "").strip(),
+        "phone_number": (cleaned.get("phone_number") or active_form.phone_number.data or "").strip(),
+        "industry": (cleaned.get("industry") or active_form.industry.data or "").strip(),
+        "city": (cleaned.get("city") or active_form.city.data or "").strip(),
+        "website_url": (cleaned.get("website_url") or active_form.website_url.data or "").strip(),
+        "social_url": (cleaned.get("social_url") or active_form.social_url.data or "").strip(),
     }
 
 
@@ -213,10 +212,11 @@ def register_member():
     if request.method == "GET":
         return render_template("members/auth/register.html")
 
-    payload = request.get_json(silent=True) or {
-        "username": (request.form.get("username") or "").strip(),
-        "email": (request.form.get("email") or "").strip().lower(),
-        "password": request.form.get("password"),
+    cleaned = getattr(request, "cleaned", {}) or {}
+    payload = {
+        "username": (cleaned.get("username") or "").strip(),
+        "email": (cleaned.get("email") or "").strip().lower(),
+        "password": cleaned.get("password"),
     }
     response, status = _register_member_from_payload(payload)
 
@@ -252,7 +252,7 @@ def company_register_page():
         return render_template("members/auth/register_company.html", form=form)
 
     if request.is_json:
-        payload = request.get_json(silent=True) or {}
+        payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
         result, status = register_company_account(payload)
         return jsonify(result), status
 
@@ -407,7 +407,7 @@ def verify_email(token: str):
 def request_password_reset():
     """Send a password reset email containing a one-time token link."""
 
-    data = request.get_json() or {}
+    data = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     email = data.get("email")
     User = _get_user_model()
     user = User.query.filter_by(email=email).first()
@@ -439,7 +439,7 @@ def reset_password(token: str):
     if not email:
         return jsonify({"message": "Invalid or expired token"}), HTTPStatus.BAD_REQUEST
 
-    data = request.get_json() or {}
+    data = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
     password = data.get("password")
     if not password:
         return (

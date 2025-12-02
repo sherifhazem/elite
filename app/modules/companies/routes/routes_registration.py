@@ -61,8 +61,9 @@ def complete_registration(company_id: int):
     )
 
     if request.method == "POST":
-        company.name = (request.form.get("name") or company.name or "").strip()
-        new_contact_number = (request.form.get("contact_number") or "").strip()
+        cleaned = getattr(request, "cleaned", {}) or {}
+        company.name = (cleaned.get("name") or company.name or "").strip()
+        new_contact_number = (cleaned.get("contact_number") or "").strip()
 
         if hasattr(company, "contact_number"):
             company.contact_number = new_contact_number

@@ -98,7 +98,8 @@ def offer_create():
     """Persist a new offer and optionally broadcast notifications."""
 
     company = _current_company()
-    data = request.get_json() if request.is_json else request.form
+    cleaned = getattr(request, "cleaned", {}) or {}
+    data = {k: v for k, v in cleaned.items() if not k.startswith("__")}
     payload, error = _parse_offer_payload(data)
     if error:
         if request.is_json:
@@ -156,7 +157,8 @@ def offer_update(offer_id: int):
     company = _current_company()
     offer = Offer.query.filter_by(company_id=company.id, id=offer_id).first_or_404()
 
-    data = request.get_json() if request.is_json else request.form
+    cleaned = getattr(request, "cleaned", {}) or {}
+    data = {k: v for k, v in cleaned.items() if not k.startswith("__")}
     payload, error = _parse_offer_payload(data)
     if error:
         if request.is_json:

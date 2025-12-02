@@ -23,7 +23,8 @@ def company_settings():
     company = _current_company()
 
     if request.method == "POST":
-        data = request.get_json() if request.is_json else request.form
+        cleaned = getattr(request, "cleaned", {}) or {}
+        data = {k: v for k, v in cleaned.items() if not k.startswith("__")}
 
         def _as_bool(raw_value) -> bool:
             if isinstance(raw_value, bool):
