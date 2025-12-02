@@ -134,10 +134,10 @@ A more organized domain-oriented model structure may be introduced later, but **
 The project uses a minimal, centralized observability system.
 
 ### Centralized Logging Only
-- Activated from `app/__init__.py` via the central middleware hooks.
+- Activated from `app/__init__.py` via `initialize_logging(app)` and the central middleware hooks.
 - No logging code inside modules (routes/services).
-- A simple JSON logger defined in `app/core/central_logger.py` that writes to `/logs/app.log.json`.
-- A request middleware in `app/core/central_middleware.py` that handles request start/end timing and unhandled errors.
+- Central logger defined in `app/logging/logger.py` that writes JSON to `logs/app.log.json` with daily rotation (4-day retention).
+- Request middleware in `app/core/central_middleware.py` handles request start/end timing and unhandled errors.
 - No distributed instrumentation in JS or Python.
 
 ### Observability Responsibilities:

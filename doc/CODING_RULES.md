@@ -184,11 +184,11 @@ Not from `app`.
 ### 9.2 Source of Truth
 All observability logic must be inside:
 
-app/core/central_logger.py app/core/central_middleware.py
+app/logging/logger.py app/core/central_middleware.py
 
 And activated **only** from:
 
-app/init.py
+app/__init__.py
 
 ---
 

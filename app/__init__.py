@@ -20,8 +20,8 @@ from werkzeug.middleware.shared_data import SharedDataMiddleware
 
 from .config import Config
 from app.core.database import db
-from app.core.central_logger import logger as central_logger
 from app.core.central_middleware import register_central_middleware
+from app.logging.logger import initialize_logging
 
 login_manager = LoginManager()
 csrf = CSRFProtect()
@@ -64,6 +64,8 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app = Flask(__name__, template_folder="../core/templates", static_folder="../core/static")
     app.config.from_object(config_class)
     app.secret_key = app.config["SECRET_KEY"]
+
+    initialize_logging(app)
 
     app.jinja_loader = ChoiceLoader(
         [

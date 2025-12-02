@@ -139,10 +139,10 @@ A service inside `companies` may not call a service inside `members`.
 
 AI agents must strictly follow:
 
-### ✔ Logging is centralized  
+### ✔ Logging is centralized
 Only inside:
 
-app/core/central_logger.py app/core/central_middleware.py
+app/logging/logger.py app/core/central_middleware.py
 
 ### ❌ No logging inside:
 - modules  
@@ -153,7 +153,7 @@ app/core/central_logger.py app/core/central_middleware.py
 
 ### ✔ Logging is activated only in:
 
-app/init.py
+app/__init__.py
 
 Any attempt to add logging elsewhere is forbidden unless explicitly requested.
 
