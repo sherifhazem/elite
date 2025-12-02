@@ -19,7 +19,10 @@ from app.modules.companies.forms.company_registration_form import (
 )
 from app.models import Company, User
 from app.services.mailer import send_email
-from app.modules.members.services.notifications import push_admin_notification, queue_notification
+from app.modules.members.services.member_notifications_service import (
+    push_admin_notification,
+    queue_notification,
+)
 
 
 def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object], HTTPStatus]:

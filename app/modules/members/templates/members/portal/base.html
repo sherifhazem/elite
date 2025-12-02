@@ -202,7 +202,7 @@
             <nav class="app-nav" aria-label="Primary navigation">
                 <a
                     class="app-nav__item {% if active_nav == 'home' %}app-nav__item--active{% endif %}"
-                    href="{{ url_for('portal.home') }}"
+                    href="{{ url_for('portal.member_portal_home') }}"
                     data-nav-link
                     data-nav-target="home"
                 >
@@ -212,7 +212,7 @@
 
                 <a
                     class="app-nav__item {% if active_nav == 'offers' %}app-nav__item--active{% endif %}"
-                    href="{{ url_for('portal.offers') }}"
+                    href="{{ url_for('portal.member_portal_offers') }}"
                     data-nav-link
                     data-nav-target="offers"
                 >
@@ -222,7 +222,7 @@
 
                 <a
                     class="app-nav__item {% if active_nav == 'profile' %}app-nav__item--active{% endif %}"
-                    href="{{ url_for('portal.profile') }}"
+                    href="{{ url_for('portal.member_portal_profile') }}"
                     data-nav-link
                     data-nav-target="profile"
                 >
@@ -232,7 +232,7 @@
 
                 <a
                     class="app-nav__item {% if active_nav == 'notifications' %}app-nav__item--active{% endif %}"
-                    href="{{ url_for('portal.notifications') }}"
+                    href="{{ url_for('portal.member_portal_notifications') }}"
                     data-nav-link
                     data-nav-target="notifications"
                 >

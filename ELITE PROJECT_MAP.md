@@ -53,22 +53,21 @@ admin.activity_log	GET	سجل النشاطات الإدارية	dashboard/activi
 
 url_for('admin.<endpoint_name>')
 
-🧭 Endpoints في بوابة الشركة (Company Portal)
-Endpoint	HTTP	المخرجات	المصدر
-company_portal.index	GET	Redirect → dashboard	app/company/routes/routes_dashboard.py
-company_portal.dashboard	GET	company/dashboard.html	app/company/routes/routes_dashboard.py
-company_portal.complete_registration	GET/POST	company/complete_registration.html	app/company/routes/routes_registration.py
-company_portal.list_offers	GET	company/offers.html	app/company/routes/routes_offers.py
-company_portal.offer_new	GET	company/offer_form.html	app/company/routes/routes_offers.py
-company_portal.offer_create	POST	JSON / redirect	app/company/routes/routes_offers.py
-company_portal.offer_edit	GET	company/offer_form.html	app/company/routes/routes_offers.py
-company_portal.offer_update	POST/PUT	JSON / redirect	app/company/routes/routes_offers.py
-company_portal.offer_delete	POST/DELETE	JSON / redirect	app/company/routes/routes_offers.py
-company_portal.redemptions	GET	company/redemptions.html	app/company/routes/routes_redemptions.py
-company_portal.redemptions_data	GET	JSON	app/company/routes/routes_redemptions.py
-company_portal.verify_redemption	POST	JSON	app/company/routes/routes_redemptions.py
-company_portal.confirm_redemption	POST	JSON	app/company/routes/routes_redemptions.py
-company_portal.settings	GET/POST	company/settings.html	app/company/routes/routes_settings.py
+Endpoint        HTTP    المخرجات        المصدر
+company_portal.company_dashboard_redirect    GET     Redirect → dashboard    app/company/routes/routes_dashboard.py
+company_portal.company_dashboard_overview        GET     company/dashboard_overview.html  app/company/routes/routes_dashboard.py
+company_portal.complete_registration    GET/POST        company/complete_registration.html      app/company/routes/routes_registration.py
+company_portal.company_offers_list      GET     company/offers_list.html     app/company/routes/routes_offers.py
+company_portal.offer_new        GET     company/offer_form.html app/company/routes/routes_offers.py
+company_portal.offer_create     POST    JSON / redirect app/company/routes/routes_offers.py
+company_portal.offer_edit       GET     company/offer_form.html app/company/routes/routes_offers.py
+company_portal.offer_update     POST/PUT        JSON / redirect app/company/routes/routes_offers.py
+company_portal.offer_delete     POST/DELETE     JSON / redirect app/company/routes/routes_offers.py
+company_portal.company_redemptions_history      GET     company/redemptions_history.html        app/company/routes/routes_redemptions.py
+company_portal.company_redemptions_data GET     JSON    app/company/routes/routes_redemptions.py
+company_portal.verify_redemption        POST    JSON    app/company/routes/routes_redemptions.py
+company_portal.confirm_redemption       POST    JSON    app/company/routes/routes_redemptions.py
+company_portal.company_settings GET/POST        company/company_settings.html   app/company/routes/routes_settings.py
 
 ✅ جميعها محمية بـ:
 
@@ -79,10 +78,10 @@ company_portal.settings	GET/POST	company/settings.html	app/company/routes/routes
 
 
 👥 Endpoints في واجهة المستخدم (Member Portal)
-Endpoint	HTTP	القالب
-portal.home	GET	portal/home.html
-portal.profile	GET/POST	portal/profile.html
-portal.my_offers	GET	portal/my_offers.html
+Endpoint        HTTP    القالب
+portal.member_portal_home     GET     portal/home.html
+portal.member_portal_profile  GET/POST        portal/profile.html
+portal.member_portal_offers        GET     portal/offers.html
 🔐 نظام الصلاحيات والأمان
 Decorator	الموقع	الغرض
 @admin_required	app/services/roles.py	تقييد الوصول لمسارات الأدمن فقط
@@ -102,11 +101,11 @@ Notification	app/models/notification.py	user_id
 Permission	app/models/permission.py	users (many-to-many)
 🛠️ الخدمات الداخلية (Services)
 ملف	الوظيفة
-app/services/mailer.py	إرسال البريد (تأكيد التسجيل، استعادة كلمة المرور)
-app/services/notifications.py	إدارة إشعارات المستخدمين — يحتوي الآن على:
-get_unread_count(user_id) و get_notifications_for_user(user_id)	
-app/services/company_registration.py	تسجيل الشركات ومراجعتها
-app/services/roles.py	إدارة الديكوريتر admin_required و company_required
+app/services/mailer.py  إرسال البريد (تأكيد التسجيل، استعادة كلمة المرور)
+app/modules/members/services/member_notifications_service.py   إدارة إشعارات المستخدمين — يحتوي الآن على:
+get_unread_count(user_id) و get_notifications_for_user(user_id)
+app/modules/companies/services/company_registration_service.py    تسجيل الشركات ومراجعتها
+app/services/access_control.py   إدارة الديكوريتر admin_required و company_required
 🎨 القوالب (Templates)
 🔹 القالب الأساسي
 

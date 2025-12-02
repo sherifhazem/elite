@@ -24,7 +24,9 @@ from app.models import User, Company, Offer, ActivityLog
 from app.services.access_control import admin_required
 
 from app.services import email_service
-from app.modules.members.services.notifications import send_admin_broadcast_notifications
+from app.modules.members.services.member_notifications_service import (
+    send_admin_broadcast_notifications,
+)
 from .. import admin
 
 CommunicationLogEntry = Dict[str, object]

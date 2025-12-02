@@ -12,9 +12,9 @@ from . import company_portal
 from app.utils.company_context import _ensure_company, _current_company
 
 
-@company_portal.route("/settings", methods=["GET", "POST"], endpoint="settings")
+@company_portal.route("/settings", methods=["GET", "POST"], endpoint="company_settings")
 @require_role("company")
-def settings():
+def company_settings():
     """Display and persist company profile metadata."""
 
     company = _current_company()
@@ -69,7 +69,7 @@ def settings():
                     HTTPStatus.OK,
                 )
             flash(message, "warning")
-            return redirect(url_for("company_portal.settings"))
+            return redirect(url_for("company_portal.company_settings"))
 
         company.description = description or None
         company.logo_url = logo_url or None
@@ -83,10 +83,10 @@ def settings():
         if request.is_json:
             return jsonify({"ok": True, "message": success_message})
         flash(success_message, "success")
-        return redirect(url_for("company_portal.settings"))
+        return redirect(url_for("company_portal.company_settings"))
 
     return render_template(
-        "companies/settings.html",
+        "companies/company_settings.html",
         company=company,
         preferences=company.notification_settings(),
     )

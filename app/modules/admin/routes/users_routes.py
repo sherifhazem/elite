@@ -22,7 +22,9 @@ from app.models import User, Company, Offer, ActivityLog
 from app.services.access_control import admin_required
 
 from app.services.mailer import send_welcome_email
-from app.modules.members.services.notifications import ensure_welcome_notification
+from app.modules.members.services.member_notifications_service import (
+    ensure_welcome_notification,
+)
 from .. import admin
 
 

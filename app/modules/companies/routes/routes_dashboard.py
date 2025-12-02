@@ -13,17 +13,17 @@ from . import company_portal
 from app.utils.company_context import _ensure_company, _current_company
 
 
-@company_portal.route("/", endpoint="index")
+@company_portal.route("/", endpoint="company_dashboard_redirect")
 @require_role("company")
-def index() -> str:
-    """Redirect root portal requests to the dashboard view."""
+def company_dashboard_redirect() -> str:
+    """Redirect root portal requests to the dashboard overview view."""
 
-    return redirect(url_for("company_portal.dashboard"))
+    return redirect(url_for("company_portal.company_dashboard_overview"))
 
 
-@company_portal.route("/dashboard", endpoint="dashboard")
+@company_portal.route("/dashboard", endpoint="company_dashboard_overview")
 @require_role("company")
-def dashboard() -> str:
+def company_dashboard_overview() -> str:
     """Render the overview cards and latest redemption activity."""
 
     company = _current_company()
@@ -60,7 +60,7 @@ def dashboard() -> str:
     )
 
     return render_template(
-        "companies/dashboard.html",
+        "companies/dashboard_overview.html",
         company=company,
         active_offers=active_offers,
         total_redeemed=total_redeemed,

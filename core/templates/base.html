@@ -42,7 +42,7 @@
                         {% endif %}
                         {% if current_user and (current_user.has_role('company') or current_user.is_superadmin) %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('company_portal.dashboard') }}">Company Portal</a>
+                                <a class="nav-link" href="{{ url_for('company_portal.company_dashboard_overview') }}">Company Portal</a>
                             </li>
                         {% endif %}
                         <li class="nav-item">

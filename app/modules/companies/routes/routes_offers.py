@@ -10,7 +10,7 @@ from flask import flash, jsonify, redirect, render_template, request, url_for
 
 from app.core.database import db
 from app.models import Offer
-from app.modules.members.services.notifications import (
+from app.modules.members.services.member_notifications_service import (
     broadcast_new_offer,
     fetch_offer_feedback_counts,
 )
@@ -56,9 +56,9 @@ def _parse_offer_payload(data: Dict[str, str]) -> Tuple[Dict[str, object], str |
     return payload, None
 
 
-@company_portal.route("/offers", methods=["GET"], endpoint="list_offers")
+@company_portal.route("/offers", methods=["GET"], endpoint="company_offers_list")
 @require_role("company")
-def list_offers() -> str:
+def company_offers_list() -> str:
     """Display the offer management table scoped to the current company."""
 
     company = _current_company()
@@ -69,7 +69,7 @@ def list_offers() -> str:
     )
     feedback_totals = fetch_offer_feedback_counts(company.id)
     return render_template(
-        "companies/offers.html",
+        "companies/offers_list.html",
         company=company,
         offers=offers,
         now=datetime.utcnow(),
@@ -104,7 +104,7 @@ def offer_create():
         if request.is_json:
             return jsonify({"ok": False, "message": error}), HTTPStatus.BAD_REQUEST
         flash(error, "danger")
-        return redirect(url_for("company_portal.list_offers"))
+        return redirect(url_for("company_portal.company_offers_list"))
 
     offer = Offer(
         title=payload["title"],
@@ -122,7 +122,7 @@ def offer_create():
     if request.is_json:
         return jsonify({"ok": True, "offer_id": offer.id})
     flash("Offer created successfully.", "success")
-    return redirect(url_for("company_portal.list_offers"))
+    return redirect(url_for("company_portal.company_offers_list"))
 
 
 @company_portal.route(
@@ -162,7 +162,7 @@ def offer_update(offer_id: int):
         if request.is_json:
             return jsonify({"ok": False, "message": error}), HTTPStatus.BAD_REQUEST
         flash(error, "danger")
-        return redirect(url_for("company_portal.list_offers"))
+        return redirect(url_for("company_portal.company_offers_list"))
 
     offer.title = payload["title"]
     offer.description = payload["description"]
@@ -176,7 +176,7 @@ def offer_update(offer_id: int):
     if request.is_json:
         return jsonify({"ok": True, "offer_id": offer.id})
     flash("Offer updated successfully.", "success")
-    return redirect(url_for("company_portal.list_offers"))
+    return redirect(url_for("company_portal.company_offers_list"))
 
 
 @company_portal.route(
@@ -196,4 +196,4 @@ def offer_delete(offer_id: int):
     if request.is_json:
         return jsonify({"ok": True})
     flash("Offer removed successfully.", "success")
-    return redirect(url_for("company_portal.list_offers"))
+    return redirect(url_for("company_portal.company_offers_list"))

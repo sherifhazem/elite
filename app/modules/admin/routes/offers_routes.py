@@ -20,7 +20,9 @@ from app.core.database import db
 from app.models import User, Company, Offer, ActivityLog
 from app.services.access_control import admin_required
 
-from app.modules.members.services.notifications import broadcast_new_offer
+from app.modules.members.services.member_notifications_service import (
+    broadcast_new_offer,
+)
 from .. import admin
 
 

@@ -36,7 +36,7 @@ WELCOME_NOTIFICATION_TEMPLATES: Dict[str, Dict[str, Optional[str]]] = {
             "استمتع بالعروض المميزة والخصومات المخصصة لمستواك منذ لحظة تسجيلك."
         ),
         "type": "welcome_user",
-        "link_endpoint": "portal.offers",
+        "link_endpoint": "portal.member_portal_offers",
     },
     "company": {
         "title": "مرحبًا بكم في ELITE للشركات",
@@ -45,7 +45,7 @@ WELCOME_NOTIFICATION_TEMPLATES: Dict[str, Dict[str, Optional[str]]] = {
             "يمكنكم الآن إدارة عروضكم ومتابعة تفاعلات الأعضاء بسهولة من لوحة التحكم الخاصة بكم."
         ),
         "type": "welcome_company",
-        "link_endpoint": "company_portal.dashboard",
+        "link_endpoint": "company_portal.company_dashboard_overview",
     },
     "staff": {
         "title": "👋 مرحبًا بك في فريق ELITE الإداري!",
@@ -243,7 +243,7 @@ def notify_membership_upgrade(user_id: int, old_level: str, new_level: str):
         type="membership_upgrade",
         title=title,
         message=message,
-        link_url=url_for("portal.profile"),
+        link_url=url_for("portal.member_portal_profile"),
         metadata=metadata,
     )
 
@@ -306,7 +306,7 @@ def notify_offer_redemption_activity(
             type="offer_redeemed",
             title="تم تفعيل العرض",
             message=f"تم إنشاء رمز {redemption.redemption_code} لعرضك.",
-            link_url=url_for("portal.profile"),
+            link_url=url_for("portal.member_portal_profile"),
             metadata=metadata,
         )
     except Exception:  # pragma: no cover - defensive notification guard
@@ -321,7 +321,7 @@ def notify_offer_redemption_activity(
                 message=(
                     f"العضو #{redemption.user_id} أنشأ كود {redemption.redemption_code} للعرض"
                 ),
-                link_url=url_for("company_portal.redemptions"),
+                link_url=url_for("company_portal.company_redemptions_history"),
                 metadata=metadata,
             )
         except Exception:  # pragma: no cover - defensive notification guard
@@ -354,7 +354,7 @@ def notify_offer_feedback(
                 type="offer_feedback",
                 title="تفاعل جديد مع العرض",
                 message="أحد الأعضاء تفاعل مع أحد عروضك.",
-                link_url=url_for("company_portal.list_offers"),
+                link_url=url_for("company_portal.company_offers_list"),
                 metadata=metadata,
             )
         except Exception:  # pragma: no cover - defensive notification guard
@@ -434,7 +434,7 @@ def broadcast_offer_task(offer_id: int, batch_size: int = 100):
                 message=(
                     f"{offer.title} now includes at least {offer.base_discount:.2f}% off."
                 ),
-                link_url=url_for("portal.offers"),
+                link_url=url_for("portal.member_portal_offers"),
                 metadata_json={
                     "offer_id": offer.id,
                     "membership_level": user.membership_level,

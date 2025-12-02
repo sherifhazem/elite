@@ -31,9 +31,13 @@ from flask_login import current_user
 from sqlalchemy import or_
 
 from flask_sqlalchemy import SQLAlchemy
-from app.modules.companies.services.company_registration import register_company_account
+from app.modules.companies.services.company_registration_service import (
+    register_company_account,
+)
 from app.services.mailer import send_email, send_member_welcome_email
-from app.modules.members.services.notifications import send_welcome_notification
+from app.modules.members.services.member_notifications_service import (
+    send_welcome_notification,
+)
 from app.modules.companies.forms.company_registration_form import CompanyRegistrationForm
 from .utils import (
     confirm_token,
@@ -80,7 +84,9 @@ def _resolve_welcome_notifier() -> Optional[WelcomeNotifier]:
     """Return the welcome notification dispatcher when available."""
 
     try:  # pragma: no cover - optional dependency graph in some deployments
-        from app.modules.members.services.notifications import send_welcome_notification
+        from app.modules.members.services.member_notifications_service import (
+            send_welcome_notification,
+        )
     except Exception:
         return None
 
@@ -145,7 +151,7 @@ def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, in
         "is_active": user.is_active,
         "membership_level": user.membership_level,
         "token": token,
-        "redirect_url": url_for("portal.home"),
+        "redirect_url": url_for("portal.member_portal_home"),
         "message": "User registered successfully.",
     }
     return jsonify(response), HTTPStatus.CREATED
@@ -217,7 +223,7 @@ def register_member():
     if request.accept_mimetypes.accept_html and not request.is_json:
         if status == HTTPStatus.CREATED:
             data = response.get_json() if hasattr(response, "get_json") else None
-            target = (data or {}).get("redirect_url") or url_for("portal.home")
+            target = (data or {}).get("redirect_url") or url_for("portal.member_portal_home")
             return redirect(target)
         return redirect(url_for("auth.register_member"))
 
@@ -298,11 +304,11 @@ def api_login() -> tuple:
 
     token = create_token(user.id)
     if user.role == "company":
-        redirect_url = url_for("company_portal.dashboard")
+        redirect_url = url_for("company_portal.company_dashboard_overview")
     elif user.role in {"admin", "superadmin"}:
         redirect_url = url_for("admin.dashboard_home")
     else:
-        redirect_url = url_for("portal.home")
+        redirect_url = url_for("portal.member_portal_home")
     return (
         jsonify(
             {

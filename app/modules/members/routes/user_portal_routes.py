@@ -16,12 +16,17 @@ from flask import Blueprint, Response, jsonify, redirect, render_template, reque
 from app.core.database import db
 from app.models import Notification, Offer, User
 from app.modules.members.auth.utils import get_user_from_token
-from app.modules.members.services.notifications import (
+from app.modules.members.services.member_notifications_service import (
     notify_membership_upgrade,
     notify_offer_feedback,
 )
-from app.modules.companies.services.offers import get_company_brief, get_portal_offers_with_company
-from app.modules.members.services.redemption import list_user_redemptions_with_context
+from app.modules.companies.services.company_offers_service import (
+    get_company_brief,
+    get_portal_offers_with_company,
+)
+from app.modules.members.services.member_redemption_service import (
+    list_user_redemptions_with_context,
+)
 
 portal = Blueprint(
     "portal",
@@ -114,8 +119,8 @@ def _membership_card_payload(user: Optional[User], membership_level: str) -> Dic
 
 
 # Render the portal home view summarizing the member's benefits.
-@portal.route("/", methods=["GET"], endpoint="home")
-def home():
+@portal.route("/", methods=["GET"], endpoint="member_portal_home")
+def member_portal_home():
     user, membership_level = _resolve_user_context()
     if user is None:
         return _redirect_to_login()
@@ -131,16 +136,16 @@ def home():
     )
 
 
-@portal.route("/home", methods=["GET"], endpoint="home_alias")
-def home_alias():
+@portal.route("/home", methods=["GET"], endpoint="member_portal_home_alias")
+def member_portal_home_alias():
     """Legacy alias to keep historic /portal/home links operational."""
 
-    return redirect(url_for("portal.home"))
+    return redirect(url_for("portal.member_portal_home"))
 
 
 # Display the personalized offers list calculated for the user's tier.
-@portal.route("/offers", methods=["GET"], endpoint="offers")
-def offers():
+@portal.route("/offers", methods=["GET"], endpoint="member_portal_offers")
+def member_portal_offers():
     user, membership_level = _resolve_user_context()
     if user is None:
         return _redirect_to_login()
@@ -157,8 +162,8 @@ def offers():
 
 
 # Present the member's profile details and upgrade prompts.
-@portal.route("/profile", methods=["GET"], endpoint="profile")
-def profile():
+@portal.route("/profile", methods=["GET"], endpoint="member_portal_profile")
+def member_portal_profile():
     user, membership_level = _resolve_user_context()
     if user is None:
         return _redirect_to_login()
@@ -190,7 +195,7 @@ def profile():
     )
 
 
-@portal.route("/activations", methods=["GET"], endpoint="activations")
+@portal.route("/activations", methods=["GET"], endpoint="member_portal_activations")
 def user_activations():
     """Return the authenticated member's activations as JSON payload."""
 
@@ -257,8 +262,8 @@ def company_brief(company_id: int):
     return jsonify(company)
 
 
-@portal.route("/notifications", methods=["GET"], endpoint="notifications")
-def notifications():
+@portal.route("/notifications", methods=["GET"], endpoint="member_portal_notifications")
+def member_portal_notifications():
     """Render the notifications center view for the authenticated member."""
 
     user, membership_level = _resolve_user_context()
@@ -327,7 +332,7 @@ def upgrade_membership():
         jsonify(
             {
                 "message": f"Membership upgraded to {normalized_level}",
-                "redirect_url": url_for("portal.profile", upgraded="1"),
+                "redirect_url": url_for("portal.member_portal_profile", upgraded="1"),
                 "new_level": normalized_level,
             }
         ),
