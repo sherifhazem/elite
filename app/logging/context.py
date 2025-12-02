@@ -28,8 +28,10 @@ class LoggingContext:
     service_ms: float = 0.0
     breadcrumbs: List[Dict[str, Any]] = field(default_factory=list)
     incoming_payload: Dict[str, Any] = field(default_factory=dict)
+    normalized_payload: Dict[str, Any] = field(default_factory=dict)
     outgoing_payload: Dict[str, Any] = field(default_factory=dict)
     validation: Dict[str, Any] = field(default_factory=dict)
+    normalization: List[Dict[str, Any]] = field(default_factory=list)
     finalized: bool = False
 
     def as_namespace(self) -> SimpleNamespace:
@@ -107,9 +109,11 @@ class LoggingContext:
             "path": request.path,
             "method": request.method,
             "incoming_payload": self.incoming_payload,
+            "normalized_payload": self.normalized_payload,
             "outgoing_payload": self.outgoing_payload,
             "breadcrumbs": self.breadcrumbs,
             "validation": self.validation,
+            "normalization": self.normalization,
             "timing": self.compute_timing(route_finished_at),
             "response_status": int(response_status),
         }

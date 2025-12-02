@@ -7,7 +7,8 @@ from http import HTTPStatus
 from time import perf_counter
 from uuid import uuid4
 
-from flask import Flask, Response, g, jsonify
+from flask import Flask, Response, g, jsonify, request
+from werkzeug.datastructures import MultiDict
 from werkzeug.exceptions import HTTPException
 
 from .context import build_logging_context
@@ -19,8 +20,48 @@ from .enrichers import (
     snapshot_payload,
 )
 from .logger import get_logger
+from core.normalization import normalize_url
 
 logger = get_logger()
+
+
+_URL_FIELDS = {"website_url", "social_url"}
+
+
+def _should_normalize(key: str) -> bool:
+    normalized_key = key.lower()
+    return normalized_key in _URL_FIELDS or normalized_key.endswith("_url")
+
+
+def _normalize_form_fields() -> tuple[dict[str, list[str]], list[dict[str, str]]]:
+    """Normalize URL fields inside form submissions and return the updated mapping."""
+
+    normalized_form: dict[str, list[str]] = {}
+    normalization_events: list[dict[str, str]] = []
+
+    if not request.form:
+        return normalized_form, normalization_events
+
+    mutable_form = MultiDict()
+    for key, values in request.form.lists():
+        normalized_values: list[str] = []
+        for value in values:
+            if _should_normalize(key):
+                normalized_value = normalize_url(value)
+                if normalized_value != value:
+                    normalization_events.append({"field": key, "from": value, "to": normalized_value})
+                normalized_values.append(normalized_value)
+            else:
+                normalized_values.append(value)
+        for normalized_value in normalized_values:
+            mutable_form.add(key, normalized_value)
+        if _should_normalize(key):
+            normalized_form[key] = normalized_values
+
+    if normalization_events:
+        request._cached_form = mutable_form
+
+    return normalized_form, normalization_events
 
 
 def _set_response_ids(response: Response, *, request_id: str, trace_id: str, parent_id: str | None) -> None:
@@ -46,7 +87,19 @@ def register_logging_middleware(app: Flask) -> None:
         ctx.add_breadcrumb("before_request:start")
         middleware_t0 = perf_counter()
 
-        ctx.incoming_payload.update(capture_incoming_request())
+        raw_payload = capture_incoming_request()
+        normalized_form, normalization_events = _normalize_form_fields()
+        if normalization_events:
+            ctx.add_breadcrumb("normalization:url_fixed")
+            ctx.normalization.extend(normalization_events)
+
+        normalized_payload = capture_incoming_request()
+        if normalized_form:
+            normalized_payload.setdefault("normalized_fields", {})
+            normalized_payload["normalized_fields"].update(normalized_form)
+
+        ctx.incoming_payload.update(raw_payload)
+        ctx.normalized_payload.update(normalized_payload)
         ctx.middleware_pre_ms += (perf_counter() - middleware_t0) * 1000
         ctx.route_started_at = perf_counter()
 
@@ -58,7 +111,8 @@ def register_logging_middleware(app: Flask) -> None:
 
         ctx.add_breadcrumb("after_request:response_ready")
         ctx.outgoing_payload.update(capture_outgoing_response(response))
-        ctx.validation = extract_validation_state(response, ctx.incoming_payload)
+        validation_source = ctx.normalized_payload or ctx.incoming_payload
+        ctx.validation = extract_validation_state(response, validation_source)
         if ctx.validation:
             ctx.add_breadcrumb("validation:detected_failure")
         ctx.middleware_post_ms += (perf_counter() - middleware_t0) * 1000
@@ -87,7 +141,8 @@ def register_logging_middleware(app: Flask) -> None:
 
         response = _build_error_response(message, status)
         ctx.outgoing_payload.update(capture_outgoing_response(response))
-        ctx.validation = extract_validation_state(response, ctx.incoming_payload)
+        validation_source = ctx.normalized_payload or ctx.incoming_payload
+        ctx.validation = extract_validation_state(response, validation_source)
 
         if not getattr(g, "_log_emitted", False):
             _emit_final_log(ctx, int(status), level="ERROR")
