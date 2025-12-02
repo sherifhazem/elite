@@ -246,3 +246,20 @@ All future changes must append new entries following the same structure.
 
 ### Documentation
 - None
+
+## v0.1.8 — 2025-12-08
+### Added
+- Introduced `company_profile_service.py` to host company notification preference and owner cleanup helpers outside the models.
+
+### Changed
+- Refined model docstrings across company, user, offer, notification, redemption, permission, and activity log models for clarity and relationship visibility.
+- Updated company-facing routes to rely on service helpers instead of model methods for notification preferences and owner deletion logic.
+
+### Fixed
+- None
+
+### Removed
+- Removed notification preference and owner cleanup helpers from the `Company` model to keep business logic out of models.
+
+### Documentation
+- Updated this changelog to record the model cleanup and service extraction work.

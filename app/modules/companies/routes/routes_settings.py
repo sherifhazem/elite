@@ -8,6 +8,9 @@ from flask import flash, g, jsonify, redirect, render_template, request, url_for
 
 from app.core.database import db
 from app.services.access_control import require_role
+from app.modules.companies.services.company_profile_service import (
+    get_notification_preferences,
+)
 from . import company_portal
 from app.utils.company_context import _ensure_company, _current_company
 
@@ -88,5 +91,5 @@ def company_settings():
     return render_template(
         "companies/company_settings.html",
         company=company,
-        preferences=company.notification_settings(),
+        preferences=get_notification_preferences(company),
     )
