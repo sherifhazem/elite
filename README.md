@@ -23,6 +23,22 @@ ELITE is a modular Flask platform with centralized observability baked in. The l
 - **Accessors:** Use `get_cities()` / `get_industries()` to fetch managed values (settings-backed, registry fallback) and `validate_choice()` to enforce selections with logging breadcrumbs (`validation:city_checked`, `validation:industry_checked`).
 - **Validation logging:** Choice checks populate `validation` diagnostics with `allowed_values`, `received_value`, and reasons for easier debugging.
 
+## Admin Settings Management
+- **Single UI:** `/admin/settings` renders registry-driven lists for cities and industries with tabbed navigation and AJAX forms—no page reloads.
+- **Endpoints:**
+  - Add: `/admin/settings/add_city`, `/admin/settings/add_industry`
+  - Update: `/admin/settings/update_city`, `/admin/settings/update_industry`
+  - Delete: `/admin/settings/delete_city`, `/admin/settings/delete_industry`
+- **Registry-first:** Lists come directly from `core.choices.registry.CITIES/INDUSTRIES`; mutations happen in-memory and are logged with `admin_settings_action`, `status`, `value`, and `reason` (e.g., `duplicate_value`, `empty_value`).
+- **Diagnostics:** `/dev/settings_status` (non-production) reports registry contents and counts alongside `/dev/choices`.
+- **ASCII preview:**
+```
+[مدن] [مجالات العمل]
+➕ إضافة مدينة | جدول المدن (تعديل/حذف)
+➕ إضافة مجال  | جدول المجالات (تعديل/حذف)
+تحديث فوري + Toast للنجاح + تنبيهات للأخطاء
+```
+
 ## Monitoring Endpoints
 - **Normalization probe:** `/test/normalizer` echoes raw vs normalized payloads for quick checks.
 - **Choices explorer:** `/dev/choices` (non-production) returns the active registry payload `{cities, industries}` with `source: core.choices.registry` for validation/debugging without authentication.

@@ -28,4 +28,29 @@ def list_choices() -> tuple:
     )
 
 
+@choices_monitor.route("/dev/settings_status", methods=["GET"])
+def settings_status() -> tuple:
+    """Expose the current registry status for QA in non-production environments."""
+
+    env = os.getenv("FLASK_ENV") or current_app.config.get("ENV") or "production"
+    if env.lower() == "production":
+        abort(404)
+
+    cities = get_cities()
+    industries = get_industries()
+    return (
+        jsonify(
+            {
+                "cities": cities,
+                "industries": industries,
+                "count_cities": len(cities),
+                "count_industries": len(industries),
+                "source": "core.choices.registry",
+                "status": "ok",
+            }
+        ),
+        200,
+    )
+
+
 __all__ = ["choices_monitor"]

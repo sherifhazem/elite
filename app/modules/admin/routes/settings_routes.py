@@ -5,21 +5,11 @@ from __future__ import annotations
 from http import HTTPStatus
 from typing import Dict
 
-from flask import (
-    render_template,
-    redirect,
-    url_for,
-    flash,
-    request,
-    jsonify,
-    abort,
-    Response,
-)
+from flask import abort, jsonify, render_template, request, Response
 from flask_login import current_user
 
-from app.core.database import db
-from app.models import User, Company, Offer, ActivityLog
 from app.services.access_control import admin_required
+from core.choices.registry import CITIES, INDUSTRIES
 
 from app.modules.admin.services import settings_service
 from .. import admin
@@ -29,18 +19,22 @@ def _settings_success_response(list_type: str, message: str | None = None) -> Re
     """Return a JSON response containing the refreshed list data."""
 
     items = settings_service.get_list(list_type)
-    payload = {"status": "success", "items": items}
+    payload = {"status": "success", "items": items, "list_type": list_type}
     if message:
         payload["message"] = message
     return jsonify(payload)
 
 
 def _settings_error_response(
-    message: str, status: HTTPStatus = HTTPStatus.BAD_REQUEST
+    message: str, status: HTTPStatus = HTTPStatus.BAD_REQUEST, *, reason: str | None = None
 ) -> Response:
     """Return a JSON payload describing the failure."""
 
-    response = jsonify({"status": "error", "message": message})
+    payload = {"status": "error", "message": message}
+    if reason:
+        payload["reason"] = reason
+
+    response = jsonify(payload)
     response.status_code = int(status)
     return response
 
@@ -62,40 +56,60 @@ def _extract_value(*keys: str) -> str:
     return ""
 
 
+def _extract_tab() -> str:
+    """Normalize the requested tab with a safe default."""
+
+    tab = (request.args.get("tab") or "").strip().lower()
+    return tab if tab in {"cities", "industries"} else "cities"
+
+
 def _handle_add_item(list_type: str) -> Response:
     """Shared handler for add endpoints."""
 
     name = _extract_value("name", "value", "label")
     if not (name or "").strip():
-        return _settings_error_response("الاسم مطلوب.")
+        return _settings_error_response("الاسم مطلوب.", reason="empty_value")
     try:
-        settings_service.add_item(list_type, name)
+        items = settings_service.add_item(list_type, name)
     except ValueError as exc:
-        return _settings_error_response(str(exc))
-    return _settings_success_response(list_type, "✅ تم تحديث القائمة بنجاح")
+        return _settings_error_response(str(exc), reason="validation_failed")
+    return jsonify({"status": "success", "items": items, "list_type": list_type})
 
 
-def _handle_update_item(list_type: str, item_id: str) -> Response:
+def _handle_update_item(list_type: str) -> Response:
     """Shared handler for update endpoints."""
 
+    current_value = _extract_value(
+        "current_value",
+        "current",
+        "previous_value",
+        "old_value",
+        "original_value",
+        "item_id",
+    )
     new_name = _extract_value("name", "new_name", "value")
+    if not (current_value or "").strip():
+        return _settings_error_response("العنصر المطلوب مفقود.", reason="missing_target")
     if not (new_name or "").strip():
-        return _settings_error_response("الاسم مطلوب.")
+        return _settings_error_response("الاسم مطلوب.", reason="empty_value")
     try:
-        settings_service.update_item(list_type, item_id, new_name)
+        items = settings_service.update_item(list_type, current_value, new_name)
     except ValueError as exc:
-        return _settings_error_response(str(exc))
-    return _settings_success_response(list_type, "✅ تم تحديث القائمة بنجاح")
+        return _settings_error_response(str(exc), reason="validation_failed")
+    return jsonify({"status": "success", "items": items, "list_type": list_type})
 
 
-def _handle_delete_item(list_type: str, item_id: str) -> Response:
+def _handle_delete_item(list_type: str) -> Response:
     """Shared handler for delete endpoints."""
 
+    target = _extract_value("name", "value", "item_id", "current_value")
+    if not (target or "").strip():
+        return _settings_error_response("قيمة غير صالحة للحذف.", reason="missing_target")
     try:
-        settings_service.delete_item(list_type, item_id)
+        items = settings_service.delete_item(list_type, target)
     except ValueError as exc:
-        return _settings_error_response(str(exc))
-    return _settings_success_response(list_type, "✅ تم تحديث القائمة بنجاح")
+        return _settings_error_response(str(exc), reason="validation_failed")
+    return jsonify({"status": "success", "items": items, "list_type": list_type})
 
 
 @admin.route("/settings", endpoint="settings_home")
@@ -103,49 +117,67 @@ def _handle_delete_item(list_type: str, item_id: str) -> Response:
 def settings_home() -> str:
     """Render the consolidated site settings management experience."""
 
-    settings_payload = settings_service.get_all_settings()
+    selected_tab = _extract_tab()
     return render_template(
-        "admin/dashboard/settings.html",
+        "admin/settings.html",
         section_title="Site Settings",
         active_page="settings",
-        settings=settings_payload,
+        cities=CITIES,
+        industries=INDUSTRIES,
+        selected_tab=selected_tab,
     )
 
 
+@admin.route("/settings/add_city", methods=["POST"], endpoint="add_city")
+@admin_required
+def add_city() -> Response:
+    """Add a city entry to the centralized registry."""
+
+    return _handle_add_item("cities")
+
+
+@admin.route("/settings/add_industry", methods=["POST"], endpoint="add_industry")
+@admin_required
+def add_industry() -> Response:
+    """Add an industry entry to the centralized registry."""
+
+    return _handle_add_item("industries")
+
+
+@admin.route("/settings/update_city", methods=["POST"], endpoint="update_city")
+@admin_required
+def update_city() -> Response:
+    """Rename an existing city entry."""
+
+    return _handle_update_item("cities")
+
+
 @admin.route(
-    "/settings/update/<section>", methods=["POST"], endpoint="update_site_settings"
+    "/settings/update_industry", methods=["POST"], endpoint="update_industry"
 )
 @admin_required
-def update_site_settings(section: str) -> Response:
-    """Persist updates for dropdown or general configuration sections."""
+def update_industry() -> Response:
+    """Rename an existing industry entry."""
 
-    normalized_section = (section or "").strip().lower()
-    if normalized_section not in {"cities", "industries", "general"}:
-        abort(HTTPStatus.NOT_FOUND)
+    return _handle_update_item("industries")
 
-    if current_user.normalized_role not in {"admin", "superadmin"}:
-        abort(HTTPStatus.FORBIDDEN)
 
-    try:
-        if normalized_section in {"cities", "industries"}:
-            payload = request.form.getlist("values")
-            if not payload:
-                payload = request.form.get("values", "")
-            settings_service.update_settings(normalized_section, payload)
-        else:
-            general_data: Dict[str, object] = {
-                "support_email": request.form.get("support_email", ""),
-                "support_phone": request.form.get("support_phone", ""),
-                "allow_company_auto_approval": request.form.get(
-                    "allow_company_auto_approval"
-                ),
-            }
-            settings_service.update_settings("general", general_data)
-        flash("تم حفظ الإعدادات بنجاح ✅", "success")
-    except ValueError as exc:
-        flash(str(exc), "danger")
+@admin.route("/settings/delete_city", methods=["POST"], endpoint="delete_city")
+@admin_required
+def delete_city() -> Response:
+    """Remove a city entry from the registry."""
 
-    return redirect(url_for("admin.settings_home"))
+    return _handle_delete_item("cities")
+
+
+@admin.route(
+    "/settings/delete_industry", methods=["POST"], endpoint="delete_industry"
+)
+@admin_required
+def delete_industry() -> Response:
+    """Remove an industry entry from the registry."""
+
+    return _handle_delete_item("industries")
 
 
 @admin.route("/settings/roles", endpoint="site_settings_roles")
@@ -258,67 +290,3 @@ def fetch_industries() -> Response:
     """Return the list of managed industries as JSON."""
 
     return _settings_success_response("industries")
-
-
-@admin.route("/settings/cities/add", methods=["POST"], endpoint="add_city")
-@admin_required
-def add_city() -> Response:
-    """Add a new city entry to the managed list via JSON."""
-
-    return _handle_add_item("cities")
-
-
-@admin.route("/settings/industries/add", methods=["POST"], endpoint="add_industry")
-@admin_required
-def add_industry() -> Response:
-    """Add a new industry entry to the managed list via JSON."""
-
-    return _handle_add_item("industries")
-
-
-@admin.route(
-    "/settings/cities/update/<path:item_id>",
-    methods=["POST"],
-    endpoint="update_city",
-)
-@admin_required
-def update_city(item_id: str) -> Response:
-    """Rename a city entry."""
-
-    return _handle_update_item("cities", item_id)
-
-
-@admin.route(
-    "/settings/industries/update/<path:item_id>",
-    methods=["POST"],
-    endpoint="update_industry",
-)
-@admin_required
-def update_industry(item_id: str) -> Response:
-    """Rename an industry entry."""
-
-    return _handle_update_item("industries", item_id)
-
-
-@admin.route(
-    "/settings/cities/delete/<path:item_id>",
-    methods=["POST"],
-    endpoint="delete_city",
-)
-@admin_required
-def delete_city(item_id: str) -> Response:
-    """Remove a city entry."""
-
-    return _handle_delete_item("cities", item_id)
-
-
-@admin.route(
-    "/settings/industries/delete/<path:item_id>",
-    methods=["POST"],
-    endpoint="delete_industry",
-)
-@admin_required
-def delete_industry(item_id: str) -> Response:
-    """Remove an industry entry."""
-
-    return _handle_delete_item("industries", item_id)
