@@ -8,7 +8,9 @@ from uuid import uuid4
 
 from flask import Flask, g, jsonify, request
 
-from app.core.central_logger import logger
+from app.logging.logger import get_logger
+
+logger = get_logger()
 
 REQUEST_ID_HEADER = "X-Request-ID"
 

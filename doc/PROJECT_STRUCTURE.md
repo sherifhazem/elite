@@ -17,10 +17,11 @@ Below is the current official directory layout of the ELITE project:
 ```
 ELITE/
 ├── app/
+│   ├── logging/
+│   │   └── logger.py                 # Central logging configuration
 │   ├── core/
 │   │   ├── __init__.py
 │   │   ├── database.py                # Central DB instance
-│   │   ├── central_logger.py          # Simple centralized logger
 │   │   ├── central_middleware.py      # Request logging middleware
 │   │   ├── templates/                 # Shared templates (layout/shared UI)
 │   │   ├── static/                    # Shared static assets (logo, base styles)
@@ -48,7 +49,7 @@ ELITE/
 │   ├── config/                        # Application configuration files
 │   └── __init__.py                    # Application factory + module registration
 ├── tools/                             # Helper scripts (seeding tools, utilities)
-├── logs/                              # Centralized JSON logs
+├── logs/                              # Centralized JSON logs (rotated daily)
 ├── docs/                              # Documentation folder (current file lives here)
 │   ├── PROJECT_OVERVIEW.md
 │   ├── ARCHITECTURE_OVERVIEW.md
@@ -74,7 +75,7 @@ The foundational layer of the entire system. Contains shared logic used by all m
 - Shared templates (layout + email templates) stored under `app/core/templates/core/`
 - Shared static assets stored under `app/core/static/`
 - Utilities
-- Central logging + middleware (simple & non-intrusive)
+- Middleware and shared infrastructure that support the entire app
 
 **What should NOT go here:**
 - Business logic
