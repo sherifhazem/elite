@@ -1,0 +1,222 @@
+{% extends "admin/dashboard/admin_base.html" %}
+{% set active_page = 'settings' %}
+
+{% block content %}
+<div class="container-fluid py-4" id="admin-settings-root">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">إعدادات القوائم المركزية</h1>
+            <p class="text-muted mb-0">
+                يتم تحميل قوائم المدن ومجالات العمل مباشرة من السجل المركزي.
+                التعديلات فورية وتنعكس على واجهة التسجيل والخدمات.
+            </p>
+        </div>
+        <div class="text-md-end text-muted small">
+            <span class="d-block">لا حاجة لإعادة تحميل الصفحة بعد التعديل.</span>
+            <span>يحفظ كل تعديل في الذاكرة المشتركة للسجل.</span>
+        </div>
+    </div>
+
+    <ul class="nav nav-pills admin-pills">
+        <li class="nav-item">
+            <a
+                class="nav-link {{ 'active' if selected_tab == 'cities' else '' }}"
+                href="{{ url_for('admin.settings_home', tab='cities') }}"
+            >
+                المدن
+            </a>
+        </li>
+        <li class="nav-item">
+            <a
+                class="nav-link {{ 'active' if selected_tab == 'industries' else '' }}"
+                href="{{ url_for('admin.settings_home', tab='industries') }}"
+            >
+                مجالات العمل
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-4">
+        <div class="tab-pane fade {{ 'show active' if selected_tab == 'cities' else '' }}" id="settings-cities" role="tabpanel">
+            <div class="card shadow-sm admin-card mb-4">
+                <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                    <div>
+                        <h2 class="h5 mb-0">قائمة المدن</h2>
+                        <span class="text-muted small">يتم الاعتماد على هذه القائمة أثناء تسجيل الشركات.</span>
+                    </div>
+                    <form class="d-flex gap-2 flex-wrap align-items-center js-add-form" data-list-type="cities" action="{{ url_for('admin.add_city') }}" method="post">
+                        <label class="visually-hidden" for="add-city-input">مدينة جديدة</label>
+                        <input class="form-control" id="add-city-input" name="name" type="text" placeholder="أدخل مدينة جديدة" required>
+                        <button class="btn btn-primary" type="submit">➕ إضافة مدينة</button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger d-none" role="alert" data-feedback="cities"></div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">الاسم</th>
+                                    <th scope="col" class="text-end">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody data-list-table="cities">
+                                {% if cities %}
+                                    {% for city in cities %}
+                                        <tr data-value="{{ city }}">
+                                            <td class="fw-medium">{{ city }}</td>
+                                            <td class="text-end">
+                                                <div class="btn-group" role="group">
+                                                    <button
+                                                        class="btn btn-sm btn-outline-primary js-edit-item"
+                                                        type="button"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editItemModal"
+                                                        data-list-type="cities"
+                                                        data-current-value="{{ city }}"
+                                                    >
+                                                        ✏️ تعديل
+                                                    </button>
+                                                    <button
+                                                        class="btn btn-sm btn-outline-danger js-delete-item"
+                                                        type="button"
+                                                        data-list-type="cities"
+                                                        data-value="{{ city }}"
+                                                    >
+                                                        🗑 حذف
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr class="js-empty-row" data-list-type="cities">
+                                        <td colspan="2" class="text-center text-muted py-4">لا توجد مدن مسجلة.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade {{ 'show active' if selected_tab == 'industries' else '' }}" id="settings-industries" role="tabpanel">
+            <div class="card shadow-sm admin-card mb-4">
+                <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                    <div>
+                        <h2 class="h5 mb-0">قائمة مجالات العمل</h2>
+                        <span class="text-muted small">يتم عرض الخيارات مباشرة من السجل المركزي.</span>
+                    </div>
+                    <form class="d-flex gap-2 flex-wrap align-items-center js-add-form" data-list-type="industries" action="{{ url_for('admin.add_industry') }}" method="post">
+                        <label class="visually-hidden" for="add-industry-input">مجال عمل جديد</label>
+                        <input class="form-control" id="add-industry-input" name="name" type="text" placeholder="أدخل مجال عمل جديد" required>
+                        <button class="btn btn-primary" type="submit">➕ إضافة مجال</button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger d-none" role="alert" data-feedback="industries"></div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">الاسم</th>
+                                    <th scope="col" class="text-end">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody data-list-table="industries">
+                                {% if industries %}
+                                    {% for industry in industries %}
+                                        <tr data-value="{{ industry }}">
+                                            <td class="fw-medium">{{ industry }}</td>
+                                            <td class="text-end">
+                                                <div class="btn-group" role="group">
+                                                    <button
+                                                        class="btn btn-sm btn-outline-primary js-edit-item"
+                                                        type="button"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editItemModal"
+                                                        data-list-type="industries"
+                                                        data-current-value="{{ industry }}"
+                                                    >
+                                                        ✏️ تعديل
+                                                    </button>
+                                                    <button
+                                                        class="btn btn-sm btn-outline-danger js-delete-item"
+                                                        type="button"
+                                                        data-list-type="industries"
+                                                        data-value="{{ industry }}"
+                                                    >
+                                                        🗑 حذف
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr class="js-empty-row" data-list-type="industries">
+                                        <td colspan="2" class="text-center text-muted py-4">لا توجد مجالات عمل مسجلة.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- تعديل عنصر -->
+<div
+    class="modal fade"
+    id="editItemModal"
+    tabindex="-1"
+    aria-labelledby="editItemModalLabel"
+    aria-hidden="true"
+    data-update-city-action="{{ url_for('admin.update_city') }}"
+    data-update-industry-action="{{ url_for('admin.update_industry') }}"
+>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editItemModalLabel">تعديل عنصر</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="editItemForm">
+                <div class="modal-body">
+                    <input type="hidden" name="current_value" id="editCurrentValue">
+                    <div class="mb-3">
+                        <label class="form-label" for="editItemName">الاسم</label>
+                        <input class="form-control" id="editItemName" name="name" type="text" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary" id="editItemSubmit">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+    {{ super() }}
+    <script id="admin-settings-context" type="application/json">
+        {{ {
+            "selected_tab": selected_tab,
+            "cities": cities,
+            "industries": industries,
+            "endpoints": {
+                "add_city": url_for('admin.add_city'),
+                "add_industry": url_for('admin.add_industry'),
+                "update_city": url_for('admin.update_city'),
+                "update_industry": url_for('admin.update_industry'),
+                "delete_city": url_for('admin.delete_city'),
+                "delete_industry": url_for('admin.delete_industry'),
+            },
+        } | tojson }}
+    </script>
+    <script src="{{ url_for('static', filename='admin/js/settings.js') }}" defer></script>
+{% endblock %}

@@ -1,221 +1,160 @@
-# LINKED: Implemented centralized Site Settings service using Redis for dropdown and general admin configurations.
-"""Centralized service helpers for managing site settings stored in Redis."""
+"""Admin settings helpers backed by the centralized choices registry.
+
+This module intentionally mutates the in-memory registry lists declared in
+``core.choices.registry`` so that admin edits are reflected immediately across
+forms, services, and monitoring endpoints without touching the database.
+"""
 
 from __future__ import annotations
 
-import copy
-import json
-from typing import Dict, Iterable, List, Mapping, MutableMapping, Sequence
+from typing import Dict, Iterable, List
 
-from app import redis_client
-from core.choices import CITIES, INDUSTRIES
+from app.logging.logger import get_logger
+from core.choices.registry import CITIES, INDUSTRIES
 
-_REDIS_KEY = "elite:site:settings"
-_ALLOWED_SECTIONS = {"cities", "industries", "general"}
-_DEFAULT_SETTINGS: Dict[str, object] = {
-    "cities": list(CITIES),
-    "industries": list(INDUSTRIES),
-    "general": {
-        "support_email": "support@elite.sa",
-        "support_phone": "+966500000000",
-        "allow_company_auto_approval": False,
-    },
-}
+_LOGGER = get_logger(__name__)
+_REGISTRY_MAP = {"cities": CITIES, "industries": INDUSTRIES}
 
 
-def _ensure_defaults() -> None:
-    """Seed Redis with default settings if the key does not exist."""
+def _action_name(list_type: str, operation: str) -> str:
+    """Return a standardized action label for logging."""
 
-    if not redis_client.exists(_REDIS_KEY):
-        redis_client.set(
-            _REDIS_KEY,
-            json.dumps(_DEFAULT_SETTINGS, ensure_ascii=False),
-        )
+    normalized_type = (list_type or "").strip().lower()
+    entity = "city" if normalized_type == "cities" else "industry"
+    return f"{operation}_{entity}"
 
 
-def _load_settings() -> Dict[str, object]:
-    """Return the raw settings payload from Redis ensuring defaults exist."""
+def _get_registry(list_type: str) -> List[str]:
+    """Return the mutable registry list for the requested type."""
 
-    _ensure_defaults()
-    raw_payload = redis_client.get(_REDIS_KEY)
-    if not raw_payload:
-        return copy.deepcopy(_DEFAULT_SETTINGS)
-    data = json.loads(raw_payload)
-    if not isinstance(data, dict):
-        return copy.deepcopy(_DEFAULT_SETTINGS)
-    # Merge with defaults to guarantee required sections exist.
-    merged: Dict[str, object] = copy.deepcopy(_DEFAULT_SETTINGS)
-    for section, value in data.items():
-        if section in _ALLOWED_SECTIONS:
-            merged[section] = value
-    return merged
+    normalized = (list_type or "").strip().lower()
+    if normalized not in _REGISTRY_MAP:
+        raise ValueError("قسم القائمة غير معروف.")
+    return _REGISTRY_MAP[normalized]
 
 
-def _save_settings(payload: Mapping[str, object]) -> None:
-    """Persist the provided settings payload to Redis."""
+def _normalize_value(value: str) -> str:
+    """Strip whitespace and coerce to a usable string."""
 
-    redis_client.set(
-        _REDIS_KEY,
-        json.dumps(payload, ensure_ascii=False),
-    )
+    return (value or "").strip()
 
 
-def _sanitize_list_payload(values: Iterable[object]) -> List[str]:
-    """Return a cleaned list of unique strings preserving order."""
+def _log(action: str, status: str, value: str, *, reason: str | None = None, items: Iterable[str] | None = None) -> None:
+    """Emit structured diagnostics for all admin setting changes."""
 
-    sanitized: List[str] = []
-    seen = set()
-    for value in values:
-        text = str(value).strip()
-        if not text or text in seen:
-            continue
-        sanitized.append(text)
-        seen.add(text)
-    return sanitized
-
-
-def _coerce_iterable(value: object) -> Iterable[object]:
-    """Convert supported payloads into an iterable of values."""
-
-    if isinstance(value, (list, tuple, set)):
-        return value
-    if isinstance(value, str):
-        normalized = value.replace("\r", "\n")
-        return [item for item in normalized.split("\n")]
-    if isinstance(value, Sequence):
-        return list(value)
-    raise ValueError("صيغة البيانات غير مدعومة لهذه القائمة.")
-
-
-def _coerce_general_mapping(value: object) -> MutableMapping[str, object]:
-    """Return a mutable mapping for the general settings payload."""
-
-    if isinstance(value, MutableMapping):
-        return value
-    if isinstance(value, Mapping):
-        return dict(value)
-    raise ValueError("صيغة الإعدادات العامة غير صالحة.")
-
-
-def get_all_settings() -> Dict[str, object]:
-    """Return a deep copy of every site setting section."""
-
-    return copy.deepcopy(_load_settings())
-
-
-def get_section(section: str) -> object:
-    """Return a single section from the site settings payload."""
-
-    if section not in _ALLOWED_SECTIONS:
-        raise ValueError("قسم الإعدادات غير معروف.")
-    settings = _load_settings()
-    return copy.deepcopy(settings[section])
-
-
-def update_settings(section: str, new_data: object) -> object:
-    """Update the provided section and persist the changes to Redis."""
-
-    if section not in _ALLOWED_SECTIONS:
-        raise ValueError("قسم الإعدادات غير معروف.")
-
-    settings = _load_settings()
-
-    if section in {"cities", "industries"}:
-        iterable = _coerce_iterable(new_data)
-        sanitized_values = _sanitize_list_payload(iterable)
-        settings[section] = sanitized_values
-        _save_settings(settings)
-        return sanitized_values
-
-    general_payload = _coerce_general_mapping(new_data)
-    support_email = str(general_payload.get("support_email", "")).strip()
-    support_phone = str(general_payload.get("support_phone", "")).strip()
-    allow_raw = general_payload.get("allow_company_auto_approval", False)
-
-    allow_auto = _parse_bool(allow_raw)
-    general_settings = {
-        "support_email": support_email,
-        "support_phone": support_phone,
-        "allow_company_auto_approval": allow_auto,
+    payload = {
+        "admin_settings_action": action,
+        "status": status,
+        "value": value,
     }
-    settings[section] = general_settings
-    _save_settings(settings)
-    return general_settings
+    if reason:
+        payload["reason"] = reason
+    if items is not None:
+        payload["items"] = list(items)
+
+    if status == "success":
+        _LOGGER.info("Admin settings change applied", extra={"log_payload": payload})
+    else:
+        _LOGGER.warning("Admin settings change rejected", extra={"log_payload": payload})
 
 
-def _parse_bool(value: object) -> bool:
-    """Interpret common truthy values used in HTML forms."""
+def get_all_settings() -> Dict[str, List[str]]:
+    """Return a copy of all managed settings."""
 
-    if isinstance(value, str):
-        return value.lower() in {"1", "true", "on", "yes"}
-    return bool(value)
+    return {"cities": list(CITIES), "industries": list(INDUSTRIES)}
 
-
-# ---------------------------------------------------------------------------
-# Compatibility helpers for existing dropdown APIs throughout the codebase.
-# ---------------------------------------------------------------------------
 
 def get_list(list_type: str) -> List[str]:
-    """Return the dropdown list for the provided type."""
+    """Return a copy of the requested registry list."""
 
-    result = get_section(list_type)
-    if not isinstance(result, list):
-        raise ValueError("تنسيق القائمة غير صالح.")
-    return result
+    return list(_get_registry(list_type))
 
 
-def save_list(list_type: str, data: Iterable[str]) -> List[str]:
-    """Persist the provided data for the specified dropdown list."""
+def update_settings(list_type: str, new_values: Iterable[str]) -> List[str]:
+    """Replace the entire list while enforcing uniqueness and non-empty values."""
 
-    return update_settings(list_type, list(data))
+    registry = _get_registry(list_type)
+    seen = set()
+    sanitized: List[str] = []
+    for raw in new_values:
+        value = _normalize_value(str(raw))
+        if not value or value in seen:
+            continue
+        sanitized.append(value)
+        seen.add(value)
+
+    registry.clear()
+    registry.extend(sanitized)
+    _log(_action_name(list_type, "update"), "success", ",".join(sanitized), items=registry, reason="list_replaced")
+    return list(registry)
 
 
-def add_item(list_type: str, name: str) -> None:
-    """Append a new item to the dropdown list when it doesn't exist."""
+def add_item(list_type: str, name: str) -> List[str]:
+    """Append a new value to the registry list when valid."""
 
-    trimmed = (name or "").strip()
-    if not trimmed:
+    registry = _get_registry(list_type)
+    value = _normalize_value(name)
+    action = _action_name(list_type, "add")
+
+    if not value:
+        _log(action, "error", value, reason="empty_value")
         raise ValueError("الاسم مطلوب.")
-    items = get_list(list_type)
-    if trimmed in items:
+    if value in registry:
+        _log(action, "error", value, reason="duplicate_value")
         raise ValueError("العنصر موجود بالفعل.")
-    items.append(trimmed)
-    update_settings(list_type, items)
+
+    registry.append(value)
+    _log(action, "success", value, items=registry, reason="added")
+    return list(registry)
 
 
-def delete_item(list_type: str, name: str) -> None:
-    """Remove an item from the dropdown list."""
+def delete_item(list_type: str, name: str) -> List[str]:
+    """Remove a value from the registry list when present."""
 
-    items = get_list(list_type)
-    if name not in items:
+    registry = _get_registry(list_type)
+    value = _normalize_value(name)
+    action = _action_name(list_type, "delete")
+
+    if not value:
+        _log(action, "error", value, reason="empty_value")
+        raise ValueError("قيمة غير صالحة للحذف.")
+    if value not in registry:
+        _log(action, "error", value, reason="not_found")
         raise ValueError("لم يتم العثور على العنصر المطلوب.")
-    items.remove(name)
-    update_settings(list_type, items)
+
+    registry.remove(value)
+    _log(action, "success", value, items=registry, reason="deleted")
+    return list(registry)
 
 
-def update_item(list_type: str, old_name: str, new_name: str) -> None:
-    """Rename an entry inside a dropdown list."""
+def update_item(list_type: str, old_name: str, new_name: str) -> List[str]:
+    """Rename an existing entry while preventing duplicates."""
 
-    trimmed = (new_name or "").strip()
-    if not trimmed:
+    registry = _get_registry(list_type)
+    new_value = _normalize_value(new_name)
+    old_value = _normalize_value(old_name)
+    action = _action_name(list_type, "update")
+
+    if not new_value:
+        _log(action, "error", new_value, reason="empty_value")
         raise ValueError("الاسم مطلوب.")
-    items = get_list(list_type)
-    try:
-        index = items.index(old_name)
-    except ValueError as exc:
-        raise ValueError("لم يتم العثور على العنصر المطلوب.") from exc
-    if trimmed != old_name and trimmed in items:
+    if old_value not in registry:
+        _log(action, "error", old_value, reason="not_found")
+        raise ValueError("لم يتم العثور على العنصر المطلوب.")
+    if new_value != old_value and new_value in registry:
+        _log(action, "error", new_value, reason="duplicate_value")
         raise ValueError("العنصر موجود بالفعل.")
-    items[index] = trimmed
-    update_settings(list_type, items)
+
+    index = registry.index(old_value)
+    registry[index] = new_value
+    _log(action, "success", new_value, items=registry, reason="renamed")
+    return list(registry)
 
 
 __all__ = [
     "get_all_settings",
-    "get_section",
-    "update_settings",
     "get_list",
-    "save_list",
+    "update_settings",
     "add_item",
     "delete_item",
     "update_item",
