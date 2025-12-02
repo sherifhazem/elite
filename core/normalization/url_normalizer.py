@@ -3,61 +3,36 @@
 from __future__ import annotations
 
 import re
+from urllib.parse import urlparse
 
-_SCHEMES: tuple[str, ...] = ("http://", "https://", "ftp://")
-_INVALID_CHARS_PATTERN = re.compile(r"[\\s<>\"'{}|\\^`]")
-
-
-def _has_scheme(candidate: str) -> bool:
-    lower_candidate = candidate.lower()
-    return lower_candidate.startswith(_SCHEMES)
+_SCHEMES: tuple[str, ...] = ("http://", "https://")
+_INVALID_CHARS_PATTERN = re.compile(r"[\s<>\"'{}|\\^`]")
 
 
-def _strip_scheme(candidate: str) -> str:
-    lowered = candidate.lower()
-    for scheme in _SCHEMES:
-        if lowered.startswith(scheme):
-            return candidate[len(scheme) :]
-    return candidate
-
-
-def _contains_invalid_characters(candidate: str) -> bool:
-    return bool(_INVALID_CHARS_PATTERN.search(candidate))
-
-
-def _looks_like_domain(candidate: str) -> bool:
-    trimmed = candidate.strip().strip("/")
-    if len(trimmed) < 3:
-        return False
-    if "." not in trimmed:
-        return False
-    return True
-
-
-def _is_plausible_url(candidate: str) -> bool:
-    if not candidate:
-        return False
-    if _contains_invalid_characters(candidate):
-        return False
-    without_scheme = _strip_scheme(candidate)
-    return _looks_like_domain(without_scheme)
-
-
-def _should_prefix_https(raw: str) -> bool:
-    if not raw:
+def _should_prefix_https(raw: str, has_any_scheme: bool) -> bool:
+    if not raw or has_any_scheme:
         return False
     if raw.startswith("www."):
         return True
-    return "." in raw and not _has_scheme(raw)
+    return "." in raw
+
+
+def _is_parsable_url(candidate: str) -> bool:
+    if not candidate or _INVALID_CHARS_PATTERN.search(candidate):
+        return False
+    parsed = urlparse(candidate)
+    return bool(parsed.netloc)
 
 
 def normalize_url(raw: str) -> str:
-    """Return a normalized URL string following project-wide rules.
+    """Normalize user-submitted URLs with a consistent strategy.
 
-    - Empty input returns an empty string.
-    - Existing schemes (http, https, ftp) are preserved.
-    - Values starting with "www." or containing a dot without a scheme are prefixed with ``https://``.
-    - Obvious non-URLs (too short, missing dots, invalid characters) are returned unchanged so validation can fail later.
+    - If empty: return an empty string.
+    - If the value already starts with ``http://`` or ``https://`` keep it.
+    - If it starts with ``www.`` or contains a dot with no scheme, prefix ``https://``.
+    - Strip surrounding whitespace before processing.
+    - If the resulting value cannot be parsed as a URL (missing ``netloc`` or invalid characters),
+      return the original input so downstream validation can flag it.
     """
 
     if raw is None:
@@ -67,11 +42,15 @@ def normalize_url(raw: str) -> str:
     if candidate == "":
         return ""
 
+    parsed = urlparse(candidate)
+    has_any_scheme = bool(parsed.scheme)
     normalized = candidate
-    if not _has_scheme(candidate) and _should_prefix_https(candidate):
+    if candidate.lower().startswith(_SCHEMES):
+        normalized = candidate
+    elif _should_prefix_https(candidate, has_any_scheme):
         normalized = f"https://{candidate}"
 
-    if not _is_plausible_url(normalized):
+    if not _is_parsable_url(normalized):
         return candidate
 
     return normalized

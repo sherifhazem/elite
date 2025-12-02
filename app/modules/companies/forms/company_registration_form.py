@@ -13,7 +13,7 @@ from wtforms import PasswordField, SelectField, StringField, TextAreaField
 from wtforms.fields import EmailField, URLField
 from wtforms.validators import DataRequired, Email, Length, Optional, URL
 
-from app.services.settings_service import get_list
+from core.choices import get_cities, get_industries
 
 
 class _DynamicChoiceAdapter(Sequence[Tuple[str, str]]):
@@ -24,7 +24,12 @@ class _DynamicChoiceAdapter(Sequence[Tuple[str, str]]):
         self.placeholder = placeholder
 
     def _current(self) -> List[Tuple[str, str]]:
-        values = get_list(self.list_type)
+        if self.list_type == "cities":
+            values = get_cities()
+        elif self.list_type == "industries":
+            values = get_industries()
+        else:
+            values = []
         return [("", self.placeholder)] + [(value, value) for value in values]
 
     def as_list(self) -> List[Tuple[str, str]]:

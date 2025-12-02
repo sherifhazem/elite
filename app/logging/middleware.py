@@ -33,35 +33,55 @@ def _should_normalize(key: str) -> bool:
     return normalized_key in _URL_FIELDS or normalized_key.endswith("_url")
 
 
-def _normalize_form_fields() -> tuple[dict[str, list[str]], list[dict[str, str]]]:
+def _merge_validation(existing: dict[str, object], extracted: dict[str, object]) -> dict[str, object]:
+    merged: dict[str, object] = {**existing}
+
+    for key, value in extracted.items():
+        if key in {"failures", "choices"} and isinstance(value, list):
+            merged[key] = list(existing.get(key, [])) + list(value)
+            continue
+        if key not in merged:
+            merged[key] = value
+            continue
+        merged[key] = merged.get(key) or value
+
+    return merged
+
+
+def _normalize_form_fields() -> tuple[dict[str, list[str]], list[dict[str, str]], dict[str, list[list[str]]]]:
     """Normalize URL fields inside form submissions and return the updated mapping."""
 
     normalized_form: dict[str, list[str]] = {}
     normalization_events: list[dict[str, str]] = []
+    normalized_fields: dict[str, list[list[str]]] = {}
 
     if not request.form:
-        return normalized_form, normalization_events
+        return normalized_form, normalization_events, normalized_fields
 
     mutable_form = MultiDict()
     for key, values in request.form.lists():
         normalized_values: list[str] = []
+        field_pairs: list[list[str]] = []
         for value in values:
+            normalized_value = value
             if _should_normalize(key):
                 normalized_value = normalize_url(value)
                 if normalized_value != value:
                     normalization_events.append({"field": key, "from": value, "to": normalized_value})
-                normalized_values.append(normalized_value)
-            else:
-                normalized_values.append(value)
+                if value or normalized_value:
+                    field_pairs.append([value, normalized_value])
+            normalized_values.append(normalized_value)
         for normalized_value in normalized_values:
             mutable_form.add(key, normalized_value)
         if _should_normalize(key):
             normalized_form[key] = normalized_values
+            if field_pairs:
+                normalized_fields[key] = field_pairs
 
     if normalization_events:
         request._cached_form = mutable_form
 
-    return normalized_form, normalization_events
+    return normalized_form, normalization_events, normalized_fields
 
 
 def _set_response_ids(response: Response, *, request_id: str, trace_id: str, parent_id: str | None) -> None:
@@ -88,15 +108,18 @@ def register_logging_middleware(app: Flask) -> None:
         middleware_t0 = perf_counter()
 
         raw_payload = capture_incoming_request()
-        normalized_form, normalization_events = _normalize_form_fields()
+        normalized_form, normalization_events, normalized_fields = _normalize_form_fields()
         if normalization_events:
             ctx.add_breadcrumb("normalization:url_fixed")
             ctx.normalization.extend(normalization_events)
 
         normalized_payload = capture_incoming_request()
         if normalized_form:
+            normalized_payload.setdefault("normalized_values", {})
+            normalized_payload["normalized_values"].update(normalized_form)
+        if normalized_fields:
             normalized_payload.setdefault("normalized_fields", {})
-            normalized_payload["normalized_fields"].update(normalized_form)
+            normalized_payload["normalized_fields"].update(normalized_fields)
 
         ctx.incoming_payload.update(raw_payload)
         ctx.normalized_payload.update(normalized_payload)
@@ -112,8 +135,13 @@ def register_logging_middleware(app: Flask) -> None:
         ctx.add_breadcrumb("after_request:response_ready")
         ctx.outgoing_payload.update(capture_outgoing_response(response))
         validation_source = ctx.normalized_payload or ctx.incoming_payload
-        ctx.validation = extract_validation_state(response, validation_source)
-        if ctx.validation:
+        extracted_validation = extract_validation_state(response, validation_source)
+        if ctx.validation and extracted_validation:
+            ctx.validation = _merge_validation(ctx.validation, extracted_validation)
+        elif extracted_validation:
+            ctx.validation = extracted_validation
+        ctx.validation = ctx.validation or {}
+        if ctx.validation and (ctx.validation.get("failures") or extracted_validation):
             ctx.add_breadcrumb("validation:detected_failure")
         ctx.middleware_post_ms += (perf_counter() - middleware_t0) * 1000
 
@@ -142,7 +170,12 @@ def register_logging_middleware(app: Flask) -> None:
         response = _build_error_response(message, status)
         ctx.outgoing_payload.update(capture_outgoing_response(response))
         validation_source = ctx.normalized_payload or ctx.incoming_payload
-        ctx.validation = extract_validation_state(response, validation_source)
+        extracted_validation = extract_validation_state(response, validation_source)
+        if ctx.validation and extracted_validation:
+            ctx.validation = _merge_validation(ctx.validation, extracted_validation)
+        elif extracted_validation:
+            ctx.validation = extracted_validation
+        ctx.validation = ctx.validation or {}
 
         if not getattr(g, "_log_emitted", False):
             _emit_final_log(ctx, int(status), level="ERROR")

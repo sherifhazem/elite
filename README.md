@@ -11,12 +11,21 @@ ELITE is a modular Flask platform with centralized observability baked in. The l
   - JSON file output at `logs/app.log.json` rotated nightly with 4-day retention.
 - **Idempotent:** Middleware and handler registration are guarded to avoid duplicates on reloads.
 
-## URL Normalization
-- **Centralized module:** `core/normalization/url_normalizer.py` automatically normalizes any incoming form field ending with `_url` (including `website_url` and `social_url`).
-- **Rules:** Preserves existing `http://`, `https://`, or `ftp://` schemes; prefixes `https://` when a dot is present or the value starts with `www.`; trims whitespace; leaves obviously invalid strings unchanged so validation can flag them.
-- **Middleware-owned:** Normalization runs in the global `app/logging/middleware.py` before validation so forms and WTForms validators receive already-normalized URLs without per-route imports.
-- **Logging:** Logs include the raw payload in `incoming_payload`, the corrected values in `normalized_payload`, and per-field normalization events under `normalization` with breadcrumbs `normalization:url_fixed`.
+## Auto URL Normalization
+- **Centralized module:** `core/normalization/url_normalizer.py` automatically normalizes any incoming field ending with `_url` (including `website_url` and `social_url`).
+- **Rules:** Preserves existing `http://`/`https://`, prefixes `https://` when a dot is present or the value starts with `www.`, trims whitespace, and returns raw values that cannot be parsed (invalid characters or missing `netloc`) so validation can surface errors.
+- **Middleware-owned:** Normalization runs in the global `app/logging/middleware.py` before validation so forms and WTForms validators receive already-normalized URLs without per-route imports; JSON payloads are normalized again in `company_registration_service` for API callers.
+- **Logging:** Logs include the raw payload in `incoming_payload`, the corrected values in `normalized_payload.normalized_values`, and before/after pairs in `normalized_payload.normalized_fields` with breadcrumb `normalization:url_fixed`.
 - **Developer probe:** POST to `/test/normalizer` (via `routes/dev_tools/normalization_test.py`) to observe normalized form/json echoes for manual testing.
+
+## Central Choices Registry
+- **Source of truth:** `core/choices/registry.py` declares authoritative `CITIES` and `INDUSTRIES` defaults used to seed settings storage and feed forms/services.
+- **Accessors:** Use `get_cities()` / `get_industries()` to fetch managed values (settings-backed, registry fallback) and `validate_choice()` to enforce selections with logging breadcrumbs (`validation:city_checked`, `validation:industry_checked`).
+- **Validation logging:** Choice checks populate `validation` diagnostics with `allowed_values`, `received_value`, and reasons for easier debugging.
+
+## Monitoring Endpoints
+- **Normalization probe:** `/test/normalizer` echoes raw vs normalized payloads for quick checks.
+- **Choices explorer:** `/dev/choices` (non-production) returns the active registry payload `{cities, industries}` with `source: core.choices.registry` for validation/debugging without authentication.
 
 ## Architecture (ASCII)
 ```
