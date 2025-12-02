@@ -8,12 +8,13 @@ import json
 from typing import Dict, Iterable, List, Mapping, MutableMapping, Sequence
 
 from app import redis_client
+from core.choices import CITIES, INDUSTRIES
 
 _REDIS_KEY = "elite:site:settings"
 _ALLOWED_SECTIONS = {"cities", "industries", "general"}
 _DEFAULT_SETTINGS: Dict[str, object] = {
-    "cities": ["الرياض", "جدة", "الدمام"],
-    "industries": ["مطاعم", "تجارة إلكترونية", "تعليم"],
+    "cities": list(CITIES),
+    "industries": list(INDUSTRIES),
     "general": {
         "support_email": "support@elite.sa",
         "support_phone": "+966500000000",

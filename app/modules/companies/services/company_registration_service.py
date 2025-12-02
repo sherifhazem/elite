@@ -13,12 +13,11 @@ from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
 
 from app.core.database import db
-from app.modules.companies.forms.company_registration_form import (
-    CITY_CHOICES,
-    INDUSTRY_CHOICES,
-)
+from app.logging.context import build_logging_context
 from app.models import Company, User
 from app.services.mailer import send_email
+from core.choices import get_cities, get_industries, validate_choice
+from core.normalization import normalize_url
 from app.modules.members.services.member_notifications_service import (
     push_admin_notification,
     queue_notification,
@@ -28,6 +27,12 @@ from app.modules.members.services.member_notifications_service import (
 def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object], HTTPStatus]:
     """Validate payload data, create company + owner, and notify admins."""
 
+    ctx = None
+    try:
+        ctx = build_logging_context()
+    except Exception:
+        ctx = None
+
     requested_username = (payload.get("username") or "").strip()
     email = (payload.get("email") or "").strip().lower()
     password = payload.get("password")
@@ -36,8 +41,29 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
     phone_number = (payload.get("phone_number") or "").strip()
     industry = (payload.get("industry") or "").strip()
     city = (payload.get("city") or "").strip()
-    website_url = (payload.get("website_url") or "").strip()
-    social_url = (payload.get("social_url") or "").strip()
+    website_url_raw = (payload.get("website_url") or "").strip()
+    social_url_raw = (payload.get("social_url") or "").strip()
+    website_url = normalize_url(website_url_raw)
+    social_url = normalize_url(social_url_raw)
+
+    if ctx:
+        normalization_records = []
+        if website_url != website_url_raw:
+            normalization_records.append(
+                {"field": "website_url", "from": website_url_raw, "to": website_url}
+            )
+        if social_url != social_url_raw:
+            normalization_records.append(
+                {"field": "social_url", "from": social_url_raw, "to": social_url}
+            )
+        if normalization_records:
+            ctx.add_breadcrumb("normalization:url_fixed")
+            ctx.normalization.extend(normalization_records)
+            normalized_fields = ctx.normalized_payload.setdefault("normalized_fields", {})
+            for record in normalization_records:
+                normalized_fields.setdefault(record["field"], []).append(
+                    [record["from"], record["to"]]
+                )
 
     if not email or not password or not company_name:
         return (
@@ -53,16 +79,44 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
             HTTPStatus.BAD_REQUEST,
         )
 
-    allowed_industries = {choice for choice, _ in INDUSTRY_CHOICES if choice}
-    allowed_cities = {choice for choice, _ in CITY_CHOICES if choice}
-    if industry not in allowed_industries:
+    allowed_industries = set(get_industries())
+    allowed_cities = set(get_cities())
+
+    def _log_validation_failure(
+        field: str, value: str, reason: str, allowed_values=None, diagnostic: str | None = None
+    ):
+        try:
+            context = ctx or build_logging_context()
+        except Exception:
+            return
+
+        context.add_breadcrumb(f"validation:{field}_checked")
+        payload = {
+            "field": field,
+            "received_value": value,
+            "reason": reason,
+        }
+        if allowed_values is not None:
+            payload["allowed_values"] = list(allowed_values)
+        if diagnostic:
+            payload["diagnostic"] = diagnostic
+        context.validation.setdefault("failures", []).append(payload)
+
+    is_valid_industry, industry_diag = validate_choice(industry, allowed_industries, "industry")
+    if not is_valid_industry:
+        _log_validation_failure(
+            "industry", industry, "value_not_in_list", allowed_industries, industry_diag
+        )
         return (
-            {"error": "industry is required and must be a supported choice."},
+            {"error": industry_diag or "industry is required and must be a supported choice."},
             HTTPStatus.BAD_REQUEST,
         )
-    if city not in allowed_cities:
+
+    is_valid_city, city_diag = validate_choice(city, allowed_cities, "city")
+    if not is_valid_city:
+        _log_validation_failure("city", city, "value_not_in_list", allowed_cities, city_diag)
         return (
-            {"error": "city is required and must be a supported choice."},
+            {"error": city_diag or "city is required and must be a supported choice."},
             HTTPStatus.BAD_REQUEST,
         )
 
@@ -73,11 +127,13 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
         return bool(parsed.scheme in {"http", "https"} and parsed.netloc)
 
     if website_url and not _is_valid_url(website_url):
+        _log_validation_failure("website_url", website_url, "invalid_url_format")
         return (
             {"error": "website_url must be a valid HTTP or HTTPS link."},
             HTTPStatus.BAD_REQUEST,
         )
     if not social_url or not _is_valid_url(social_url):
+        _log_validation_failure("social_url", social_url, "invalid_url_format")
         return (
             {"error": "social_url must be a valid HTTP or HTTPS link."},
             HTTPStatus.BAD_REQUEST,

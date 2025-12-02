@@ -256,6 +256,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     from app.modules.companies import company_portal  # noqa: E402
     from app.modules.companies.routes.api_routes import companies  # noqa: E402
     from routes.dev_tools.normalization_test import normalization_test  # noqa: E402
+    from routes.dev_tools.choices_monitor import choices_monitor  # noqa: E402
 
     app.register_blueprint(main_blueprint)
     app.register_blueprint(admin)  # ← الآن يستخدم تعريف blueprint الصحيح من app/admin/__init__.py
@@ -267,6 +268,10 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.register_blueprint(users, url_prefix="/api/users")
     app.register_blueprint(redemption)
     app.register_blueprint(notifications)
-    app.register_blueprint(normalization_test)
+
+    env_name = str(app.config.get("ENV", "production")).lower()
+    if env_name != "production":
+        app.register_blueprint(normalization_test)
+        app.register_blueprint(choices_monitor)
 
     return app
