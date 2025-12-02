@@ -1,36 +1,46 @@
 # ELITE Platform
 
 ## Overview
-The ELITE application is a modular Flask platform built around a centralized infrastructure for security, observability, and modular business domains. This README highlights the logging and observability model introduced in this iteration so contributors can reason about runtime behavior quickly.
+ELITE is a modular Flask platform with centralized observability baked in. The logging system now auto-captures every request and response, correlation identifiers, breadcrumbs, timing, and validation details with zero per-route code.
 
-## Centralized Logging
-- **Module:** `app/logging/logger.py`
-- **Activation:** Automatically initialized inside `app/__init__.py` when the Flask app is created.
-- **Coverage:** Unifies the **root**, **flask.app**, and **werkzeug** loggers so every message flows through the same handlers.
+## Global Logging & Tracking
+- **Initialization:** `initialize_logging(app)` + `register_logging_middleware(app)` are wired inside `app/__init__.py`; no manual imports.
+- **Coverage:** All routes and services inherit the same pipeline—request/response capture, correlation headers, masking, validation snapshots, and timing metrics.
 - **Handlers:**
-  - Console handler with colored human-readable output for development.
-  - Timed rotating JSON file handler at `logs/app.log.json` with a 4-day retention window.
-- **Format:** JSON with `timestamp`, `level`, `message`, `file`, `function`, `line`, `request_id` (when available), `user_id` (when known), and request `path`/`method` when a Flask request context exists.
-- **Idempotency:** Handler attachment is guarded so reloading the app does not duplicate handlers.
+  - Colorized console output for local debugging.
+  - JSON file output at `logs/app.log.json` rotated nightly with 4-day retention.
+- **Idempotent:** Middleware and handler registration are guarded to avoid duplicates on reloads.
 
-## Log Rotation and Access
-- **Location:** `logs/app.log.json` (auto-created on startup if missing).
-- **Rotation:** Daily rotation via `TimedRotatingFileHandler` with filenames like `app.log.json.2025-01-01`; only the last **4** days are retained.
-- **Viewing Logs:**
-  - Tail JSON logs during development: `tail -f logs/app.log.json`
-  - Inspect rotated archives: `ls logs/app.log.json.*`
+## Architecture (ASCII)
+```
+[Client] -> [Flask app]
+    -> initialize_logging
+    -> register_logging_middleware
+         |- before_request: IDs + incoming payload capture
+         |- route/service: breadcrumbs (+ optional @trace_execution)
+         |- after_request: response capture + validation analysis + timing
+         |- error_handler: structured exception snapshot
+    -> RequestAwareFormatter -> console + JSON sinks
+```
 
-## Tracking and Request Context
-- Request lifecycle hooks in `app/core/central_middleware.py` enrich log entries with `request_id`, HTTP method, and path. Errors also capture duration and bubble through the centralized logger.
-- User context is automatically injected into logs when `g.current_user` or Flask-Login state is available.
+## Capture Matrix
+- **Incoming:** method, full path, query params, form data, JSON payload, non-sensitive headers, file names/extensions → `request.meta.incoming_payload`.
+- **Outgoing:** status code, JSON body (if JSON), error payloads, redirect target, response size → `request.meta.outgoing_payload`.
+- **Correlation:** `request_id`, `trace_id`, optional `parent_id`, and `user_id` when authenticated (echoed in response headers).
+- **Breadcrumbs:** stored in `request.meta.trace` from middleware checkpoints, validation detection, error handlers, and optional `@trace_execution` service decorators.
+- **Timing:** `total_ms`, `middleware_ms`, `route_ms`, `service_ms` emitted in every log entry.
 
-## Extending the Logger
-- Use `from app.logging.logger import get_logger` to obtain a logger; no other configuration is required.
-- Keep formatting consistent by allowing the centralized formatter to run; do not attach custom handlers in modules.
-- To add new metadata, extend `RequestAwareFormatter` in `app/logging/logger.py` so both console and JSON outputs stay aligned.
+## Masking & Safety
+Sensitive keys (`password`, `token`, `authorization`, `cookie`, `csrf_token`) are masked or removed across payloads and headers. File logging keeps only filenames and extensions; payload snapshots are sanitized before persistence.
 
-## Documentation
-Further logging guidance lives in:
-- `doc/LOGGING.md` — deep dive into the logging pipeline and examples.
-- `config/logging_config.md` — operational notes and configuration knobs.
-- `doc/OBSERVABILITY.md` — overview of the observability layer.
+## Validation & Error Logging
+- 400/422 responses automatically emit a `validation_failed` block with missing/invalid fields, allowed values, received values, and a diagnostic message.
+- Exceptions emit structured records with type, message, traceback, source file/function/line, payload snapshot, breadcrumbs, correlation IDs, and elapsed time to failure.
+
+## Output Format
+Each request generates one JSON log entry containing timestamp, level, correlation IDs, path/method, incoming/outgoing payloads, breadcrumbs, validation snapshot, timing block, response status, and file/function/line metadata.
+
+## Further Reading
+- `doc/LOGGING.md` — detailed pipeline, examples, and troubleshooting.
+- `doc/TRACKING.md` — correlation IDs, breadcrumbs, validation, and timing behavior.
+- `doc/OBSERVABILITY.md` — broader observability overview for the platform.

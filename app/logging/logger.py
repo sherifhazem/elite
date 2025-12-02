@@ -53,6 +53,9 @@ class RequestAwareFormatter(logging.Formatter):
         if request_id:
             payload.setdefault("request_id", request_id)
 
+        payload.setdefault("trace_id", getattr(g, "trace_id", None) or request.headers.get("X-Trace-ID"))
+        payload.setdefault("parent_id", getattr(g, "parent_id", None) or request.headers.get("X-Parent-ID"))
+
         user_id = getattr(g, "user_id", None)
         current_user = getattr(g, "current_user", None)
         if current_user and getattr(current_user, "is_authenticated", False):
@@ -71,7 +74,8 @@ class RequestAwareFormatter(logging.Formatter):
         return payload
 
     def format(self, record: logging.LogRecord) -> str:  # noqa: D401
-        payload = {
+        payload = getattr(record, "log_payload", None)
+        base_payload = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "level": record.levelname,
             "message": record.getMessage(),
@@ -83,6 +87,17 @@ class RequestAwareFormatter(logging.Formatter):
             "path": getattr(record, "path", None),
             "method": getattr(record, "method", None),
         }
+
+        if isinstance(payload, dict):
+            merged = {**payload}
+            merged.setdefault("timestamp", base_payload["timestamp"])
+            merged.setdefault("level", record.levelname)
+            merged.setdefault("file", record.filename)
+            merged.setdefault("function", record.funcName)
+            merged.setdefault("line", record.lineno)
+            payload = merged
+        else:
+            payload = base_payload
 
         payload = self._enrich_with_request(payload)
 
