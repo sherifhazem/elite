@@ -22,7 +22,18 @@ user_permissions = db.Table(
 
 
 class User(db.Model):
-    """Represents an application user with role-based access metadata."""
+    """Represents an application user with role-based access metadata.
+
+    Key fields:
+    - ``username`` and ``email``: Account identity fields.
+    - ``role`` and ``membership_level``: Authorization and membership tier.
+
+    Relationships:
+    - ``company``: Linked company when the user is a business account.
+    - ``notifications``: In-app notifications targeting the user.
+    - ``permissions``: Optional fine-grained permissions.
+    - ``redemptions``: Offer redemptions created by the user.
+    """
 
     __tablename__ = "users"
 

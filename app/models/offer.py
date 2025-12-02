@@ -1,4 +1,14 @@
-"""Offer model definition."""
+"""Offer model describing discounts provided by partner companies.
+
+Key fields:
+- ``title`` and ``description``: Offer content details.
+- ``base_discount``: Minimum discount applied to all members.
+- ``valid_until``: Optional expiration timestamp.
+
+Relationships:
+- ``company``: Company that owns the offer.
+- ``redemptions``: Redemptions generated from the offer.
+"""
 
 from datetime import datetime
 

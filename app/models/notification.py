@@ -8,7 +8,15 @@ from app.core.database import db
 
 
 class Notification(db.Model):
-    """Represents an in-app notification stored for a user."""
+    """Represents an in-app notification stored for a user.
+
+    Key fields:
+    - ``title`` and ``message``: Notification content.
+    - ``is_read``: Tracks read state.
+
+    Relationships:
+    - ``user``: Recipient of the notification.
+    """
 
     __tablename__ = "notifications"
 

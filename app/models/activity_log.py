@@ -6,6 +6,8 @@ from app.core.database import db
 
 
 class ActivityLog(db.Model):
+    """Audit log entry tracking administrative actions on companies."""
+
     __tablename__ = "activity_log"
 
     id = db.Column(db.Integer, primary_key=True)

@@ -12,6 +12,9 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.database import db
 from app.models import Company, User
+from app.modules.companies.services.company_profile_service import (
+    remove_company_owner_accounts,
+)
 from app.modules.companies.services.company_registration_service import (
     register_company_account,
 )
@@ -137,7 +140,7 @@ def delete_company(company_id: int):
     if company is None:
         return jsonify({"error": "Company not found."}), 404
 
-    company.remove_owner_account()
+    remove_company_owner_accounts(company)
     db.session.delete(company)
     db.session.commit()
     return jsonify({"status": "deleted"}), 200

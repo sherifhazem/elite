@@ -1,11 +1,16 @@
-# LINKED: Fixed cascade deletion chain between Company → User → Notification
-# Ensures safe automatic cleanup without manual deletion or integrity errors.
-"""Company model definition with ownership and branding metadata."""
+"""Company model representing a business collaborating with ELITE.
 
-from __future__ import annotations
+Key fields:
+- ``name``: Company name.
+- ``status``: Moderation state such as ``pending``.
+- ``notification_preferences``: Mutable JSON storing contact preferences.
+
+Relationships:
+- ``owner``: The primary user who owns the company account.
+- ``redemptions``: Offer redemptions associated with the company.
+"""
 
 from datetime import datetime
-from typing import Any, Dict
 
 from sqlalchemy.ext.mutable import MutableDict
 
@@ -49,39 +54,9 @@ class Company(db.Model):
     )
 
     def __repr__(self) -> str:
-        """Return a string representation for debugging."""
+        """Return a concise representation for debugging."""
 
         return f"<Company {self.name}>"
-
-    def notification_settings(self) -> Dict[str, Any]:
-        """Return notification preferences while ensuring a dictionary output."""
-
-        preferences = self.notification_preferences or {}
-        if not isinstance(preferences, dict):
-            return {}
-        return preferences
-
-    def remove_owner_account(self) -> None:
-        """Delete the owner account while leaving member accounts untouched."""
-
-        from .user import User
-
-        owners = []
-        if self.owner is not None:
-            owners.append(self.owner)
-
-        owners.extend(
-            User.query.filter(
-                User.company_id == self.id,
-                User.role == "company",
-            ).all()
-        )
-
-        seen_ids = set()
-        for owner in owners:
-            if owner and owner.id not in seen_ids:
-                seen_ids.add(owner.id)
-                db.session.delete(owner)
 
 
 __all__ = ["Company"]

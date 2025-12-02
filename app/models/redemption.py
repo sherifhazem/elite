@@ -8,7 +8,17 @@ from app.core.database import db
 
 
 class Redemption(db.Model):
-    """Represents a single-use redemption code generated for a user offer."""
+    """Represents a single-use redemption code generated for a user offer.
+
+    Key fields:
+    - ``redemption_code`` and ``qr_token``: Unique identifiers for validation.
+    - ``status``: Tracks lifecycle such as ``pending`` or ``redeemed``.
+
+    Relationships:
+    - ``user``: Member who owns the redemption.
+    - ``offer``: Offer that produced the redemption.
+    - ``company``: Company associated with the redeemed offer.
+    """
 
     __tablename__ = "offer_redemptions"
 

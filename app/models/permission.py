@@ -6,7 +6,12 @@ from app.core.database import db
 
 
 class Permission(db.Model):
-    """Represents a named permission that can be assigned to users."""
+    """Represents a named permission that can be assigned to users.
+
+    Relationships:
+    - ``users``: Accounts that reference the permission through
+      ``user_permissions`` association table.
+    """
 
     __tablename__ = "permissions"
 
