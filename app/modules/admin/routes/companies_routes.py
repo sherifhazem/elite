@@ -140,6 +140,7 @@ def request_company_correction(company_id: int) -> str:
     """Move a company to correction status and notify for edits."""
 
     company = get_company(company_id)
-    request_company_correction_record(company)
-    flash("Company moved to correction status.", "info")
-    return redirect(url_for("admin.list_companies"))
+    notes = request.form.get("correction_notes", "").strip()
+    request_company_correction_record(company, notes=notes)
+    flash("Correction request sent to the company.", "info")
+    return redirect(url_for("admin.view_company", company_id=company.id))

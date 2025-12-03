@@ -15,7 +15,7 @@
 
       <div class="row">
         <div class="col-md-6">
-          <p><strong>Email:</strong> {{ company.email }}</p>
+          <p><strong>Email:</strong> {{ company.email or '—' }}</p>
           <p><strong>Phone:</strong> {{ company.contact_number or '—' }}</p>
           <p><strong>City:</strong> {{ company.city or '—' }}</p>
           <p><strong>Industry:</strong> {{ company.industry or '—' }}</p>
@@ -52,5 +52,20 @@
     </div>
   </div>
   {% endif %}
+
+  <div class="card shadow-sm mt-4">
+    <div class="card-body">
+      <h5 class="mb-3">Request Missing/Corrected Details</h5>
+      <form method="post" action="{{ url_for('admin.request_company_correction', company_id=company.id) }}">
+        <div class="mb-3">
+          <label for="correction_notes" class="form-label">Message to Company</label>
+          <textarea class="form-control" id="correction_notes" name="correction_notes" rows="4"
+            placeholder="Describe the missing or incorrect information to complete the review." required></textarea>
+          <div class="form-text">This note will be emailed to the company contact.</div>
+        </div>
+        <button type="submit" class="btn btn-warning">Send Correction Request</button>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}

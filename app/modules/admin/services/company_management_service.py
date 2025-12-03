@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Dict
 
+from flask import url_for
+
 from app.core.database import db
 from app.models import Company
 from app.services.mailer import (
@@ -41,6 +43,9 @@ def update_company(company: Company, payload: dict[str, str]) -> None:
     company.email = payload.get("email", company.email)
     company.city = payload.get("city", company.city)
     company.industry = payload.get("industry", company.industry)
+    company.contact_number = payload.get("contact_number", company.contact_number)
+    company.website_url = payload.get("website_url", company.website_url)
+    company.social_url = payload.get("social_url", company.social_url)
     db.session.commit()
 
 
@@ -75,9 +80,18 @@ def reactivate_company(company: Company) -> None:
     send_company_reactivation_email(company)
 
 
-def request_correction(company: Company) -> None:
+def request_correction(
+    company: Company, notes: str | None = None, correction_link: str | None = None
+) -> None:
     """Move a company into correction status and send guidance email."""
 
     company.status = "correction"
+    company.admin_notes = notes or company.admin_notes
     db.session.commit()
-    send_company_correction_email(company)
+
+    resolved_link = correction_link or url_for(
+        "company_portal.complete_registration",
+        company_id=company.id,
+        _external=True,
+    )
+    send_company_correction_email(company, notes or "", resolved_link)
