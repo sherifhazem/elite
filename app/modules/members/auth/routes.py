@@ -411,6 +411,14 @@ def logout():
     response.headers["Expires"] = "0"
     return response
 
+
+@auth.get("/register/company")
+def legacy_company_register_redirect():
+    """Redirect legacy company registration URLs to the new company blueprint."""
+
+    return redirect(url_for("company.register_company"))
+
+
 def _dispatch_member_welcome_notification(user: "User") -> None:
     """Safely send welcome notification when available."""
 
