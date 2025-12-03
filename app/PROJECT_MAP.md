@@ -201,6 +201,7 @@
 | `Redemption` | `user_id`, `offer_id` |
 | `Notification` | `user_id` |
 | `Permission` | `users` (many-to-many) |
+| `LookupChoice` | قيم ديناميكية للقوائم المركزية (list_type/name) |
 
 ---
 
