@@ -15,7 +15,7 @@ def _load_managed_list(list_type: str, fallback: Iterable[str]) -> List[str]:
     try:
         from app.services.settings_service import get_list
 
-        values = get_list(list_type)
+        values = get_list(list_type, active_only=True)
         if isinstance(values, list) and values:
             return [value for value in values if value]
     except Exception:

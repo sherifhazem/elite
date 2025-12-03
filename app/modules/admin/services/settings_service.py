@@ -1,36 +1,18 @@
-"""Admin settings helpers backed by the centralized choices registry.
-
-This module intentionally mutates the in-memory registry lists declared in
-``app.core.choices.registry`` so that admin edits are reflected immediately across
-forms, services, and monitoring endpoints without touching the database.
-"""
+"""Admin settings helpers backed by the database-backed lookup table."""
 
 from __future__ import annotations
 
 from typing import Dict, Iterable, List
 
+from sqlalchemy.exc import IntegrityError
+
 from app.logging.logger import get_logger
 from app.core.choices.registry import CITIES, INDUSTRIES
+from app.models import LookupChoice, db
 
 _LOGGER = get_logger(__name__)
-_REGISTRY_MAP = {"cities": CITIES, "industries": INDUSTRIES}
-
-
-def _action_name(list_type: str, operation: str) -> str:
-    """Return a standardized action label for logging."""
-
-    normalized_type = (list_type or "").strip().lower()
-    entity = "city" if normalized_type == "cities" else "industry"
-    return f"{operation}_{entity}"
-
-
-def _get_registry(list_type: str) -> List[str]:
-    """Return the mutable registry list for the requested type."""
-
-    normalized = (list_type or "").strip().lower()
-    if normalized not in _REGISTRY_MAP:
-        raise ValueError("قسم القائمة غير معروف.")
-    return _REGISTRY_MAP[normalized]
+_VALID_TYPES = {"cities", "industries"}
+_DEFAULTS = {"cities": CITIES, "industries": INDUSTRIES}
 
 
 def _normalize_value(value: str) -> str:
@@ -39,43 +21,64 @@ def _normalize_value(value: str) -> str:
     return (value or "").strip()
 
 
-def _log(action: str, status: str, value: str, *, reason: str | None = None, items: Iterable[str] | None = None) -> None:
-    """Emit structured diagnostics for all admin setting changes."""
+def _ensure_storage_ready() -> None:
+    """Create the lookup table if missing and seed defaults once."""
 
-    payload = {
-        "admin_settings_action": action,
-        "status": status,
-        "value": value,
-    }
-    if reason:
-        payload["reason"] = reason
-    if items is not None:
-        payload["items"] = list(items)
-
-    if status == "success":
-        _LOGGER.info("Admin settings change applied", extra={"log_payload": payload})
-    else:
-        _LOGGER.warning("Admin settings change rejected", extra={"log_payload": payload})
+    LookupChoice.__table__.create(bind=db.engine, checkfirst=True)
+    _seed_defaults()
 
 
-def get_all_settings() -> Dict[str, List[str]]:
+def _seed_defaults() -> None:
+    """Populate missing managed lists with the registry defaults."""
+
+    for list_type, defaults in _DEFAULTS.items():
+        existing = LookupChoice.query.filter_by(list_type=list_type).count()
+        if existing:
+            continue
+        for value in defaults:
+            normalized = _normalize_value(value)
+            if not normalized:
+                continue
+            db.session.add(
+                LookupChoice(list_type=list_type, name=normalized, active=True)
+            )
+    db.session.commit()
+
+
+def _validate_type(list_type: str) -> str:
+    normalized = (list_type or "").strip().lower()
+    if normalized not in _VALID_TYPES:
+        raise ValueError("قسم القائمة غير معروف.")
+    return normalized
+
+
+def get_all_settings(*, active_only: bool = True) -> Dict[str, List[str]]:
     """Return a copy of all managed settings."""
 
-    return {"cities": list(CITIES), "industries": list(INDUSTRIES)}
+    return {
+        "cities": get_list("cities", active_only=active_only),
+        "industries": get_list("industries", active_only=active_only),
+    }
 
 
-def get_list(list_type: str) -> List[str]:
+def get_list(list_type: str, *, active_only: bool = True) -> List[str]:
     """Return a copy of the requested registry list."""
 
-    return list(_get_registry(list_type))
+    _ensure_storage_ready()
+    normalized = _validate_type(list_type)
+    query = LookupChoice.query.filter_by(list_type=normalized)
+    if active_only:
+        query = query.filter_by(active=True)
+    return [row.name for row in query.order_by(LookupChoice.name.asc()).all()]
 
 
 def update_settings(list_type: str, new_values: Iterable[str]) -> List[str]:
     """Replace the entire list while enforcing uniqueness and non-empty values."""
 
-    registry = _get_registry(list_type)
+    _ensure_storage_ready()
+    normalized = _validate_type(list_type)
+    sanitized: list[str] = []
     seen = set()
-    sanitized: List[str] = []
     for raw in new_values:
         value = _normalize_value(str(raw))
         if not value or value in seen:
@@ -83,72 +86,129 @@ def update_settings(list_type: str, new_values: Iterable[str]) -> List[str]:
         sanitized.append(value)
         seen.add(value)
 
-    registry.clear()
-    registry.extend(sanitized)
-    _log(_action_name(list_type, "update"), "success", ",".join(sanitized), items=registry, reason="list_replaced")
-    return list(registry)
+    LookupChoice.query.filter_by(list_type=normalized).delete()
+    for value in sanitized:
+        db.session.add(LookupChoice(list_type=normalized, name=value, active=True))
+    db.session.commit()
+
+    _LOGGER.info(
+        "Admin settings list replaced", extra={"log_payload": {"list_type": normalized, "items": sanitized}}
+    )
+    return list(sanitized)
 
 
-def add_item(list_type: str, name: str) -> List[str]:
+def add_item(list_type: str, name: str, *, is_active: bool | None = None) -> List[str]:
     """Append a new value to the registry list when valid."""
 
-    registry = _get_registry(list_type)
+    _ensure_storage_ready()
+    normalized_type = _validate_type(list_type)
     value = _normalize_value(name)
-    action = _action_name(list_type, "add")
+    is_active = True if is_active is None else bool(is_active)
 
     if not value:
-        _log(action, "error", value, reason="empty_value")
+        _LOGGER.warning("Admin settings change rejected", extra={"log_payload": {"admin_settings_action": f"add_{normalized_type}", "status": "error", "reason": "empty_value"}})
         raise ValueError("الاسم مطلوب.")
-    if value in registry:
-        _log(action, "error", value, reason="duplicate_value")
+
+    entry = LookupChoice(list_type=normalized_type, name=value, active=is_active)
+    db.session.add(entry)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        _LOGGER.warning(
+            "Admin settings change rejected",
+            extra={"log_payload": {"admin_settings_action": f"add_{normalized_type}", "status": "error", "reason": "duplicate_value"}},
+        )
         raise ValueError("العنصر موجود بالفعل.")
 
-    registry.append(value)
-    _log(action, "success", value, items=registry, reason="added")
-    return list(registry)
+    _LOGGER.info(
+        "Admin settings change applied",
+        extra={
+            "log_payload": {
+                "admin_settings_action": f"add_{normalized_type}",
+                "status": "success",
+                "value": value,
+                "items": get_list(normalized_type, active_only=False),
+            }
+        },
+    )
+    return get_list(normalized_type, active_only=True)
 
 
 def delete_item(list_type: str, name: str) -> List[str]:
     """Remove a value from the registry list when present."""
 
-    registry = _get_registry(list_type)
+    _ensure_storage_ready()
+    normalized_type = _validate_type(list_type)
     value = _normalize_value(name)
-    action = _action_name(list_type, "delete")
-
     if not value:
-        _log(action, "error", value, reason="empty_value")
         raise ValueError("قيمة غير صالحة للحذف.")
-    if value not in registry:
-        _log(action, "error", value, reason="not_found")
+
+    deleted = (
+        LookupChoice.query.filter_by(list_type=normalized_type, name=value)
+        .delete()
+    )
+    if not deleted:
         raise ValueError("لم يتم العثور على العنصر المطلوب.")
+    db.session.commit()
 
-    registry.remove(value)
-    _log(action, "success", value, items=registry, reason="deleted")
-    return list(registry)
+    _LOGGER.info(
+        "Admin settings change applied",
+        extra={
+            "log_payload": {
+                "admin_settings_action": f"delete_{normalized_type}",
+                "status": "success",
+                "value": value,
+                "items": get_list(normalized_type, active_only=False),
+            }
+        },
+    )
+    return get_list(normalized_type, active_only=True)
 
 
-def update_item(list_type: str, old_name: str, new_name: str) -> List[str]:
+def update_item(
+    list_type: str,
+    old_name: str,
+    new_name: str,
+    *,
+    is_active: bool | None = None,
+) -> List[str]:
     """Rename an existing entry while preventing duplicates."""
 
-    registry = _get_registry(list_type)
+    _ensure_storage_ready()
+    normalized_type = _validate_type(list_type)
     new_value = _normalize_value(new_name)
     old_value = _normalize_value(old_name)
-    action = _action_name(list_type, "update")
 
     if not new_value:
-        _log(action, "error", new_value, reason="empty_value")
         raise ValueError("الاسم مطلوب.")
-    if old_value not in registry:
-        _log(action, "error", old_value, reason="not_found")
-        raise ValueError("لم يتم العثور على العنصر المطلوب.")
-    if new_value != old_value and new_value in registry:
-        _log(action, "error", new_value, reason="duplicate_value")
-        raise ValueError("العنصر موجود بالفعل.")
 
-    index = registry.index(old_value)
-    registry[index] = new_value
-    _log(action, "success", new_value, items=registry, reason="renamed")
-    return list(registry)
+    entry = LookupChoice.query.filter_by(list_type=normalized_type, name=old_value).first()
+    if not entry:
+        raise ValueError("لم يتم العثور على العنصر المطلوب.")
+
+    if new_value != old_value:
+        duplicate = LookupChoice.query.filter_by(list_type=normalized_type, name=new_value).first()
+        if duplicate:
+            raise ValueError("العنصر موجود بالفعل.")
+        entry.name = new_value
+
+    if is_active is not None:
+        entry.active = bool(is_active)
+
+    db.session.commit()
+    _LOGGER.info(
+        "Admin settings change applied",
+        extra={
+            "log_payload": {
+                "admin_settings_action": f"update_{normalized_type}",
+                "status": "success",
+                "value": new_value,
+                "items": get_list(normalized_type, active_only=False),
+            }
+        },
+    )
+    return get_list(normalized_type, active_only=True)
 
 
 __all__ = [

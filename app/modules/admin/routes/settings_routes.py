@@ -9,8 +9,6 @@ from flask import abort, jsonify, render_template, request, Response
 from flask_login import current_user
 
 from app.services.access_control import admin_required
-from app.core.choices.registry import CITIES, INDUSTRIES
-
 from app.modules.admin.services import settings_service
 from .. import admin
 
@@ -113,12 +111,14 @@ def settings_home() -> str:
     """Render the consolidated site settings management experience."""
 
     selected_tab = _extract_tab()
+    cities = settings_service.get_list("cities", active_only=False)
+    industries = settings_service.get_list("industries", active_only=False)
     return render_template(
         "admin/settings.html",
         section_title="Site Settings",
         active_page="settings",
-        cities=CITIES,
-        industries=INDUSTRIES,
+        cities=cities,
+        industries=industries,
         selected_tab=selected_tab,
     )
 
