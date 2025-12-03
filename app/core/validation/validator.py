@@ -41,7 +41,7 @@ def _validate_url(field: str, value: Any) -> Tuple[bool, str | None]:
         lowered = candidate.lower()
         if lowered.startswith("http://") or lowered.startswith("https://"):
             return True
-        if "." in candidate and candidate.index(".") >= 2:
+        if "." in candidate:
             return True
         return False
 

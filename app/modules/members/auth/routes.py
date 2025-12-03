@@ -256,22 +256,22 @@ def company_register_page():
         result, status = register_company_account(payload)
         return jsonify(result), status
 
-    if form.validate_on_submit():
-        payload = _register_company_from_form(form)
-        result, status = register_company_account(payload)
-        if status == HTTPStatus.CREATED:
-            flash("تم استلام طلبك وسيتم مراجعته من قبل الإدارة.", "success")
-            return redirect(url_for("auth.register_company"))
+    if not form.validate_on_submit():
+        for field_errors in form.errors.values():
+            for error in field_errors:
+                flash(error, "danger")
+        return render_template("members/auth/register_company.html", form=form), HTTPStatus.BAD_REQUEST
 
-        error_message = result.get("error") if isinstance(result, dict) else None
-        if error_message:
-            flash(error_message, "danger")
-        return render_template("members/auth/register_company.html", form=form), status
+    payload = _register_company_from_form(form)
+    result, status = register_company_account(payload)
+    if status == HTTPStatus.CREATED:
+        flash("تم استلام طلبك وسيتم مراجعته من قبل الإدارة.", "success")
+        return redirect(url_for("auth.register_company"))
 
-    for field_errors in form.errors.values():
-        for error in field_errors:
-            flash(error, "danger")
-    return render_template("members/auth/register_company.html", form=form), HTTPStatus.BAD_REQUEST
+    error_message = result.get("error") if isinstance(result, dict) else None
+    if error_message:
+        flash(error_message, "danger")
+    return render_template("members/auth/register_company.html", form=form), status
 
 
 @auth.post("/api/auth/login", endpoint="api_login")

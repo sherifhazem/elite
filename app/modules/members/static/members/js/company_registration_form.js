@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const lower = trimmed.toLowerCase();
             if (lower.startsWith('http://') || lower.startsWith('https://')) return trimmed;
             if (trimmed.startsWith('www.')) return `https://${trimmed}`;
-            if (/^[0-9]\./.test(trimmed)) return `https://www.${trimmed}`;
+            if (/^\d/.test(trimmed)) return `https://www.${trimmed}`;
             if (trimmed.includes('.')) return `https://${trimmed}`;
             return trimmed;
         };
@@ -32,10 +32,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const socialInput = form.querySelector('[name="social_url"]');
 
         if (websiteInput) {
-            websiteInput.value = normalizeUrl(websiteInput.value);
+            const normalized = normalizeUrl(websiteInput.value);
+            websiteInput.value = normalized;
         }
         if (socialInput) {
-            socialInput.value = normalizeUrl(socialInput.value);
+            const normalized = normalizeUrl(socialInput.value);
+            socialInput.value = normalized;
         }
 
         if (!form.checkValidity()) {
