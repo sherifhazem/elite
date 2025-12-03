@@ -44,3 +44,9 @@ After
 ## Operational notes
 - Navigation buttons for company signup now call `url_for('company.register_company')` to match the new blueprint namespace.
 - Logging and middleware remain unchanged; no additional logging hooks were required for the relocated route.
+
+## Route cleanup and compatibility
+- Removed the legacy `/register/company` handler under the `auth` blueprint to keep company onboarding fully within the `company` namespace.
+- `/company/register` (`url_for("company.register_company")`) is the single source of truth for browser-based company signups and receives traffic from legacy bookmarks via a lightweight redirect.
+- Templates updated in this sweep: `members/auth/choose_membership.html`, `members/auth/register_choice.html`, and `members/auth/register_select.html` now link exclusively to `company.register_company`.
+- Frontend teams should load the registration script from `url_for('company.static', filename='js/company_registration_form.js')` (path: `app/modules/companies/static/companies/js/company_registration_form.js`); the old `members` static path has been removed.
