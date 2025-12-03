@@ -13,6 +13,7 @@
 | **auth** | `/auth` | `app/modules/members/auth/routes.py` | التسجيل وتسجيل الدخول والخروج |
 | **admin** | `/admin` | `app/modules/admin/routes/dashboard_routes.py` | لوحة تحكم الأدمن، وتشمل كل الوحدات الفرعية |
 | **reports** | `/admin/reports` | `app/modules/admin/routes/reports_routes.py` | عرض تقارير النظام والإحصاءات |
+| **company** | `/company` | `app/modules/companies/routes.py` | تسجيل الشركات عبر الويب وواجهات الدعم |
 | **company_portal** | `/company` | `app/modules/companies/routes/__init__.py` | واجهة الشركات (العروض، الإحصاءات، الإعدادات) |
 | **portal** | `/portal` | `app/modules/members/routes/user_portal_routes.py` | بوابة المستخدمين (العروض، الملف الشخصي) |
 | **offers** | `/api/offers` | `app/modules/members/routes/offer_routes.py` | واجهات API الخاصة بالعروض |
@@ -37,7 +38,6 @@
 - auth.register_select → app/modules/members/auth/routes.py
 - auth.register_member → app/modules/members/auth/routes.py
 - auth.register_member_legacy → app/modules/members/auth/routes.py
-- auth.register_company → app/modules/members/auth/routes.py
 - auth.api_login → app/modules/members/auth/routes.py
 - auth.profile → app/modules/members/auth/routes.py
 - auth.choose_membership → app/modules/members/auth/routes.py
@@ -48,6 +48,9 @@
 - auth.request_password_reset → app/modules/members/auth/routes.py
 - auth.reset_password → app/modules/members/auth/routes.py
 - auth.logout → app/modules/members/auth/routes.py
+
+### 🔹 company (`app/modules/companies/routes.py`)
+- company.register_company → app/modules/companies/routes.py
 
 ### 🔹 admin (`app/modules/admin/routes/dashboard_routes.py`)
 - admin.admin_logout → app/modules/admin/routes/dashboard_routes.py

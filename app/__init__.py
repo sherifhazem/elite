@@ -252,6 +252,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     )
     from app.modules.members.routes.user_portal_routes import portal  # noqa: E402
     from app.modules.members.auth.routes import auth  # noqa: E402
+    from app.modules.companies.routes import company_bp  # noqa: E402
     from app.modules.admin import admin  # noqa: E402
     from app.modules.companies import company_portal  # noqa: E402
     from app.modules.companies.routes.api_routes import companies  # noqa: E402
@@ -261,6 +262,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.register_blueprint(main_blueprint)
     app.register_blueprint(admin)  # ← الآن يستخدم تعريف blueprint الصحيح من app/admin/__init__.py
     app.register_blueprint(auth)
+    app.register_blueprint(company_bp)
     app.register_blueprint(company_portal)
     app.register_blueprint(portal)
     app.register_blueprint(offers, url_prefix="/api/offers")
