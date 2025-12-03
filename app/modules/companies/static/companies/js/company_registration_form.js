@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!form.checkValidity()) {
             event.preventDefault();
-            errorMessage.textContent = 'يرجى تعبئة جميع الحقول المطلوبة بشكل صحيح.';
+            errorMessage.textContent = 'يرجى تعبئة جميع الحقول الضرورية المميزة بالنجمة الحمراء قبل الإرسال.';
             form.classList.add('was-validated');
         } else {
             errorMessage.textContent = '';

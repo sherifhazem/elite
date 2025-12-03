@@ -135,8 +135,8 @@ def send_company_welcome_email(*, owner, company_name: str) -> bool:
         "recipient_name": getattr(owner, "username", "").strip() or owner.email,
         "company_name": company_name,
         "welcome_message": (
-            "مرحبًا بكم في منصة ELITE للشركات!\n"
-            "يمكنكم الآن إدارة عروضكم ومتابعة تفاعلات الأعضاء بسهولة من لوحة التحكم الخاصة بكم."
+            "شكرًا لتسجيل شركتكم في منصة ELITE.\n"
+            "طلبكم قيد المراجعة الآن وسيتم التواصل معكم قريبًا فور الانتهاء من دراسة التفاصيل."
         ),
     }
     return send_email(

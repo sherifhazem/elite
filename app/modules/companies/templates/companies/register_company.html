@@ -14,30 +14,34 @@
   <form id="register-company-form" method="post" class="needs-validation text-end" novalidate>
     {{ form.hidden_tag() }}
 
+    <p class="text-danger small text-end mb-3">
+      الحقول المميزة بالعلامة (<span class="text-danger">*</span>) ضرورية لإتمام طلب التسجيل.
+    </p>
+
     <div class="row g-3">
       <div class="col-12">
-        <label class="form-label fw-semibold d-block text-end">اسم الشركة</label>
-        {{ form.company_name(class="form-control auth-input text-end", placeholder="اسم الشركة") }}
+        <label class="form-label fw-semibold d-block text-end">اسم الشركة <span class="text-danger">*</span></label>
+        {{ form.company_name(class="form-control auth-input text-end", placeholder="اسم الشركة", required=True) }}
       </div>
 
       <div class="col-12 col-md-6">
-        <label class="form-label fw-semibold d-block text-end">البريد الإلكتروني للشركة</label>
-        {{ form.email(class="form-control auth-input text-start", dir="ltr", placeholder="company@example.com") }}
+        <label class="form-label fw-semibold d-block text-end">البريد الإلكتروني للشركة <span class="text-danger">*</span></label>
+        {{ form.email(class="form-control auth-input text-start", dir="ltr", placeholder="company@example.com", required=True) }}
       </div>
 
       <div class="col-12 col-md-6">
-        <label class="form-label fw-semibold d-block text-end">رقم الهاتف</label>
-        {{ form.phone_number(class="form-control auth-input text-start", dir="ltr", placeholder="05xxxxxxxx") }}
+        <label class="form-label fw-semibold d-block text-end">رقم الهاتف <span class="text-danger">*</span></label>
+        {{ form.phone_number(class="form-control auth-input text-start", dir="ltr", placeholder="05xxxxxxxx", required=True) }}
       </div>
 
       <div class="col-12 col-md-6">
-        <label class="form-label fw-semibold d-block text-end">مجال عمل الشركة</label>
-        {{ form.industry(class="form-select auth-input text-end") }}
+        <label class="form-label fw-semibold d-block text-end">مجال عمل الشركة <span class="text-danger">*</span></label>
+        {{ form.industry(class="form-select auth-input text-end", required=True) }}
       </div>
 
       <div class="col-12 col-md-6">
-        <label class="form-label fw-semibold d-block text-end">اسم المدينة</label>
-        {{ form.city(class="form-select auth-input text-end") }}
+        <label class="form-label fw-semibold d-block text-end">اسم المدينة <span class="text-danger">*</span></label>
+        {{ form.city(class="form-select auth-input text-end", required=True) }}
       </div>
 
       <div class="col-12 col-md-6">
@@ -46,13 +50,13 @@
       </div>
 
       <div class="col-12 col-md-6">
-        <label class="form-label fw-semibold d-block text-end">رابط التواصل الاجتماعي</label>
-        {{ form.social_url(class="form-control auth-input text-start", dir="ltr", placeholder="https://instagram.com/yourbrand") }}
+        <label class="form-label fw-semibold d-block text-end">رابط التواصل الاجتماعي <span class="text-danger">*</span></label>
+        {{ form.social_url(class="form-control auth-input text-start", dir="ltr", placeholder="https://instagram.com/yourbrand", required=True) }}
       </div>
 
       <div class="col-12 col-md-6">
-        <label class="form-label fw-semibold d-block text-end">كلمة المرور</label>
-        {{ form.password(class="form-control auth-input text-start", dir="ltr", placeholder="••••••••") }}
+        <label class="form-label fw-semibold d-block text-end">كلمة المرور <span class="text-danger">*</span></label>
+        {{ form.password(class="form-control auth-input text-start", dir="ltr", placeholder="••••••••", required=True) }}
       </div>
 
       <div class="col-12">

@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from app.core.database import db
 from app.logging.context import build_logging_context
 from app.models import Company, User
-from app.services.mailer import send_email
+from app.services.mailer import send_company_welcome_email, send_email
 from app.core.choices import get_cities, get_industries, validate_choice
 from app.modules.members.services.member_notifications_service import (
     push_admin_notification,
@@ -198,6 +198,8 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
         industry=industry,
         city=city,
     )
+
+    send_company_welcome_email(owner=owner, company_name=company.name)
 
     response = {
         "company": {
