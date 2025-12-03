@@ -20,7 +20,7 @@ from .enrichers import (
 from .logger import get_logger
 from .sanitizers import sanitize_payload
 from app.core.cleaning.request_cleaner import (
-    build_cleaned_data,
+    build_cleaned_payload,
     extract_raw_data,
     normalize_data,
 )
@@ -75,7 +75,7 @@ def register_logging_middleware(app: Flask) -> None:
         if normalized_payload.get("normalization"):
             ctx.normalization.extend(normalized_payload.get("normalization", []))
 
-        cleaned_payload = build_cleaned_data(raw_payload, normalized_payload)
+        cleaned_payload = build_cleaned_payload(raw_payload, normalized_payload)
         ctx.add_breadcrumb("cleaning:cleaned_data_built")
 
         request.raw_data = raw_payload

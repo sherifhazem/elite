@@ -16,6 +16,28 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     form.addEventListener('submit', (event) => {
+        const normalizeUrl = (value) => {
+            const trimmed = (value || '').trim();
+            if (!trimmed) return '';
+
+            const lower = trimmed.toLowerCase();
+            if (lower.startsWith('http://') || lower.startsWith('https://')) return trimmed;
+            if (trimmed.startsWith('www.')) return `https://${trimmed}`;
+            if (/^[0-9]\./.test(trimmed)) return `https://www.${trimmed}`;
+            if (trimmed.includes('.')) return `https://${trimmed}`;
+            return trimmed;
+        };
+
+        const websiteInput = form.querySelector('[name="website_url"]');
+        const socialInput = form.querySelector('[name="social_url"]');
+
+        if (websiteInput) {
+            websiteInput.value = normalizeUrl(websiteInput.value);
+        }
+        if (socialInput) {
+            socialInput.value = normalizeUrl(socialInput.value);
+        }
+
         if (!form.checkValidity()) {
             event.preventDefault();
             errorMessage.textContent = 'يرجى تعبئة جميع الحقول المطلوبة بشكل صحيح.';
