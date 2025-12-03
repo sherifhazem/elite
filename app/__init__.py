@@ -252,7 +252,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     )
     from app.modules.members.routes.user_portal_routes import portal  # noqa: E402
     from app.modules.members.auth.routes import auth  # noqa: E402
-    from app.modules.companies.routes import company_bp  # noqa: E402
+    from app.modules.companies.company_registration_routes import company_bp  # noqa: E402
     from app.modules.admin import admin  # noqa: E402
     from app.modules.companies import company_portal  # noqa: E402
     from app.modules.companies.routes.api_routes import companies  # noqa: E402
