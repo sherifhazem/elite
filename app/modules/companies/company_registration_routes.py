@@ -35,9 +35,14 @@ def register_company():
 
     if status == HTTPStatus.CREATED:
         flash("تم استلام طلب شركتك بنجاح.", "success")
-        return redirect(url_for("company.register_company"))
+        return redirect(url_for("company.register_company_success"))
 
     if isinstance(result, dict) and result.get("error"):
         flash(result["error"], "danger")
 
     return render_template("companies/register_company.html", form=form), status
+
+
+@company_bp.route("/register/success", methods=["GET"])
+def register_company_success():
+    return render_template("companies/register_company_success.html")

@@ -49,8 +49,9 @@
 - auth.reset_password → app/modules/members/auth/routes.py
 - auth.logout → app/modules/members/auth/routes.py
 
-### 🔹 company (`app/modules/companies/routes.py`)
-- company.register_company → app/modules/companies/routes.py
+### 🔹 company (`app/modules/companies/company_registration_routes.py`)
+- company.register_company → app/modules/companies/company_registration_routes.py
+- company.register_company_success → app/modules/companies/company_registration_routes.py
 
 ### 🔹 admin (`app/modules/admin/routes/dashboard_routes.py`)
 - admin.admin_logout → app/modules/admin/routes/dashboard_routes.py

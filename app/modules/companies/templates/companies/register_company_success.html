@@ -1,0 +1,26 @@
+{% extends "members/auth/base_auth.html" %}
+{% block title %}تم استلام طلب شركتك | ELITE{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-md-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+      <div class="auth-card text-center shadow-sm" style="max-width: 560px; margin: 0 auto;" dir="rtl">
+        <div class="mb-4">
+          <div class="rounded-circle bg-success-subtle text-success d-inline-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+            <i class="fa-solid fa-handshake-angle fa-2x"></i>
+          </div>
+        </div>
+        <h2 class="fw-bold mb-2" style="color: var(--brand-primary);">مرحبًا بكم في ELITE!</h2>
+        <p class="text-muted mb-4">
+          تم استلام طلب انضمام شركتكم بنجاح. جاري العمل على مراجعة الطلب وسنتواصل معكم قريبًا لإكمال الخطوات التالية.
+        </p>
+        <div class="d-flex flex-column flex-md-row gap-2 justify-content-center">
+          <a href="{{ url_for('auth.login') }}" class="btn btn-gradient px-4">العودة لتسجيل الدخول</a>
+          <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary px-4">الصفحة الرئيسية</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
