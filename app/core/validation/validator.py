@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 from flask import request
 
 from app.logging.context import build_logging_context
-from core.choices import registry
+from app.core.choices import registry
 
 _REQUIRED_FIELDS = {
     "email",

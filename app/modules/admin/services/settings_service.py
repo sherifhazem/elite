@@ -1,7 +1,7 @@
 """Admin settings helpers backed by the centralized choices registry.
 
 This module intentionally mutates the in-memory registry lists declared in
-``core.choices.registry`` so that admin edits are reflected immediately across
+``app.core.choices.registry`` so that admin edits are reflected immediately across
 forms, services, and monitoring endpoints without touching the database.
 """
 
@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Dict, Iterable, List
 
 from app.logging.logger import get_logger
-from core.choices.registry import CITIES, INDUSTRIES
+from app.core.choices.registry import CITIES, INDUSTRIES
 
 _LOGGER = get_logger(__name__)
 _REGISTRY_MAP = {"cities": CITIES, "industries": INDUSTRIES}

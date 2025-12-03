@@ -61,7 +61,7 @@ def _mount_static_mappings(app: Flask) -> None:
 
 
 def create_app(config_class: type[Config] = Config) -> Flask:
-    app = Flask(__name__, template_folder="../core/templates", static_folder="../core/static")
+    app = Flask(__name__, template_folder="core/templates", static_folder="core/static")
     app.config.from_object(config_class)
     app.secret_key = app.config["SECRET_KEY"]
 

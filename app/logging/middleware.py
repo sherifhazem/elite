@@ -19,12 +19,12 @@ from .enrichers import (
 )
 from .logger import get_logger
 from .sanitizers import sanitize_payload
-from core.cleaning.request_cleaner import (
+from app.core.cleaning.request_cleaner import (
     build_cleaned_data,
     extract_raw_data,
     normalize_data,
 )
-from core.validation.validator import validate
+from app.core.validation.validator import validate
 
 logger = get_logger()
 

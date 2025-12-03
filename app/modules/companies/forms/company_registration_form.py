@@ -13,7 +13,7 @@ from wtforms import PasswordField, SelectField, StringField, TextAreaField
 from wtforms.fields import EmailField, URLField
 from wtforms.validators import DataRequired, Email, Length, Optional, URL
 
-from core.choices import get_cities, get_industries
+from app.core.choices import get_cities, get_industries
 
 
 class _DynamicChoiceAdapter(Sequence[Tuple[str, str]]):
