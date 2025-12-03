@@ -7,7 +7,7 @@ from typing import Any, Dict, Tuple
 from flask import Request
 
 from app.logging.sanitizers import filter_headers, sanitize_payload
-from app.core.normalization import normalize_url
+from app.core.normalization.url_normalizer import normalize_url
 
 
 _URL_FIELDS = {"website_url", "social_url"}
@@ -145,7 +145,7 @@ def validate_choices(normalized_data: Dict[str, Any]) -> Tuple[bool, list[dict[s
     return len(errors) == 0, errors
 
 
-def build_cleaned_data(raw_data: Dict[str, Any], normalized_data: Dict[str, Any]) -> Dict[str, Any]:
+def build_cleaned_payload(raw_data: Dict[str, Any], normalized_data: Dict[str, Any]) -> Dict[str, Any]:
     """Combine original and normalized payloads into a canonical cleaned mapping."""
 
     cleaned = dict(normalized_data.get("combined", {}))
@@ -162,5 +162,5 @@ __all__ = [
     "extract_raw_data",
     "normalize_data",
     "validate_choices",
-    "build_cleaned_data",
+    "build_cleaned_payload",
 ]

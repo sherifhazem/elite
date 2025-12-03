@@ -6,7 +6,6 @@ import re
 from datetime import datetime
 from http import HTTPStatus
 from typing import Dict, Tuple
-from urllib.parse import urlparse
 
 from flask import current_app, url_for
 from flask_login import current_user
@@ -17,7 +16,6 @@ from app.logging.context import build_logging_context
 from app.models import Company, User
 from app.services.mailer import send_email
 from app.core.choices import get_cities, get_industries, validate_choice
-from app.core.normalization import normalize_url
 from app.modules.members.services.member_notifications_service import (
     push_admin_notification,
     queue_notification,
@@ -41,29 +39,8 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
     phone_number = (payload.get("phone_number") or "").strip()
     industry = (payload.get("industry") or "").strip()
     city = (payload.get("city") or "").strip()
-    website_url_raw = (payload.get("website_url") or "").strip()
-    social_url_raw = (payload.get("social_url") or "").strip()
-    website_url = normalize_url(website_url_raw)
-    social_url = normalize_url(social_url_raw)
-
-    if ctx:
-        normalization_records = []
-        if website_url != website_url_raw:
-            normalization_records.append(
-                {"field": "website_url", "from": website_url_raw, "to": website_url}
-            )
-        if social_url != social_url_raw:
-            normalization_records.append(
-                {"field": "social_url", "from": social_url_raw, "to": social_url}
-            )
-        if normalization_records:
-            ctx.add_breadcrumb("normalization:url_fixed")
-            ctx.normalization.extend(normalization_records)
-            normalized_fields = ctx.normalized_payload.setdefault("normalized_fields", {})
-            for record in normalization_records:
-                normalized_fields.setdefault(record["field"], []).append(
-                    [record["from"], record["to"]]
-                )
+    website_url = (payload.get("website_url") or "").strip()
+    social_url = (payload.get("social_url") or "").strip()
 
     if not email or not password or not company_name:
         return (
@@ -117,25 +94,6 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
         _log_validation_failure("city", city, "value_not_in_list", allowed_cities, city_diag)
         return (
             {"error": city_diag or "city is required and must be a supported choice."},
-            HTTPStatus.BAD_REQUEST,
-        )
-
-    def _is_valid_url(value: str) -> bool:
-        if not value:
-            return False
-        parsed = urlparse(value)
-        return bool(parsed.scheme in {"http", "https"} and parsed.netloc)
-
-    if website_url and not _is_valid_url(website_url):
-        _log_validation_failure("website_url", website_url, "invalid_url_format")
-        return (
-            {"error": "website_url must be a valid HTTP or HTTPS link."},
-            HTTPStatus.BAD_REQUEST,
-        )
-    if not social_url or not _is_valid_url(social_url):
-        _log_validation_failure("social_url", social_url, "invalid_url_format")
-        return (
-            {"error": "social_url must be a valid HTTP or HTTPS link."},
             HTTPStatus.BAD_REQUEST,
         )
 

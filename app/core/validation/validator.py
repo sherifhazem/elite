@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Tuple
-from urllib.parse import urlparse
 
 from flask import request
 
@@ -31,9 +30,20 @@ def _validate_url(field: str, value: Any) -> Tuple[bool, str | None]:
     if value in (None, ""):
         return True, None
 
+    def has_invalid_chars(candidate: str) -> bool:
+        return any(ch.isspace() or ch in {'"', "'", "\\"} for ch in candidate)
+
     def is_valid(candidate: str) -> bool:
-        parsed = urlparse(candidate)
-        return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+        if candidate == "":
+            return True
+        if has_invalid_chars(candidate):
+            return False
+        lowered = candidate.lower()
+        if lowered.startswith("http://") or lowered.startswith("https://"):
+            return True
+        if "." in candidate and candidate.index(".") >= 2:
+            return True
+        return False
 
     if isinstance(value, list):
         invalid = [item for item in value if isinstance(item, str) and not is_valid(item)]
