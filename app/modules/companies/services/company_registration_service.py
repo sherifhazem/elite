@@ -16,8 +16,8 @@ from app.core.database import db
 from app.logging.context import build_logging_context
 from app.models import Company, User
 from app.services.mailer import send_email
-from core.choices import get_cities, get_industries, validate_choice
-from core.normalization import normalize_url
+from app.core.choices import get_cities, get_industries, validate_choice
+from app.core.normalization import normalize_url
 from app.modules.members.services.member_notifications_service import (
     push_admin_notification,
     queue_notification,

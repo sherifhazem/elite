@@ -7,7 +7,7 @@ from typing import Any, Dict, Tuple
 from flask import Request
 
 from app.logging.sanitizers import filter_headers, sanitize_payload
-from core.normalization import normalize_url
+from app.core.normalization import normalize_url
 
 
 _URL_FIELDS = {"website_url", "social_url"}
@@ -113,7 +113,7 @@ def normalize_data(raw_data: Dict[str, Any]) -> Dict[str, Any]:
 def validate_choices(normalized_data: Dict[str, Any]) -> Tuple[bool, list[dict[str, Any]]]:
     """Validate registry-backed choice fields."""
 
-    from core.choices import registry
+    from app.core.choices import registry
 
     combined = normalized_data.get("combined", {})
     errors: list[dict[str, Any]] = []

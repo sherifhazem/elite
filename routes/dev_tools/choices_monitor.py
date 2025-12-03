@@ -4,7 +4,7 @@ import os
 
 from flask import Blueprint, abort, current_app, jsonify
 
-from core.choices import get_cities, get_industries
+from app.core.choices import get_cities, get_industries
 
 choices_monitor = Blueprint("choices_monitor", __name__)
 
