@@ -288,7 +288,7 @@ def send_company_approval_email(company) -> bool:
         return False
 
     company_name = getattr(company, "name", "") or "your company"
-    base_url = (flask_app.config.get("BASE_URL") or "").rstrip("/")
+    base_url = (current_app.config.get("BASE_URL") or "").rstrip("/")
     login_link = f"{base_url}/company/login" if base_url else "/company/login"
     html_body = f"""
     <h3>Welcome to Elite Discounts!</h3>
@@ -297,13 +297,12 @@ def send_company_approval_email(company) -> bool:
     <p><a href="{login_link}">Click here to log in</a></p>
     """
 
-    with flask_app.app_context():
-        if not _dispatch_email(
-            recipient,
-            "Your Company Has Been Approved - Elite Program",
-            html_body,
-        ):
-            return False
+    if not _dispatch_email(
+        recipient,
+        "Your Company Has Been Approved - Elite Program",
+        html_body,
+    ):
+        return False
     return True
 
 
@@ -325,13 +324,12 @@ def send_company_correction_email(company, notes: str, correction_link: str) -> 
     <p><a href="{correction_link}">{correction_link}</a></p>
     """
 
-    with flask_app.app_context():
-        if not _dispatch_email(
-            recipient,
-            "Correction Required for Your Company Application",
-            html_body,
-        ):
-            return False
+    if not _dispatch_email(
+        recipient,
+        "Correction Required for Your Company Application",
+        html_body,
+    ):
+        return False
     return True
 
 
@@ -350,13 +348,12 @@ def send_company_suspension_email(company) -> bool:
     <p>If you believe this is a mistake, please contact our support team.</p>
     """
 
-    with flask_app.app_context():
-        if not _dispatch_email(
-            recipient,
-            "Your Account Has Been Suspended - Elite Discounts",
-            html_body,
-        ):
-            return False
+    if not _dispatch_email(
+        recipient,
+        "Your Account Has Been Suspended - Elite Discounts",
+        html_body,
+    ):
+        return False
     return True
 
 
@@ -368,7 +365,7 @@ def send_company_reactivation_email(company) -> bool:
         return False
 
     company_name = getattr(company, "name", "") or "your company"
-    base_url = (flask_app.config.get("BASE_URL") or "").rstrip("/")
+    base_url = (current_app.config.get("BASE_URL") or "").rstrip("/")
     login_link = f"{base_url}/company/login" if base_url else "/company/login"
     html_body = f"""
     <h3>Account Reactivated</h3>
@@ -377,13 +374,12 @@ def send_company_reactivation_email(company) -> bool:
     <p><a href="{login_link}">Login to your account</a></p>
     """
 
-    with flask_app.app_context():
-        if not _dispatch_email(
-            recipient,
-            "Your Company Account Has Been Reactivated",
-            html_body,
-        ):
-            return False
+    if not _dispatch_email(
+        recipient,
+        "Your Company Account Has Been Reactivated",
+        html_body,
+    ):
+        return False
     return True
 
 
