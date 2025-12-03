@@ -2,27 +2,24 @@
 
 from __future__ import annotations
 
+
 def normalize_url(raw: str) -> str:
     """Normalize user-submitted URLs with a consistent strategy."""
 
-    if raw is None:
+    value = "" if raw is None else raw.strip()
+    if value == "":
         return ""
 
-    candidate = raw.strip()
-    if candidate == "":
-        return ""
+    if value.startswith("http"):
+        return value
+    if value.startswith("www."):
+        return f"https://{value}"
+    if value[:1].isdigit():
+        return f"https://www.{value}"
+    if "." in value:
+        return f"https://{value}"
 
-    lower = candidate.lower()
-    if lower.startswith("http://") or lower.startswith("https://"):
-        return candidate
-    if candidate.startswith("www."):
-        return f"https://{candidate}"
-    if candidate[:1].isdigit():
-        return f"https://www.{candidate}"
-    if "." in candidate:
-        return f"https://{candidate}"
-
-    return candidate
+    return value
 
 
 __all__ = ["normalize_url"]

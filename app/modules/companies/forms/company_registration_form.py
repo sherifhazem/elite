@@ -106,12 +106,12 @@ class CompanyRegistrationForm(FlaskForm):
     )
     website_url = URLField(
         "رابط الموقع الإلكتروني",
-        validators=[Optional(), URL(message="الرجاء إدخال رابط صحيح.")],
+        validators=[Optional()],
         render_kw={"placeholder": "https://example.com", "class": "input-control"},
     )
     social_url = URLField(
         "رابط التواصل الاجتماعي",
-        validators=[DataRequired(message="هذا الحقل إلزامي."), URL(message="الرجاء إدخال رابط صحيح.")],
+        validators=[DataRequired(message="هذا الحقل إلزامي.")],
         render_kw={
             "placeholder": "https://instagram.com/yourbrand",
             "class": "input-control",

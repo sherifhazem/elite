@@ -7,7 +7,7 @@ from datetime import datetime
 from http import HTTPStatus
 from typing import Dict, Tuple
 
-from flask import current_app, url_for
+from flask import current_app, request, url_for
 from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
 
@@ -31,16 +31,18 @@ def register_company_account(payload: Dict[str, str]) -> Tuple[Dict[str, object]
     except Exception:
         ctx = None
 
-    requested_username = (payload.get("username") or "").strip()
-    email = (payload.get("email") or "").strip().lower()
-    password = payload.get("password")
-    company_name = (payload.get("company_name") or "").strip()
-    description = payload.get("description")
-    phone_number = (payload.get("phone_number") or "").strip()
-    industry = (payload.get("industry") or "").strip()
-    city = (payload.get("city") or "").strip()
-    website_url = (payload.get("website_url") or "").strip()
-    social_url = (payload.get("social_url") or "").strip()
+    data = getattr(request, "cleaned", {}) or payload or {}
+
+    requested_username = (data.get("username") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password")
+    company_name = (data.get("company_name") or "").strip()
+    description = data.get("description")
+    phone_number = (data.get("phone_number") or "").strip()
+    industry = (data.get("industry") or "").strip()
+    city = (data.get("city") or "").strip()
+    website_url = (data.get("website_url") or "").strip()
+    social_url = (data.get("social_url") or "").strip()
 
     if not email or not password or not company_name:
         return (

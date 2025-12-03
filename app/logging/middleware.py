@@ -72,6 +72,7 @@ def register_logging_middleware(app: Flask) -> None:
 
         normalized_payload = normalize_data(raw_payload)
         ctx.add_breadcrumb("cleaning:url_normalized")
+        ctx.add_breadcrumb("cleaning:frontend_backend_url_normalized")
         if normalized_payload.get("normalization"):
             ctx.normalization.extend(normalized_payload.get("normalization", []))
 
@@ -79,12 +80,14 @@ def register_logging_middleware(app: Flask) -> None:
         ctx.add_breadcrumb("cleaning:cleaned_data_built")
 
         request.raw_data = raw_payload
+        request.incoming_payload = raw_payload
         request.normalized_data = normalized_payload
+        request.normalized_payload = normalized_payload
         request.cleaned = cleaned_payload
 
-        ctx.incoming_payload.update(sanitize_payload(raw_payload))
-        ctx.normalized_payload.update(sanitize_payload(normalized_payload))
-        ctx.cleaned_payload.update(sanitize_payload(cleaned_payload))
+        ctx.incoming_payload.update(sanitize_payload(getattr(request, "incoming_payload", raw_payload)))
+        ctx.normalized_payload.update(sanitize_payload(getattr(request, "normalized_payload", normalized_payload)))
+        ctx.cleaned_payload.update(sanitize_payload(getattr(request, "cleaned", cleaned_payload)))
 
         validation_info = validate(normalized_payload)
         request.validation_info = validation_info
