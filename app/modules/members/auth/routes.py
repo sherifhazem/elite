@@ -31,14 +31,10 @@ from flask_login import current_user
 from sqlalchemy import or_
 
 from flask_sqlalchemy import SQLAlchemy
-from app.modules.companies.services.company_registration_service import (
-    register_company_account,
-)
 from app.services.mailer import send_email, send_member_welcome_email
 from app.modules.members.services.member_notifications_service import (
     send_welcome_notification,
 )
-from app.modules.companies.forms.company_registration_form import CompanyRegistrationForm
 from .utils import (
     confirm_token,
     create_token,
@@ -184,27 +180,6 @@ def register_select_page() -> Response:
     return redirect(url_for("auth.register_choice"))
 
 
-def _register_company_from_form(
-    form: Optional[CompanyRegistrationForm] = None,
-) -> Dict[str, str]:
-    """Normalize HTML form submissions for company registration."""
-
-    active_form = form or CompanyRegistrationForm()
-    cleaned = getattr(request, "cleaned", {}) or {}
-    return {
-        "company_name": (cleaned.get("company_name") or active_form.company_name.data or "").strip(),
-        "description": (cleaned.get("description") or active_form.description.data or "").strip() or None,
-        "email": (cleaned.get("email") or active_form.email.data or "").strip().lower(),
-        "password": cleaned.get("password") or active_form.password.data,
-        "username": "",
-        "phone_number": (cleaned.get("phone_number") or active_form.phone_number.data or "").strip(),
-        "industry": (cleaned.get("industry") or active_form.industry.data or "").strip(),
-        "city": (cleaned.get("city") or active_form.city.data or "").strip(),
-        "website_url": (cleaned.get("website_url") or active_form.website_url.data or "").strip(),
-        "social_url": (cleaned.get("social_url") or active_form.social_url.data or "").strip(),
-    }
-
-
 @auth.route("/register/member", methods=["GET", "POST"], endpoint="register_member")
 def register_member():
     """Render or process the member registration form for browser visitors."""
@@ -237,41 +212,6 @@ def register_member_legacy():
     """Preserve the historic /auth/register/member path."""
 
     return register_member()
-
-
-@auth.route(
-    "/register/company",
-    methods=["GET", "POST"],
-    endpoint="register_company",
-)
-def company_register_page():
-    """Render or process the company registration form."""
-
-    form = CompanyRegistrationForm()
-    if request.method == "GET":
-        return render_template("members/auth/register_company.html", form=form)
-
-    if request.is_json:
-        payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
-        result, status = register_company_account(payload)
-        return jsonify(result), status
-
-    if not form.validate_on_submit():
-        for field_errors in form.errors.values():
-            for error in field_errors:
-                flash(error, "danger")
-        return render_template("members/auth/register_company.html", form=form), HTTPStatus.BAD_REQUEST
-
-    payload = _register_company_from_form(form)
-    result, status = register_company_account(payload)
-    if status == HTTPStatus.CREATED:
-        flash("تم استلام طلبك وسيتم مراجعته من قبل الإدارة.", "success")
-        return redirect(url_for("auth.register_company"))
-
-    error_message = result.get("error") if isinstance(result, dict) else None
-    if error_message:
-        flash(error_message, "danger")
-    return render_template("members/auth/register_company.html", form=form), status
 
 
 @auth.post("/api/auth/login", endpoint="api_login")

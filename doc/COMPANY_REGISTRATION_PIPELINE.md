@@ -4,7 +4,7 @@ This document captures the end-to-end flow for company registration, including h
 
 ## Frontend URL normalization
 
-Implemented in `app/modules/members/static/members/js/company_registration_form.js`:
+Implemented in `app/modules/companies/static/companies/js/company_registration_form.js`:
 
 - Trim whitespace from inputs before submission.
 - If the value starts with `http://` or `https://`, keep it unchanged.
