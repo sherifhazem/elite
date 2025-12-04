@@ -54,6 +54,28 @@
   {% endif %}
 
   <div class="card shadow-sm mt-4">
+    <div class="card-body d-flex flex-wrap gap-2 align-items-center">
+      <h5 class="mb-0 me-3">Status Actions</h5>
+
+      {% if company.status in ['pending', 'correction'] %}
+        <form method="post" action="{{ url_for('admin.approve_company', company_id=company.id) }}" class="d-inline">
+          <button type="submit" class="btn btn-success">Accept Company</button>
+        </form>
+      {% endif %}
+
+      {% if company.status == 'approved' %}
+        <form method="post" action="{{ url_for('admin.suspend_company', company_id=company.id) }}" class="d-inline">
+          <button type="submit" class="btn btn-warning">Suspend</button>
+        </form>
+      {% elif company.status == 'suspended' %}
+        <form method="post" action="{{ url_for('admin.reactivate_company', company_id=company.id) }}" class="d-inline">
+          <button type="submit" class="btn btn-success">Reactivate</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card shadow-sm mt-4">
     <div class="card-body">
       <h5 class="mb-3">Request Missing/Corrected Details</h5>
       <form method="post" action="{{ url_for('admin.request_company_correction', company_id=company.id) }}">
