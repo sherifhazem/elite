@@ -12,7 +12,7 @@
         {% set registration_value = none %}
     {% endif %}
     <section class="settings-layout">
-        <form id="company-settings-form" data-action="{{ url_for('company_portal.company_settings') }}" class="settings-form" novalidate>
+        <form id="company-settings-form" data-action="{{ url_for('company_portal.company_settings') }}" class="settings-form" novalidate enctype="multipart/form-data">
             <fieldset class="settings-section">
                 <legend>Account overview</legend>
                 <div class="row g-4">
@@ -67,15 +67,26 @@
                         <textarea class="form-control" id="company-description" name="description" rows="4" placeholder="Describe your company benefits">{{ company.description or '' }}</textarea>
                     </div>
                     <div class="col-12 col-md-6">
-                        <label for="company-logo" class="form-label">Logo URL</label>
+                        <label for="company-logo" class="form-label">Logo</label>
                         <input
-                            type="url"
+                            type="file"
                             class="form-control"
                             id="company-logo"
-                            name="logo_url"
-                            value="{{ company.logo_url or '' }}"
-                            placeholder="https://example.com/logo.png"
+                            name="logo_file"
+                            accept="image/png,image/jpeg,image/webp,image/svg+xml"
                         >
+                        <div class="form-text">الرجاء رفع لوجو بقياس 400×120 بحد أقصى وحجم أقل من 2MB.</div>
+                    </div>
+                    <div class="col-12 col-md-6 d-flex align-items-end">
+                        <div class="logo-preview-wrapper">
+                            <div class="form-text mb-1">معاينة اللوجو الحالي</div>
+                            <img
+                                id="company-logo-preview"
+                                src="{{ company.logo_url or url_for('static', filename='companies/images/logo-placeholder.svg') }}"
+                                alt="{{ company.name }} logo"
+                                class="img-fluid rounded shadow-sm border"
+                            >
+                        </div>
                     </div>
                 </div>
             </fieldset>

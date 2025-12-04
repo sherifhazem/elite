@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" role="img" aria-label="Placeholder logo">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1f3b70" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#e0b341" stop-opacity="0.85"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="400" height="120" rx="18" fill="url(#g)"/>
+  <g fill="#fff" font-family="'Inter', 'Segoe UI', sans-serif" font-weight="700" font-size="42" text-anchor="middle" dominant-baseline="middle">
+    <text x="200" y="60">Company Logo</text>
+  </g>
+</svg>
