@@ -62,6 +62,10 @@
                   <form method="post" action="{{ url_for('admin.approve_company', company_id=company.id) }}" class="d-inline">
                     <button type="submit" class="btn btn-success btn-sm">Activate</button>
                   </form>
+                {% elif company.status == 'correction' %}
+                  <form method="post" action="{{ url_for('admin.approve_company', company_id=company.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-success btn-sm">Mark Accepted</button>
+                  </form>
                 {% elif company.status == 'approved' %}
                   <form method="post" action="{{ url_for('admin.suspend_company', company_id=company.id) }}" class="d-inline">
                     <button type="submit" class="btn btn-warning btn-sm">Suspend</button>
