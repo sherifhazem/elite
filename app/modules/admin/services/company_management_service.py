@@ -52,15 +52,7 @@ def update_company(company: Company, payload: dict[str, str]) -> None:
 def _set_company_users_active(company: Company, *, active: bool) -> None:
     """Toggle activation for the company owner and associated users."""
 
-    owner = getattr(company, "owner", None)
-    if owner:
-        owner.is_active = active
-
-    users = getattr(company, "users", None)
-    if users is not None:
-        user_records = users.all() if hasattr(users, "all") else users
-        for user in user_records or []:
-            user.is_active = active
+    company.sync_user_activation(active)
 
 
 def delete_company(company: Company) -> None:
