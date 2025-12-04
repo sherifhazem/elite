@@ -3,7 +3,9 @@
 Key fields:
 - ``title`` and ``description``: Offer content details.
 - ``base_discount``: Minimum discount applied to all members.
+- ``start_date``: Optional activation date.
 - ``valid_until``: Optional expiration timestamp.
+- ``image_url``: Optional visual used to promote the offer.
 
 Relationships:
 - ``company``: Company that owns the offer.
@@ -26,7 +28,9 @@ class Offer(db.Model):
     # Store the minimum discount value that all users can access.
     base_discount = db.Column(db.Float, nullable=False, default=5.0)
     status = db.Column(db.String(20), nullable=False, default="active")
+    start_date = db.Column(db.DateTime, nullable=True)
     valid_until = db.Column(db.DateTime, nullable=True)
+    image_url = db.Column(db.String(255), nullable=True)
     company_id = db.Column(db.Integer, db.ForeignKey("companies.id"))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

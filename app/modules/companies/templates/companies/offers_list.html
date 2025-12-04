@@ -16,9 +16,9 @@
                 <label for="offer-search" class="visually-hidden">Search offers</label>
                 <input id="offer-search" type="search" class="form-control" placeholder="Search offers">
             </div>
-            <button class="btn btn-elite-primary" id="offer-add-btn" data-offer-url="{{ url_for('company_portal.offer_new') }}">
+            <a class="btn btn-elite-primary" id="offer-add-btn" href="{{ url_for('company_portal.offer_new') }}">
                 Add Offer
-            </button>
+            </a>
         </div>
     </section>
 
@@ -30,6 +30,7 @@
                         <tr>
                             <th scope="col" data-sort-key="title">Title</th>
                             <th scope="col" data-sort-key="base_discount">Base Discount</th>
+                            <th scope="col" data-sort-key="start_date">Start Date</th>
                             <th scope="col" data-sort-key="valid_until">Valid Until</th>
                             <th scope="col">Status</th>
                             <th scope="col">Feedback</th>
@@ -44,11 +45,14 @@
                                 'description': offer.description or '',
                                 'base_discount': offer.base_discount,
                                 'status': offer.status,
-                                'valid_until': offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else ''
+                                'start_date': offer.start_date.strftime('%Y-%m-%d') if offer.start_date else '',
+                                'valid_until': offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else '',
+                                'image_url': offer.image_url or ''
                             } %}
                             <tr data-offer='{{ offer_payload | tojson }}'>
                                 <td class="offer-title">{{ offer.title }}</td>
                                 <td>{{ '%.2f%%'|format(offer.base_discount) }}</td>
+                                <td>{{ offer.start_date.strftime('%Y-%m-%d') if offer.start_date else 'Not set' }}</td>
                                 <td>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'No expiry' }}</td>
                                 <td>
                                     {% set is_expired = offer.valid_until is not none and offer.valid_until < now %}
@@ -71,8 +75,11 @@
                                 </td>
                                 <td>
                                     <div class="table-action-group">
-                                        <button class="btn btn-sm btn-outline-secondary offer-edit" data-offer-id="{{ offer.id }}">Edit</button>
-                                        <button class="btn btn-sm btn-outline-warning offer-stop" data-offer-id="{{ offer.id }}">Stop</button>
+                                        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('company_portal.offer_edit', offer_id=offer.id) }}">Edit</a>
+                                        {% if offer.status != 'active' %}
+                                            <button class="btn btn-sm btn-outline-success offer-activate" data-offer-id="{{ offer.id }}">Activate</button>
+                                        {% endif %}
+                                        <button class="btn btn-sm btn-outline-warning offer-stop" data-offer-id="{{ offer.id }}">Pause</button>
                                         <button class="btn btn-sm btn-outline-dark offer-archive" data-offer-id="{{ offer.id }}">Archive</button>
                                         <button class="btn btn-sm btn-outline-danger offer-delete" data-offer-id="{{ offer.id }}">Delete</button>
                                     </div>
@@ -96,7 +103,9 @@
                         'description': offer.description or '',
                         'base_discount': offer.base_discount,
                         'status': offer.status,
-                        'valid_until': offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else ''
+                        'start_date': offer.start_date.strftime('%Y-%m-%d') if offer.start_date else '',
+                        'valid_until': offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else '',
+                        'image_url': offer.image_url or ''
                     } %}
                     <article class="offer-card" data-offer='{{ offer_payload | tojson }}'>
                         <header class="offer-card-header">
@@ -117,6 +126,10 @@
                                 <dd>{{ '%.2f%%'|format(offer.base_discount) }}</dd>
                             </div>
                             <div>
+                                <dt>Starts</dt>
+                                <dd>{{ offer.start_date.strftime('%Y-%m-%d') if offer.start_date else 'Not set' }}</dd>
+                            </div>
+                            <div>
                                 <dt>Valid Until</dt>
                                 <dd>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'No expiry' }}</dd>
                             </div>
@@ -132,8 +145,11 @@
                             {% endif %}
                         </dl>
                         <div class="offer-card-actions">
-                            <button class="btn btn-sm btn-elite-outline offer-edit" data-offer-id="{{ offer.id }}">Edit</button>
-                            <button class="btn btn-sm btn-outline-warning offer-stop" data-offer-id="{{ offer.id }}">Stop</button>
+                            <a class="btn btn-sm btn-elite-outline" href="{{ url_for('company_portal.offer_edit', offer_id=offer.id) }}">Edit</a>
+                            {% if offer.status != 'active' %}
+                                <button class="btn btn-sm btn-outline-success offer-activate" data-offer-id="{{ offer.id }}">Activate</button>
+                            {% endif %}
+                            <button class="btn btn-sm btn-outline-warning offer-stop" data-offer-id="{{ offer.id }}">Pause</button>
                             <button class="btn btn-sm btn-outline-dark offer-archive" data-offer-id="{{ offer.id }}">Archive</button>
                             <button class="btn btn-sm btn-outline-danger offer-delete" data-offer-id="{{ offer.id }}">Delete</button>
                         </div>
@@ -144,21 +160,6 @@
             {% endif %}
         </div>
     </section>
-
-    <div id="offer-modal" class="modal fade" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Offer</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="offer-modal-body">
-                    <!-- Form content dynamically injected by company_offers.js -->
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="toast-container position-fixed bottom-0 end-0 p-3" id="offers-toast-container"></div>
 {% endblock %}
 
