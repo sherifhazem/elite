@@ -49,6 +49,20 @@ def update_company(company: Company, payload: dict[str, str]) -> None:
     db.session.commit()
 
 
+def _set_company_users_active(company: Company, *, active: bool) -> None:
+    """Toggle activation for the company owner and associated users."""
+
+    owner = getattr(company, "owner", None)
+    if owner:
+        owner.is_active = active
+
+    users = getattr(company, "users", None)
+    if users is not None:
+        user_records = users.all() if hasattr(users, "all") else users
+        for user in user_records or []:
+            user.is_active = active
+
+
 def delete_company(company: Company) -> None:
     """Remove a company and persist deletion."""
 
@@ -60,6 +74,7 @@ def approve_company(company: Company) -> None:
     """Mark the company as approved and send notification."""
 
     company.status = "approved"
+    _set_company_users_active(company, active=True)
     db.session.commit()
     send_company_approval_email(company)
 
@@ -68,6 +83,7 @@ def suspend_company(company: Company) -> None:
     """Suspend the company and inform stakeholders."""
 
     company.status = "suspended"
+    _set_company_users_active(company, active=False)
     db.session.commit()
     send_company_suspension_email(company)
 
@@ -76,6 +92,7 @@ def reactivate_company(company: Company) -> None:
     """Reactivate a previously suspended company and notify owners."""
 
     company.status = "approved"
+    _set_company_users_active(company, active=True)
     db.session.commit()
     send_company_reactivation_email(company)
 
@@ -87,6 +104,7 @@ def request_correction(
 
     company.status = "correction"
     company.admin_notes = notes or company.admin_notes
+    _set_company_users_active(company, active=True)
     db.session.commit()
 
     resolved_link = correction_link or url_for(
