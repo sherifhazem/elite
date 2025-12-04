@@ -24,16 +24,12 @@ def _parse_offer_payload(data: Dict[str, str]) -> Tuple[Dict[str, object], str |
     description = (data.get("description") or "").strip()
     base_discount_raw = (data.get("base_discount") or "0").strip()
     valid_until_raw = (data.get("valid_until") or "").strip()
-    status = (data.get("status") or "active").strip().lower()
     send_notifications = str(data.get("send_notifications", "")).lower() in {
         "true",
         "1",
         "on",
         "yes",
     }
-
-    if status not in {"active", "paused", "archived"}:
-        return {}, "Status must be one of: active, paused, archived."
 
     if not title:
         return {}, "Title is required."
@@ -55,7 +51,6 @@ def _parse_offer_payload(data: Dict[str, str]) -> Tuple[Dict[str, object], str |
         "description": description or None,
         "base_discount": base_discount,
         "valid_until": valid_until,
-        "status": status,
         "send_notifications": send_notifications,
     }
     return payload, None
@@ -116,7 +111,6 @@ def offer_create():
         title=payload["title"],
         description=payload["description"],
         base_discount=payload["base_discount"],
-        status=payload["status"],
         valid_until=payload["valid_until"],
         company_id=company.id,
     )
@@ -175,7 +169,6 @@ def offer_update(offer_id: int):
     offer.title = payload["title"]
     offer.description = payload["description"]
     offer.base_discount = payload["base_discount"]
-    offer.status = payload["status"]
     offer.valid_until = payload["valid_until"]
     db.session.commit()
 
