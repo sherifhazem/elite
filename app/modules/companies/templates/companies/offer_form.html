@@ -1,6 +1,7 @@
 <!-- Offer form partial reused for both creation and editing workflows. -->
 <!-- UPDATED: Responsive Company Portal with Restricted Editable Fields. -->
 <form id="offer-form" data-action="{{ action_url }}" data-method="{{ method }}">
+    <input type="hidden" name="status" value="{{ offer.status if offer else 'active' }}">
     <div class="mb-3">
         <label for="offer-title" class="form-label">Title</label>
         <input type="text" class="form-control" id="offer-title" name="title" value="{{ offer.title if offer else '' }}" required>
