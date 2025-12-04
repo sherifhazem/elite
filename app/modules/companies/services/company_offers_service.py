@@ -45,6 +45,7 @@ def get_portal_offers_with_company(
     normalized_level = (membership_level or "Basic").strip().title() or "Basic"
     offers: Iterable[Offer] = (
         Offer.query.options(joinedload(Offer.company))
+        .filter(Offer.status == "active")
         .order_by(Offer.valid_until.asc())
         .all()
     )
@@ -89,6 +90,7 @@ def list_company_offers(company_id: int) -> List[Offer]:
 
     return (
         Offer.query.filter_by(company_id=company_id)
+        .filter(Offer.status == "active")
         .order_by(Offer.title.asc())
         .all()
     )
