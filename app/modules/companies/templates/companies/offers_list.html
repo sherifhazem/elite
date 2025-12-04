@@ -16,7 +16,9 @@
                 <label for="offer-search" class="visually-hidden">Search offers</label>
                 <input id="offer-search" type="search" class="form-control" placeholder="Search offers">
             </div>
-            <button class="btn btn-elite-primary" id="offer-add-btn">Add Offer</button>
+            <button class="btn btn-elite-primary" id="offer-add-btn" data-offer-url="{{ url_for('company_portal.offer_new') }}">
+                Add Offer
+            </button>
         </div>
     </section>
 
@@ -41,6 +43,7 @@
                                 'title': offer.title,
                                 'description': offer.description or '',
                                 'base_discount': offer.base_discount,
+                                'status': offer.status,
                                 'valid_until': offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else ''
                             } %}
                             <tr data-offer='{{ offer_payload | tojson }}'>
@@ -48,8 +51,19 @@
                                 <td>{{ '%.2f%%'|format(offer.base_discount) }}</td>
                                 <td>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'No expiry' }}</td>
                                 <td>
-                                <span class="badge bg-{{ 'success' if offer.valid_until is none or offer.valid_until >= now else 'secondary' }}">
-                                        {{ 'Active' if offer.valid_until is none or offer.valid_until >= now else 'Expired' }}
+                                    {% set is_expired = offer.valid_until is not none and offer.valid_until < now %}
+                                    {% set status_classes = {
+                                        'active': 'success' if not is_expired else 'secondary',
+                                        'paused': 'warning',
+                                        'archived': 'secondary'
+                                    } %}
+                                    {% set status_labels = {
+                                        'active': 'Active' if not is_expired else 'Expired',
+                                        'paused': 'Stopped',
+                                        'archived': 'Archived'
+                                    } %}
+                                    <span class="badge bg-{{ status_classes.get(offer.status, 'secondary') }}">
+                                        {{ status_labels.get(offer.status, 'Unknown') }}
                                     </span>
                                 </td>
                                 <td>
@@ -58,13 +72,15 @@
                                 <td>
                                     <div class="table-action-group">
                                         <button class="btn btn-sm btn-outline-secondary offer-edit" data-offer-id="{{ offer.id }}">Edit</button>
+                                        <button class="btn btn-sm btn-outline-warning offer-stop" data-offer-id="{{ offer.id }}">Stop</button>
+                                        <button class="btn btn-sm btn-outline-dark offer-archive" data-offer-id="{{ offer.id }}">Archive</button>
                                         <button class="btn btn-sm btn-outline-danger offer-delete" data-offer-id="{{ offer.id }}">Delete</button>
                                     </div>
                                 </td>
                             </tr>
                         {% else %}
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">No offers yet. Click "Add Offer" to create one.</td>
+                                <td colspan="6" class="text-center text-muted py-4">No offers yet. Click "Add Offer" to create one.</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -79,13 +95,20 @@
                         'title': offer.title,
                         'description': offer.description or '',
                         'base_discount': offer.base_discount,
+                        'status': offer.status,
                         'valid_until': offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else ''
                     } %}
                     <article class="offer-card" data-offer='{{ offer_payload | tojson }}'>
                         <header class="offer-card-header">
                             <h3 class="offer-card-title">{{ offer.title }}</h3>
-                            <span class="badge offer-status {{ 'is-active' if offer.valid_until is none or offer.valid_until >= now else 'is-muted' }}">
-                                {{ 'Active' if offer.valid_until is none or offer.valid_until >= now else 'Expired' }}
+                            {% set is_expired = offer.valid_until is not none and offer.valid_until < now %}
+                            {% set status_labels = {
+                                'active': 'Active' if not is_expired else 'Expired',
+                                'paused': 'Stopped',
+                                'archived': 'Archived'
+                            } %}
+                            <span class="badge offer-status {{ 'is-active' if offer.status == 'active' and not is_expired else 'is-muted' }}">
+                                {{ status_labels.get(offer.status, 'Unknown') }}
                             </span>
                         </header>
                         <dl class="offer-card-meta">
@@ -110,6 +133,8 @@
                         </dl>
                         <div class="offer-card-actions">
                             <button class="btn btn-sm btn-elite-outline offer-edit" data-offer-id="{{ offer.id }}">Edit</button>
+                            <button class="btn btn-sm btn-outline-warning offer-stop" data-offer-id="{{ offer.id }}">Stop</button>
+                            <button class="btn btn-sm btn-outline-dark offer-archive" data-offer-id="{{ offer.id }}">Archive</button>
                             <button class="btn btn-sm btn-outline-danger offer-delete" data-offer-id="{{ offer.id }}">Delete</button>
                         </div>
                     </article>

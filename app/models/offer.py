@@ -25,6 +25,7 @@ class Offer(db.Model):
     description = db.Column(db.Text, nullable=True)
     # Store the minimum discount value that all users can access.
     base_discount = db.Column(db.Float, nullable=False, default=5.0)
+    status = db.Column(db.String(20), nullable=False, default="active")
     valid_until = db.Column(db.DateTime, nullable=True)
     company_id = db.Column(db.Integer, db.ForeignKey("companies.id"))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
