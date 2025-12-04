@@ -1,0 +1,126 @@
+{% extends "companies/base.html" %}
+
+{% set is_edit = offer is not none %}
+{% set page_heading = page_title or ('Edit Offer' if is_edit else 'Add Offer') %}
+
+{% block portal_title %}{{ page_heading }}{% endblock %}
+
+{% block portal_content %}
+<section class="offer-editor">
+    <header class="company-page-intro">
+        <div>
+            <h2 class="section-title">{{ page_heading }}</h2>
+            <p class="section-subtitle">
+                Define the details, timing, and visuals for your company offer. You can return later to pause,
+                archive, or reactivate it.
+            </p>
+        </div>
+        <div class="intro-actions">
+            <a class="btn btn-elite-outline" href="{{ url_for('company_portal.company_offers_list') }}">Back to offers</a>
+        </div>
+    </header>
+
+    <form class="card shadow-sm" action="{{ action_url }}" method="post" enctype="multipart/form-data">
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-12 col-lg-7">
+                    <label for="offer-title" class="form-label">Offer name</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="offer-title"
+                        name="title"
+                        value="{{ offer.title if offer else '' }}"
+                        required
+                        placeholder="e.g., Weekend Saver"
+                    >
+                </div>
+                <div class="col-12 col-md-5">
+                    <label for="offer-status" class="form-label">Status</label>
+                    <select class="form-select" id="offer-status" name="status">
+                        {% set current_status = offer.status if offer else 'active' %}
+                        <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="paused" {% if current_status == 'paused' %}selected{% endif %}>Paused</option>
+                        <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archived</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="offer-base-discount" class="form-label">Base discount (%)</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        class="form-control"
+                        id="offer-base-discount"
+                        name="base_discount"
+                        value="{{ offer.base_discount if offer else '' }}"
+                        required
+                    >
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="offer-start-date" class="form-label">Start date</label>
+                    <input
+                        type="date"
+                        class="form-control"
+                        id="offer-start-date"
+                        name="start_date"
+                        value="{{ offer.start_date.strftime('%Y-%m-%d') if offer and offer.start_date else '' }}"
+                    >
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="offer-valid-until" class="form-label">End date</label>
+                    <input
+                        type="date"
+                        class="form-control"
+                        id="offer-valid-until"
+                        name="valid_until"
+                        value="{{ offer.valid_until.strftime('%Y-%m-%d') if offer and offer.valid_until else '' }}"
+                    >
+                </div>
+                <div class="col-12">
+                    <label for="offer-description" class="form-label">Description</label>
+                    <textarea
+                        class="form-control"
+                        id="offer-description"
+                        name="description"
+                        rows="4"
+                        placeholder="Explain the offer, eligibility, or redemption steps"
+                    >{{ offer.description if offer else '' }}</textarea>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label for="offer-image" class="form-label">Offer image (optional)</label>
+                    <input
+                        type="file"
+                        class="form-control"
+                        id="offer-image"
+                        name="image_file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    >
+                    <div class="form-text">PNG, JPG, WEBP, or SVG up to 4MB.</div>
+                </div>
+                {% if offer and offer.image_url %}
+                    <div class="col-12 col-md-6 d-flex flex-column">
+                        <span class="form-label">Current image</span>
+                        <div class="border rounded p-2 bg-light d-flex justify-content-center">
+                            <img src="{{ offer.image_url }}" alt="{{ offer.title }} image" class="img-fluid" style="max-height: 180px;">
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="offer-send-notifications" name="send_notifications">
+                        <label class="form-check-label" for="offer-send-notifications">Send notifications to members</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <span class="text-muted">You can pause or archive the offer later from the list view.</span>
+            <div class="d-flex gap-2">
+                <a class="btn btn-elite-outline" href="{{ url_for('company_portal.company_offers_list') }}">Cancel</a>
+                <button type="submit" class="btn btn-elite-primary">Save offer</button>
+            </div>
+        </div>
+    </form>
+</section>
+{% endblock %}
