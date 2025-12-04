@@ -576,6 +576,17 @@
     color: #9a6b00 !important;
 }
 
+.logo-preview-wrapper {
+    width: 100%;
+}
+
+.logo-preview-wrapper img {
+    max-height: 140px;
+    object-fit: contain;
+    background: #fff;
+    padding: 0.5rem;
+}
+
 /* Toast overrides */
 .toast.text-bg-warning {
     color: #5c3d00;
