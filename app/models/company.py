@@ -13,6 +13,7 @@ Relationships:
 from datetime import datetime
 
 from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.orm import validates
 
 from app.core.database import db
 
@@ -129,6 +130,36 @@ class Company(db.Model):
         prefs["contact_email"] = value or None
         if self.owner:
             self.owner.email = value or self.owner.email
+
+    def sync_user_activation(self, active: bool) -> None:
+        """Align the activation flag for the owner and related users.
+
+        This keeps the linked account list consistent when the company's
+        lifecycle status changes between active/inactive states.
+        """
+
+        owner = getattr(self, "owner", None)
+        if owner:
+            owner.is_active = active
+
+        users = getattr(self, "users", None)
+        if users is None:
+            return
+
+        user_records = users.all() if hasattr(users, "all") else users
+        for user in user_records or []:
+            user.is_active = active
+
+    @validates("status")
+    def _normalize_status(self, key: str, value: str) -> str:
+        normalized = (value or "").strip().lower()
+
+        if normalized == "approved":
+            self.sync_user_activation(True)
+        elif normalized == "suspended":
+            self.sync_user_activation(False)
+
+        return normalized
 
     def __repr__(self) -> str:
         """Return a concise representation for debugging."""
