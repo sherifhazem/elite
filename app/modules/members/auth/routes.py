@@ -305,6 +305,13 @@ def choose_membership() -> Response:
     return redirect(url_for("auth.register_choice"))
 
 
+@auth.route("/forgot-password", methods=["GET"], endpoint="forgot_password")
+def forgot_password() -> str:
+    """Render the password reset request page for any account type."""
+
+    return render_template("members/auth/forgot_password.html")
+
+
 @auth.route("/login", methods=["GET"], endpoint="login")
 @auth.route("/login-page", endpoint="login_page")
 def login_page() -> str:
@@ -348,7 +355,12 @@ def request_password_reset():
     """Send a password reset email containing a one-time token link."""
 
     data = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
-    email = data.get("email")
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return (
+            jsonify({"message": "البريد الإلكتروني مطلوب لإرسال رابط الاستعادة"}),
+            HTTPStatus.BAD_REQUEST,
+        )
     User = _get_user_model()
     user = User.query.filter_by(email=email).first()
     if not user:
