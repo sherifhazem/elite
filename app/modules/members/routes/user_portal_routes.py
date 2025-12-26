@@ -15,7 +15,7 @@ from flask import Blueprint, Response, jsonify, redirect, render_template, reque
 
 from app.core.database import db
 from app.models import Notification, Offer, User
-from app.modules.members.auth.utils import get_user_from_token
+from app.modules.members.auth.utils import AUTH_COOKIE_NAME, get_user_from_token
 from app.modules.members.services.member_notifications_service import (
     notify_membership_upgrade,
     notify_offer_feedback,
@@ -68,7 +68,7 @@ def _extract_token() -> Optional[str]:
     scheme, _, token = authorization.partition(" ")
     if scheme.lower() == "bearer" and token:
         return token
-    cookie_token = request.cookies.get("elite_token")
+    cookie_token = request.cookies.get(AUTH_COOKIE_NAME)
     if cookie_token:
         return cookie_token
     return None
