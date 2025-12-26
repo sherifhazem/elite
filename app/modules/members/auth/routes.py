@@ -36,11 +36,14 @@ from app.modules.members.services.member_notifications_service import (
     send_welcome_notification,
 )
 from .utils import (
+    AUTH_COOKIE_NAME,
+    clear_auth_cookie,
     confirm_token,
     create_token,
     decode_token,
     extract_bearer_token,
     generate_token,
+    set_auth_cookie,
 )
 
 
@@ -148,7 +151,9 @@ def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, in
         "redirect_url": url_for("portal.member_portal_home"),
         "message": "User registered successfully.",
     }
-    return jsonify(response), HTTPStatus.CREATED
+    json_response = jsonify(response)
+    set_auth_cookie(json_response, token)
+    return json_response, HTTPStatus.CREATED
 
 
 @auth.route("/api/auth/register", methods=["GET", "POST"], endpoint="api_register")
@@ -249,18 +254,17 @@ def api_login() -> tuple:
         redirect_url = url_for("admin.dashboard_home")
     else:
         redirect_url = url_for("portal.member_portal_home")
-    return (
-        jsonify(
-            {
-                "token": token,
-                "token_type": "Bearer",
-                "role": user.role,
-                "is_active": user.is_active,
-                "redirect_url": redirect_url,
-            }
-        ),
-        HTTPStatus.OK,
+    response = jsonify(
+        {
+            "token": token,
+            "token_type": "Bearer",
+            "role": user.role,
+            "is_active": user.is_active,
+            "redirect_url": redirect_url,
+        }
     )
+    set_auth_cookie(response, token)
+    return response, HTTPStatus.OK
 
 
 @auth.get("/api/auth/profile", endpoint="profile")
@@ -269,8 +273,10 @@ def profile() -> tuple:
 
     token = extract_bearer_token(request.headers.get("Authorization", ""))
     if not token:
+        token = request.cookies.get(AUTH_COOKIE_NAME)
+    if not token:
         return (
-            jsonify({"error": "Authorization header with Bearer token is required."}),
+            jsonify({"error": "Authentication token is required."}),
             HTTPStatus.UNAUTHORIZED,
         )
 
@@ -465,7 +471,7 @@ def logout():
     session["logout_notice"] = "تم تسجيل الخروج بنجاح"
 
     response = redirect(url_for("auth.login_page"))
-    response.delete_cookie("elite_token", path="/")
+    clear_auth_cookie(response)
     response.headers["Clear-Site-Data"] = '"storage"'
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"

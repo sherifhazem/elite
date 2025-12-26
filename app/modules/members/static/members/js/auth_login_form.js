@@ -10,12 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!form) return;
 
-    const persistTokenCookie = (token) => {
-        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
-        const secureFlag = window.location.protocol === 'https:' ? ' Secure;' : '';
-        document.cookie = `elite_token=${token}; Path=/;${secureFlag} SameSite=Strict; Expires=${expires}`;
-    };
-
     const showToast = (message) => {
         if (!toast || !toastMessage) return;
         toastMessage.textContent = message || 'تم تسجيل الدخول بنجاح';
@@ -49,11 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) {
                 errorMessage.textContent = data?.error || 'فشل تسجيل الدخول. تحقق من البيانات.';
                 return;
-            }
-
-            if (data.token) {
-                localStorage.setItem('elite_token', data.token);
-                persistTokenCookie(data.token);
             }
 
             showToast('تم تسجيل الدخول بنجاح! جاري تحويلك...');

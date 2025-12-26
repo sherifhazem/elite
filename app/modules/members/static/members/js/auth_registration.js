@@ -11,12 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!form) return;
 
-    const persistTokenCookie = (token) => {
-        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
-        const secureFlag = window.location.protocol === 'https:' ? ' Secure;' : '';
-        document.cookie = `elite_token=${token}; Path=/;${secureFlag} SameSite=Strict; Expires=${expires}`;
-    };
-
     const showToast = (message) => {
         if (!toast || !toastMessage) return;
         toastMessage.textContent = message || 'تم إنشاء الحساب بنجاح';
@@ -51,11 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) {
                 errorMessage.textContent = data?.error || 'تعذر إنشاء الحساب، حاول مرة أخرى.';
                 return;
-            }
-
-            if (data.token) {
-                localStorage.setItem('elite_token', data.token);
-                persistTokenCookie(data.token);
             }
 
             showToast('تم إنشاء حسابك بنجاح! جاري تحويلك...');

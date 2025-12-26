@@ -12,7 +12,7 @@ from flask import abort, flash, g, redirect, request, url_for
 from flask_login import current_user as flask_current_user
 from sqlalchemy import func
 
-from app.modules.members.auth.utils import get_user_from_token
+from app.modules.members.auth.utils import AUTH_COOKIE_NAME, get_user_from_token
 
 # Mapping of role requirements to the set of roles allowed to satisfy them.
 ROLE_ACCESS_MATRIX = {
@@ -50,8 +50,9 @@ def _extract_token() -> Optional[str]:
     if scheme.lower() == "bearer" and token:
         return token
 
-    cookie_token = request.cookies.get("elite_token")
+    cookie_token = request.cookies.get(AUTH_COOKIE_NAME)
     if cookie_token:
+        g.auth_token_source = "cookie"
         return cookie_token
     return None
 

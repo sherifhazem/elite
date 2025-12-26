@@ -166,6 +166,12 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         return User.query.get(int(user_id))
 
     from app.services.access_control import resolve_user_from_request
+    from app.modules.members.auth.utils import (
+        AUTH_COOKIE_NAME,
+        clear_auth_cookie,
+        create_token,
+        set_auth_cookie,
+    )
 
     @app.before_request
     def attach_current_user() -> None:
@@ -205,6 +211,19 @@ def create_app(config_class: type[Config] = Config) -> Flask:
                     abort(HTTPStatus.UNAUTHORIZED)
                 if hasattr(g.current_user, "is_active") and not g.current_user.is_active:
                     abort(HTTPStatus.FORBIDDEN)
+
+    @app.after_request
+    def refresh_auth_cookie(response):
+        """Renew the authentication cookie on each authenticated request."""
+
+        user = getattr(g, "current_user", None)
+        if user is not None and getattr(user, "is_authenticated", False):
+            if request.cookies.get(AUTH_COOKIE_NAME):
+                token = create_token(user.id)
+                set_auth_cookie(response, token)
+        elif request.endpoint == "auth.logout":
+            clear_auth_cookie(response)
+        return response
 
     @app.context_processor
     def inject_user_context():

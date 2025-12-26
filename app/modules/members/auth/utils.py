@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from importlib import import_module
 from typing import Any, Optional
 
-from flask import current_app
+from flask import current_app, request
 from itsdangerous import URLSafeTimedSerializer
 
 from app.models import User
@@ -52,6 +52,43 @@ def create_token(user_id: int) -> str:
     if isinstance(token, bytes):
         return token.decode("utf-8")
     return token
+
+
+# Default cookie configuration for issued authentication tokens.
+AUTH_COOKIE_NAME = "elite_token"
+AUTH_COOKIE_MAX_AGE = 60 * 60 * 24  # 24 hours
+
+
+def _auth_cookie_parameters() -> dict[str, Any]:
+    """Return standardized cookie parameters for issuing auth tokens."""
+
+    secure_default = request.is_secure or not current_app.debug
+    return {
+        "key": AUTH_COOKIE_NAME,
+        "max_age": current_app.config.get(
+            "AUTH_COOKIE_MAX_AGE", AUTH_COOKIE_MAX_AGE
+        ),
+        "httponly": True,
+        "secure": current_app.config.get("SESSION_COOKIE_SECURE", secure_default),
+        "samesite": "Strict",
+        "path": "/",
+    }
+
+
+def set_auth_cookie(response, token: str) -> None:
+    """Attach an HttpOnly authentication cookie to the response."""
+
+    params = _auth_cookie_parameters()
+    response.set_cookie(params.pop("key"), token, **params)
+
+
+def clear_auth_cookie(response) -> None:
+    """Remove the authentication cookie from the client's browser."""
+
+    params = _auth_cookie_parameters()
+    response.delete_cookie(
+        params.pop("key"), path=params.get("path", "/"), samesite=params.get("samesite")
+    )
 
 
 def decode_token(token: str) -> int:
