@@ -60,9 +60,48 @@ def _mount_static_mappings(app: Flask) -> None:
         app.wsgi_app = SharedDataMiddleware(app.wsgi_app, mounts)
 
 
+def _enforce_security_requirements(app: Flask) -> None:
+    """Fail fast when mandatory security controls are missing."""
+
+    secret_key = app.config.get("SECRET_KEY")
+    if not secret_key:
+        raise RuntimeError("SECRET_KEY is required and cannot be empty during startup.")
+
+    if app.config.get("RELAX_SECURITY_CONTROLS"):
+        raise RuntimeError("RELAX_SECURITY_CONTROLS cannot be enabled during application startup.")
+
+    if not app.config.get("WTF_CSRF_ENABLED", True):
+        raise RuntimeError("CSRF protection must remain enabled; startup aborted.")
+
+
+def _validate_production_settings(app: Flask) -> None:
+    """Ensure required environment values are set in production environments."""
+
+    env_name = str(app.config.get("ENV", "production")).lower()
+    if env_name != "production":
+        return
+
+    required_keys = {
+        "SECRET_KEY": "Application secret key is required in production.",
+        "SQLALCHEMY_DATABASE_URI": "Database connection string is required in production.",
+        "MAIL_SERVER": "MAIL_SERVER must be configured in production.",
+        "MAIL_USERNAME": "MAIL_USERNAME must be configured in production.",
+        "MAIL_PASSWORD": "MAIL_PASSWORD must be configured in production.",
+    }
+
+    missing = [key for key, message in required_keys.items() if not app.config.get(key)]
+    if missing:
+        error_messages = [required_keys[key] for key in missing]
+        raise RuntimeError(" | ".join(error_messages))
+
+
 def create_app(config_class: type[Config] = Config) -> Flask:
     app = Flask(__name__, template_folder="core/templates", static_folder="core/static")
     app.config.from_object(config_class)
+
+    _enforce_security_requirements(app)
+    _validate_production_settings(app)
+
     app.secret_key = app.config["SECRET_KEY"]
 
     initialize_logging(app)

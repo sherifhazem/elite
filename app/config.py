@@ -47,8 +47,8 @@ MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER") or MAIL_USERNAME or "no-r
 class Config:
     """Application configuration sourced from environment variables with sensible defaults."""
 
-    SECRET_KEY = os.getenv("SECRET_KEY", "ضع_قيمة_سرية_ثابتة_هنا")
-    RELAX_SECURITY_CONTROLS = _as_bool(os.getenv("RELAX_SECURITY_CONTROLS"), True)
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    RELAX_SECURITY_CONTROLS = _as_bool(os.getenv("RELAX_SECURITY_CONTROLS"), False)
     WTF_CSRF_ENABLED = _as_bool(os.getenv("WTF_CSRF_ENABLED"), not RELAX_SECURITY_CONTROLS)
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "SQLALCHEMY_DATABASE_URI",
