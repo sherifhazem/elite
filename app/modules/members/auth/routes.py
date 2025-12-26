@@ -363,19 +363,68 @@ def request_password_reset():
         )
     User = _get_user_model()
     user = User.query.filter_by(email=email).first()
+    # Always return a generic response to avoid revealing whether the email exists.
     if not user:
-        return jsonify({"message": "Email not found"}), HTTPStatus.NOT_FOUND
+        return (
+            jsonify(
+                {
+                    "message": "If the email is registered, you will receive a password reset link."
+                }
+            ),
+            HTTPStatus.OK,
+        )
 
     # Issue a password reset token and deliver the reset instructions.
     token = generate_token(user.email)
-    reset_url = f"{request.host_url}api/auth/reset-password/{token}"
+    reset_url = f"{request.host_url}reset-password/{token}"
     send_email(
         user.email,
         "Reset Your Elite Discounts Password",
         "core/emails/password_reset.html",
         {"reset_url": reset_url, "recipient_name": user.username or user.email},
     )
-    return jsonify({"message": "Password reset email sent"}), HTTPStatus.OK
+    return (
+        jsonify(
+            {
+                "message": "If the email is registered, you will receive a password reset link."
+            }
+        ),
+        HTTPStatus.OK,
+    )
+
+
+@auth.route("/reset-password/<token>", methods=["GET"], endpoint="reset_password_form")
+def reset_password_form(token: str) -> str:
+    """Render a browser-friendly password reset form for valid tokens.
+
+    The UI is intentionally separated from the POST API to ensure that email links
+    (opened via GET) lead to an informative page while preserving the API contract
+    for programmatic password updates.
+    """
+
+    email = confirm_token(token)
+    token_error = None
+
+    if not email:
+        token_error = "الرابط غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد لإعادة التعيين."
+    else:
+        User = _get_user_model()
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            token_error = "الرابط غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد لإعادة التعيين."
+
+    if token_error:
+        return render_template(
+            "members/auth/reset_password.html",
+            token_error=token_error,
+            token=None,
+        )
+
+    return render_template(
+        "members/auth/reset_password.html",
+        token=token,
+        token_error=None,
+    )
 
 
 @auth.route(
