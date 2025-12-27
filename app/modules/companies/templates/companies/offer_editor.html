@@ -21,6 +21,7 @@
     </header>
 
     <form class="card shadow-sm" action="{{ action_url }}" method="post" enctype="multipart/form-data">
+        {% include "companies/_csrf_field.html" %}
         <div class="card-body">
             <div class="row g-4">
                 <div class="col-12 col-lg-7">

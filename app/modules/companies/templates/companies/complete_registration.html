@@ -19,7 +19,7 @@
                         action="{{ url_for('company_portal.complete_registration', company_id=company.id) }}"
                         novalidate
                     >
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% include "companies/_csrf_field.html" %}
 
                         <div class="mb-3">
                             <label class="form-label">Company name</label>

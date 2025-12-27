@@ -13,6 +13,7 @@
     {% endif %}
     <section class="settings-layout">
         <form id="company-settings-form" data-action="{{ url_for('company_portal.company_settings') }}" class="settings-form" novalidate enctype="multipart/form-data">
+            {% include "companies/_csrf_field.html" %}
             <fieldset class="settings-section">
                 <legend>Account overview</legend>
                 <div class="row g-4">
