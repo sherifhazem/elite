@@ -16,6 +16,7 @@
 
         <form id="register-company-form" method="post" class="needs-validation text-end" novalidate>
           {{ form.hidden_tag() }}
+          {% include "companies/_csrf_field.html" %}
 
           <p class="text-danger small text-end mb-3">
             الحقول المميزة بالعلامة (<span class="text-danger">*</span>) ضرورية لإتمام طلب التسجيل.

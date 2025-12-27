@@ -13,6 +13,7 @@
                     <h2 class="section-title">Verify redemption</h2>
                     <p class="section-subtitle">Enter a code or scan a QR token to confirm member eligibility instantly.</p>
                     <form id="redemption-verify-form" class="redemption-form" novalidate>
+                        {% include "companies/_csrf_field.html" %}
                         <div class="form-control-group">
                             <label for="redemption-code" class="form-label">Activation code</label>
                             <div class="verify-input-group">
@@ -49,6 +50,7 @@
                 </div>
                 <div class="card-body">
                     <form class="row g-3 redemption-filters mb-4" id="redemption-filter" data-redemption-filter>
+                        {% include "companies/_csrf_field.html" %}
                         <div class="col-12 col-md-4">
                             <label for="filter-offer" class="form-label">Offer</label>
                             <select class="form-select" id="filter-offer" name="offer_id">
