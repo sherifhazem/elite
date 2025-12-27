@@ -28,9 +28,14 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.textContent = 'جارٍ الإرسال...';
 
         try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
             const response = await fetch('/api/auth/reset-request', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
                 body: JSON.stringify({ email }),
             });
 

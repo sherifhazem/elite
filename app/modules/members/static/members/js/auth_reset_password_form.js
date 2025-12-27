@@ -59,9 +59,14 @@ document.addEventListener('DOMContentLoaded', () => {
         setFeedback('جارٍ تحديث كلمة المرور...', true);
 
         try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
             const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
                 body: JSON.stringify({ password: passwordInput.value }),
             });
 

@@ -8,27 +8,20 @@
 import os
 from http import HTTPStatus
 from flask import Flask, abort, g, request
-from flask_login import LoginManager, current_user as flask_login_current_user
+from flask_login import current_user as flask_login_current_user
 from flask_cors import CORS
-from flask_migrate import Migrate
-from flask_mail import Mail
-from celery import Celery
 from redis import Redis
 from jinja2 import ChoiceLoader, FileSystemLoader
-from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.shared_data import SharedDataMiddleware
 
 from .config import Config
 from app.core.database import db
+from app.core.extensions import celery, csrf, login_manager, mail, migrate
 from app.core.central_middleware import register_central_middleware
 from app.logging.logger import initialize_logging
 
-login_manager = LoginManager()
-csrf = CSRFProtect()
-migrate = Migrate()
-mail = Mail()
-celery = Celery()
 redis_client: Redis | None = None
+
 
 # JWT authentication temporarily disabled during web testing phase.
 # To re-enable, restore imports from flask_jwt_extended.

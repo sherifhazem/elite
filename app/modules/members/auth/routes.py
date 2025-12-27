@@ -45,6 +45,7 @@ from .utils import (
     generate_token,
     set_auth_cookie,
 )
+from app.core.extensions import csrf
 
 
 auth = Blueprint(
@@ -157,6 +158,7 @@ def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, in
 
 
 @auth.route("/api/auth/register", methods=["GET", "POST"], endpoint="api_register")
+@csrf.exempt
 def register() -> Response | tuple:
     """Register a new member account tailored for the mobile portal."""
 
@@ -220,6 +222,7 @@ def register_member_legacy():
 
 
 @auth.post("/api/auth/login", endpoint="api_login")
+@csrf.exempt
 def api_login() -> tuple:
     """Authenticate a user and return a signed JWT token."""
 

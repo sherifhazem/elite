@@ -32,9 +32,14 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.textContent = 'جاري تسجيل الدخول...';
 
         try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
                 body: JSON.stringify({ email, password }),
             });
 

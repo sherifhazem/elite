@@ -34,9 +34,14 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.textContent = 'جاري إنشاء الحساب...';
 
         try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
             const response = await fetch('/api/auth/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
                 body: JSON.stringify({ username, email, password }),
             });
 
