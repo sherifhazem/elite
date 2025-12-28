@@ -16,6 +16,9 @@
     const registry = {
         cities: Array.isArray(context.cities) ? [...context.cities] : [],
         industries: Array.isArray(context.industries) ? [...context.industries] : [],
+        membership_discounts: Array.isArray(context.membership_discounts)
+            ? [...context.membership_discounts]
+            : [],
     };
     const endpoints = context.endpoints || {};
 
@@ -28,6 +31,9 @@
     const editItemName = document.getElementById('editItemName');
     const editCurrentValue = document.getElementById('editCurrentValue');
     const editModal = editModalElement ? bootstrap.Modal.getOrCreateInstance(editModalElement) : null;
+
+    const membershipTable = root.querySelector('[data-membership-table]');
+    const membershipForm = document.getElementById('membership-discounts-form');
 
     const entityKey = (listType) => (listType === 'industries' ? 'industry' : 'city');
     const endpointFor = (action, listType) => endpoints[`${action}_${entityKey(listType)}`];
@@ -113,6 +119,87 @@
         values.forEach((value) => {
             tbody.appendChild(buildRow(listType, value));
         });
+    }
+
+    function buildMembershipRow(entry) {
+        const row = document.createElement('tr');
+        row.dataset.membershipDiscountRow = '';
+        row.dataset.membershipLevel = entry.membership_level;
+
+        const levelCell = document.createElement('td');
+        levelCell.className = 'fw-medium';
+        levelCell.textContent = entry.membership_level;
+
+        const discountCell = document.createElement('td');
+        discountCell.style.maxWidth = '180px';
+
+        const helper = document.createElement('div');
+        helper.className = 'form-text mb-1';
+        helper.textContent = 'ادخل رقماً بين 0 و 100';
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.name = 'discount_percentage';
+        input.min = '0';
+        input.max = '100';
+        input.step = '0.1';
+        input.value = entry.discount_percentage;
+        input.className = 'form-control form-control-sm';
+        input.dataset.discountInput = '';
+
+        const feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback';
+
+        discountCell.appendChild(helper);
+        discountCell.appendChild(input);
+        discountCell.appendChild(feedback);
+
+        row.appendChild(levelCell);
+        row.appendChild(discountCell);
+
+        return row;
+    }
+
+    function renderMembershipDiscounts(values) {
+        if (!membershipTable) return;
+
+        membershipTable.innerHTML = '';
+        const records = Array.isArray(values) ? values : [];
+
+        if (!records.length) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.className = 'text-center text-muted';
+            const cell = document.createElement('td');
+            cell.colSpan = 2;
+            cell.textContent = 'لا توجد خصومات عضوية حالياً.';
+            emptyRow.appendChild(cell);
+            membershipTable.appendChild(emptyRow);
+            return;
+        }
+
+        records.forEach((entry) => {
+            membershipTable.appendChild(buildMembershipRow(entry));
+        });
+    }
+
+    function setRowError(input, message) {
+        if (!input) return;
+        input.classList.add('is-invalid');
+        const feedback = input.nextElementSibling;
+        if (feedback) {
+            feedback.textContent = message || '';
+        }
+    }
+
+    function clearMembershipErrors() {
+        root.querySelectorAll('[data-discount-input]').forEach((input) => {
+            input.classList.remove('is-invalid');
+            const feedback = input.nextElementSibling;
+            if (feedback) {
+                feedback.textContent = '';
+            }
+        });
+        setFeedback('membership_discounts', null);
     }
 
     function handleSuccess(listType, data) {
@@ -250,6 +337,76 @@
         bindAddForms();
         bindDeleteActions();
         bindEditModal();
+        renderMembershipDiscounts(registry.membership_discounts);
+        bindMembershipDiscounts();
+    }
+
+    function bindMembershipDiscounts() {
+        if (!membershipForm) return;
+
+        membershipForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            clearMembershipErrors();
+
+            const rows = root.querySelectorAll('[data-membership-discount-row]');
+            const payload = [];
+            let hasError = false;
+
+            rows.forEach((row) => {
+                const level = row.dataset.membershipLevel || '';
+                const input = row.querySelector('[data-discount-input]');
+                const rawValue = input?.value ?? '';
+                const numericValue = Number.parseFloat(rawValue);
+
+                if (!level) return;
+
+                if (Number.isNaN(numericValue)) {
+                    setRowError(input, 'الرجاء إدخال نسبة خصم صالحة.');
+                    hasError = true;
+                    return;
+                }
+
+                if (numericValue < 0 || numericValue > 100) {
+                    setRowError(input, 'يجب أن تكون النسبة بين 0 و 100.');
+                    hasError = true;
+                    return;
+                }
+
+                payload.push({
+                    membership_level: level,
+                    discount_percentage: numericValue,
+                });
+            });
+
+            if (hasError) {
+                setFeedback('membership_discounts', 'برجاء تصحيح الأخطاء أعلاه.');
+                return;
+            }
+
+            try {
+                const url = endpoints.save_settings || '/admin/settings/save';
+                const data = await postJSON(url, {
+                    section: 'membership_discounts',
+                    values: payload,
+                });
+
+                if (!data || data.status !== 'success') {
+                    setFeedback('membership_discounts', data?.message || 'تعذر حفظ الخصومات.');
+                    showToast(data?.message || 'تعذر حفظ الخصومات.', true);
+                    return;
+                }
+
+                registry.membership_discounts = Array.isArray(data.values)
+                    ? data.values
+                    : registry.membership_discounts;
+                renderMembershipDiscounts(registry.membership_discounts);
+                showToast(data.message || 'تم حفظ التغييرات بنجاح.');
+            } catch (error) {
+                const message = error.response?.message || 'تعذر حفظ الخصومات.';
+                setFeedback('membership_discounts', message);
+                showToast(message, true);
+            }
+        });
     }
 
     bootstrapPage();

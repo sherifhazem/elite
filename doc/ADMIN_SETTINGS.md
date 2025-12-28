@@ -17,12 +17,12 @@ JSON responses (no reload)                 Monitoring (/dev/settings_status)
 Membership Discounts flow:
 
 ```
-[Admin UI (future tab)]
-   |
+[Admin UI (membership tab)]
+   |   AJAX (save)
    v
-[Admin settings service] -> [LookupChoice(list_type="membership_discounts")]
-                                      |
-                                      v
+[Admin settings route] -> [settings_service.save_list("membership_discounts", payload)]
+                                     |
+                                     v
 [Offer/User logic fetches discounts at runtime]
 ```
 
@@ -58,8 +58,9 @@ Membership Discounts flow:
 | POST | `/admin/settings/delete_industry` | Remove an industry (requires `value`). |
 | GET | `/admin/settings/cities` | JSON snapshot of cities list (QA/automation). |
 | GET | `/admin/settings/industries` | JSON snapshot of industries list (QA/automation). |
+| POST | `/admin/settings/save` | Persist membership discount percentages (AJAX only). |
 
-> Membership discount endpoints can reuse the service layer via `settings_service.save_list("membership_discounts", payload)`; UI routes will be added alongside the existing tabs when needed.
+> Membership discounts reuse the existing service layer via `settings_service.save_list("membership_discounts", payload)`.
 
 ## Frontend Behavior
 - Template: `app/modules/admin/templates/admin/settings.html` renders the tables and embeds JSON context for JS.
@@ -67,7 +68,12 @@ Membership Discounts flow:
 - Success: DOM updates instantly and a toast is shown.
 - Errors: Inline alerts surface validation messages (empty/duplicate/not found) without leaving the page.
 
-Membership discounts currently rely on the service layer only; when the admin UI is extended, mirror the same AJAX flow.
+## Membership Discounts UI
+- Open the **خصومات العضوية** tab inside `/admin/settings` to view every membership level and its configured percentage.
+- Edit the numeric percentage (0–100) inline; membership level labels are read-only.
+- Click **حفظ الخصومات** to persist changes via AJAX (`/admin/settings/save`).
+- Validation errors (non-numeric or out-of-range) appear directly under the input; success shows the standard toast.
+- Saved values refresh immediately from the backend response—no page reload required.
 
 ## Error Conditions
 - Empty payloads → `400` with message `الاسم مطلوب.` and `reason=empty_value` (logged).
@@ -95,9 +101,10 @@ Membership discounts currently rely on the service layer only; when the admin UI
 ## ASCII Screenshot Placeholder
 ```
 +-------------------- Admin Settings --------------------+
-| [مدن] [مجالات العمل]                                 |
+| [مدن] [مجالات العمل] [خصومات العضوية]                |
 | + إضافة مدينة  [جدول المدن with تعديل/حذف]           |
 | + إضافة مجال  [جدول المجالات with تعديل/حذف]         |
-| Toasts + inline alerts for validation                  |
+| [جدول الخصومات: مستوى، نسبة مئوية قابلة للتعديل]     |
+| حفظ الخصومات ⇢ Toasts + inline alerts                 |
 +-------------------------------------------------------+
 ```
