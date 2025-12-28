@@ -50,17 +50,10 @@ class Offer(db.Model):
         return f"<Offer {self.title} - base {self.base_discount}%>"
 
     def get_discount_for_level(self, level: str) -> float:
-        """Return discount value based on membership level."""
+        """Return the discount including the configured membership adjustment."""
 
-        # Normalize the incoming level to simplify comparisons.
-        normalized = (level or "").strip().lower()
-        # Map membership tiers to the amount added on top of the base discount.
-        adjustments = {
-            "basic": 0.0,
-            "silver": 5.0,
-            "gold": 10.0,
-            "premium": 15.0,
-        }
-        # Retrieve the adjustment, defaulting to the base level when unknown.
-        extra = adjustments.get(normalized, 0.0)
-        return float(self.base_discount + extra)
+        from app.services.settings_service import get_membership_discount
+
+        normalized = (level or "").strip().title()
+        membership_bonus = get_membership_discount(normalized, default=0.0)
+        return float(self.base_discount or 0.0) + float(membership_bonus)

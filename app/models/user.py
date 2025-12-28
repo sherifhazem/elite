@@ -238,5 +238,12 @@ class User(db.Model):
             return False
         return desired_rank > self.membership_rank()
 
+    def get_membership_discount(self, default: float = 0.0) -> float:
+        """Return the configured discount percentage for the current membership level."""
+
+        from app.services.settings_service import get_membership_discount
+
+        return float(get_membership_discount(self.membership_level, default=default))
+
 
 __all__ = ["User", "user_permissions"]

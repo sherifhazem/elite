@@ -198,6 +198,23 @@ All future changes must append new entries following the same structure.
 ### Added
 - Introduced a shared base layout under `app/core/templates/core/` for member-facing public views.
 
+## v0.1.5 — 2025-12-05
+### Added
+- Added centralized membership discount management backed by the admin settings service and LookupChoice store.
+
+### Changed
+- Offers now calculate membership-specific discounts dynamically using the configured settings.
+- User helpers expose the configured membership discount percentage for the assigned tier.
+
+### Fixed
+- None
+
+### Removed
+- None
+
+### Documentation
+- Updated `doc/ADMIN_SETTINGS.md` with membership discount storage, validation, and runtime usage details.
+
 ### Changed
 - Relocated email templates to `app/core/templates/core/emails/` and updated all render paths to the shared location.
 

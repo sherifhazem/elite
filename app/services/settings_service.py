@@ -6,9 +6,12 @@ from app.modules.admin.services.settings_service import (
     get_all_settings,
     get_list,
     get_section,
+    get_membership_discount,
+    get_membership_discounts,
     save_list,
     update_item,
     update_settings,
+    update_membership_discounts,
 )
 
 __all__ = [
@@ -17,6 +20,9 @@ __all__ = [
     "update_settings",
     "get_list",
     "save_list",
+    "get_membership_discount",
+    "get_membership_discounts",
+    "update_membership_discounts",
     "add_item",
     "delete_item",
     "update_item",
