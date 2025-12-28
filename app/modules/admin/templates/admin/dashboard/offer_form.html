@@ -2,70 +2,47 @@
 <!-- Form for creating or editing an offer record. -->
 
 {% block content %}
-    {% set form_action = url_for('admin.manage_offer', offer_id=offer.id) if offer else url_for('admin.add_offer') %}
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h2 class="card-title mb-4">{{ 'Edit Offer' if offer else 'Add Offer' }}</h2>
-            <form action="{{ form_action }}" method="post" novalidate>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label" for="title">Title</label>
-                        <input
-                            class="form-control"
-                            id="title"
-                            name="title"
-                            required
-                            value="{{ offer.title if offer else '' }}"
-                        >
+{% set form_action = url_for('admin.manage_offer', offer_id=offer.id) if offer else url_for('admin.add_offer') %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title mb-4">{{ 'Edit Offer' if offer else 'Add Offer' }}</h2>
+        <form action="{{ form_action }}" method="post" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="title">Title</label>
+                    <input class="form-control" id="title" name="title" required
+                        value="{{ offer.title if offer else '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="base_discount">Base Discount (%)</label>
+                    <input class="form-control" id="base_discount" name="base_discount" type="number" step="0.01"
+                        min="0" required {# Persist the minimum discount configured for the offer. #}
+                        value="{{ offer.base_discount if offer else '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="valid_until">Valid Until</label>
+                    <input class="form-control" id="valid_until" name="valid_until" type="date"
+                        value="{{ offer.valid_until.strftime('%Y-%m-%d') if offer and offer.valid_until else '' }}">
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" id="send_notifications" name="send_notifications"
+                            type="checkbox" value="1" {% if request.form.get('send_notifications') %}checked{% endif %}>
+                        <label class="form-check-label" for="send_notifications">
+                            Send notifications to members after saving
+                        </label>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label" for="base_discount">Base Discount (%)</label>
-                        <input
-                            class="form-control"
-                            id="base_discount"
-                            name="base_discount"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            required
-                            {# Persist the minimum discount configured for the offer. #}
-                            value="{{ offer.base_discount if offer else '' }}"
-                        >
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label" for="valid_until">Valid Until</label>
-                        <input
-                            class="form-control"
-                            id="valid_until"
-                            name="valid_until"
-                            type="date"
-                            value="{{ offer.valid_until.strftime('%Y-%m-%d') if offer and offer.valid_until else '' }}"
-                        >
-                    </div>
-                    <div class="col-12">
-                        <div class="form-check form-switch">
-                            <input
-                                class="form-check-input"
-                                id="send_notifications"
-                                name="send_notifications"
-                                type="checkbox"
-                                value="1"
-                                {% if request.form.get('send_notifications') %}checked{% endif %}
-                            >
-                            <label class="form-check-label" for="send_notifications">
-                                Send notifications to members after saving
-                            </label>
-                        </div>
-                        <div class="form-text">
-                            When enabled, a broadcast job notifies eligible users about this offer update.
-                        </div>
+                    <div class="form-text">
+                        When enabled, a broadcast job notifies eligible users about this offer update.
                     </div>
                 </div>
-                <div class="d-flex justify-content-between mt-4">
-                    <a class="btn btn-secondary" href="{{ url_for('admin.dashboard_offers') }}">Cancel</a>
-                    <button class="btn btn-primary" type="submit">{{ 'Save Changes' if offer else 'Create Offer' }}</button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+                <a class="btn btn-secondary" href="{{ url_for('admin.dashboard_offers') }}">Cancel</a>
+                <button class="btn btn-primary" type="submit">{{ 'Save Changes' if offer else 'Create Offer' }}</button>
+            </div>
+        </form>
     </div>
+</div>
 {% endblock %}

@@ -108,7 +108,21 @@ def create_redemption_endpoint():
         redemption = create_redemption(user.id, offer_identifier)
     except ValueError as exc:
         db.session.rollback()
-        return jsonify({"error": str(exc)}), HTTPStatus.BAD_REQUEST
+        message = str(exc)
+        if "active redemption already exists" in message:
+            # Idempotency: Return the existing active redemption if the user clicks "Activate" again
+            existing = (
+                Redemption.query.filter_by(user_id=user.id, offer_id=offer_identifier)
+                .order_by(Redemption.created_at.desc())
+                .first()
+            )
+            # Ensure it really is active/pending before returning
+            if existing and existing.status == "pending" and not existing.is_expired():
+                status_payload = get_redemption_status(existing.redemption_code) or {}
+                response = _serialize_response(existing, status_payload)
+                return jsonify(response), HTTPStatus.OK
+
+        return jsonify({"error": message}), HTTPStatus.BAD_REQUEST
     except Exception as exc:  # pragma: no cover - defensive logging
         db.session.rollback()
         return jsonify({"error": "Unable to create redemption at this time."}), HTTPStatus.INTERNAL_SERVER_ERROR
@@ -254,7 +268,10 @@ def get_qrcode_image(code: str):
         db.session.commit()
         return jsonify({"error": "Redemption expired."}), HTTPStatus.GONE
 
-    directory = os.path.join(current_app.static_folder or "static", "qrcodes")
+    # Ensure we look in the same directory where the service saves the QR codes (modules/members/static/members/qrcodes)
+    # matching _qr_storage_directory in member_redemption_service.py
+    static_root = os.path.join(current_app.root_path, "modules", "members", "static", "members")
+    directory = os.path.join(static_root, "qrcodes")
     filename = f"{redemption.redemption_code}.png"
     file_path = os.path.join(directory, filename)
 

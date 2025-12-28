@@ -2,104 +2,90 @@
 <!-- Form for creating or editing a user record. -->
 
 {% block content %}
-    {% set form_action = url_for('admin.edit_user', user_id=user.id) if user else url_for('admin.add_user') %}
-    {% set membership_levels = membership_choices if membership_choices is defined else ('Basic', 'Silver', 'Gold', 'Premium') %}
-    {% set can_manage_roles = current_user and current_user.normalized_role in ['admin', 'superadmin'] %}
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h2 class="card-title mb-4">{{ 'Edit User' if user else 'Add User' }}</h2>
-            <form action="{{ form_action }}" method="post" novalidate>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label" for="username">Username</label>
-                        <input
-                            class="form-control"
-                            id="username"
-                            name="username"
-                            required
-                            value="{{ user.username if user else '' }}"
-                        >
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="email">Email</label>
-                        <input
-                            class="form-control"
-                            id="email"
-                            name="email"
-                            type="email"
-                            required
-                            value="{{ user.email if user else '' }}"
-                        >
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="password">Password</label>
-                        <input
-                            class="form-control"
-                            id="password"
-                            name="password"
-                            type="password"
-                            {% if not user %}required{% endif %}
-                            placeholder="{{ 'Leave blank to keep current password' if user else '' }}"
-                        >
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="membership_level">Membership Level</label>
-                        <!-- FIX: Logout, Current User, Role Access, Membership Dropdown – Desktop Admin Context. -->
-                        <select class="form-select" id="membership_level" name="membership_level">
-                            {% for level in membership_levels %}
-                                <option value="{{ level }}" {% if (user and user.membership_level == level) or (not user and level == 'Basic') %}selected{% endif %}>
-                                    {{ level }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    {% if can_manage_roles %}
-                        <div class="col-md-6">
-                            <label class="form-label" for="role">Role</label>
-                            <select class="form-select" id="role" name="role">
-                                {% for role in role_choices %}
-                                    {% set disable_option = role == 'superadmin' and (not current_user or not current_user.is_superadmin) %}
-                                    <option value="{{ role }}" {% if user and user.role == role %}selected{% endif %} {% if disable_option %}disabled{% endif %}>
-                                        {{ role|capitalize }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                            {% if current_user and not current_user.is_superadmin %}
-                                <div class="form-text">Only super administrators can assign the Superadmin role.</div>
-                            {% endif %}
-                        </div>
+{% set form_action = url_for('admin.edit_user', user_id=user.id) if user else url_for('admin.add_user') %}
+{% set membership_levels = membership_choices if membership_choices is defined else ('Basic', 'Silver', 'Gold',
+'Premium') %}
+{% set can_manage_roles = current_user and current_user.normalized_role in ['admin', 'superadmin'] %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title mb-4">{{ 'Edit User' if user else 'Add User' }}</h2>
+        <form action="{{ form_action }}" method="post" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="username">Username</label>
+                    <input class="form-control" id="username" name="username" required
+                        value="{{ user.username if user else '' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="email">Email</label>
+                    <input class="form-control" id="email" name="email" type="email" required
+                        value="{{ user.email if user else '' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="password">Password</label>
+                    <input class="form-control" id="password" name="password" type="password" {% if not user
+                        %}required{% endif %}
+                        placeholder="{{ 'Leave blank to keep current password' if user else '' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="membership_level">Membership Level</label>
+                    <!-- FIX: Logout, Current User, Role Access, Membership Dropdown – Desktop Admin Context. -->
+                    <select class="form-select" id="membership_level" name="membership_level">
+                        {% for level in membership_levels %}
+                        <option value="{{ level }}" {% if (user and user.membership_level==level) or (not user and
+                            level=='Basic' ) %}selected{% endif %}>
+                            {{ level }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if can_manage_roles %}
+                <div class="col-md-6">
+                    <label class="form-label" for="role">Role</label>
+                    <select class="form-select" id="role" name="role">
+                        {% for role in role_choices %}
+                        {% set disable_option = role == 'superadmin' and (not current_user or not
+                        current_user.is_superadmin) %}
+                        <option value="{{ role }}" {% if user and user.role==role %}selected{% endif %} {% if
+                            disable_option %}disabled{% endif %}>
+                            {{ role|capitalize }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if current_user and not current_user.is_superadmin %}
+                    <div class="form-text">Only super administrators can assign the Superadmin role.</div>
                     {% endif %}
-                    {% if companies %}
-                        <div class="col-md-6">
-                            <label class="form-label" for="company_id">Company</label>
-                            <select class="form-select" id="company_id" name="company_id" {% if not current_user or current_user.role != 'superadmin' %}disabled{% endif %}>
-                                <option value="">No linked company</option>
-                                {% for company in companies %}
-                                    <option value="{{ company.id }}" {% if user and user.company_id == company.id %}selected{% endif %}>
-                                        {{ company.name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    {% endif %}
-                    <div class="col-md-6">
-                        <div class="form-check mt-4">
-                            <input
-                                class="form-check-input"
-                                id="is_active"
-                                name="is_active"
-                                type="checkbox"
-                                {% if not user or user.is_active %}checked{% endif %}
-                            >
-                            <label class="form-check-label" for="is_active">Active account</label>
-                        </div>
+                </div>
+                {% endif %}
+                {% if companies %}
+                <div class="col-md-6">
+                    <label class="form-label" for="company_id">Company</label>
+                    <select class="form-select" id="company_id" name="company_id" {% if not current_user or
+                        current_user.role !='superadmin' %}disabled{% endif %}>
+                        <option value="">No linked company</option>
+                        {% for company in companies %}
+                        <option value="{{ company.id }}" {% if user and user.company_id==company.id %}selected{% endif
+                            %}>
+                            {{ company.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <div class="col-md-6">
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" id="is_active" name="is_active" type="checkbox" {% if not user
+                            or user.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">Active account</label>
                     </div>
                 </div>
-                <div class="d-flex justify-content-between mt-4">
-                    <a class="btn btn-secondary" href="{{ url_for('admin.dashboard_users') }}">Cancel</a>
-                    <button class="btn btn-primary" type="submit">{{ 'Save Changes' if user else 'Create User' }}</button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+                <a class="btn btn-secondary" href="{{ url_for('admin.dashboard_users') }}">Cancel</a>
+                <button class="btn btn-primary" type="submit">{{ 'Save Changes' if user else 'Create User' }}</button>
+            </div>
+        </form>
     </div>
+</div>
 {% endblock %}

@@ -2,74 +2,61 @@
 <!-- Form dedicated to updating an offer's base discount. -->
 
 {% block content %}
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h2 class="card-title mb-4">Edit Base Discount</h2>
-            <p class="text-muted">
-                Adjust the base discount for <strong>{{ offer.title }}</strong>. Membership-specific discounts
-                are recalculated automatically using this value.
-            </p>
-            <form action="{{ url_for('admin.edit_offer_discount', offer_id=offer.id) }}" method="post" novalidate>
-                <div class="mb-3">
-                    <label class="form-label" for="base_discount">Base Discount (%)</label>
-                    <input
-                        class="form-control"
-                        id="base_discount"
-                        name="base_discount"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        required
-                        value="{{ '%.2f'|format(offer.base_discount) }}"
-                    >
-                    <div class="form-text">
-                        Silver, Gold, and Premium discounts will automatically add their tier bonuses on top of this value.
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title mb-4">Edit Base Discount</h2>
+        <p class="text-muted">
+            Adjust the base discount for <strong>{{ offer.title }}</strong>. Membership-specific discounts
+            are recalculated automatically using this value.
+        </p>
+        <form action="{{ url_for('admin.edit_offer_discount', offer_id=offer.id) }}" method="post" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="mb-3">
+                <label class="form-label" for="base_discount">Base Discount (%)</label>
+                <input class="form-control" id="base_discount" name="base_discount" type="number" step="0.01" min="0"
+                    required value="{{ '%.2f'|format(offer.base_discount) }}">
+                <div class="form-text">
+                    Silver, Gold, and Premium discounts will automatically add their tier bonuses on top of this value.
+                </div>
+            </div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="border rounded p-3 text-center">
+                        <div class="fw-semibold">Basic</div>
+                        <div class="display-6">{{ '%.2f%%'|format(offer.get_discount_for_level('Basic')) }}</div>
                     </div>
                 </div>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-3">
-                        <div class="border rounded p-3 text-center">
-                            <div class="fw-semibold">Basic</div>
-                            <div class="display-6">{{ '%.2f%%'|format(offer.get_discount_for_level('Basic')) }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border rounded p-3 text-center">
-                            <div class="fw-semibold">Silver</div>
-                            <div class="display-6">{{ '%.2f%%'|format(offer.get_discount_for_level('Silver')) }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border rounded p-3 text-center">
-                            <div class="fw-semibold">Gold</div>
-                            <div class="display-6">{{ '%.2f%%'|format(offer.get_discount_for_level('Gold')) }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="border rounded p-3 text-center">
-                            <div class="fw-semibold">Premium</div>
-                            <div class="display-6">{{ '%.2f%%'|format(offer.get_discount_for_level('Premium')) }}</div>
-                        </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 text-center">
+                        <div class="fw-semibold">Silver</div>
+                        <div class="display-6">{{ '%.2f%%'|format(offer.get_discount_for_level('Silver')) }}</div>
                     </div>
                 </div>
-                <div class="form-check form-switch mb-4">
-                    <input
-                        class="form-check-input"
-                        id="send_notifications"
-                        name="send_notifications"
-                        type="checkbox"
-                        value="1"
-                        {% if request.form.get('send_notifications') %}checked{% endif %}
-                    >
-                    <label class="form-check-label" for="send_notifications">
-                        Notify members about this discount change
-                    </label>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 text-center">
+                        <div class="fw-semibold">Gold</div>
+                        <div class="display-6">{{ '%.2f%%'|format(offer.get_discount_for_level('Gold')) }}</div>
+                    </div>
                 </div>
-                <div class="d-flex justify-content-between">
-                    <a class="btn btn-secondary" href="{{ url_for('admin.dashboard_offers') }}">Cancel</a>
-                    <button class="btn btn-primary" type="submit">Save Discount</button>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 text-center">
+                        <div class="fw-semibold">Premium</div>
+                        <div class="display-6">{{ '%.2f%%'|format(offer.get_discount_for_level('Premium')) }}</div>
+                    </div>
                 </div>
-            </form>
-        </div>
+            </div>
+            <div class="form-check form-switch mb-4">
+                <input class="form-check-input" id="send_notifications" name="send_notifications" type="checkbox"
+                    value="1" {% if request.form.get('send_notifications') %}checked{% endif %}>
+                <label class="form-check-label" for="send_notifications">
+                    Notify members about this discount change
+                </label>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a class="btn btn-secondary" href="{{ url_for('admin.dashboard_offers') }}">Cancel</a>
+                <button class="btn btn-primary" type="submit">Save Discount</button>
+            </div>
+        </form>
     </div>
+</div>
 {% endblock %}
