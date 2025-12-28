@@ -1,7 +1,7 @@
-# Admin Settings (Cities & Industries)
+# Admin Settings (Cities, Industries & Membership Discounts)
 
 ## Overview
-The admin settings page (`/admin/settings`) is the single place to manage the registry-backed dropdown lists for **cities** and **industries**. All changes mutate the in-memory registry declared in `core/choices/registry.py`, so updates are instantly visible across forms, services, and diagnostics.
+The admin settings page (`/admin/settings`) is the single place to manage the registry-backed dropdown lists for **cities**, **industries**, and the centrally managed **membership discount matrix**. All changes mutate the in-memory registry declared in `core/choices/registry.py` (for dropdowns) or the database-backed membership discount list, so updates are instantly visible across forms, services, and diagnostics.
 
 ## Data Flow (ASCII)
 ```
@@ -14,7 +14,19 @@ The admin settings page (`/admin/settings`) is the single place to manage the re
 JSON responses (no reload)                 Monitoring (/dev/settings_status)
 ```
 
-## Admin Workflow
+Membership Discounts flow:
+
+```
+[Admin UI (future tab)]
+   |
+   v
+[Admin settings service] -> [LookupChoice(list_type="membership_discounts")]
+                                      |
+                                      v
+[Offer/User logic fetches discounts at runtime]
+```
+
+## Admin Workflow (Cities & Industries)
 1. Open `/admin/settings` (requires `admin_required`).
 2. Choose the **مدن** or **مجالات العمل** tab.
 3. Add a value via the inline form (POST to `/admin/settings/add_city` or `/admin/settings/add_industry`).
@@ -24,10 +36,13 @@ JSON responses (no reload)                 Monitoring (/dev/settings_status)
 
 ## Backend Contract
 - Lists are sourced from `core.choices.registry.CITIES` and `core.choices.registry.INDUSTRIES`.
+- Membership discounts are stored in `LookupChoice` rows with `list_type="membership_discounts"` and a JSON `name` payload of `{ "membership_level": "Basic", "discount_percentage": 10 }`.
 - Validation rules (enforced in `app/modules/admin/services/settings_service.py`):
-  - Non-empty values only.
-  - No duplicates (per list).
+  - Non-empty values only for lists.
+  - No duplicates (per list) and one discount per membership level.
   - Target must exist for updates/deletes.
+  - Membership level must be in `User.MEMBERSHIP_LEVELS`.
+  - Discount must be numeric between 0 and 100.
 - Logging (`app.logging.logger`): every attempt includes `admin_settings_action`, `status` (`success`/`error`), `value`, optional `reason` (`empty_value`, `duplicate_value`, `not_found`, `renamed`, etc.), and the updated `items` snapshot when successful.
 - Responses are JSON only; UI uses AJAX and displays toast/error messages without redirecting.
 
@@ -44,11 +59,15 @@ JSON responses (no reload)                 Monitoring (/dev/settings_status)
 | GET | `/admin/settings/cities` | JSON snapshot of cities list (QA/automation). |
 | GET | `/admin/settings/industries` | JSON snapshot of industries list (QA/automation). |
 
+> Membership discount endpoints can reuse the service layer via `settings_service.save_list("membership_discounts", payload)`; UI routes will be added alongside the existing tabs when needed.
+
 ## Frontend Behavior
 - Template: `app/modules/admin/templates/admin/settings.html` renders the tables and embeds JSON context for JS.
 - Script: `app/modules/admin/static/admin/js/settings.js` handles add/update/delete via `fetch` calls to the endpoints above.
 - Success: DOM updates instantly and a toast is shown.
 - Errors: Inline alerts surface validation messages (empty/duplicate/not found) without leaving the page.
+
+Membership discounts currently rely on the service layer only; when the admin UI is extended, mirror the same AJAX flow.
 
 ## Error Conditions
 - Empty payloads → `400` with message `الاسم مطلوب.` and `reason=empty_value` (logged).
@@ -61,8 +80,12 @@ JSON responses (no reload)                 Monitoring (/dev/settings_status)
 {
   "cities": [...],
   "industries": [...],
+  "membership_discounts": [
+    {"membership_level": "Basic", "discount_percentage": 0}
+  ],
   "count_cities": 3,
   "count_industries": 3,
+  "count_membership_discounts": 4,
   "source": "core.choices.registry",
   "status": "ok"
 }
