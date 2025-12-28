@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from http import HTTPStatus
-from typing import Dict
+from typing import Dict, Iterable
 
 from flask import abort, jsonify, render_template, request, Response
 from flask_login import current_user
@@ -53,7 +53,7 @@ def _extract_tab() -> str:
 
     cleaned = getattr(request, "cleaned", {}) or {}
     tab = (cleaned.get("tab") or "").strip().lower()
-    return tab if tab in {"cities", "industries"} else "cities"
+    return tab if tab in {"cities", "industries", "membership_discounts"} else "cities"
 
 
 def _handle_add_item(list_type: str) -> Response:
@@ -113,12 +113,14 @@ def settings_home() -> str:
     selected_tab = _extract_tab()
     cities = settings_service.get_list("cities", active_only=False)
     industries = settings_service.get_list("industries", active_only=False)
+    membership_discounts = settings_service.get_section("membership_discounts", active_only=False)
     return render_template(
         "admin/settings.html",
         section_title="Site Settings",
         active_page="settings",
         cities=cities,
         industries=industries,
+        membership_discounts=membership_discounts,
         selected_tab=selected_tab,
     )
 
@@ -285,3 +287,34 @@ def fetch_industries() -> Response:
     """Return the list of managed industries as JSON."""
 
     return _settings_success_response("industries")
+
+
+def _extract_payload() -> tuple[str, Iterable]:
+    cleaned = getattr(request, "cleaned", None) or request.get_json(silent=True) or {}
+    section = (cleaned.get("section") or "").strip().lower()
+    values = cleaned.get("values") or []
+    return section, values
+
+
+@admin.route("/settings/save", methods=["POST"], endpoint="save_settings")
+@admin_required
+def save_settings() -> Response:
+    """Persist supported settings sections such as membership discounts."""
+
+    section, values = _extract_payload()
+    if section not in {"membership_discounts"}:
+        return _settings_error_response("القسم المحدد غير مدعوم.")
+
+    try:
+        updated = settings_service.save_list(section, values)
+    except ValueError as exc:
+        return _settings_error_response(str(exc), reason="validation_failed")
+
+    return jsonify(
+        {
+            "status": "success",
+            "message": "✅ تم حفظ التغييرات بنجاح.",
+            "section": section,
+            "values": list(updated) if not isinstance(updated, list) else updated,
+        }
+    )

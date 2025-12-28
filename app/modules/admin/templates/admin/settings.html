@@ -34,6 +34,14 @@
                 مجالات العمل
             </a>
         </li>
+        <li class="nav-item">
+            <a
+                class="nav-link {{ 'active' if selected_tab == 'membership_discounts' else '' }}"
+                href="{{ url_for('admin.settings_home', tab='membership_discounts') }}"
+            >
+                خصومات العضوية
+            </a>
+        </li>
     </ul>
 
     <div class="tab-content mt-4">
@@ -164,6 +172,67 @@
                 </div>
             </div>
         </div>
+
+        <div
+            class="tab-pane fade {{ 'show active' if selected_tab == 'membership_discounts' else '' }}"
+            id="settings-membership-discounts"
+            role="tabpanel"
+        >
+            <div class="card shadow-sm admin-card mb-4">
+                <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                    <div>
+                        <h2 class="h5 mb-0">خصومات العضوية</h2>
+                        <span class="text-muted small">قم بتعديل نسبة الخصم لكل مستوى عضوية.</span>
+                    </div>
+                    <div class="text-muted small">يتم تطبيق التغييرات مباشرة دون إعادة تحميل الصفحة.</div>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger d-none" role="alert" data-feedback="membership_discounts"></div>
+                    <form id="membership-discounts-form" class="d-flex flex-column gap-3">
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">مستوى العضوية</th>
+                                        <th scope="col">نسبة الخصم (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-membership-table>
+                                    {% if membership_discounts %}
+                                        {% for entry in membership_discounts %}
+                                            <tr data-membership-discount-row data-membership-level="{{ entry.membership_level }}">
+                                                <td class="fw-medium">{{ entry.membership_level }}</td>
+                                                <td style="max-width: 180px;">
+                                                    <div class="form-text mb-1">ادخل رقماً بين 0 و 100</div>
+                                                    <input
+                                                        type="number"
+                                                        class="form-control form-control-sm"
+                                                        name="discount_percentage"
+                                                        min="0"
+                                                        max="100"
+                                                        step="0.1"
+                                                        value="{{ entry.discount_percentage }}"
+                                                        data-discount-input
+                                                    >
+                                                    <div class="invalid-feedback"></div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr class="text-center text-muted">
+                                            <td colspan="2">لا توجد خصومات عضوية حالياً.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="submit" class="btn btn-primary">حفظ الخصومات</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -208,6 +277,7 @@
             "selected_tab": selected_tab,
             "cities": cities,
             "industries": industries,
+            "membership_discounts": membership_discounts,
             "endpoints": {
                 "add_city": url_for('admin.add_city'),
                 "add_industry": url_for('admin.add_industry'),
@@ -215,6 +285,7 @@
                 "update_industry": url_for('admin.update_industry'),
                 "delete_city": url_for('admin.delete_city'),
                 "delete_industry": url_for('admin.delete_industry'),
+                "save_settings": url_for('admin.save_settings'),
             },
         } | tojson }}
     </script>
