@@ -32,17 +32,11 @@ def dashboard_offers() -> str:
     """Render the offer management view with dynamic membership discount previews."""
 
     offers = Offer.query.order_by(Offer.id).all()
-    tier_styles: Dict[str, Dict[str, str]] = {
-        "Basic": {"bg": "#6c757d", "text": "text-white"},
-        "Silver": {"bg": "#C0C0C0", "text": "text-dark"},
-        "Gold": {"bg": "#FFD700", "text": "text-dark"},
-        "Premium": {"bg": "#6f42c1", "text": "text-white"},
-    }
+    # TODO: Incentives will be calculated based on verified usage.
     return render_template(
         "admin/dashboard/offers.html",
         section_title="Offers",
         offers=offers,
-        tier_styles=tier_styles,
         current_time=datetime.utcnow(),
     )
 

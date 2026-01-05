@@ -8,7 +8,6 @@ from sqlalchemy.orm import joinedload
 
 from app.core.database import db
 from app.models import Company, Offer
-from app.modules.members.auth.utils import extract_bearer_token, get_user_from_token
 from app.modules.members.services.member_notifications_service import (
     broadcast_new_offer,
 )
@@ -21,8 +20,8 @@ offers = Blueprint("offers", __name__)
 def _serialize_offer(offer: Offer, membership_level: str) -> dict:
     """Return a dictionary representation of an offer."""
 
-    # Compute the dynamic discount using the membership level passed in.
-    dynamic_discount = offer.get_discount_for_level(membership_level)
+    # TODO: Incentives will be calculated based on verified usage.
+    dynamic_discount = offer.base_discount
     return {
         "id": offer.id,
         "title": offer.title,
@@ -53,13 +52,8 @@ def _parse_datetime(value):
 def list_offers():
     """Return all offers provided by registered companies."""
 
-    # Default to the Basic tier when no authenticated user is available.
-    membership_level = "Basic"
-    token = extract_bearer_token(request.headers.get("Authorization", ""))
-    if token:
-        user = get_user_from_token(token)
-        if user is not None:
-            membership_level = user.membership_level
+    # TODO: Incentives will be calculated based on verified usage.
+    membership_level = ""
 
     offers = Offer.query.options(joinedload(Offer.company)).order_by(Offer.id).all()
     return jsonify([_serialize_offer(offer, membership_level) for offer in offers]), 200
