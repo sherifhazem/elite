@@ -26,7 +26,7 @@ class User(db.Model):
 
     Key fields:
     - ``username`` and ``email``: Account identity fields.
-    - ``role`` and ``membership_level``: Authorization and membership tier.
+    - ``role``: Authorization profile.
 
     Relationships:
     - ``company``: Linked company when the user is a business account.
@@ -36,9 +36,6 @@ class User(db.Model):
     """
 
     __tablename__ = "users"
-
-    #: Tuple defining the allowed membership levels in ascending order.
-    MEMBERSHIP_LEVELS = ("Basic", "Silver", "Gold", "Premium")
 
     #: List of supported roles ordered from least to most privileged.
     ROLE_CHOICES = ("member", "company", "admin", "superadmin")
@@ -66,11 +63,11 @@ class User(db.Model):
         nullable=False,
         doc="Flag indicating if the account is active and allowed to authenticate.",
     )
+    # TODO: Incentives will be calculated based on verified usage.
     membership_level = db.Column(
         db.String(50),
-        default="Basic",
-        nullable=False,
-        doc="Tracks the membership tier assigned to the user.",
+        nullable=True,
+        doc="Legacy placeholder for incentive tracking pending usage verification.",
     )
     joined_at = db.Column(db.DateTime, default=datetime.utcnow)
     company_id = db.Column(
@@ -196,54 +193,33 @@ class User(db.Model):
                 self.permissions.append(permission)
 
     # ------------------------------------------------------------------
-    # Membership helpers
+    # Incentive placeholders
     # ------------------------------------------------------------------
     @classmethod
     def normalize_membership_level(cls, level: str) -> str:
-        """Return a normalized membership level when valid, otherwise an empty string."""
+        """TODO: Incentives will be calculated based on verified usage."""
 
-        if not level or not isinstance(level, str):
-            return ""
-        normalized = level.strip().title()
-        if normalized in cls.MEMBERSHIP_LEVELS:
-            return normalized
         return ""
 
-    def update_membership_level(self, level: str) -> None:
-        """Update the user's membership level for tier-based access control."""
+    def update_membership_level(self, level: str | None) -> None:
+        """TODO: Incentives will be calculated based on verified usage."""
 
-        normalized = self.normalize_membership_level(level)
-        if not normalized:
-            raise ValueError("Membership level must be one of: Basic, Silver, Gold, Premium.")
-        self.membership_level = normalized
+        self.membership_level = None
 
     def membership_rank(self) -> int:
-        """Return the index of the current membership level for comparison operations."""
+        """TODO: Incentives will be calculated based on verified usage."""
 
-        normalized = self.normalize_membership_level(self.membership_level or "Basic")
-        try:
-            return self.MEMBERSHIP_LEVELS.index(normalized or "Basic")
-        except ValueError:
-            return 0
+        return 0
 
     def can_upgrade_to(self, new_level: str) -> bool:
-        """Return True when the provided level is higher than the current membership."""
+        """TODO: Incentives will be calculated based on verified usage."""
 
-        normalized = self.normalize_membership_level(new_level)
-        if not normalized:
-            return False
-        try:
-            desired_rank = self.MEMBERSHIP_LEVELS.index(normalized)
-        except ValueError:
-            return False
-        return desired_rank > self.membership_rank()
+        return False
 
     def get_membership_discount(self, default: float = 0.0) -> float:
-        """Return the configured discount percentage for the current membership level."""
+        """TODO: Incentives will be calculated based on verified usage."""
 
-        from app.services.settings_service import get_membership_discount
-
-        return float(get_membership_discount(self.membership_level, default=default))
+        return float(default or 0.0)
 
 
 __all__ = ["User", "user_permissions"]
