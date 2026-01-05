@@ -9,7 +9,7 @@
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <div>
                 <h1 class="h4 mb-1">Offer Management</h1>
-                <p class="text-muted mb-0">Shape elite campaigns with tier-specific pricing and timely refreshes.</p>
+                <p class="text-muted mb-0">Review offers and keep incentives ready for future usage-based rewards.</p>
             </div>
             <a class="btn btn-primary" href="{{ url_for('admin.add_offer') }}">Add Offer</a>
         </div>
@@ -23,10 +23,7 @@
                     <thead class="admin-table-head">
                         <tr>
                             <th scope="col">Offer Title</th>
-                            <th scope="col" class="text-center">Base</th>
-                            <th scope="col" class="text-center">Silver</th>
-                            <th scope="col" class="text-center">Gold</th>
-                            <th scope="col" class="text-center">Premium</th>
+                            <th scope="col" class="text-center">Discount</th>
                             <th scope="col" class="text-center">Status</th>
                             <th scope="col" class="text-end">Actions</th>
                         </tr>
@@ -47,28 +44,10 @@
                                 {% endif %}
                             </td>
                             <td class="text-center">
-                                <span class="badge rounded-pill {{ tier_styles['Basic']['text'] }}"
-                                    style="background-color: {{ tier_styles['Basic']['bg'] }};">
+                                <span class="badge rounded-pill text-white" style="background-color: #6c757d;">
                                     {{ '%.2f%%'|format(offer.base_discount) }}
                                 </span>
-                            </td>
-                            <td class="text-center">
-                                <span class="badge rounded-pill {{ tier_styles['Silver']['text'] }}"
-                                    style="background-color: {{ tier_styles['Silver']['bg'] }};">
-                                    {{ '%.2f%%'|format(offer.get_discount_for_level('Silver')) }}
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <span class="badge rounded-pill {{ tier_styles['Gold']['text'] }}"
-                                    style="background-color: {{ tier_styles['Gold']['bg'] }};">
-                                    {{ '%.2f%%'|format(offer.get_discount_for_level('Gold')) }}
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <span class="badge rounded-pill {{ tier_styles['Premium']['text'] }}"
-                                    style="background-color: {{ tier_styles['Premium']['bg'] }};">
-                                    {{ '%.2f%%'|format(offer.get_discount_for_level('Premium')) }}
-                                </span>
+                                <div class="small text-muted">TODO: Incentives will be calculated based on verified usage.</div>
                             </td>
                             <td class="text-center">
                                 <span class="badge-status {{ 'expired' if is_expired else 'active' }}">

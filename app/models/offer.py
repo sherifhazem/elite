@@ -51,9 +51,5 @@ class Offer(db.Model):
 
     def get_discount_for_level(self, level: str) -> float:
         """Return the discount including the configured membership adjustment."""
-
-        from app.services.settings_service import get_membership_discount
-
-        normalized = (level or "").strip().title()
-        membership_bonus = get_membership_discount(normalized, default=0.0)
-        return float(self.base_discount or 0.0) + float(membership_bonus)
+        # TODO: Incentives will be calculated based on verified usage.
+        return float(self.base_discount or 0.0)

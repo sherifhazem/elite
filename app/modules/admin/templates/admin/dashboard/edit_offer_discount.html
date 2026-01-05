@@ -6,8 +6,8 @@
     <div class="card-body">
         <h2 class="card-title mb-4">Edit Base Discount</h2>
         <p class="text-muted">
-            Adjust the base discount for <strong>{{ offer.title }}</strong>. Membership-specific discounts
-            are recalculated automatically using this value.
+            Adjust the base discount for <strong>{{ offer.title }}</strong>. TODO: Incentives will be calculated
+            based on verified usage.
         </p>
         <form action="{{ url_for('admin.edit_offer_discount', offer_id=offer.id) }}" method="post" novalidate>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -19,30 +19,11 @@
                     Silver, Gold, and Premium discounts will automatically add their tier bonuses on top of this value.
                 </div>
             </div>
-            <div class="row g-3 mb-4">
-                <div class="col-md-3">
-                    <div class="border rounded p-3 text-center">
-                        <div class="fw-semibold">Basic</div>
-                        <div class="display-6">{{ '%.2f%%'|format(offer.get_discount_for_level('Basic')) }}</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="border rounded p-3 text-center">
-                        <div class="fw-semibold">Silver</div>
-                        <div class="display-6">{{ '%.2f%%'|format(offer.get_discount_for_level('Silver')) }}</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="border rounded p-3 text-center">
-                        <div class="fw-semibold">Gold</div>
-                        <div class="display-6">{{ '%.2f%%'|format(offer.get_discount_for_level('Gold')) }}</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="border rounded p-3 text-center">
-                        <div class="fw-semibold">Premium</div>
-                        <div class="display-6">{{ '%.2f%%'|format(offer.get_discount_for_level('Premium')) }}</div>
-                    </div>
+            <div class="mb-4">
+                <div class="border rounded p-3 text-center">
+                    <div class="fw-semibold">Current Discount</div>
+                    <div class="display-6">{{ '%.2f%%'|format(offer.base_discount) }}</div>
+                    <div class="text-muted small">TODO: Incentives will be calculated based on verified usage.</div>
                 </div>
             </div>
             <div class="form-check form-switch mb-4">

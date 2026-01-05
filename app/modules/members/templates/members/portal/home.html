@@ -176,9 +176,8 @@
             }
         }
     </style>
-    <section class="home-hero" data-membership-tier="{{ membership_level|lower }}">
+    <section class="home-hero">
         <div class="home-hero__header">
-            <span class="home-hero__badge">{{ membership_level }}</span>
             <div class="home-hero__logo" aria-hidden="true"><i class="fa-solid fa-crown"></i></div>
         </div>
         <div>
@@ -191,9 +190,9 @@
             </h1>
             <p class="home-hero__text">
                 {% if current_user.is_authenticated %}
-                    تابع أحدث العروض المتاحة لمستوى <strong>{{ membership_level }}</strong> واجمع نقاطك بسهولة من الهاتف.
+                    تابع أحدث العروض المتاحة واجمع نقاطك بسهولة من الهاتف.
                 {% else %}
-                    قم بتسجيل الدخول لمزامنة عضويتك والوصول إلى أفضل العروض المصممة للأعضاء.
+                    قم بتسجيل الدخول لمزامنة نشاطك والوصول إلى أفضل العروض المصممة للأعضاء.
                 {% endif %}
             </p>
         </div>
@@ -216,21 +215,20 @@
             </button>
         </div>
         <div class="featured-carousel" data-featured-carousel>
-            <div class="featured-carousel__track" data-featured-track data-membership-level="{{ membership_level }}">
+            <div class="featured-carousel__track" data-featured-track>
                 {% set featured_offers = featured_offers | default([]) %}
                 {% if featured_offers %}
                     {% for offer in featured_offers %}
-                        {% set discount_value = '%.0f'|format(offer.get_discount_for_level(membership_level)) %}
+                        {% set discount_value = '%.0f'|format(offer.base_discount) %}
                         <article
                             class="offer-chip"
                             data-offer-id="{{ offer.id }}"
                             data-offer-title="{{ offer.title }}"
                             data-offer-company="{{ offer.company.name if offer.company else 'شريك ELITE' }}"
                             data-offer-discount="{{ discount_value }}"
-                            data-offer-level="{{ membership_level }}"
                             data-offer-valid="{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'مستمر' }}"
                         >
-                            <div class="offer-chip__level">{{ membership_level }}</div>
+                            <div class="offer-chip__level">TODO: Incentives will be calculated based on verified usage.</div>
                             <h3 class="offer-chip__title">{{ offer.title }}</h3>
                             <p class="offer-chip__company">{{ offer.company.name if offer.company else 'عرض حصري' }}</p>
                             <span class="offer-chip__discount">{{ discount_value }}%</span>
@@ -246,24 +244,7 @@
         </div>
     </section>
     <section class="home-section">
-        <h2 class="section-headline__title">مستويات البرنامج</h2>
-        <div class="tiers-list">
-            <article class="tier-card tier-card--basic">
-                <h3>Basic</h3>
-                <p>ابدأ رحلتك مع خصومات تمهيدية من شركائنا الموثوقين.</p>
-            </article>
-            <article class="tier-card tier-card--silver">
-                <h3>Silver</h3>
-                <p>نقاط إضافية مع كل تفاعل ومكافآت مخصصة لمناسباتك.</p>
-            </article>
-            <article class="tier-card tier-card--gold">
-                <h3>Gold</h3>
-                <p>خدمة دعم أولوية مع خصومات أكبر على أفضل العروض.</p>
-            </article>
-            <article class="tier-card tier-card--premium">
-                <h3>Premium</h3>
-                <p>تجربة VIP متكاملة مع مزايا حصرية وخصومات مضاعفة.</p>
-            </article>
-        </div>
+        <h2 class="section-headline__title">المكافآت</h2>
+        <p class="text-muted">TODO: Incentives will be calculated based on verified usage.</p>
     </section>
 {% endblock %}

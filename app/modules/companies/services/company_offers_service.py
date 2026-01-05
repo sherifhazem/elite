@@ -41,8 +41,7 @@ def get_portal_offers_with_company(
     membership_level: str | None = None,
 ) -> List[OfferCompanyBundle]:
     """Return offer records enriched with linked company data for the portal."""
-
-    normalized_level = (membership_level or "Basic").strip().title() or "Basic"
+    # TODO: Incentives will be calculated based on verified usage.
     offers: Iterable[Offer] = (
         Offer.query.options(joinedload(Offer.company))
         .filter(Offer.status == "active")
@@ -59,7 +58,7 @@ def get_portal_offers_with_company(
             description=offer.description,
             base_discount=float(offer.base_discount or 0.0),
             valid_until=offer.valid_until,
-            membership_discount=float(offer.get_discount_for_level(normalized_level)),
+            membership_discount=float(offer.base_discount or 0.0),
             company={
                 "id": company.id if company else "",
                 "name": company.name if company else "شريك ELITE",
