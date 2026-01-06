@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from datetime import datetime
 from http import HTTPStatus
-from typing import Dict, Tuple
+from typing import Dict, Set, Tuple
 
 from flask import current_app, flash, jsonify, redirect, render_template, request, url_for
 from werkzeug.utils import secure_filename
@@ -17,6 +17,7 @@ from app.modules.members.services.member_notifications_service import (
     broadcast_new_offer,
     fetch_offer_feedback_counts,
 )
+from app.modules.admin.services import admin_settings_service
 from app.services.access_control import require_role
 from . import company_portal
 from app.utils.company_context import _current_company
@@ -30,6 +31,17 @@ CLASSIFICATION_LABELS = {
     "happy_hour": "Happy hour",
     "mid_week": "Mid-week",
 }
+
+
+def _get_offer_type_availability() -> Dict[str, bool]:
+    """Return admin-controlled availability for each classification key."""
+
+    admin_settings = admin_settings_service.get_admin_settings()
+    offer_types = admin_settings.get("offer_types", {})
+    availability: Dict[str, bool] = {}
+    for key in OFFER_CLASSIFICATION_TYPES:
+        availability[key] = bool(offer_types.get(key, False))
+    return availability
 
 
 def _as_bool(raw_value) -> bool:
@@ -57,7 +69,12 @@ def _get_request_payload() -> Dict[str, object]:
     return {}
 
 
-def _parse_offer_payload(data: Dict[str, str], existing_offer: Offer | None = None) -> Tuple[Dict[str, object], str | None]:
+def _parse_offer_payload(
+    data: Dict[str, str],
+    existing_offer: Offer | None = None,
+    *,
+    allowed_classifications: Set[str] | None = None,
+) -> Tuple[Dict[str, object], str | None]:
     """Normalize incoming fields while preserving existing values when omitted."""
 
     def _coalesce(key: str, default: str = "") -> str:
@@ -126,6 +143,20 @@ def _parse_offer_payload(data: Dict[str, str], existing_offer: Offer | None = No
     invalid_classifications = [c for c in classifications if c not in OFFER_CLASSIFICATION_TYPES]
     if invalid_classifications:
         return {}, "One or more classifications are not supported."
+
+    if allowed_classifications is not None:
+        disabled_selected = [
+            classification
+            for classification in classifications
+            if classification not in allowed_classifications
+        ]
+        if disabled_selected:
+            readable = [CLASSIFICATION_LABELS.get(value, value) for value in disabled_selected]
+            return {}, (
+                "The following classifications are disabled by Admin Settings: "
+                + ", ".join(readable)
+                + "."
+            )
 
     payload = {
         "title": title,
@@ -217,6 +248,7 @@ def offer_new() -> str:
     """Render the offer creation form in a dedicated workspace."""
 
     company = _current_company()
+    offer_type_availability = _get_offer_type_availability()
     return render_template(
         "companies/offer_editor.html",
         company=company,
@@ -224,6 +256,7 @@ def offer_new() -> str:
         action_url=url_for("company_portal.offer_create"),
         page_title="Create Offer",
         classification_choices=CLASSIFICATION_LABELS,
+        classification_availability=offer_type_availability,
     )
 
 
@@ -233,8 +266,14 @@ def offer_create():
     """Persist a new offer and optionally broadcast notifications."""
 
     company = _current_company()
+    offer_type_availability = _get_offer_type_availability()
+    allowed_classifications = {
+        key for key, enabled in offer_type_availability.items() if enabled
+    }
     data = _get_request_payload()
-    payload, error = _parse_offer_payload(data)
+    payload, error = _parse_offer_payload(
+        data, allowed_classifications=allowed_classifications
+    )
     if error:
         if request.is_json:
             return jsonify({"ok": False, "message": error}), HTTPStatus.BAD_REQUEST
@@ -290,6 +329,7 @@ def offer_edit(offer_id: int) -> str:
 
     company = _current_company()
     offer = Offer.query.filter_by(company_id=company.id, id=offer_id).first_or_404()
+    offer_type_availability = _get_offer_type_availability()
     return render_template(
         "companies/offer_editor.html",
         company=company,
@@ -297,6 +337,7 @@ def offer_edit(offer_id: int) -> str:
         action_url=url_for("company_portal.offer_update", offer_id=offer_id),
         page_title="Edit Offer",
         classification_choices=CLASSIFICATION_LABELS,
+        classification_availability=offer_type_availability,
     )
 
 
@@ -312,8 +353,16 @@ def offer_update(offer_id: int):
     company = _current_company()
     offer = Offer.query.filter_by(company_id=company.id, id=offer_id).first_or_404()
 
+    offer_type_availability = _get_offer_type_availability()
+    allowed_classifications = {
+        key for key, enabled in offer_type_availability.items() if enabled
+    }
     data = _get_request_payload()
-    payload, error = _parse_offer_payload(data, existing_offer=offer)
+    payload, error = _parse_offer_payload(
+        data,
+        existing_offer=offer,
+        allowed_classifications=allowed_classifications,
+    )
     if error:
         if request.is_json:
             return jsonify({"ok": False, "message": error}), HTTPStatus.BAD_REQUEST
