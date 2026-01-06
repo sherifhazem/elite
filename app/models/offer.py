@@ -17,6 +17,15 @@ from datetime import datetime
 from app.core.database import db
 
 
+OFFER_CLASSIFICATION_TYPES = (
+    "first_time_offer",
+    "loyalty_offer",
+    "active_members_only",
+    "happy_hour",
+    "mid_week",
+)
+
+
 class Offer(db.Model):
     """Represents an offer provided by a company."""
 
@@ -44,6 +53,13 @@ class Offer(db.Model):
         cascade="all, delete-orphan",
     )
 
+    classifications = db.relationship(
+        "OfferClassification",
+        back_populates="offer",
+        cascade="all, delete-orphan",
+        order_by="OfferClassification.classification",
+    )
+
     def __repr__(self) -> str:
         """Return a string representation for debugging."""
 
@@ -53,3 +69,30 @@ class Offer(db.Model):
         """Return the discount including the configured membership adjustment."""
         # TODO: Incentives will be calculated based on verified usage.
         return float(self.base_discount or 0.0)
+
+    @property
+    def classification_values(self) -> list[str]:
+        """Return the stored classification keys for template convenience."""
+
+        return [record.classification for record in self.classifications]
+
+
+class OfferClassification(db.Model):
+    """Represents a single classification label attached to an offer."""
+
+    __tablename__ = "offer_classifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+    offer_id = db.Column(db.Integer, db.ForeignKey("offers.id"), nullable=False)
+    classification = db.Column(db.String(50), nullable=False)
+
+    offer = db.relationship("Offer", back_populates="classifications")
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "offer_id", "classification", name="uq_offer_classifications_offer_id"
+        ),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging helper
+        return f"<OfferClassification {self.classification}>"
