@@ -5,11 +5,12 @@ from __future__ import annotations
 from http import HTTPStatus
 from typing import Dict, Iterable
 
-from flask import abort, jsonify, render_template, request, Response
+from flask import abort, flash, jsonify, redirect, render_template, request, Response, url_for
 from flask_login import current_user
 
 from app.services.access_control import admin_required
 from app.modules.admin.services import settings_service
+from app.modules.admin.services import admin_settings_service
 from .. import admin
 
 
@@ -53,7 +54,12 @@ def _extract_tab() -> str:
 
     cleaned = getattr(request, "cleaned", {}) or {}
     tab = (cleaned.get("tab") or "").strip().lower()
-    return tab if tab in {"cities", "industries", "membership_discounts"} else "cities"
+    return (
+        tab
+        if tab
+        in {"cities", "industries", "membership_discounts", "admin_settings"}
+        else "cities"
+    )
 
 
 def _handle_add_item(list_type: str) -> Response:
@@ -114,6 +120,7 @@ def settings_home() -> str:
     cities = settings_service.get_list("cities", active_only=False)
     industries = settings_service.get_list("industries", active_only=False)
     membership_discounts = settings_service.get_section("membership_discounts", active_only=False)
+    admin_settings = admin_settings_service.get_admin_settings()
     return render_template(
         "admin/settings.html",
         section_title="Site Settings",
@@ -121,6 +128,7 @@ def settings_home() -> str:
         cities=cities,
         industries=industries,
         membership_discounts=membership_discounts,
+        admin_settings=admin_settings,
         selected_tab=selected_tab,
     )
 
@@ -318,3 +326,19 @@ def save_settings() -> Response:
             "values": list(updated) if not isinstance(updated, list) else updated,
         }
     )
+
+
+@admin.route("/settings/admin", methods=["POST"], endpoint="save_admin_settings")
+@admin_required
+def save_admin_settings() -> Response:
+    """Persist admin-configurable settings such as activity rules and toggles."""
+
+    payload = getattr(request, "cleaned", None) or request.form or request.get_json(silent=True) or {}
+    try:
+        admin_settings_service.save_admin_settings(payload)
+    except ValueError as exc:
+        flash(str(exc), "danger")
+    else:
+        flash("✅ تم حفظ إعدادات الإدارة بنجاح", "success")
+
+    return redirect(url_for("admin.settings_home", tab="admin_settings"))
