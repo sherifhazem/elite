@@ -30,6 +30,7 @@
   - `partner_activity_rules`: `{required_usages, require_unique_customers, time_window_days, active_grace_mode}`
   - `verification_code`: `{code_format, code_expiry_seconds, max_uses_per_minute}`
   - `offer_types`: `{first_time_offer, loyalty_offer, active_members_only, happy_hour, mid_week}`
+- يتم تمرير رمز CSRF تلقائيًا مع جميع طلبات AJAX الخاصة بإعدادات الإدارة عبر ترويسة `X-CSRFToken`.
 
 ## تدفق إعادة تعيين كلمة المرور
 - رابط البريد الإلكتروني أصبح يشير إلى واجهة المستخدم (GET) على المسار `/reset-password/<token>` بدل استدعاء واجهة برمجية مباشرة.
