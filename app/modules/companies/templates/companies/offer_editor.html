@@ -47,9 +47,13 @@
                 </div>
                 <div class="col-12 col-md-7">
                     <span class="form-label d-block">Classifications (optional)</span>
+                    <p class="form-text mb-2">
+                        Classifications disabled in Admin Settings cannot be saved to new or updated offers.
+                    </p>
                     <div class="row g-2">
                         {% set selected_classifications = offer.classification_values if offer else [] %}
                         {% for key, label in classification_choices.items() %}
+                            {% set is_enabled = classification_availability.get(key, False) %}
                             <div class="col-12 col-sm-6">
                                 <div class="form-check">
                                     <input
@@ -60,7 +64,12 @@
                                         value="{{ key }}"
                                         {% if key in selected_classifications %}checked{% endif %}
                                     >
-                                    <label class="form-check-label" for="offer-classification-{{ key }}">{{ label }}</label>
+                                    <label class="form-check-label" for="offer-classification-{{ key }}">
+                                        {{ label }}
+                                        {% if not is_enabled %}
+                                            <span class="badge bg-light text-dark border ms-2">Disabled</span>
+                                        {% endif %}
+                                    </label>
                                 </div>
                             </div>
                         {% endfor %}
