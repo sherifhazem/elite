@@ -12,6 +12,7 @@ from werkzeug.utils import secure_filename
 
 from app.core.database import db
 from app.models import Offer
+from app.models.offer import OFFER_CLASSIFICATION_TYPES, OfferClassification
 from app.modules.members.services.member_notifications_service import (
     broadcast_new_offer,
     fetch_offer_feedback_counts,
@@ -22,6 +23,13 @@ from app.utils.company_context import _current_company
 
 
 ALLOWED_OFFER_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "svg"}
+CLASSIFICATION_LABELS = {
+    "first_time_offer": "First-time offer",
+    "loyalty_offer": "Loyalty offer",
+    "active_members_only": "Active members only",
+    "happy_hour": "Happy hour",
+    "mid_week": "Mid-week",
+}
 
 
 def _as_bool(raw_value) -> bool:
@@ -41,7 +49,10 @@ def _get_request_payload() -> Dict[str, object]:
         return {k: v for k, v in cleaned.items() if not k.startswith("__")}
 
     if request.form:
-        return request.form.to_dict()
+        form_data = request.form.to_dict()
+        # Preserve multi-select values such as classifications
+        form_data["classifications"] = request.form.getlist("classifications")
+        return form_data
 
     return {}
 
@@ -105,6 +116,17 @@ def _parse_offer_payload(data: Dict[str, str], existing_offer: Offer | None = No
     if start_date and valid_until and start_date > valid_until:
         return {}, "Start date cannot be later than the end date."
 
+    has_classifications = "classifications" in data
+    raw_classifications = data.get("classifications", [])
+    if not has_classifications and existing_offer is not None:
+        raw_classifications = existing_offer.classification_values
+    if isinstance(raw_classifications, str):
+        raw_classifications = [raw_classifications]
+    classifications = [value.strip() for value in raw_classifications if str(value).strip()]
+    invalid_classifications = [c for c in classifications if c not in OFFER_CLASSIFICATION_TYPES]
+    if invalid_classifications:
+        return {}, "One or more classifications are not supported."
+
     payload = {
         "title": title,
         "description": description or None,
@@ -114,8 +136,22 @@ def _parse_offer_payload(data: Dict[str, str], existing_offer: Offer | None = No
         "image_url": image_url or None,
         "status": status,
         "send_notifications": send_notifications,
+        "classifications": list(dict.fromkeys(classifications)),
     }
     return payload, None
+
+
+def _apply_classifications(offer: Offer, classifications: list[str]) -> None:
+    """Synchronize offer classifications with the provided collection."""
+
+    desired = set(classifications)
+    existing = {record.classification: record for record in offer.classifications}
+
+    for value in desired - set(existing):
+        offer.classifications.append(OfferClassification(classification=value))
+
+    for value in set(existing) - desired:
+        db.session.delete(existing[value])
 
 
 def _handle_offer_image_upload(offer: Offer) -> str:
@@ -187,6 +223,7 @@ def offer_new() -> str:
         offer=None,
         action_url=url_for("company_portal.offer_create"),
         page_title="Create Offer",
+        classification_choices=CLASSIFICATION_LABELS,
     )
 
 
@@ -216,6 +253,8 @@ def offer_create():
     )
     db.session.add(offer)
     db.session.flush()
+
+    _apply_classifications(offer, payload["classifications"])
 
     try:
         image_url = _handle_offer_image_upload(offer)
@@ -257,6 +296,7 @@ def offer_edit(offer_id: int) -> str:
         offer=offer,
         action_url=url_for("company_portal.offer_update", offer_id=offer_id),
         page_title="Edit Offer",
+        classification_choices=CLASSIFICATION_LABELS,
     )
 
 
@@ -287,6 +327,8 @@ def offer_update(offer_id: int):
     offer.status = payload["status"]
     offer.valid_until = payload["valid_until"]
     offer.image_url = payload["image_url"]
+
+    _apply_classifications(offer, payload["classifications"])
 
     try:
         image_url = _handle_offer_image_upload(offer)

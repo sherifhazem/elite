@@ -5,7 +5,7 @@ from app.core.database import db
 from .permission import Permission
 from .user import User
 from .company import Company
-from .offer import Offer
+from .offer import Offer, OfferClassification
 from .notification import Notification
 from .activity_log import ActivityLog
 from .redemption import Redemption
@@ -17,6 +17,7 @@ __all__ = [
     "User",
     "Company",
     "Offer",
+    "OfferClassification",
     "Notification",
     "Redemption",
     "Permission",
