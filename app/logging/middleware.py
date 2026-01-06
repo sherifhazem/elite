@@ -142,6 +142,7 @@ def register_logging_middleware(app: Flask) -> None:
         ctx.add_breadcrumb("error_handler", file=__file__, function="_capture_exception", line=__line__())
 
         status = getattr(exc, "code", HTTPStatus.INTERNAL_SERVER_ERROR)
+        safe_status = _coerce_status(status)
         if isinstance(exc, HTTPException):
             message = exc.description or str(exc)
         else:
@@ -150,7 +151,7 @@ def register_logging_middleware(app: Flask) -> None:
         error_payload = serialize_exception(exc)
         error_payload["payload_snapshot"] = snapshot_payload()
 
-        response = _build_error_response(message, status)
+        response = _build_error_response(message, safe_status)
         ctx.outgoing_payload.update(capture_outgoing_response(response))
         validation_source = ctx.normalized_payload or ctx.incoming_payload
         extracted_validation = extract_validation_state(response, validation_source)
@@ -161,21 +162,32 @@ def register_logging_middleware(app: Flask) -> None:
         ctx.validation = ctx.validation or {}
 
         if not getattr(g, "_log_emitted", False):
-            _emit_final_log(ctx, int(status), level="ERROR")
+            _emit_final_log(ctx, safe_status, level="ERROR")
             g._log_emitted = True
 
         _set_response_ids(response, request_id=ctx.request_id, trace_id=ctx.trace_id, parent_id=ctx.parent_id)
-        return response, status
+        return response, safe_status
 
 
-def _build_error_response(message: str | dict[str, object], status: int) -> Response:
+def _coerce_status(status: object) -> int:
+    if isinstance(status, int):
+        return status
+    if isinstance(status, str) and status.isdigit():
+        try:
+            return int(status)
+        except ValueError:
+            pass
+    return int(HTTPStatus.INTERNAL_SERVER_ERROR)
+
+
+def _build_error_response(message: str | dict[str, object], status: object) -> Response:
     if isinstance(message, dict):
         payload = {**message}
     else:
         payload = {"message": message}
     payload.setdefault("request_id", getattr(g, "request_id", None))
     response = jsonify(payload)
-    response.status_code = int(status)
+    response.status_code = _coerce_status(status)
     return response
 
 
