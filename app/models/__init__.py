@@ -10,6 +10,7 @@ from .notification import Notification
 from .activity_log import ActivityLog
 from .redemption import Redemption
 from .lookup_choice import LookupChoice
+from .admin_setting import AdminSetting
 
 __all__ = [
     "db",
@@ -21,4 +22,5 @@ __all__ = [
     "Permission",
     "ActivityLog",
     "LookupChoice",
+    "AdminSetting",
 ]
