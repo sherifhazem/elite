@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from http import HTTPStatus
-from typing import Dict, Iterable
+from typing import Dict
 
-from flask import abort, jsonify, render_template, request, Response
+from flask import abort, flash, jsonify, redirect, render_template, request, Response, url_for
 from flask_login import current_user
 
 from app.services.access_control import admin_required
 from app.modules.admin.services import settings_service
+from app.modules.admin.services import admin_settings_service
 from .. import admin
 
 
@@ -53,7 +54,11 @@ def _extract_tab() -> str:
 
     cleaned = getattr(request, "cleaned", {}) or {}
     tab = (cleaned.get("tab") or "").strip().lower()
-    return tab if tab in {"cities", "industries", "membership_discounts"} else "cities"
+    return (
+        tab
+        if tab in {"cities", "industries", "admin_settings"}
+        else "cities"
+    )
 
 
 def _handle_add_item(list_type: str) -> Response:
@@ -113,14 +118,14 @@ def settings_home() -> str:
     selected_tab = _extract_tab()
     cities = settings_service.get_list("cities", active_only=False)
     industries = settings_service.get_list("industries", active_only=False)
-    membership_discounts = settings_service.get_section("membership_discounts", active_only=False)
+    admin_settings = admin_settings_service.get_admin_settings()
     return render_template(
         "admin/settings.html",
         section_title="Site Settings",
         active_page="settings",
         cities=cities,
         industries=industries,
-        membership_discounts=membership_discounts,
+        admin_settings=admin_settings,
         selected_tab=selected_tab,
     )
 
@@ -289,32 +294,17 @@ def fetch_industries() -> Response:
     return _settings_success_response("industries")
 
 
-def _extract_payload() -> tuple[str, Iterable]:
-    cleaned = getattr(request, "cleaned", None) or request.get_json(silent=True) or {}
-    section = (cleaned.get("section") or "").strip().lower()
-    values = cleaned.get("values") or []
-    return section, values
-
-
-@admin.route("/settings/save", methods=["POST"], endpoint="save_settings")
+@admin.route("/settings/admin", methods=["POST"], endpoint="save_admin_settings")
 @admin_required
-def save_settings() -> Response:
-    """Persist supported settings sections such as membership discounts."""
+def save_admin_settings() -> Response:
+    """Persist admin-configurable settings such as activity rules and toggles."""
 
-    section, values = _extract_payload()
-    if section not in {"membership_discounts"}:
-        return _settings_error_response("القسم المحدد غير مدعوم.")
-
+    payload = getattr(request, "cleaned", None) or request.form or request.get_json(silent=True) or {}
     try:
-        updated = settings_service.save_list(section, values)
+        admin_settings_service.save_admin_settings(payload)
     except ValueError as exc:
-        return _settings_error_response(str(exc), reason="validation_failed")
+        flash(str(exc), "danger")
+    else:
+        flash("✅ تم حفظ إعدادات الإدارة بنجاح", "success")
 
-    return jsonify(
-        {
-            "status": "success",
-            "message": "✅ تم حفظ التغييرات بنجاح.",
-            "section": section,
-            "values": list(updated) if not isinstance(updated, list) else updated,
-        }
-    )
+    return redirect(url_for("admin.settings_home", tab="admin_settings"))
