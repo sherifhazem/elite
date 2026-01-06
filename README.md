@@ -32,6 +32,7 @@
   - `verification_code`: `{code_format, code_expiry_seconds, max_uses_per_minute}`
   - `offer_types`: `{first_time_offer, loyalty_offer, active_members_only, happy_hour, mid_week}`
 - يتم تمرير رمز CSRF تلقائيًا مع جميع طلبات AJAX الخاصة بإعدادات الإدارة عبر ترويسة `X-CSRFToken`.
+- تبويب إعدادات الإدارة يعرض في `app/modules/admin/templates/admin/settings.html`؛ التنقل بين التبويبات في نفس الملف بينما يحتوي قسم إعدادات الإدارة على نموذج واحد فقط بدون تكرار.
 
 ## تدفق إعادة تعيين كلمة المرور
 - رابط البريد الإلكتروني أصبح يشير إلى واجهة المستخدم (GET) على المسار `/reset-password/<token>` بدل استدعاء واجهة برمجية مباشرة.
