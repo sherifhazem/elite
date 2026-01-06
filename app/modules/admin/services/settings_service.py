@@ -2,20 +2,17 @@
 
 from __future__ import annotations
 
-import json
-from typing import Dict, Iterable, List, Mapping, Tuple
+from typing import Dict, Iterable, List
 
 from sqlalchemy.exc import IntegrityError
 
 from app.logging.logger import get_logger
 from app.core.choices.registry import CITIES, INDUSTRIES
 from app.models import LookupChoice, db
-from app.models.user import User
 
 _LOGGER = get_logger(__name__)
 _VALID_TYPES = {"cities", "industries"}
 _DEFAULTS = {"cities": CITIES, "industries": INDUSTRIES}
-_MEMBERSHIP_DISCOUNTS = "membership_discounts"
 
 
 def _normalize_value(value: str) -> str:
@@ -47,33 +44,6 @@ def _seed_defaults() -> None:
             )
     db.session.commit()
 
-    _seed_membership_discount_defaults()
-
-
-def _seed_membership_discount_defaults() -> None:
-    """Ensure a zeroed discount exists for every membership tier."""
-
-    existing_rows = LookupChoice.query.filter_by(list_type=_MEMBERSHIP_DISCOUNTS).all()
-    existing_levels = {
-        data[0]
-        for data in (_deserialize_membership_discount(row.name) for row in existing_rows)
-        if data
-    }
-
-    missing_levels = [
-        level for level in User.MEMBERSHIP_LEVELS if level not in existing_levels
-    ]
-    for level in missing_levels:
-        db.session.add(
-            LookupChoice(
-                list_type=_MEMBERSHIP_DISCOUNTS,
-                name=_serialize_membership_discount(level, 0.0),
-                active=True,
-            )
-        )
-    if missing_levels:
-        db.session.commit()
-
 
 def _validate_type(list_type: str) -> str:
     normalized = (list_type or "").strip().lower()
@@ -82,58 +52,12 @@ def _validate_type(list_type: str) -> str:
     return normalized
 
 
-def _serialize_membership_discount(level: str, discount: float) -> str:
-    return json.dumps(
-        {
-            "membership_level": level,
-            "discount_percentage": discount,
-        },
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    )
-
-
-def _deserialize_membership_discount(value: str) -> Tuple[str, float] | None:
-    try:
-        payload = json.loads(value)
-    except (TypeError, json.JSONDecodeError):
-        return None
-
-    level = User.normalize_membership_level(payload.get("membership_level", ""))
-    if not level:
-        return None
-    try:
-        discount = float(payload.get("discount_percentage", 0))
-    except (TypeError, ValueError):
-        return None
-    return level, discount
-
-
-def _validate_membership_discount(level: str, discount: object) -> Tuple[str, float]:
-    normalized_level = User.normalize_membership_level(level)
-    if not normalized_level:
-        allowed = ", ".join(User.MEMBERSHIP_LEVELS)
-        raise ValueError(f"Membership level must be one of: {allowed}.")
-
-    try:
-        numeric_discount = float(discount)
-    except (TypeError, ValueError):
-        raise ValueError("Discount must be a numeric value.")
-
-    if numeric_discount < 0 or numeric_discount > 100:
-        raise ValueError("Discount must be between 0 and 100 percent.")
-
-    return normalized_level, numeric_discount
-
-
 def get_all_settings(*, active_only: bool = True) -> Dict[str, List[str]]:
     """Return a copy of all managed settings."""
 
     return {
         "cities": get_list("cities", active_only=active_only),
         "industries": get_list("industries", active_only=active_only),
-        _MEMBERSHIP_DISCOUNTS: get_membership_discounts(active_only=active_only),
     }
 
 
@@ -146,30 +70,6 @@ def get_list(list_type: str, *, active_only: bool = True) -> List[str]:
     if active_only:
         query = query.filter_by(active=True)
     return [row.name for row in query.order_by(LookupChoice.name.asc()).all()]
-
-
-def get_membership_discounts(*, active_only: bool = True) -> List[Dict[str, float]]:
-    """Return configured membership discounts sorted by membership level order."""
-
-    _ensure_storage_ready()
-    query = LookupChoice.query.filter_by(list_type=_MEMBERSHIP_DISCOUNTS)
-    if active_only:
-        query = query.filter_by(active=True)
-
-    rows = query.order_by(LookupChoice.name.asc()).all()
-    parsed: list[tuple[str, float]] = []
-    for row in rows:
-        data = _deserialize_membership_discount(row.name)
-        if not data:
-            continue
-        parsed.append(data)
-
-    ordering = {level: index for index, level in enumerate(User.MEMBERSHIP_LEVELS)}
-    parsed.sort(key=lambda item: ordering.get(item[0], len(ordering)))
-    return [
-        {"membership_level": level, "discount_percentage": discount}
-        for level, discount in parsed
-    ]
 
 
 def update_settings(list_type: str, new_values: Iterable[str]) -> List[str]:
@@ -195,57 +95,6 @@ def update_settings(list_type: str, new_values: Iterable[str]) -> List[str]:
         "Admin settings list replaced", extra={"log_payload": {"list_type": normalized, "items": sanitized}}
     )
     return list(sanitized)
-
-
-def update_membership_discounts(
-    new_values: Iterable[Mapping[str, object] | Tuple[object, object]]
-) -> List[Dict[str, float]]:
-    """Replace all membership discounts with validated records."""
-
-    _ensure_storage_ready()
-
-    sanitized: list[tuple[str, float]] = []
-    seen_levels: set[str] = set()
-    for value in new_values:
-        if isinstance(value, Mapping):
-            level = value.get("membership_level")
-            discount = value.get("discount_percentage")
-        else:
-            try:
-                level, discount = value
-            except (TypeError, ValueError):
-                raise ValueError(
-                    "Membership discounts must be provided as (level, discount) pairs or mappings."
-                )
-        normalized_level, numeric_discount = _validate_membership_discount(level, discount)
-        if normalized_level in seen_levels:
-            continue
-        sanitized.append((normalized_level, numeric_discount))
-        seen_levels.add(normalized_level)
-
-    LookupChoice.query.filter_by(list_type=_MEMBERSHIP_DISCOUNTS).delete()
-    for level, discount in sanitized:
-        db.session.add(
-            LookupChoice(
-                list_type=_MEMBERSHIP_DISCOUNTS,
-                name=_serialize_membership_discount(level, discount),
-                active=True,
-            )
-        )
-    db.session.commit()
-
-    _LOGGER.info(
-        "Admin settings list replaced",
-        extra={
-            "log_payload": {
-                "list_type": _MEMBERSHIP_DISCOUNTS,
-                "items": sanitized,
-            }
-        },
-    )
-
-    _seed_membership_discount_defaults()
-    return get_membership_discounts()
 
 
 def add_item(list_type: str, name: str, *, is_active: bool | None = None) -> List[str]:
@@ -317,26 +166,15 @@ def delete_item(list_type: str, name: str) -> List[str]:
     return get_list(normalized_type, active_only=True)
 
 
-def get_membership_discount(level: str, *, default: float = 0.0) -> float:
-    """Return the configured discount for the provided membership level."""
-
-    normalized_level = User.normalize_membership_level(level) or ""
-    if not normalized_level:
-        return float(default)
-
-    discounts = {
-        entry["membership_level"]: float(entry.get("discount_percentage", 0))
-        for entry in get_membership_discounts(active_only=True)
-    }
-    return float(discounts.get(normalized_level, default))
-
-
 def get_section(section: str, *, active_only: bool = True):
-    """Return a settings section, including membership discounts."""
+    """Return a settings section for the supported registries."""
 
     normalized = (section or "").strip().lower()
-    if normalized == _MEMBERSHIP_DISCOUNTS:
-        return get_membership_discounts(active_only=active_only)
+    if normalized == "membership_discounts":
+        _LOGGER.info(
+            "Deprecated membership discounts requested", extra={"log_payload": {"list_type": normalized}}
+        )
+        return []
     return get_list(normalized, active_only=active_only)
 
 
@@ -344,8 +182,12 @@ def save_list(section: str, new_values: Iterable):
     """Persist the given settings section, routing to the proper handler."""
 
     normalized = (section or "").strip().lower()
-    if normalized == _MEMBERSHIP_DISCOUNTS:
-        return update_membership_discounts(new_values)
+    if normalized == "membership_discounts":
+        _LOGGER.info(
+            "Ignoring deprecated membership discounts payload",
+            extra={"log_payload": {"list_type": normalized, "items": list(new_values)}},
+        )
+        return []
     return update_settings(normalized, new_values)
 
 
@@ -397,12 +239,9 @@ def update_item(
 __all__ = [
     "get_all_settings",
     "get_list",
-    "get_membership_discount",
-    "get_membership_discounts",
     "get_section",
     "save_list",
     "update_settings",
-    "update_membership_discounts",
     "add_item",
     "delete_item",
     "update_item",
