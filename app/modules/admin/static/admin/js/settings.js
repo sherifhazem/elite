@@ -18,6 +18,7 @@
         industries: Array.isArray(context.industries) ? [...context.industries] : [],
     };
     const endpoints = context.endpoints || {};
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
     const toastElement = document.getElementById('adminToast');
     const toastBody = toastElement?.querySelector('.toast-body');
@@ -133,6 +134,7 @@
             headers: {
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
+                'X-CSRFToken': csrfToken,
             },
             body: JSON.stringify(payload),
         });
