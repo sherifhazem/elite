@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
 from typing import Any, Dict, Mapping
 
 from app.logging.logger import get_logger
@@ -11,21 +10,14 @@ from app.models import AdminSetting, db
 _LOGGER = get_logger(__name__)
 
 _ALLOWED_CODE_FORMATS = {"5_digits", "1_letter_4_digits"}
-
-
-def _end_of_next_week() -> str:
-    today = date.today()
-    days_until_next_monday = (7 - today.weekday()) % 7 or 7
-    start_next_week = today + timedelta(days=days_until_next_monday)
-    end_next_week = start_next_week + timedelta(days=6)
-    return end_next_week.isoformat()
+_ALLOWED_GRACE_MODES = {"end_of_next_week"}
 
 
 def _default_member_activity_rules() -> dict:
     return {
         "required_usages": 1,
         "time_window_days": 7,
-        "active_valid_until": _end_of_next_week(),
+        "active_grace_mode": "end_of_next_week",
     }
 
 
@@ -34,7 +26,7 @@ def _default_partner_activity_rules() -> dict:
         "required_usages": 1,
         "require_unique_customers": False,
         "time_window_days": 7,
-        "active_valid_until": _end_of_next_week(),
+        "active_grace_mode": "end_of_next_week",
     }
 
 
@@ -49,7 +41,7 @@ def _default_verification_settings() -> dict:
 def _default_offer_types() -> dict:
     return {
         "first_time_offer": False,
-        "loyalty_offerOffer": False,
+        "loyalty_offer": False,
         "active_members_only": False,
         "happy_hour": False,
         "mid_week": False,
@@ -73,19 +65,17 @@ def _coerce_bool(value: Any) -> bool:
     return bool(value)
 
 
-def _coerce_date(value: Any, field: str) -> str:
-    if not value:
-        return _end_of_next_week()
-    try:
-        return date.fromisoformat(str(value)).isoformat()
-    except ValueError as exc:  # pragma: no cover - defensive
-        raise ValueError(f"صيغة {field} غير صالحة. يرجى اختيار تاريخ صحيح.") from exc
-
-
 def _coerce_code_format(value: Any) -> str:
     normalized = (str(value or "").strip() or "5_digits")
     if normalized not in _ALLOWED_CODE_FORMATS:
         raise ValueError("صيغة رمز التحقق غير صالحة.")
+    return normalized
+
+
+def _coerce_grace_mode(value: Any) -> str:
+    normalized = str(value or "").strip() or "end_of_next_week"
+    if normalized not in _ALLOWED_GRACE_MODES:
+        raise ValueError("سياسة انتهاء النشاط غير صالحة.")
     return normalized
 
 
@@ -102,10 +92,13 @@ def _merge(defaults: Mapping[str, Any], stored: Mapping[str, Any] | None) -> Dic
 def _load_setting(key: str, defaults: Mapping[str, Any]) -> Dict[str, Any]:
     record = AdminSetting.query.filter_by(key=key).first()
     stored_value = record.value if record and isinstance(record.value, dict) else {}
+
+    # backward compatibility for prior offer key
+    if key == "offer_types" and "loyalty_offerOffer" in stored_value:
+        stored_value = dict(stored_value)
+        stored_value.setdefault("loyalty_offer", stored_value.get("loyalty_offerOffer"))
+
     merged = _merge(defaults, stored_value)
-    # Refresh time-sensitive defaults when missing
-    if key in {"member_activity_rules", "partner_activity_rules"}:
-        merged.setdefault("active_valid_until", _end_of_next_week())
     return merged
 
 
@@ -155,8 +148,8 @@ def save_admin_settings(payload: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]
                 "فترة التتبع (أيام) للأعضاء",
                 minimum=1,
             ),
-            "active_valid_until": _coerce_date(
-                payload.get("member_active_valid_until"), "تاريخ صلاحية نشاط الأعضاء"
+            "active_grace_mode": _coerce_grace_mode(
+                payload.get("member_active_grace_mode"),
             ),
         }
     )
@@ -181,8 +174,8 @@ def save_admin_settings(payload: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]
                 "فترة التتبع (أيام) للشركاء",
                 minimum=1,
             ),
-            "active_valid_until": _coerce_date(
-                payload.get("partner_active_valid_until"), "تاريخ صلاحية نشاط الشركاء"
+            "active_grace_mode": _coerce_grace_mode(
+                payload.get("partner_active_grace_mode"),
             ),
         }
     )
@@ -213,7 +206,9 @@ def save_admin_settings(payload: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]
     offer_types.update(
         {
             "first_time_offer": _coerce_bool(payload.get("first_time_offer")),
-            "loyalty_offerOffer": _coerce_bool(payload.get("loyalty_offerOffer")),
+            "loyalty_offer": _coerce_bool(
+                payload.get("loyalty_offer", payload.get("loyalty_offerOffer"))
+            ),
             "active_members_only": _coerce_bool(payload.get("active_members_only")),
             "happy_hour": _coerce_bool(payload.get("happy_hour")),
             "mid_week": _coerce_bool(payload.get("mid_week")),

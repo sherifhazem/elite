@@ -36,10 +36,10 @@
         </li>
         <li class="nav-item">
             <a
-                class="nav-link {{ 'active' if selected_tab == 'membership_discounts' else '' }}"
-                href="{{ url_for('admin.settings_home', tab='membership_discounts') }}"
+                class="nav-link {{ 'active' if selected_tab == 'admin_settings' else '' }}"
+                href="{{ url_for('admin.settings_home', tab='admin_settings') }}"
             >
-                خصومات العضوية
+                إعدادات الإدارة
             </a>
         </li>
         <li class="nav-item">
@@ -182,60 +182,219 @@
         </div>
 
         <div
-            class="tab-pane fade {{ 'show active' if selected_tab == 'membership_discounts' else '' }}"
-            id="settings-membership-discounts"
+            class="tab-pane fade {{ 'show active' if selected_tab == 'admin_settings' else '' }}"
+            id="settings-admin"
             role="tabpanel"
         >
             <div class="card shadow-sm admin-card mb-4">
                 <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
                     <div>
-                        <h2 class="h5 mb-0">خصومات العضوية</h2>
-                        <span class="text-muted small">قم بتعديل نسبة الخصم لكل مستوى عضوية.</span>
+                        <h2 class="h5 mb-0">إعدادات القواعد والعروض</h2>
+                        <span class="text-muted small">قم بتحديث القواعد بدون تعديل الكود.</span>
                     </div>
-                    <div class="text-muted small">يتم تطبيق التغييرات مباشرة دون إعادة تحميل الصفحة.</div>
+                    <div class="text-muted small">يتم حفظ جميع القيم في قاعدة البيانات.</div>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-danger d-none" role="alert" data-feedback="membership_discounts"></div>
-                    <form id="membership-discounts-form" class="d-flex flex-column gap-3">
-                        <div class="table-responsive">
-                            <table class="table align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">مستوى العضوية</th>
-                                        <th scope="col">نسبة الخصم (%)</th>
-                                    </tr>
-                                </thead>
-                                <tbody data-membership-table>
-                                    {% if membership_discounts %}
-                                        {% for entry in membership_discounts %}
-                                            <tr data-membership-discount-row data-membership-level="{{ entry.membership_level }}">
-                                                <td class="fw-medium">{{ entry.membership_level }}</td>
-                                                <td style="max-width: 180px;">
-                                                    <div class="form-text mb-1">ادخل رقماً بين 0 و 100</div>
-                                                    <input
-                                                        type="number"
-                                                        class="form-control form-control-sm"
-                                                        name="discount_percentage"
-                                                        min="0"
-                                                        max="100"
-                                                        step="0.1"
-                                                        value="{{ entry.discount_percentage }}"
-                                                        data-discount-input
-                                                    >
-                                                    <div class="invalid-feedback"></div>
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    {% else %}
-                                        <tr class="text-center text-muted">
-                                            <td colspan="2">لا توجد خصومات عضوية حالياً.</td>
-                                        </tr>
-                                    {% endif %}
-                                </tbody>
-                            </table>
+                    <form method="post" action="{{ url_for('admin.save_admin_settings') }}" class="d-flex flex-column gap-4">
+                        <div class="row g-3">
+                            <div class="col-12 col-xl-6">
+                                <div class="border rounded p-3 h-100">
+                                    <h3 class="h6 mb-3">قواعد نشاط الأعضاء</h3>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="member_required_usages">عدد الاستخدامات المطلوبة</label>
+                                        <input
+                                            type="number"
+                                            class="form-control"
+                                            id="member_required_usages"
+                                            name="member_required_usages"
+                                            min="0"
+                                            value="{{ admin_settings.member_activity_rules.required_usages }}"
+                                            required
+                                        >
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="member_time_window_days">فترة التتبع (أيام)</label>
+                                        <input
+                                            type="number"
+                                            class="form-control"
+                                            id="member_time_window_days"
+                                            name="member_time_window_days"
+                                            min="1"
+                                            value="{{ admin_settings.member_activity_rules.time_window_days }}"
+                                            required
+                                        >
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label" for="member_active_grace_mode">سياسة انتهاء النشاط</label>
+                                        <select
+                                            class="form-select"
+                                            id="member_active_grace_mode"
+                                            name="member_active_grace_mode"
+                                        >
+                                            <option value="end_of_next_week" {% if admin_settings.member_activity_rules.active_grace_mode == 'end_of_next_week' %}selected{% endif %}>
+                                                حتى نهاية الأسبوع القادم
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-xl-6">
+                                <div class="border rounded p-3 h-100">
+                                    <h3 class="h6 mb-3">قواعد نشاط الشركاء</h3>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="partner_required_usages">عدد الاستخدامات المطلوبة</label>
+                                        <input
+                                            type="number"
+                                            class="form-control"
+                                            id="partner_required_usages"
+                                            name="partner_required_usages"
+                                            min="0"
+                                            value="{{ admin_settings.partner_activity_rules.required_usages }}"
+                                            required
+                                        >
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input
+                                            class="form-check-input"
+                                            type="checkbox"
+                                            role="switch"
+                                            id="partner_require_unique_customers"
+                                            name="partner_require_unique_customers"
+                                            {% if admin_settings.partner_activity_rules.require_unique_customers %}checked{% endif %}
+                                        >
+                                        <label class="form-check-label" for="partner_require_unique_customers">يتطلب عملاء مختلفين</label>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="partner_time_window_days">فترة التتبع (أيام)</label>
+                                        <input
+                                            type="number"
+                                            class="form-control"
+                                            id="partner_time_window_days"
+                                            name="partner_time_window_days"
+                                            min="1"
+                                            value="{{ admin_settings.partner_activity_rules.time_window_days }}"
+                                            required
+                                        >
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label" for="partner_active_grace_mode">سياسة انتهاء النشاط</label>
+                                        <select
+                                            class="form-select"
+                                            id="partner_active_grace_mode"
+                                            name="partner_active_grace_mode"
+                                        >
+                                            <option value="end_of_next_week" {% if admin_settings.partner_activity_rules.active_grace_mode == 'end_of_next_week' %}selected{% endif %}>
+                                                حتى نهاية الأسبوع القادم
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
+                        <div class="row g-3">
+                            <div class="col-12 col-xl-6">
+                                <div class="border rounded p-3 h-100">
+                                    <h3 class="h6 mb-3">إعدادات رمز التحقق</h3>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="code_format">صيغة الرمز</label>
+                                        <select class="form-select" id="code_format" name="code_format">
+                                            <option value="5_digits" {% if admin_settings.verification_code.code_format == '5_digits' %}selected{% endif %}>٥ أرقام</option>
+                                            <option value="1_letter_4_digits" {% if admin_settings.verification_code.code_format == '1_letter_4_digits' %}selected{% endif %}>حرف واحد + ٤ أرقام</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="code_expiry_seconds">مدة الصلاحية (ثواني)</label>
+                                        <input
+                                            type="number"
+                                            class="form-control"
+                                            id="code_expiry_seconds"
+                                            name="code_expiry_seconds"
+                                            min="1"
+                                            value="{{ admin_settings.verification_code.code_expiry_seconds }}"
+                                            required
+                                        >
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label" for="max_uses_per_minute">الحد الأقصى للاستخدام في الدقيقة</label>
+                                        <input
+                                            type="number"
+                                            class="form-control"
+                                            id="max_uses_per_minute"
+                                            name="max_uses_per_minute"
+                                            min="1"
+                                            value="{{ admin_settings.verification_code.max_uses_per_minute }}"
+                                            required
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-xl-6">
+                                <div class="border rounded p-3 h-100">
+                                    <h3 class="h6 mb-3">أنواع العروض المفعّلة</h3>
+                                    <div class="d-flex flex-column gap-2">
+                                        <div class="form-check form-switch">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                role="switch"
+                                                id="first_time_offer"
+                                                name="first_time_offer"
+                                                {% if admin_settings.offer_types.first_time_offer %}checked{% endif %}
+                                            >
+                                            <label class="form-check-label" for="first_time_offer">عرض أول مرة</label>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                role="switch"
+                                                id="loyalty_offer"
+                                                name="loyalty_offer"
+                                                {% if admin_settings.offer_types.loyalty_offer %}checked{% endif %}
+                                            >
+                                            <label class="form-check-label" for="loyalty_offer">عرض الولاء</label>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                role="switch"
+                                                id="active_members_only"
+                                                name="active_members_only"
+                                                {% if admin_settings.offer_types.active_members_only %}checked{% endif %}
+                                            >
+                                            <label class="form-check-label" for="active_members_only">نشط للأعضاء فقط</label>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                role="switch"
+                                                id="happy_hour"
+                                                name="happy_hour"
+                                                {% if admin_settings.offer_types.happy_hour %}checked{% endif %}
+                                            >
+                                            <label class="form-check-label" for="happy_hour">ساعة السعادة</label>
+                                        </div>
+                                        <div class="form-check form-switch mb-0">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                role="switch"
+                                                id="mid_week"
+                                                name="mid_week"
+                                                {% if admin_settings.offer_types.mid_week %}checked{% endif %}
+                                            >
+                                            <label class="form-check-label" for="mid_week">منتصف الأسبوع</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="d-flex justify-content-end gap-2">
-                            <button type="submit" class="btn btn-primary">حفظ الخصومات</button>
+                            <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
                         </div>
                     </form>
                 </div>
@@ -501,7 +660,6 @@
             "selected_tab": selected_tab,
             "cities": cities,
             "industries": industries,
-            "membership_discounts": membership_discounts,
             "admin_settings": admin_settings,
             "endpoints": {
                 "add_city": url_for('admin.add_city'),
@@ -510,7 +668,6 @@
                 "update_industry": url_for('admin.update_industry'),
                 "delete_city": url_for('admin.delete_city'),
                 "delete_industry": url_for('admin.delete_industry'),
-                "save_settings": url_for('admin.save_settings'),
                 "save_admin_settings": url_for('admin.save_admin_settings'),
             },
         } | tojson }}

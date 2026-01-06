@@ -23,6 +23,12 @@
 - إضافة قسم إعدادات إدارية يتيح ضبط قواعد النشاط للأعضاء والشركاء (عدد الاستخدامات، نافذة الوقت، انتهاء الصلاحية، ومتطلب العملاء الفريدين).
 - دعم إعدادات رمز التحقق (صيغة الرمز، مدة الصلاحية، الحد الأقصى للاستخدام في الدقيقة) من خلال واجهة إدارة قابلة للتعديل.
 - إمكانية تفعيل أو إيقاف أنواع العروض (عرض أول مرة، الولاء، للأعضاء النشطين فقط، ساعة السعادة، منتصف الأسبوع) دون تغييرات برمجية.
+- إزالة واجهة خصومات العضوية القديمة من إعدادات الإدارة لصالح قواعد النشاط الجديدة.
+- مفاتيح إعدادات الإدارة المخزنة في قاعدة البيانات:
+  - `member_activity_rules`: `{required_usages, time_window_days, active_grace_mode}`
+  - `partner_activity_rules`: `{required_usages, require_unique_customers, time_window_days, active_grace_mode}`
+  - `verification_code`: `{code_format, code_expiry_seconds, max_uses_per_minute}`
+  - `offer_types`: `{first_time_offer, loyalty_offer, active_members_only, happy_hour, mid_week}`
 
 ## تدفق إعادة تعيين كلمة المرور
 - رابط البريد الإلكتروني أصبح يشير إلى واجهة المستخدم (GET) على المسار `/reset-password/<token>` بدل استدعاء واجهة برمجية مباشرة.
