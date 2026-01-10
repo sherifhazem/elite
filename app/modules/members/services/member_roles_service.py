@@ -158,11 +158,11 @@ def company_required(view_func: Callable) -> Callable:
             user = resolve_user_from_request()
 
         if user is None or not getattr(user, "is_authenticated", True):
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("auth.login_page"))
 
         if not getattr(user, "is_active", False):
             _log_access_denied(user, "inactive_user")
-            abort(HTTPStatus.FORBIDDEN, "Company access required.")
+            abort(HTTPStatus.FORBIDDEN)
 
         role = getattr(user, "normalized_role", None)
         if callable(role):  # pragma: no cover - defensive for unconventional objects
@@ -171,11 +171,11 @@ def company_required(view_func: Callable) -> Callable:
             role = getattr(user, "role", "")
         if str(role).strip().lower() != "company":
             _log_access_denied(user, "role_mismatch")
-            abort(HTTPStatus.FORBIDDEN, "Company access required.")
+            abort(HTTPStatus.FORBIDDEN)
 
         if getattr(user, "company_id", None) is None:
             _log_access_denied(user, "missing_company_id")
-            abort(HTTPStatus.FORBIDDEN, "Company access required.")
+            abort(HTTPStatus.FORBIDDEN)
 
         g.current_user = user
         return view_func(*args, **kwargs)
@@ -195,7 +195,7 @@ def admin_required(view_func: Callable) -> Callable:
 
         if user is None:
             flash("يُسمح بالوصول للمشرفين فقط", "warning")
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("auth.login_page"))
 
         if not getattr(user, "is_active", False):
             abort(HTTPStatus.FORBIDDEN)
