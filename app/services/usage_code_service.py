@@ -170,45 +170,51 @@ def verify_usage_code(
         )
         return {"ok": False, "result": "expired", "message": "Code has expired."}
 
-    if member_id is not None:
-        prior_attempt = (
-            ActivityLog.query.filter_by(
-                action="usage_code_attempt",
-                member_id=member_id,
-                offer_id=offer_id,
-                result="success",
-            )
-            .filter(ActivityLog.created_at >= usage_code.created_at)
+    window_start = usage_code.created_at
+    window_end = usage_code.expires_at
+    successful_attempts = (
+        ActivityLog.query.filter_by(
+            action="usage_code_attempt",
+            partner_id=partner_id,
+            code_used=normalized_code,
         )
-        if usage_code.expires_at:
-            prior_attempt = prior_attempt.filter(
-                ActivityLog.created_at <= usage_code.expires_at
-            )
+        .filter(ActivityLog.result.in_(["valid", "success"]))
+        .filter(ActivityLog.created_at >= window_start)
+    )
+    if window_end:
+        successful_attempts = successful_attempts.filter(
+            ActivityLog.created_at <= window_end
+        )
+
+    if member_id is not None:
+        prior_attempt = successful_attempts.filter(
+            member_id=member_id, offer_id=offer_id
+        )
         if prior_attempt.first() is not None:
             log_usage_attempt(
                 member_id=member_id,
                 partner_id=partner_id,
                 offer_id=offer_id,
                 code_used=normalized_code,
-                result="duplicate_attempt",
+                result="usage_limit_reached",
             )
             return {
                 "ok": False,
-                "result": "duplicate_attempt",
+                "result": "usage_limit_reached",
                 "message": "Usage already verified for this offer.",
             }
 
-    if usage_code.usage_count >= usage_code.max_uses_per_window:
+    if successful_attempts.count() >= usage_code.max_uses_per_window:
         log_usage_attempt(
             member_id=member_id,
             partner_id=partner_id,
             offer_id=offer_id,
             code_used=normalized_code,
-            result="limit_exceeded",
+            result="usage_limit_reached",
         )
         return {
             "ok": False,
-            "result": "limit_exceeded",
+            "result": "usage_limit_reached",
             "message": "Usage limit reached.",
         }
 
@@ -219,11 +225,11 @@ def verify_usage_code(
             partner_id=partner_id,
             offer_id=offer_id,
             code_used=normalized_code,
-            result="success",
+            result="valid",
         )
     return {
         "ok": True,
-        "result": "success",
+        "result": "valid",
         "message": "Usage verified.",
         "usage_count": usage_code.usage_count,
         "max_uses_per_window": usage_code.max_uses_per_window,
