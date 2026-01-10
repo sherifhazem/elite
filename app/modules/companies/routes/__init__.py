@@ -9,6 +9,7 @@ from . import (  # noqa: F401
     routes_redemptions,
     routes_registration,
     routes_settings,
+    routes_usage_codes,
 )
 
 __all__ = ["company_bp", "company_portal"]
