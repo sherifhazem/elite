@@ -9,6 +9,7 @@ import secrets
 from app.core.database import db
 from app.models import ActivityLog, Offer, UsageCode
 from app.modules.admin.services.admin_settings_service import get_admin_settings
+from app.services.incentive_eligibility_service import evaluate_offer_eligibility
 
 
 @dataclass(frozen=True)
@@ -169,6 +170,21 @@ def verify_usage_code(
             result="expired",
         )
         return {"ok": False, "result": "expired", "message": "Code has expired."}
+
+    eligibility = evaluate_offer_eligibility(member_id, offer_id)
+    if not eligibility["eligible"]:
+        log_usage_attempt(
+            member_id=member_id,
+            partner_id=partner_id,
+            offer_id=offer_id,
+            code_used=normalized_code,
+            result="not_eligible",
+        )
+        return {
+            "ok": False,
+            "result": "not_eligible",
+            "reason": eligibility["reason"],
+        }
 
     window_start = usage_code.created_at
     window_end = usage_code.expires_at
