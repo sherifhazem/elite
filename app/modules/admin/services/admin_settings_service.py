@@ -35,6 +35,8 @@ def _default_verification_settings() -> dict:
         "code_format": "5_digits",
         "code_expiry_seconds": 60,
         "max_uses_per_minute": 3,
+        "usage_code_expiry_seconds": 300,
+        "usage_code_max_uses_per_window": 5,
     }
 
 
@@ -198,6 +200,22 @@ def save_admin_settings(payload: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]
                     verification_settings["max_uses_per_minute"],
                 ),
                 "الحد الأقصى للاستخدام في الدقيقة",
+                minimum=1,
+            ),
+            "usage_code_expiry_seconds": _coerce_int(
+                payload.get(
+                    "usage_code_expiry_seconds",
+                    verification_settings["usage_code_expiry_seconds"],
+                ),
+                "مدة صلاحية رمز الاستخدام (ثواني)",
+                minimum=1,
+            ),
+            "usage_code_max_uses_per_window": _coerce_int(
+                payload.get(
+                    "usage_code_max_uses_per_window",
+                    verification_settings["usage_code_max_uses_per_window"],
+                ),
+                "الحد الأقصى لاستخدام رمز الاستخدام",
                 minimum=1,
             ),
         }

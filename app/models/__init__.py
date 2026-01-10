@@ -11,6 +11,7 @@ from .activity_log import ActivityLog
 from .redemption import Redemption
 from .lookup_choice import LookupChoice
 from .admin_setting import AdminSetting
+from .usage_code import UsageCode
 
 __all__ = [
     "db",
@@ -24,4 +25,5 @@ __all__ = [
     "ActivityLog",
     "LookupChoice",
     "AdminSetting",
+    "UsageCode",
 ]

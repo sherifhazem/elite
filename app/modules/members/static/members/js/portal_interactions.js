@@ -327,6 +327,27 @@
                         ? `<button class="ghost-button" type="button" data-modal-company data-company-id="${companyId}" data-company-name="${company}" data-company-summary="${summary}" data-company-description="${source.dataset.offerCompanyDescription || ""}">عن الشركة</button>`
                         : ""
                 }
+                <div class="usage-code-entry">
+                    <h4>توثيق الاستخدام</h4>
+                    <p class="text-muted">أدخل رمز الاستخدام الذي يقدمه الشريك لإتمام التحقق.</p>
+                    <form class="usage-code-form" data-usage-code-form>
+                        <label class="form-label" for="usage-code-input">رمز الاستخدام</label>
+                        <div class="usage-code-input-group">
+                            <input
+                                class="form-control"
+                                id="usage-code-input"
+                                name="usage_code"
+                                type="text"
+                                inputmode="numeric"
+                                maxlength="5"
+                                autocomplete="one-time-code"
+                                placeholder="أدخل الرمز"
+                                data-usage-code-input
+                            >
+                            <button class="cta-button" type="submit">تحقق</button>
+                        </div>
+                    </form>
+                </div>
             </article>
         `;
         const companyButton = modalBody.querySelector("[data-modal-company]");
@@ -338,6 +359,56 @@
                     companyButton.dataset.companySummary,
                     companyButton.dataset.companyDescription
                 );
+            });
+        }
+        const usageForm = modalBody.querySelector("[data-usage-code-form]");
+        const usageInput = modalBody.querySelector("[data-usage-code-input]");
+        if (usageForm && usageInput) {
+            usageForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const offerId = source.dataset.offerId;
+                const code = usageInput.value.trim();
+                if (!offerId) {
+                    showToast("تعذر تحديد العرض المحدد.", "error");
+                    return;
+                }
+                if (!code) {
+                    showToast("يرجى إدخال رمز الاستخدام.", "error");
+                    return;
+                }
+                const submitButton = usageForm.querySelector("button[type=\"submit\"]");
+                if (submitButton) {
+                    submitButton.disabled = true;
+                }
+                try {
+                    const response = await fetch("/api/usage-codes/verify", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        credentials: "include",
+                        body: JSON.stringify({
+                            offer_id: Number.parseInt(offerId, 10) || offerId,
+                            code,
+                        }),
+                    });
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok || payload.ok === false) {
+                        throw new Error(
+                            payload.message || payload.error || "تعذر التحقق من الرمز."
+                        );
+                    }
+                    showToast("تم توثيق الاستخدام بنجاح.");
+                    usageInput.value = "";
+                } catch (error) {
+                    console.error("Usage code verification failed", error);
+                    showToast(error.message || "تعذر التحقق من الرمز.", "error");
+                } finally {
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                    }
+                }
             });
         }
         modal.removeAttribute("hidden");

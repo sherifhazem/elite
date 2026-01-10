@@ -786,6 +786,44 @@ img {
     color: var(--color-gray-600);
 }
 
+.usage-code-entry {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.usage-code-entry h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.35rem;
+    color: var(--color-gray-800);
+}
+
+.usage-code-form {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.usage-code-input-group {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.usage-code-input-group .cta-button {
+    width: 100%;
+}
+
+@media (min-width: 576px) {
+    .usage-code-input-group {
+        grid-template-columns: 1fr auto;
+        align-items: center;
+    }
+
+    .usage-code-input-group .cta-button {
+        width: auto;
+        white-space: nowrap;
+    }
+}
+
 /* Toast notifications pinned to top. */
 .toast-stack {
     position: fixed;

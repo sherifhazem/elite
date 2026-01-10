@@ -299,6 +299,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         notifications,
         offers,
         redemption,
+        usage_codes,
         users,
     )
     from app.modules.members.routes.user_portal_routes import portal  # noqa: E402
@@ -320,6 +321,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.register_blueprint(companies, url_prefix="/api/companies")
     app.register_blueprint(users, url_prefix="/api/users")
     app.register_blueprint(redemption)
+    app.register_blueprint(usage_codes)
     app.register_blueprint(notifications)
 
     env_name = str(app.config.get("ENV", "production")).lower()

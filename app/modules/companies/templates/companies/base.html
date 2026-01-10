@@ -102,6 +102,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_usage_codes')) %}active{% endif %}" href="{{ url_for('company_portal.company_usage_codes') }}">
+                            <i class="fas fa-key me-2"></i>
+                            <span>Usage Codes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_settings')) %}active{% endif %}" href="{{ url_for('company_portal.company_settings') }}">
                             <i class="fas fa-gear me-2"></i>
                             <span>Settings</span>
