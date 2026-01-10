@@ -23,6 +23,13 @@ def _window_start(time_window_days: int | None) -> datetime:
     return datetime.utcnow() - timedelta(days=days)
 
 
+def _base_usage_query(window_start: datetime):
+    return (
+        ActivityLog.query.filter_by(action="usage_code_attempt", result="valid")
+        .filter(ActivityLog.created_at >= window_start)
+    )
+
+
 def is_member_active(member_id: int) -> bool:
     """Return True when the member meets the usage activity threshold."""
 
@@ -30,16 +37,11 @@ def is_member_active(member_id: int) -> bool:
     required_usages = int(rules.get("required_usages", 0))
     time_window_days = int(rules.get("time_window_days", 0))
 
+    if required_usages <= 0:
+        return False
+
     window_start = _window_start(time_window_days)
-    usage_count = (
-        ActivityLog.query.filter_by(
-            action="usage_code_attempt",
-            result="valid",
-            member_id=member_id,
-        )
-        .filter(ActivityLog.created_at >= window_start)
-        .count()
-    )
+    usage_count = _base_usage_query(window_start).filter_by(member_id=member_id).count()
 
     return usage_count >= required_usages
 
@@ -52,21 +54,16 @@ def is_partner_active(partner_id: int) -> bool:
     time_window_days = int(rules.get("time_window_days", 0))
     require_unique_customers = bool(rules.get("require_unique_customers", False))
 
+    if required_usages <= 0:
+        return False
+
     window_start = _window_start(time_window_days)
-    base_query = ActivityLog.query.filter_by(
-        action="usage_code_attempt",
-        result="valid",
-        partner_id=partner_id,
-    ).filter(ActivityLog.created_at >= window_start)
+    base_query = _base_usage_query(window_start).filter_by(partner_id=partner_id)
 
     if require_unique_customers:
         usage_count = (
-            db.session.query(func.count(func.distinct(ActivityLog.member_id)))
-            .filter(ActivityLog.member_id.isnot(None))
-            .filter(ActivityLog.action == "usage_code_attempt")
-            .filter(ActivityLog.result == "valid")
-            .filter(ActivityLog.partner_id == partner_id)
-            .filter(ActivityLog.created_at >= window_start)
+            base_query.filter(ActivityLog.member_id.isnot(None))
+            .with_entities(func.count(func.distinct(ActivityLog.member_id)))
             .scalar()
             or 0
         )
