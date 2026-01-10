@@ -18,7 +18,7 @@ from app.modules.members.services.member_notifications_service import (
     fetch_offer_feedback_counts,
 )
 from app.modules.admin.services import admin_settings_service
-from app.services.access_control import require_role
+from app.services.access_control import company_required
 from . import company_portal
 from app.utils.company_context import _current_company
 
@@ -222,7 +222,7 @@ def _handle_offer_image_upload(offer: Offer) -> str:
 
 
 @company_portal.route("/offers", methods=["GET"], endpoint="company_offers_list")
-@require_role("company")
+@company_required
 def company_offers_list() -> str:
     """Display the offer management table scoped to the current company."""
 
@@ -243,7 +243,7 @@ def company_offers_list() -> str:
 
 
 @company_portal.route("/offers/new", endpoint="offer_new")
-@require_role("company")
+@company_required
 def offer_new() -> str:
     """Render the offer creation form in a dedicated workspace."""
 
@@ -261,7 +261,7 @@ def offer_new() -> str:
 
 
 @company_portal.route("/offers", methods=["POST"], endpoint="offer_create")
-@require_role("company")
+@company_required
 def offer_create():
     """Persist a new offer and optionally broadcast notifications."""
 
@@ -323,7 +323,7 @@ def offer_create():
     "/offers/<int:offer_id>/edit",
     endpoint="offer_edit",
 )
-@require_role("company")
+@company_required
 def offer_edit(offer_id: int) -> str:
     """Return the pre-filled offer form for inline editing."""
 
@@ -346,7 +346,7 @@ def offer_edit(offer_id: int) -> str:
     methods=["POST", "PUT"],
     endpoint="offer_update",
 )
-@require_role("company")
+@company_required
 def offer_update(offer_id: int):
     """Update an existing offer ensuring it belongs to the current company."""
 
@@ -408,7 +408,7 @@ def offer_update(offer_id: int):
     methods=["POST", "DELETE"],
     endpoint="offer_delete",
 )
-@require_role("company")
+@company_required
 def offer_delete(offer_id: int):
     """Delete the specified offer owned by the current company."""
 

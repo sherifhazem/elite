@@ -23,6 +23,7 @@ _LAZY_EXPORTS = {
     "PERMISSION_ROLE_MATRIX",
     "resolve_user_from_request",
     "require_role",
+    "company_required",
     "admin_required",
     "has_role",
     "can_access",

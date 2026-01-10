@@ -20,7 +20,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from app.core.database import db
-from app.services.access_control import require_role
+from app.services.access_control import company_required
 from app.modules.companies.services.company_profile_service import (
     get_notification_preferences,
 )
@@ -76,7 +76,7 @@ def _save_logo_file(upload, company) -> str:
 
 
 @company_portal.route("/settings", methods=["GET", "POST"], endpoint="company_settings")
-@require_role("company")
+@company_required
 def company_settings():
     """Display and persist company profile metadata."""
 

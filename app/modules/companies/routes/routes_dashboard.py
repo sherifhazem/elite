@@ -8,13 +8,13 @@ from flask import redirect, render_template, url_for
 from sqlalchemy import func
 
 from app.models import Offer, Redemption
-from app.services.access_control import require_role
+from app.services.access_control import company_required
 from . import company_portal
 from app.utils.company_context import _ensure_company, _current_company
 
 
 @company_portal.route("/", endpoint="company_dashboard_redirect")
-@require_role("company")
+@company_required
 def company_dashboard_redirect() -> str:
     """Redirect root portal requests to the dashboard overview view."""
 
@@ -22,7 +22,7 @@ def company_dashboard_redirect() -> str:
 
 
 @company_portal.route("/dashboard", endpoint="company_dashboard_overview")
-@require_role("company")
+@company_required
 def company_dashboard_overview() -> str:
     """Render the overview cards and latest redemption activity."""
 
