@@ -66,3 +66,16 @@ def evaluate_offer_eligibility(member_id: int | None, offer_id: int) -> dict:
         "reason": reason,
         "applied_rules": applied_rules,
     }
+
+
+def get_offer_runtime_flags(member_id: int | None, offer_id: int) -> dict:
+    """Return runtime flags for offer visibility and eligibility in templates."""
+
+    eligibility = evaluate_offer_eligibility(member_id, offer_id)
+    applied_rules = set(eligibility.get("applied_rules", []))
+    return {
+        "is_visible": eligibility.get("reason") != "classification_disabled",
+        "is_eligible": bool(eligibility.get("eligible")),
+        "requires_active_member": "active_member_required" in applied_rules,
+        "requires_active_partner": "active_partner_required" in applied_rules,
+    }
