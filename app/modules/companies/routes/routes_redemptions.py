@@ -14,13 +14,13 @@ from app.modules.companies.services.company_offers_service import list_company_o
 from app.modules.members.services.member_redemption_service import (
     list_company_redemptions,
 )
-from app.services.access_control import require_role
+from app.services.access_control import company_required
 from . import company_portal
 from app.utils.company_context import _ensure_company, _current_company
 
 
 @company_portal.route("/redemptions", endpoint="company_redemptions_history")
-@require_role("company")
+@company_required
 def company_redemptions_history() -> str:
     """Render the redemption history with contextual filters."""
 
@@ -72,7 +72,7 @@ def company_redemptions_history() -> str:
 
 
 @company_portal.route("/redemptions/data", endpoint="company_redemptions_data")
-@require_role("company")
+@company_required
 def company_redemptions_data():
     """Return company redemption history as JSON for live refreshing."""
 
@@ -140,7 +140,7 @@ def company_redemptions_data():
     methods=["POST"],
     endpoint="verify_redemption",
 )
-@require_role("company")
+@company_required
 def verify_redemption():
     """Validate a redemption code or QR token for the current company."""
 
@@ -188,7 +188,7 @@ def verify_redemption():
     methods=["POST"],
     endpoint="confirm_redemption",
 )
-@require_role("company")
+@company_required
 def confirm_redemption():
     """Mark a verified redemption as redeemed after staff confirmation."""
 

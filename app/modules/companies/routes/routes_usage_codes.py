@@ -9,14 +9,14 @@ from flask import jsonify, render_template
 
 from app.core.database import db
 from app.models import UsageCode
-from app.services.access_control import require_role
+from app.services.access_control import company_required
 from app.services.usage_code_service import generate_usage_code, get_usage_code_settings
 from app.utils.company_context import _current_company
 from .. import company_portal
 
 
 @company_portal.route("/usage-codes", endpoint="company_usage_codes")
-@require_role("company")
+@company_required
 def company_usage_codes() -> str:
     """Render the usage code management screen for partners."""
 
@@ -42,7 +42,7 @@ def company_usage_codes() -> str:
     methods=["POST"],
     endpoint="company_usage_codes_generate",
 )
-@require_role("company")
+@company_required
 def company_usage_codes_generate():
     """Generate a new usage code for the authenticated partner."""
 

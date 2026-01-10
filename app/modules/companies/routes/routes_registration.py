@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.database import db
 from app.models import Company
-from app.services.access_control import resolve_user_from_request
+from app.services.access_control import company_required, resolve_user_from_request
 from app.modules.companies.services.company_profile_service import (
     get_notification_preferences,
 )
@@ -53,6 +53,7 @@ def _prevent_suspended_company_access():
     methods=["GET", "POST"],
     endpoint="complete_registration",
 )
+@company_required
 def complete_registration(company_id: int):
     company = Company.query.get_or_404(company_id)
     preferences = get_notification_preferences(company)

@@ -120,6 +120,42 @@ def require_role(role_name: str) -> Callable:
     return decorator
 
 
+def company_required(view_func: Callable) -> Callable:
+    """Decorator enforcing authenticated company access with redirects."""
+
+    @wraps(view_func)
+    def wrapper(*args, **kwargs):
+        user = getattr(g, "current_user", None)
+        if user is None or not getattr(user, "is_authenticated", False):
+            if getattr(flask_current_user, "is_authenticated", False):
+                user = flask_current_user
+
+        if user is None:
+            user = resolve_user_from_request()
+
+        if user is None or not getattr(user, "is_authenticated", True):
+            return redirect(url_for("auth.login"))
+
+        if not getattr(user, "is_active", False):
+            abort(HTTPStatus.FORBIDDEN, "Company access required.")
+
+        role = getattr(user, "normalized_role", None)
+        if callable(role):  # pragma: no cover - defensive for unconventional objects
+            role = role()
+        if not role:
+            role = getattr(user, "role", "")
+        if str(role).strip().lower() != "company":
+            abort(HTTPStatus.FORBIDDEN, "Company access required.")
+
+        if getattr(user, "company_id", None) is None:
+            abort(HTTPStatus.FORBIDDEN, "Company access required.")
+
+        g.current_user = user
+        return view_func(*args, **kwargs)
+
+    return wrapper
+
+
 def admin_required(view_func: Callable) -> Callable:
     """Decorator enforcing admin (or higher) access with user-friendly redirects."""
 
@@ -190,6 +226,7 @@ __all__ = [
     "PERMISSION_ROLE_MATRIX",
     "has_role",
     "require_role",
+    "company_required",
     "admin_required",
     "can_access",
     "resolve_user_from_request",
