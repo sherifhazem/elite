@@ -13,6 +13,9 @@ from flask_login import current_user as flask_current_user
 from sqlalchemy import func
 
 from app.modules.members.auth.utils import AUTH_COOKIE_NAME, get_user_from_token
+from app.logging.logger import get_logger
+
+_LOGGER = get_logger(__name__)
 
 # Mapping of role requirements to the set of roles allowed to satisfy them.
 ROLE_ACCESS_MATRIX = {
@@ -123,6 +126,27 @@ def require_role(role_name: str) -> Callable:
 def company_required(view_func: Callable) -> Callable:
     """Decorator enforcing authenticated company access with redirects."""
 
+    def _log_access_denied(user: Optional[SupportsRole], reason: str) -> None:
+        role = getattr(user, "normalized_role", None)
+        if callable(role):  # pragma: no cover - defensive for unconventional objects
+            role = role()
+        if not role:
+            role = getattr(user, "role", None)
+
+        _LOGGER.warning(
+            "company_access_denied",
+            extra={
+                "log_payload": {
+                    "event": "company_access_denied",
+                    "reason": reason,
+                    "user_id": getattr(user, "id", None),
+                    "role": role,
+                    "company_id": getattr(user, "company_id", None),
+                    "path": request.path,
+                }
+            },
+        )
+
     @wraps(view_func)
     def wrapper(*args, **kwargs):
         user = getattr(g, "current_user", None)
@@ -137,6 +161,7 @@ def company_required(view_func: Callable) -> Callable:
             return redirect(url_for("auth.login"))
 
         if not getattr(user, "is_active", False):
+            _log_access_denied(user, "inactive_user")
             abort(HTTPStatus.FORBIDDEN, "Company access required.")
 
         role = getattr(user, "normalized_role", None)
@@ -145,9 +170,11 @@ def company_required(view_func: Callable) -> Callable:
         if not role:
             role = getattr(user, "role", "")
         if str(role).strip().lower() != "company":
+            _log_access_denied(user, "role_mismatch")
             abort(HTTPStatus.FORBIDDEN, "Company access required.")
 
         if getattr(user, "company_id", None) is None:
+            _log_access_denied(user, "missing_company_id")
             abort(HTTPStatus.FORBIDDEN, "Company access required.")
 
         g.current_user = user
