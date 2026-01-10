@@ -7,6 +7,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Iterable
 
+from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.core.database import db
@@ -21,7 +22,7 @@ user_permissions = db.Table(
 )
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     """Represents an application user with role-based access metadata.
 
     Key fields:
