@@ -27,7 +27,7 @@ from flask import (
     session,
     url_for,
 )
-from flask_login import current_user
+from flask_login import current_user, login_user
 from sqlalchemy import or_
 
 from flask_sqlalchemy import SQLAlchemy
@@ -251,12 +251,27 @@ def api_login() -> tuple:
         )
 
     token = create_token(user.id)
-    if user.role == "company":
-        redirect_url = url_for("company_portal.company_dashboard_overview")
-    elif user.role in {"admin", "superadmin"}:
-        redirect_url = url_for("admin.dashboard_home")
-    else:
-        redirect_url = url_for("portal.member_portal_home")
+    # Establish the Flask-Login session before deciding where to send the user.
+    login_user(user)
+    # Read from Flask-Login's current_user after the session has been created.
+    role_source = current_user if current_user.is_authenticated else user
+    member_role, company_role, admin_role, superadmin_role = user.ROLE_CHOICES
+    # Prefer the documented member dashboard path when it exists; otherwise keep the legacy portal.
+    member_dashboard_path = "/member/dashboard"
+    member_dashboard_url = member_dashboard_path
+    if not any(
+        rule.rule == member_dashboard_path for rule in current_app.url_map.iter_rules()
+    ):
+        member_dashboard_url = url_for("portal.member_portal_home")
+    role_redirects = {
+        member_role: member_dashboard_url,
+        company_role: url_for("company_portal.company_dashboard_overview"),
+        admin_role: url_for("admin.dashboard_alias"),
+        superadmin_role: url_for("admin.dashboard_alias"),
+    }
+    normalized_role = getattr(role_source, "normalized_role", None) or role_source.role
+    # Fall back to the home page when the role is unknown or unsupported.
+    redirect_url = role_redirects.get(normalized_role, url_for("main.index"))
     response = jsonify(
         {
             "token": token,
@@ -500,4 +515,3 @@ def _dispatch_member_welcome_notification(user: "User") -> None:
         notifier(user)
     except Exception:  # pragma: no cover - notifications are best-effort
         pass
-
