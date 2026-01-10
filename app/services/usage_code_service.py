@@ -170,6 +170,34 @@ def verify_usage_code(
         )
         return {"ok": False, "result": "expired", "message": "Code has expired."}
 
+    if member_id is not None:
+        prior_attempt = (
+            ActivityLog.query.filter_by(
+                action="usage_code_attempt",
+                member_id=member_id,
+                offer_id=offer_id,
+                result="success",
+            )
+            .filter(ActivityLog.created_at >= usage_code.created_at)
+        )
+        if usage_code.expires_at:
+            prior_attempt = prior_attempt.filter(
+                ActivityLog.created_at <= usage_code.expires_at
+            )
+        if prior_attempt.first() is not None:
+            log_usage_attempt(
+                member_id=member_id,
+                partner_id=partner_id,
+                offer_id=offer_id,
+                code_used=normalized_code,
+                result="duplicate_attempt",
+            )
+            return {
+                "ok": False,
+                "result": "duplicate_attempt",
+                "message": "Usage already verified for this offer.",
+            }
+
     if usage_code.usage_count >= usage_code.max_uses_per_window:
         log_usage_attempt(
             member_id=member_id,
@@ -184,14 +212,15 @@ def verify_usage_code(
             "message": "Usage limit reached.",
         }
 
-    usage_code.usage_count += 1
-    log_usage_attempt(
-        member_id=member_id,
-        partner_id=partner_id,
-        offer_id=offer_id,
-        code_used=normalized_code,
-        result="success",
-    )
+    with db.session.begin_nested():
+        usage_code.usage_count += 1
+        log_usage_attempt(
+            member_id=member_id,
+            partner_id=partner_id,
+            offer_id=offer_id,
+            code_used=normalized_code,
+            result="success",
+        )
     return {
         "ok": True,
         "result": "success",
