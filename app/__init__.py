@@ -221,6 +221,8 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     @app.context_processor
     def inject_user_context():
         """Inject user and role context into all templates, including status labels."""
+        from app.services.incentive_eligibility_service import get_offer_runtime_flags
+
         user = getattr(g, "current_user", None)
         role = getattr(g, "user_role", "guest") or "guest"
         permissions = getattr(g, "user_permissions", None)
@@ -289,6 +291,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             "user_status_label": user_status_label,
             "is_admin": is_admin,
             "is_superadmin": is_superadmin,
+            "get_offer_runtime_flags": get_offer_runtime_flags,
         }
 
     with app.app_context():
