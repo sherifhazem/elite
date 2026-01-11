@@ -57,24 +57,25 @@ def apply_incentive(
             settings = get_admin_settings()
             incentive_type = _resolve_incentive_type(offer, settings)
             if incentive_type:
-                applied = True
                 valid_until = _resolve_grace_valid_until(settings, now)
 
-    log_result = incentive_type or "none"
-    log_entry = ActivityLog(
-        admin_id=None,
-        company_id=None,
-        action="incentive_applied",
-        details=f"Incentive applied result: {log_result}",
-        member_id=member_id,
-        partner_id=offer.company_id if offer else None,
-        offer_id=offer_id,
-        code_used=None,
-        result=log_result,
-        created_at=now,
-        timestamp=now,
-    )
-    db.session.add(log_entry)
+        log_result = incentive_type or "none"
+        log_entry = ActivityLog(
+            admin_id=None,
+            company_id=None,
+            action="incentive_applied",
+            details=f"Incentive applied result: {log_result}",
+            member_id=member_id,
+            partner_id=offer.company_id if offer else None,
+            offer_id=offer_id,
+            code_used=None,
+            result=log_result,
+            created_at=now,
+            timestamp=now,
+        )
+        with db.session.begin_nested():
+            db.session.add(log_entry)
+            applied = bool(incentive_type)
 
     return {
         "applied": applied,

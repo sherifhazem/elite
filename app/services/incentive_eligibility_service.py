@@ -38,7 +38,7 @@ def evaluate_offer_eligibility(member_id: int | None, offer_id: int) -> dict:
 
     if offer is None:
         eligible = False
-        reason = "classification_disabled"
+        reason = "disabled_offer"
     else:
         classification_data = _classification_rules(offer, settings)
         if classification_data["classifications"]:
@@ -47,7 +47,7 @@ def evaluate_offer_eligibility(member_id: int | None, offer_id: int) -> dict:
             )
         if classification_data["disabled"]:
             eligible = False
-            reason = "classification_disabled"
+            reason = "disabled_offer"
 
         if eligible and "active_members_only" in classification_data["classifications"]:
             applied_rules.append("active_member_required")
@@ -74,10 +74,8 @@ def get_offer_runtime_flags(member_id: int | None, offer_id: int) -> dict:
     eligibility = evaluate_offer_eligibility(member_id, offer_id)
     applied_rules = set(eligibility.get("applied_rules", []))
     reason = eligibility.get("reason") or "eligible"
-    if reason == "classification_disabled":
-        reason = "disabled_offer"
     return {
-        "is_visible": eligibility.get("reason") != "classification_disabled",
+        "is_visible": reason != "disabled_offer",
         "is_eligible": bool(eligibility.get("eligible")),
         "reason": reason,
         "requires_active_member": "active_member_required" in applied_rules,
