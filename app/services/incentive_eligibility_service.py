@@ -31,14 +31,6 @@ def evaluate_offer_eligibility(member_id: int | None, offer_id: int) -> dict:
 
     offer = Offer.query.get(offer_id)
     settings = get_admin_settings()
-    allowed_reasons = {
-        "eligible",
-        "inactive_member",
-        "inactive_partner",
-        "disabled_offer",
-        "none",
-    }
-
     applied_rules: list[str] = []
     eligible = True
     reason = "eligible"
@@ -70,8 +62,6 @@ def evaluate_offer_eligibility(member_id: int | None, offer_id: int) -> dict:
 
     if eligible:
         reason = "eligible"
-    elif reason not in allowed_reasons:
-        reason = "none"
 
     return {
         "eligible": eligible,
