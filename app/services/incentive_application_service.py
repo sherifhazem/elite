@@ -39,13 +39,19 @@ def _resolve_grace_valid_until(settings: dict, now: datetime) -> datetime | None
     return None
 
 
-def _resolve_incentive_window(settings: dict, now: datetime) -> tuple[datetime | None, datetime | None]:
+def _resolve_incentive_window(
+    settings: dict, now: datetime
+) -> tuple[datetime | None, datetime | None]:
     valid_until = _resolve_grace_valid_until(settings, now)
     if valid_until is None:
         return None, None
-    current_week_start = now.date() - timedelta(days=now.weekday())
-    previous_week_start = current_week_start - timedelta(days=7)
-    window_start = datetime.combine(previous_week_start, time.min)
+    rules = settings.get("member_activity_rules", {})
+    mode = rules.get("active_grace_mode")
+    if mode == "end_of_next_week":
+        current_week_start = now.date() - timedelta(days=now.weekday())
+        window_start = datetime.combine(current_week_start, time.min)
+    else:
+        window_start = None
     return window_start, valid_until
 
 
@@ -93,38 +99,36 @@ def apply_incentive(
         incentive_type = _resolve_incentive_type(offer, settings)
         if incentive_type:
             valid_until = _resolve_grace_valid_until(settings, now)
+            window_start, window_end = _resolve_incentive_window(settings, now)
+            with db.session.begin_nested():
+                if _has_recent_incentive(
+                    member_id=member_id,
+                    offer_id=offer_id,
+                    incentive_result=incentive_type,
+                    window_start=window_start,
+                    window_end=window_end,
+                ):
+                    return {
+                        "applied": False,
+                        "incentive_type": incentive_type,
+                        "valid_until": valid_until.isoformat() if valid_until else None,
+                    }
 
-        log_result = incentive_type or "none"
-        window_start, window_end = _resolve_incentive_window(settings, now)
-        with db.session.begin_nested():
-            if _has_recent_incentive(
-                member_id=member_id,
-                offer_id=offer_id,
-                incentive_result=log_result,
-                window_start=window_start,
-                window_end=window_end,
-            ):
-                return {
-                    "applied": False,
-                    "incentive_type": incentive_type,
-                    "valid_until": valid_until.isoformat() if valid_until else None,
-                }
-
-            log_entry = ActivityLog(
-                admin_id=None,
-                company_id=None,
-                action="incentive_applied",
-                details=f"Incentive applied result: {log_result}",
-                member_id=member_id,
-                partner_id=offer.company_id if offer else None,
-                offer_id=offer_id,
-                code_used=None,
-                result=log_result,
-                created_at=now,
-                timestamp=now,
-            )
-            db.session.add(log_entry)
-            applied = bool(incentive_type)
+                log_entry = ActivityLog(
+                    admin_id=None,
+                    company_id=None,
+                    action="incentive_applied",
+                    details=f"Incentive applied result: {incentive_type}",
+                    member_id=member_id,
+                    partner_id=offer.company_id if offer else None,
+                    offer_id=offer_id,
+                    code_used=None,
+                    result=incentive_type,
+                    created_at=now,
+                    timestamp=now,
+                )
+                db.session.add(log_entry)
+                applied = True
 
     return {
         "applied": applied,
