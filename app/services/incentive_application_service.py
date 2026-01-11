@@ -45,12 +45,8 @@ def _resolve_incentive_window(
     valid_until = _resolve_grace_valid_until(settings, now)
     if valid_until is None:
         return None, None
-    rules = settings.get("member_activity_rules", {})
-    mode = rules.get("active_grace_mode")
-    if mode == "end_of_next_week":
-        window_start = datetime.combine(now.date(), time.min)
-    else:
-        window_start = datetime.combine(now.date(), time.min)
+    week_start_date = now.date() - timedelta(days=now.weekday())
+    window_start = datetime.combine(week_start_date, time.min)
     return window_start, valid_until
 
 
