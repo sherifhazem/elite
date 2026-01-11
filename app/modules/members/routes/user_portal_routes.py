@@ -27,6 +27,7 @@ from app.modules.companies.services.company_offers_service import (
 from app.modules.members.services.member_redemption_service import (
     list_user_redemptions_with_context,
 )
+from app.services.incentive_eligibility_service import get_offer_runtime_flags
 
 portal = Blueprint(
     "portal",
@@ -150,11 +151,16 @@ def member_portal_offers():
     if user is None:
         return _redirect_to_login()
     offers_data = get_portal_offers_with_company(membership_level)
+    offer_runtime_flags = {
+        offer.id: get_offer_runtime_flags(user.id if user else None, offer.id)
+        for offer in offers_data
+    }
     return render_template(
         "members/portal/offers.html",
         user=user,
         membership_level=membership_level,
         offers=offers_data,
+        offer_runtime_flags=offer_runtime_flags,
         notification_unread_count=_unread_notification_count(user),
         active_nav="offers",
         current_year=datetime.utcnow().year,

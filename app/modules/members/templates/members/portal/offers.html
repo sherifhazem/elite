@@ -164,6 +164,12 @@
             font-weight: 600;
             font-size: 0.82rem;
         }
+
+        .offer-card__eligibility {
+            margin: 0;
+            font-size: 0.82rem;
+            color: #a94442;
+        }
     </style>
     <section class="offers-banner">
         <div>
@@ -177,6 +183,11 @@
             <div class="offers-grid" role="list">
                 {% set level_key = membership_level|lower %}
                 {% for offer in offers %}
+                    {% set runtime = offer_runtime_flags.get(offer.id, {}) %}
+                    {% set is_visible = runtime.get('is_visible', True) %}
+                    {% if is_visible %}
+                        {% set is_eligible = runtime.get('is_eligible', True) %}
+                        {% set eligibility_reason = runtime.get('reason', '') %}
                     {% set discount_value = '%.0f'|format(offer.membership_discount) %}
                     <article
                         class="offer-card"
@@ -193,6 +204,8 @@
                         data-offer-level="{{ membership_level }}"
                         data-offer-base="{{ '%.0f'|format(offer.base_discount) }}"
                         data-offer-valid="{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'مستمر' }}"
+                        data-offer-eligible="{{ 'true' if is_eligible else 'false' }}"
+                        data-offer-eligibility-reason="{{ eligibility_reason }}"
                     >
                         <header class="offer-card__header">
                             <div>
@@ -215,11 +228,14 @@
                             </span>
                             <div class="offer-card__buttons">
                                 <button class="offer-card__action" type="button" data-offer-action>View Offer</button>
-                                <button class="offer-card__action offer-card__action--primary" type="button" data-offer-activate>
+                                <button class="offer-card__action offer-card__action--primary" type="button" data-offer-activate{% if not is_eligible %} disabled aria-disabled="true"{% endif %}>
                                     تفعيل العرض
                                 </button>
                             </div>
                         </footer>
+                        {% if not is_eligible and eligibility_reason %}
+                            <p class="offer-card__eligibility">{{ eligibility_reason }}</p>
+                        {% endif %}
                         <div class="offer-card__meta-actions">
                             <button class="offer-card__meta-button" type="button" data-offer-company>
                                 عن الشركة
@@ -229,6 +245,7 @@
                             </button>
                         </div>
                     </article>
+                    {% endif %}
                 {% endfor %}
             </div>
         {% else %}
