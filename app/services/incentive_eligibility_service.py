@@ -73,9 +73,13 @@ def get_offer_runtime_flags(member_id: int | None, offer_id: int) -> dict:
 
     eligibility = evaluate_offer_eligibility(member_id, offer_id)
     applied_rules = set(eligibility.get("applied_rules", []))
+    reason = eligibility.get("reason") or "eligible"
+    if reason == "classification_disabled":
+        reason = "disabled_offer"
     return {
         "is_visible": eligibility.get("reason") != "classification_disabled",
         "is_eligible": bool(eligibility.get("eligible")),
+        "reason": reason,
         "requires_active_member": "active_member_required" in applied_rules,
         "requires_active_partner": "active_partner_required" in applied_rules,
     }
