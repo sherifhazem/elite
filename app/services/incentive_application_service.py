@@ -39,6 +39,37 @@ def _resolve_grace_valid_until(settings: dict, now: datetime) -> datetime | None
     return None
 
 
+def _resolve_incentive_window(settings: dict, now: datetime) -> tuple[datetime | None, datetime | None]:
+    valid_until = _resolve_grace_valid_until(settings, now)
+    if valid_until is None:
+        return None, None
+    current_week_start = now.date() - timedelta(days=now.weekday())
+    previous_week_start = current_week_start - timedelta(days=7)
+    window_start = datetime.combine(previous_week_start, time.min)
+    return window_start, valid_until
+
+
+def _has_recent_incentive(
+    *,
+    member_id: int | None,
+    offer_id: int,
+    incentive_result: str,
+    window_start: datetime | None,
+    window_end: datetime | None,
+) -> bool:
+    query = ActivityLog.query.filter_by(
+        action="incentive_applied",
+        member_id=member_id,
+        offer_id=offer_id,
+        result=incentive_result,
+    )
+    if window_start is not None:
+        query = query.filter(ActivityLog.created_at >= window_start)
+    if window_end is not None:
+        query = query.filter(ActivityLog.created_at <= window_end)
+    return query.first() is not None
+
+
 def apply_incentive(
     member_id: int | None, offer_id: int, usage_result: dict
 ) -> dict:
@@ -52,28 +83,46 @@ def apply_incentive(
     eligibility = evaluate_offer_eligibility(member_id, offer_id)
     offer = Offer.query.get(offer_id)
 
-    if usage_result.get("ok") and usage_result.get("result") == "valid":
-        if eligibility.get("eligible") and offer is not None:
-            settings = get_admin_settings()
-            incentive_type = _resolve_incentive_type(offer, settings)
-            if incentive_type:
-                valid_until = _resolve_grace_valid_until(settings, now)
+    if (
+        usage_result.get("ok")
+        and usage_result.get("result") == "valid"
+        and eligibility.get("eligible")
+        and offer is not None
+    ):
+        settings = get_admin_settings()
+        incentive_type = _resolve_incentive_type(offer, settings)
+        if incentive_type:
+            valid_until = _resolve_grace_valid_until(settings, now)
 
         log_result = incentive_type or "none"
-        log_entry = ActivityLog(
-            admin_id=None,
-            company_id=None,
-            action="incentive_applied",
-            details=f"Incentive applied result: {log_result}",
-            member_id=member_id,
-            partner_id=offer.company_id if offer else None,
-            offer_id=offer_id,
-            code_used=None,
-            result=log_result,
-            created_at=now,
-            timestamp=now,
-        )
+        window_start, window_end = _resolve_incentive_window(settings, now)
         with db.session.begin_nested():
+            if _has_recent_incentive(
+                member_id=member_id,
+                offer_id=offer_id,
+                incentive_result=log_result,
+                window_start=window_start,
+                window_end=window_end,
+            ):
+                return {
+                    "applied": False,
+                    "incentive_type": incentive_type,
+                    "valid_until": valid_until.isoformat() if valid_until else None,
+                }
+
+            log_entry = ActivityLog(
+                admin_id=None,
+                company_id=None,
+                action="incentive_applied",
+                details=f"Incentive applied result: {log_result}",
+                member_id=member_id,
+                partner_id=offer.company_id if offer else None,
+                offer_id=offer_id,
+                code_used=None,
+                result=log_result,
+                created_at=now,
+                timestamp=now,
+            )
             db.session.add(log_entry)
             applied = bool(incentive_type)
 
