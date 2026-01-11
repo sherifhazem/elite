@@ -48,10 +48,9 @@ def _resolve_incentive_window(
     rules = settings.get("member_activity_rules", {})
     mode = rules.get("active_grace_mode")
     if mode == "end_of_next_week":
-        current_week_start = now.date() - timedelta(days=now.weekday())
-        window_start = datetime.combine(current_week_start, time.min)
+        window_start = datetime.combine(now.date(), time.min)
     else:
-        window_start = None
+        window_start = datetime.combine(now.date(), time.min)
     return window_start, valid_until
 
 
@@ -97,6 +96,8 @@ def apply_incentive(
     ):
         settings = get_admin_settings()
         incentive_type = _resolve_incentive_type(offer, settings)
+        if incentive_type not in {"first_time", "loyalty"}:
+            incentive_type = None
         if incentive_type:
             valid_until = _resolve_grace_valid_until(settings, now)
             window_start, window_end = _resolve_incentive_window(settings, now)
