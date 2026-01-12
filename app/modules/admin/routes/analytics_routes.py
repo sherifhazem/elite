@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import csv
+import json
 from io import StringIO
+from datetime import datetime
 
-from flask import abort, jsonify, request, Response
+from flask import abort, jsonify, request, Response, g
 
+from app.core.database import db
+from app.models import ActivityLog
 from app.services.access_control import admin_required
 from ..services.analytics_summary_service import (
     get_analytics_summary,
@@ -44,6 +48,23 @@ def analytics_summary_export() -> Response:
         abort(400, description="Invalid ISO8601 date_from/date_to parameter.")
 
     summary = get_analytics_summary(date_from=date_from, date_to=date_to)
+    filename = "analytics-summary.csv"
+    admin_id = getattr(getattr(g, "current_user", None), "id", None)
+    log_entry = ActivityLog(
+        admin_id=admin_id,
+        action="analytics_export",
+        details=json.dumps(
+            {
+                "admin_id": admin_id,
+                "date_from": date_from.isoformat() if date_from else None,
+                "date_to": date_to.isoformat() if date_to else None,
+                "filename": filename,
+            }
+        ),
+        timestamp=datetime.utcnow(),
+    )
+    db.session.add(log_entry)
+    db.session.commit()
     incentives = summary.get("incentives_applied") or {}
     breakdown = summary.get("incentives_applied_breakdown") or {}
     total_incentives = sum(incentives.values()) if incentives else 0
@@ -78,7 +99,5 @@ def analytics_summary_export() -> Response:
     )
 
     response = Response(buffer.getvalue(), mimetype="text/csv")
-    response.headers["Content-Disposition"] = (
-        "attachment; filename=analytics-summary.csv"
-    )
+    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
     return response
