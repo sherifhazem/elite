@@ -252,6 +252,8 @@ def api_login() -> tuple:
 
     token = create_token(user.id)
     # Establish the Flask-Login session before deciding where to send the user.
+    from flask_login import logout_user
+    logout_user()
     login_user(user)
     # Read from Flask-Login's current_user after the session has been created.
     role_source = current_user if current_user.is_authenticated else user
@@ -281,6 +283,7 @@ def api_login() -> tuple:
             "redirect_url": redirect_url,
         }
     )
+    clear_auth_cookie(response)
     set_auth_cookie(response, token)
     return response, HTTPStatus.OK
 

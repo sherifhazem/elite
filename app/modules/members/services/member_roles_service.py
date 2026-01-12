@@ -169,7 +169,7 @@ def company_required(view_func: Callable) -> Callable:
             role = role()
         if not role:
             role = getattr(user, "role", "")
-        if str(role).strip().lower() != "company":
+        if not has_role(user, "company"):
             _log_access_denied(user, "role_mismatch")
             abort(HTTPStatus.FORBIDDEN)
 
