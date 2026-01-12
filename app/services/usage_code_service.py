@@ -54,6 +54,7 @@ def generate_usage_code(partner_id: int) -> UsageCode:
         now = datetime.utcnow()
         settings = get_usage_code_settings()
 
+        UsageCode.query.filter(UsageCode.expires_at > now).with_for_update().all()
         active_codes = (
             UsageCode.query.filter_by(partner_id=partner_id)
             .filter(UsageCode.expires_at > now)
@@ -68,6 +69,7 @@ def generate_usage_code(partner_id: int) -> UsageCode:
             collision = (
                 UsageCode.query.filter_by(code=candidate)
                 .filter(UsageCode.expires_at > now)
+                .with_for_update()
                 .first()
             )
             if collision is None:
@@ -126,7 +128,7 @@ def verify_usage_code(
 
     normalized_code = (code or "").strip()
     with db.session.begin():
-        offer = Offer.query.get(offer_id)
+        offer = Offer.query.filter_by(id=offer_id).with_for_update().first()
         partner_id = offer.company_id if offer else None
 
         if not normalized_code.isdigit() or len(normalized_code) not in (4, 5):
@@ -200,6 +202,7 @@ def verify_usage_code(
             )
             .filter(ActivityLog.result.in_(["valid", "success"]))
             .filter(ActivityLog.created_at >= window_start)
+            .with_for_update()
         )
         if window_end:
             successful_attempts = successful_attempts.filter(

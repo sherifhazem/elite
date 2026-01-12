@@ -84,23 +84,26 @@ def apply_incentive(
     incentive_type: str | None = None
     valid_until: datetime | None = None
 
-    eligibility = evaluate_offer_eligibility(member_id, offer_id)
-    offer = Offer.query.get(offer_id)
-
-    if (
-        usage_result.get("ok")
-        and usage_result.get("result") == "valid"
-        and eligibility.get("eligible")
-        and offer is not None
-    ):
+    if usage_result.get("ok") and usage_result.get("result") == "valid":
         settings = get_admin_settings()
-        incentive_type = _resolve_incentive_type(offer, settings)
-        if incentive_type not in {"first_time", "loyalty"}:
-            incentive_type = None
-        if incentive_type:
-            valid_until = _resolve_grace_valid_until(settings, now)
-            window_start, window_end = _resolve_incentive_window(settings, now)
-            with db.session.begin():
+        with db.session.begin():
+            eligibility = evaluate_offer_eligibility(member_id, offer_id)
+            offer = Offer.query.filter_by(id=offer_id).with_for_update().first()
+
+            if not eligibility.get("eligible") or offer is None:
+                return {
+                    "applied": False,
+                    "incentive_type": None,
+                    "valid_until": None,
+                }
+
+            incentive_type = _resolve_incentive_type(offer, settings)
+            if incentive_type not in {"first_time", "loyalty"}:
+                incentive_type = None
+
+            if incentive_type:
+                valid_until = _resolve_grace_valid_until(settings, now)
+                window_start, window_end = _resolve_incentive_window(settings, now)
                 if _has_recent_incentive(
                     member_id=member_id,
                     offer_id=offer_id,
@@ -112,7 +115,25 @@ def apply_incentive(
                     return {
                         "applied": False,
                         "incentive_type": incentive_type,
-                        "valid_until": valid_until.isoformat() if valid_until else None,
+                        "valid_until": valid_until.isoformat()
+                        if valid_until
+                        else None,
+                    }
+
+                if _has_recent_incentive(
+                    member_id=member_id,
+                    offer_id=offer_id,
+                    incentive_result=incentive_type,
+                    window_start=now - timedelta(seconds=30),
+                    window_end=now,
+                    for_update=True,
+                ):
+                    return {
+                        "applied": False,
+                        "incentive_type": incentive_type,
+                        "valid_until": valid_until.isoformat()
+                        if valid_until
+                        else None,
                     }
 
                 log_entry = ActivityLog(
