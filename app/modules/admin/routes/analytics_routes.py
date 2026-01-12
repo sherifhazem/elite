@@ -7,13 +7,7 @@ from datetime import datetime, timezone
 from flask import abort, jsonify, request
 
 from app.services.access_control import admin_required
-from app.services.analytics_service import (
-    active_members_count,
-    active_partners_count,
-    incentives_applied,
-    successful_usages,
-    total_usage_attempts,
-)
+from ..services.analytics_summary_service import get_analytics_summary
 from .. import admin
 
 
@@ -47,19 +41,5 @@ def analytics_summary() -> tuple[dict[str, object], int]:
     except ValueError:
         abort(400, description="Invalid ISO8601 date_from/date_to parameter.")
 
-    payload = {
-        "total_usage_attempts": total_usage_attempts(
-            date_from=date_from, date_to=date_to
-        ),
-        "successful_usages": successful_usages(date_from=date_from, date_to=date_to),
-        "incentives_applied": incentives_applied(
-            date_from=date_from, date_to=date_to
-        ),
-        "active_members_count": active_members_count(
-            date_from=date_from, date_to=date_to
-        ),
-        "active_partners_count": active_partners_count(
-            date_from=date_from, date_to=date_to
-        ),
-    }
+    payload = get_analytics_summary(date_from=date_from, date_to=date_to)
     return jsonify(payload), 200
