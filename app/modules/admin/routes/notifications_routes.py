@@ -12,7 +12,7 @@ from flask import (
     abort,
     Response,
 )
-from flask_login import current_user, login_required
+from flask_login import current_user
 
 from app.core.database import db
 from app.models import User, Company, Offer, ActivityLog
@@ -27,7 +27,6 @@ from .. import admin
 
 
 @admin.route("/api/notifications", methods=["GET"], endpoint="api_notifications_list")
-@login_required
 @admin_required
 def api_notifications_list() -> Response:
     """Return a list of recent admin notifications with unread count."""

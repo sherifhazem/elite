@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from flask import Blueprint, jsonify, request
 
+from app.services.access_control import admin_required
+
 normalization_test = Blueprint("normalization_test", __name__)
 
 
 @normalization_test.route("/test/normalizer", methods=["POST"])
+@admin_required
 def run_normalization_probe():
     """Echo back received payloads after middleware normalization."""
 
