@@ -17,9 +17,9 @@ def _apply_date_range(
     query: Query, *, date_from: datetime | None, date_to: datetime | None
 ) -> Query:
     if date_from is not None:
-        query = query.filter(ActivityLog.timestamp >= date_from)
+        query = query.filter(ActivityLog.created_at >= date_from)
     if date_to is not None:
-        query = query.filter(ActivityLog.timestamp <= date_to)
+        query = query.filter(ActivityLog.created_at <= date_to)
     return query
 
 
