@@ -5,11 +5,13 @@ import os
 from flask import Blueprint, abort, current_app, jsonify
 
 from app.core.choices import get_cities, get_industries
+from app.services.access_control import admin_required
 
 choices_monitor = Blueprint("choices_monitor", __name__)
 
 
 @choices_monitor.route("/dev/choices", methods=["GET"])
+@admin_required
 def list_choices() -> tuple:
     """Expose the current registry values for validation and debugging."""
 
@@ -29,6 +31,7 @@ def list_choices() -> tuple:
 
 
 @choices_monitor.route("/dev/settings_status", methods=["GET"])
+@admin_required
 def settings_status() -> tuple:
     """Expose the current registry status for QA in non-production environments."""
 

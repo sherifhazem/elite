@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from io import BytesIO
+import json
+from datetime import datetime
 from typing import Any, Dict
 
 from flask import (
@@ -15,6 +17,7 @@ from flask import (
     abort,
     Response,
     send_file,
+    g,
 )
 
 from app.core.database import db
@@ -132,6 +135,23 @@ def export_pdf() -> Any:
 
     pdf.save()
     buffer.seek(0)
+
+    admin_id = getattr(getattr(g, "current_user", None), "id", None)
+    created_at = datetime.utcnow()
+    log_entry = ActivityLog(
+        admin_id=admin_id,
+        action="reports_export",
+        details=json.dumps(
+            {
+                "admin_id": admin_id,
+                "filename": "elite-reports.pdf",
+            }
+        ),
+        created_at=created_at,
+        timestamp=created_at,
+    )
+    db.session.add(log_entry)
+    db.session.commit()
 
     return send_file(
         buffer,
