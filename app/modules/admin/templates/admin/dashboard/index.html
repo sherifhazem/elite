@@ -95,6 +95,13 @@
                         <div class="h4 fw-bold mb-0">
                             {{ ((analytics_summary or {}).get("incentives_applied") or {}).values() | sum }}
                         </div>
+                        {% set incentives_breakdown = (analytics_summary or {}).get("incentives_applied_breakdown") or {} %}
+                        {% if incentives_breakdown %}
+                            <div class="text-muted small mt-1">
+                                أول مرة: {{ incentives_breakdown.get("first_time", 0) }} •
+                                ولاء: {{ incentives_breakdown.get("loyalty", 0) }}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="col-6 col-lg">
