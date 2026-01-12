@@ -1,57 +1,140 @@
-# Request & Trace Tracking
+# Request & Usage Tracking
 
 ## Overview
-End-to-end tracking is automatic: every Flask request receives correlation identifiers, payload snapshots, breadcrumbs, timing, and validation diagnostics. No per-view imports or manual logging calls are required.
+End-to-end tracking is automatic and centralized.
+
+The system tracks:
+- Technical request lifecycle (requests, validation, errors, timing)
+- Business-level usage events derived from verified actions
+
+No per-view imports or manual logging calls are required.
+
+---
 
 ## Architecture (ASCII)
-```
-Client -> Flask -> register_logging_middleware
-    -> assigns request_id/trace_id/parent_id
-    -> captures inbound payloads (query, form, JSON, headers, files)
-    -> executes route/services (@trace_execution supported)
-    -> captures responses + validation state
-    -> emits unified JSON log with breadcrumbs + timing
-```
+Client
+-> Flask
+-> register_logging_middleware
+-> assigns request_id / trace_id / parent_id
+-> captures inbound payloads
+-> executes route/services
+-> captures validation & timing
+-> emits unified JSON log
 
-## Correlation IDs
-- `request_id`: generated or honored from `X-Request-ID`; echoed in responses.
-- `trace_id` / `parent_id`: generated or honored from incoming headers to support distributed tracing.
-- `user_id`: resolved from Flask context when available.
+Verified Usage Events
+-> derived from successful requests
+-> persisted for activity evaluation
 
-## Payload tracking
-- Incoming data lives in `request.meta.incoming_payload`.
-- Outgoing data lives in `request.meta.outgoing_payload`.
-- Breadcrumb history lives in `request.meta.trace`.
-- Sensitive keys are masked/removed per `app/logging/sanitizers.py`.
+yaml
+Copy code
 
-## Breadcrumb rules
-- Middleware appends checkpoints for start/end and validation detection.
+---
+
+## Correlation Identifiers
+- `request_id`: Generated or honored from `X-Request-ID`, echoed in responses.
+- `trace_id` / `parent_id`: Generated or honored for distributed tracing.
+- `user_id`: Resolved from Flask context when authenticated.
+- `company_id`: Attached when request is associated with a partner/store.
+
+These identifiers allow full correlation between technical logs and usage records.
+
+---
+
+## Payload Tracking
+- Incoming data → `request.meta.incoming_payload`
+- Outgoing data → `request.meta.outgoing_payload`
+- Breadcrumb history → `request.meta.trace`
+- Sensitive keys are masked or removed via `app/logging/sanitizers.py`
+
+Payload tracking is used for:
+- Debugging
+- Auditability
+- Validation diagnostics
+
+It is NOT used to determine privileges or incentives.
+
+---
+
+## Breadcrumb Rules
+- Middleware appends start/end checkpoints.
+- Validation failures append explicit breadcrumbs.
 - Error handler appends failure breadcrumbs.
 - Optional `@trace_execution` decorator appends service-level breadcrumbs and accumulates `service_ms`.
 
-## Timing breakdown
-- `total_ms`: full lifecycle.
-- `middleware_ms`: before/after middleware time.
-- `route_ms`: Flask routing + view execution time.
-- `service_ms`: time from decorated service calls.
+Breadcrumbs describe execution flow only, not business decisions.
 
-## Validation snapshots
-For 400/422 responses the logger emits:
+---
+
+## Timing Breakdown
+- `total_ms`: Full request lifecycle.
+- `middleware_ms`: Pre/post middleware time.
+- `route_ms`: Flask routing + view execution.
+- `service_ms`: Aggregated time from decorated services.
+
+Timing data is used for observability and performance tuning only.
+
+---
+
+## Validation Snapshots
+For 400 / 422 responses, the logger emits:
 ```json
 {
   "event": "validation_failed",
   "missing_fields": [],
   "invalid_fields": {},
   "allowed_values": {},
-  "received_values": {...},
+  "received_values": {},
   "diagnostic": "Validation failed"
 }
-```
+Validation failures do NOT generate usage events.
 
-## Error capture
-Exceptions are logged with type, message, traceback string, failing file/function/line, payload snapshot, breadcrumbs, correlation IDs, and timing at failure. Responses return JSON with the `request_id` header to aid support investigations.
+Usage Tracking (Business Layer)
+Usage tracking is derived from verified actions only.
 
-## Troubleshooting
-- **No breadcrumbs**: confirm middleware registration; idempotency guard prevents double registration but still allows initial wiring.
-- **Missing validation block**: ensure the response status is 400/422; other statuses bypass validation extraction.
-- **Unexpected masking**: extend `SENSITIVE_FIELDS` in `app/logging/sanitizers.py`.
+Principles:
+
+A usage event is recorded only after successful verification.
+
+Usage events are the single source of truth for:
+
+User activity (active / inactive)
+
+Partner activity (active / inactive)
+
+Incentive eligibility
+
+Usage tracking does NOT depend on:
+
+Membership levels
+
+Manual flags
+
+Static discounts
+
+Error Capture
+Exceptions are logged with:
+
+Exception type and message
+
+Traceback (string)
+
+Failing file / function / line
+
+Payload snapshot
+
+Breadcrumbs
+
+Correlation identifiers
+
+Timing at point of failure
+
+Error responses include the request_id header to support investigation.
+
+Troubleshooting
+No breadcrumbs: Confirm middleware registration; idempotency guard prevents double registration.
+
+Missing validation block: Ensure response status is 400 or 422.
+
+Unexpected masking: Extend SENSITIVE_FIELDS in app/logging/sanitizers.py.
+
+Usage not recorded: Confirm verification completed successfully; unverified requests never create usage events.

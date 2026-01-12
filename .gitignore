@@ -23,6 +23,9 @@ Thumbs.db
 
 # Logs
 *.log
+log.json
+*log.json*
+.logs/*
 
 # Binary or temporary files
 *.bin
@@ -49,6 +52,6 @@ migrations/__pycache__/
 # Test or local configs
 test_*.py
 local_settings.py
-log.json
+
 
 
