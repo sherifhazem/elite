@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.services.analytics_service import (
     active_members_count,
@@ -44,3 +44,22 @@ def get_analytics_summary(
         summary["incentives_applied_breakdown"] = incentives_breakdown
 
     return summary
+
+
+def parse_iso8601(value: str | None) -> datetime | None:
+    if not value:
+        return None
+
+    normalized = value.strip()
+    if normalized.endswith("Z"):
+        normalized = f"{normalized[:-1]}+00:00"
+
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise ValueError("Expected ISO8601 datetime format.") from exc
+
+    if parsed.tzinfo is not None:
+        return parsed.astimezone(timezone.utc).replace(tzinfo=None)
+
+    return parsed

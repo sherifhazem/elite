@@ -66,11 +66,36 @@
     <!-- Analytics Summary -->
     <div class="card shadow-sm admin-card mb-4">
         <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-3 gap-3">
                 <div>
                     <h5 class="fw-semibold mb-0">ملخص التحليلات</h5>
                     <p class="text-muted small mb-0">مؤشرات سريعة (قابلة للإخفاء لاحقاً).</p>
                 </div>
+                <form class="d-flex flex-wrap gap-2 align-items-end" method="get" action="{{ url_for('admin.dashboard_home') }}">
+                    <div>
+                        <label class="form-label small mb-1" for="analytics-date-from">من</label>
+                        <input
+                            class="form-control form-control-sm"
+                            type="date"
+                            id="analytics-date-from"
+                            name="date_from"
+                            value="{{ date_from }}"
+                        >
+                    </div>
+                    <div>
+                        <label class="form-label small mb-1" for="analytics-date-to">إلى</label>
+                        <input
+                            class="form-control form-control-sm"
+                            type="date"
+                            id="analytics-date-to"
+                            name="date_to"
+                            value="{{ date_to }}"
+                        >
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary" type="submit">تطبيق</button>
+                    </div>
+                </form>
             </div>
             <div class="row g-3 text-center">
                 <div class="col-6 col-lg">

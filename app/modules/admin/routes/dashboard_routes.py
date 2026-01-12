@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from flask import Response, render_template, redirect, url_for, flash
+from flask import Response, render_template, redirect, url_for, flash, request, abort
 
 from app.services.access_control import admin_required
 
 from .. import admin
-from ..services.analytics_summary_service import get_analytics_summary
+from ..services.analytics_summary_service import (
+    get_analytics_summary,
+    parse_iso8601,
+)
 from ..services.dashboard_service import get_overview_metrics, process_logout
 
 
@@ -27,7 +30,16 @@ def dashboard_home() -> str:
     """Render the admin dashboard landing page."""
 
     metrics = get_overview_metrics()
-    analytics_summary = get_analytics_summary()
+    date_from_raw = request.args.get("date_from") or ""
+    date_to_raw = request.args.get("date_to") or ""
+
+    try:
+        date_from = parse_iso8601(date_from_raw)
+        date_to = parse_iso8601(date_to_raw)
+    except ValueError:
+        abort(400, description="Invalid ISO8601 date_from/date_to parameter.")
+
+    analytics_summary = get_analytics_summary(date_from=date_from, date_to=date_to)
 
     return render_template(
         "admin/dashboard/index.html",
@@ -37,6 +49,8 @@ def dashboard_home() -> str:
         total_companies=metrics["total_companies"],
         total_offers=metrics["total_offers"],
         analytics_summary=analytics_summary,
+        date_from=date_from_raw,
+        date_to=date_to_raw,
     )
 
 
