@@ -57,6 +57,7 @@ def _has_recent_incentive(
     incentive_result: str,
     window_start: datetime | None,
     window_end: datetime | None,
+    for_update: bool = False,
 ) -> bool:
     query = ActivityLog.query.filter_by(
         action="incentive_applied",
@@ -64,6 +65,8 @@ def _has_recent_incentive(
         offer_id=offer_id,
         result=incentive_result,
     )
+    if for_update:
+        query = query.with_for_update()
     if window_start is not None:
         query = query.filter(ActivityLog.created_at >= window_start)
     if window_end is not None:
@@ -97,13 +100,14 @@ def apply_incentive(
         if incentive_type:
             valid_until = _resolve_grace_valid_until(settings, now)
             window_start, window_end = _resolve_incentive_window(settings, now)
-            with db.session.begin_nested():
+            with db.session.begin():
                 if _has_recent_incentive(
                     member_id=member_id,
                     offer_id=offer_id,
                     incentive_result=incentive_type,
                     window_start=window_start,
                     window_end=window_end,
+                    for_update=True,
                 ):
                     return {
                         "applied": False,

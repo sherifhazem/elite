@@ -7,7 +7,6 @@ from http import HTTPStatus
 
 from flask import jsonify, render_template
 
-from app.core.database import db
 from app.models import UsageCode
 from app.services.access_control import company_required
 from app.services.usage_code_service import generate_usage_code, get_usage_code_settings
@@ -48,7 +47,6 @@ def company_usage_codes_generate():
 
     company = _current_company()
     usage_code = generate_usage_code(company.id)
-    db.session.commit()
     return (
         jsonify(
             {

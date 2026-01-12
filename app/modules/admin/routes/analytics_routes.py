@@ -51,22 +51,22 @@ def analytics_summary_export() -> Response:
     filename = "analytics-summary.csv"
     admin_id = getattr(getattr(g, "current_user", None), "id", None)
     created_at = datetime.utcnow()
-    log_entry = ActivityLog(
-        admin_id=admin_id,
-        action="analytics_export",
-        details=json.dumps(
-            {
-                "admin_id": admin_id,
-                "date_from": date_from.isoformat() if date_from else None,
-                "date_to": date_to.isoformat() if date_to else None,
-                "filename": filename,
-            }
-        ),
-        created_at=created_at,
-        timestamp=created_at,
-    )
-    db.session.add(log_entry)
-    db.session.commit()
+    with db.session.begin():
+        log_entry = ActivityLog(
+            admin_id=admin_id,
+            action="analytics_export",
+            details=json.dumps(
+                {
+                    "admin_id": admin_id,
+                    "date_from": date_from.isoformat() if date_from else None,
+                    "date_to": date_to.isoformat() if date_to else None,
+                    "filename": filename,
+                }
+            ),
+            created_at=created_at,
+            timestamp=created_at,
+        )
+        db.session.add(log_entry)
     incentives = summary.get("incentives_applied") or {}
     breakdown = summary.get("incentives_applied_breakdown") or {}
     total_incentives = sum(incentives.values()) if incentives else 0

@@ -50,40 +50,42 @@ def _generate_numeric_code() -> str:
 def generate_usage_code(partner_id: int) -> UsageCode:
     """Create a fresh usage code for a partner, expiring any active code."""
 
-    now = datetime.utcnow()
-    settings = get_usage_code_settings()
+    with db.session.begin():
+        now = datetime.utcnow()
+        settings = get_usage_code_settings()
 
-    active_codes = (
-        UsageCode.query.filter_by(partner_id=partner_id)
-        .filter(UsageCode.expires_at > now)
-        .all()
-    )
-    for active in active_codes:
-        active.expires_at = now
-
-    for _ in range(30):
-        candidate = _generate_numeric_code()
-        collision = (
-            UsageCode.query.filter_by(code=candidate)
+        active_codes = (
+            UsageCode.query.filter_by(partner_id=partner_id)
             .filter(UsageCode.expires_at > now)
-            .first()
+            .with_for_update()
+            .all()
         )
-        if collision is None:
-            code_value = candidate
-            break
-    else:  # pragma: no cover - extreme collision edge case
-        raise RuntimeError("Unable to generate a unique usage code.")
+        for active in active_codes:
+            active.expires_at = now
 
-    usage_code = UsageCode(
-        code=code_value,
-        partner_id=partner_id,
-        created_at=now,
-        expires_at=now + timedelta(seconds=settings.expiry_seconds),
-        usage_count=0,
-        max_uses_per_window=settings.max_uses_per_window,
-    )
-    db.session.add(usage_code)
-    return usage_code
+        for _ in range(30):
+            candidate = _generate_numeric_code()
+            collision = (
+                UsageCode.query.filter_by(code=candidate)
+                .filter(UsageCode.expires_at > now)
+                .first()
+            )
+            if collision is None:
+                code_value = candidate
+                break
+        else:  # pragma: no cover - extreme collision edge case
+            raise RuntimeError("Unable to generate a unique usage code.")
+
+        usage_code = UsageCode(
+            code=code_value,
+            partner_id=partner_id,
+            created_at=now,
+            expires_at=now + timedelta(seconds=settings.expiry_seconds),
+            usage_count=0,
+            max_uses_per_window=settings.max_uses_per_window,
+        )
+        db.session.add(usage_code)
+        return usage_code
 
 
 def log_usage_attempt(
@@ -123,90 +125,106 @@ def verify_usage_code(
     """Validate a usage code for a selected offer and record the attempt."""
 
     normalized_code = (code or "").strip()
-    offer = Offer.query.get(offer_id)
-    partner_id = offer.company_id if offer else None
+    with db.session.begin():
+        offer = Offer.query.get(offer_id)
+        partner_id = offer.company_id if offer else None
 
-    if not normalized_code.isdigit() or len(normalized_code) not in (4, 5):
-        log_usage_attempt(
-            member_id=member_id,
-            partner_id=partner_id,
-            offer_id=offer_id,
-            code_used=normalized_code,
-            result="invalid",
-        )
-        return {"ok": False, "result": "invalid", "message": "Invalid code format."}
+        if not normalized_code.isdigit() or len(normalized_code) not in (4, 5):
+            log_usage_attempt(
+                member_id=member_id,
+                partner_id=partner_id,
+                offer_id=offer_id,
+                code_used=normalized_code,
+                result="invalid",
+            )
+            return {"ok": False, "result": "invalid", "message": "Invalid code format."}
 
-    if offer is None or offer.company_id is None:
-        log_usage_attempt(
-            member_id=member_id,
-            partner_id=partner_id,
-            offer_id=offer_id,
-            code_used=normalized_code,
-            result="invalid",
-        )
-        return {"ok": False, "result": "invalid", "message": "Offer not found."}
+        if offer is None or offer.company_id is None:
+            log_usage_attempt(
+                member_id=member_id,
+                partner_id=partner_id,
+                offer_id=offer_id,
+                code_used=normalized_code,
+                result="invalid",
+            )
+            return {"ok": False, "result": "invalid", "message": "Offer not found."}
 
-    usage_code = (
-        UsageCode.query.filter_by(partner_id=offer.company_id, code=normalized_code)
-        .order_by(UsageCode.created_at.desc())
-        .first()
-    )
-    if usage_code is None:
-        log_usage_attempt(
-            member_id=member_id,
-            partner_id=partner_id,
-            offer_id=offer_id,
-            code_used=normalized_code,
-            result="invalid",
+        usage_code = (
+            UsageCode.query.filter_by(partner_id=offer.company_id, code=normalized_code)
+            .order_by(UsageCode.created_at.desc())
+            .with_for_update()
+            .first()
         )
-        return {"ok": False, "result": "invalid", "message": "Code is invalid."}
+        if usage_code is None:
+            log_usage_attempt(
+                member_id=member_id,
+                partner_id=partner_id,
+                offer_id=offer_id,
+                code_used=normalized_code,
+                result="invalid",
+            )
+            return {"ok": False, "result": "invalid", "message": "Code is invalid."}
 
-    if usage_code.is_expired():
-        log_usage_attempt(
-            member_id=member_id,
-            partner_id=partner_id,
-            offer_id=offer_id,
-            code_used=normalized_code,
-            result="expired",
-        )
-        return {"ok": False, "result": "expired", "message": "Code has expired."}
+        if usage_code.is_expired():
+            log_usage_attempt(
+                member_id=member_id,
+                partner_id=partner_id,
+                offer_id=offer_id,
+                code_used=normalized_code,
+                result="expired",
+            )
+            return {"ok": False, "result": "expired", "message": "Code has expired."}
 
-    eligibility = evaluate_offer_eligibility(member_id, offer_id)
-    if not eligibility["eligible"]:
-        log_usage_attempt(
-            member_id=member_id,
-            partner_id=partner_id,
-            offer_id=offer_id,
-            code_used=normalized_code,
-            result="not_eligible",
-        )
-        return {
-            "ok": False,
-            "result": "not_eligible",
-            "reason": eligibility["reason"],
-        }
+        eligibility = evaluate_offer_eligibility(member_id, offer_id)
+        if not eligibility["eligible"]:
+            log_usage_attempt(
+                member_id=member_id,
+                partner_id=partner_id,
+                offer_id=offer_id,
+                code_used=normalized_code,
+                result="not_eligible",
+            )
+            return {
+                "ok": False,
+                "result": "not_eligible",
+                "reason": eligibility["reason"],
+            }
 
-    window_start = usage_code.created_at
-    window_end = usage_code.expires_at
-    successful_attempts = (
-        ActivityLog.query.filter_by(
-            action="usage_code_attempt",
-            partner_id=partner_id,
-            code_used=normalized_code,
+        window_start = usage_code.created_at
+        window_end = usage_code.expires_at
+        successful_attempts = (
+            ActivityLog.query.filter_by(
+                action="usage_code_attempt",
+                partner_id=partner_id,
+                code_used=normalized_code,
+            )
+            .filter(ActivityLog.result.in_(["valid", "success"]))
+            .filter(ActivityLog.created_at >= window_start)
         )
-        .filter(ActivityLog.result.in_(["valid", "success"]))
-        .filter(ActivityLog.created_at >= window_start)
-    )
-    if window_end:
-        successful_attempts = successful_attempts.filter(
-            ActivityLog.created_at <= window_end
-        )
+        if window_end:
+            successful_attempts = successful_attempts.filter(
+                ActivityLog.created_at <= window_end
+            )
 
-    if member_id is not None:
-        prior_attempt = successful_attempts.filter(
-            member_id=member_id, offer_id=offer_id
-        )
-        if prior_attempt.first() is not None:
+        if member_id is not None:
+            prior_attempt = successful_attempts.filter(
+                member_id=member_id, offer_id=offer_id
+            )
+            if prior_attempt.first() is not None:
+                log_usage_attempt(
+                    member_id=member_id,
+                    partner_id=partner_id,
+                    offer_id=offer_id,
+                    code_used=normalized_code,
+                    result="usage_limit_reached",
+                )
+                return {
+                    "ok": False,
+                    "result": "usage_limit_reached",
+                    "message": "Usage already verified for this offer.",
+                }
+
+        if successful_attempts.count() >= usage_code.max_uses_per_window:
             log_usage_attempt(
                 member_id=member_id,
                 partner_id=partner_id,
@@ -217,24 +235,9 @@ def verify_usage_code(
             return {
                 "ok": False,
                 "result": "usage_limit_reached",
-                "message": "Usage already verified for this offer.",
+                "message": "Usage limit reached.",
             }
 
-    if successful_attempts.count() >= usage_code.max_uses_per_window:
-        log_usage_attempt(
-            member_id=member_id,
-            partner_id=partner_id,
-            offer_id=offer_id,
-            code_used=normalized_code,
-            result="usage_limit_reached",
-        )
-        return {
-            "ok": False,
-            "result": "usage_limit_reached",
-            "message": "Usage limit reached.",
-        }
-
-    with db.session.begin_nested():
         usage_code.usage_count += 1
         log_usage_attempt(
             member_id=member_id,
@@ -243,14 +246,16 @@ def verify_usage_code(
             code_used=normalized_code,
             result="valid",
         )
-    return {
-        "ok": True,
-        "result": "valid",
-        "message": "Usage verified.",
-        "usage_count": usage_code.usage_count,
-        "max_uses_per_window": usage_code.max_uses_per_window,
-        "expires_at": usage_code.expires_at.isoformat() if usage_code.expires_at else None,
-    }
+        return {
+            "ok": True,
+            "result": "valid",
+            "message": "Usage verified.",
+            "usage_count": usage_code.usage_count,
+            "max_uses_per_window": usage_code.max_uses_per_window,
+            "expires_at": usage_code.expires_at.isoformat()
+            if usage_code.expires_at
+            else None,
+        }
 
 
 __all__ = [
