@@ -7,6 +7,7 @@ from flask import Response, render_template, redirect, url_for, flash
 from app.services.access_control import admin_required
 
 from .. import admin
+from ..services.analytics_summary_service import get_analytics_summary
 from ..services.dashboard_service import get_overview_metrics, process_logout
 
 
@@ -26,6 +27,7 @@ def dashboard_home() -> str:
     """Render the admin dashboard landing page."""
 
     metrics = get_overview_metrics()
+    analytics_summary = get_analytics_summary()
 
     return render_template(
         "admin/dashboard/index.html",
@@ -34,6 +36,7 @@ def dashboard_home() -> str:
         total_users=metrics["total_users"],
         total_companies=metrics["total_companies"],
         total_offers=metrics["total_offers"],
+        analytics_summary=analytics_summary,
     )
 
 
