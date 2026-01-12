@@ -138,20 +138,20 @@ def export_pdf() -> Any:
 
     admin_id = getattr(getattr(g, "current_user", None), "id", None)
     created_at = datetime.utcnow()
-    log_entry = ActivityLog(
-        admin_id=admin_id,
-        action="reports_export",
-        details=json.dumps(
-            {
-                "admin_id": admin_id,
-                "filename": "elite-reports.pdf",
-            }
-        ),
-        created_at=created_at,
-        timestamp=created_at,
-    )
-    db.session.add(log_entry)
-    db.session.commit()
+    with db.session.begin():
+        log_entry = ActivityLog(
+            admin_id=admin_id,
+            action="reports_export",
+            details=json.dumps(
+                {
+                    "admin_id": admin_id,
+                    "filename": "elite-reports.pdf",
+                }
+            ),
+            created_at=created_at,
+            timestamp=created_at,
+        )
+        db.session.add(log_entry)
 
     return send_file(
         buffer,

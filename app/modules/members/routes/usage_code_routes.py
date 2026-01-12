@@ -6,7 +6,6 @@ from http import HTTPStatus
 
 from flask import Blueprint, g, jsonify, request
 
-from app.core.database import db
 from app.services.access_control import resolve_user_from_request
 from app.services.usage_code_service import verify_usage_code
 
@@ -61,7 +60,6 @@ def verify_usage_code_endpoint():
         return jsonify({"error": "offer_id must be numeric."}), HTTPStatus.BAD_REQUEST
 
     result = verify_usage_code(member_id=user.id, offer_id=offer_identifier, code=code)
-    db.session.commit()
     return jsonify(result), HTTPStatus.OK
 
 
