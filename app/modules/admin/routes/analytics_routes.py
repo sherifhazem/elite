@@ -3,19 +3,16 @@
 from __future__ import annotations
 
 import csv
-import json
 from io import StringIO
-from datetime import datetime
 
 from flask import abort, jsonify, request, Response, g
 
-from app.core.database import db
-from app.models import ActivityLog
 from app.services.access_control import admin_required
 from ..services.analytics_summary_service import (
     get_analytics_summary,
     parse_iso8601,
 )
+from ..services.export_log_service import log_analytics_export
 from .. import admin
 
 
@@ -50,23 +47,12 @@ def analytics_summary_export() -> Response:
     summary = get_analytics_summary(date_from=date_from, date_to=date_to)
     filename = "analytics-summary.csv"
     admin_id = getattr(getattr(g, "current_user", None), "id", None)
-    created_at = datetime.utcnow()
-    with db.session.begin():
-        log_entry = ActivityLog(
-            admin_id=admin_id,
-            action="analytics_export",
-            details=json.dumps(
-                {
-                    "admin_id": admin_id,
-                    "date_from": date_from.isoformat() if date_from else None,
-                    "date_to": date_to.isoformat() if date_to else None,
-                    "filename": filename,
-                }
-            ),
-            created_at=created_at,
-            timestamp=created_at,
-        )
-        db.session.add(log_entry)
+    log_analytics_export(
+        admin_id=admin_id,
+        date_from=date_from,
+        date_to=date_to,
+        filename=filename,
+    )
     incentives = summary.get("incentives_applied") or {}
     breakdown = summary.get("incentives_applied_breakdown") or {}
     total_incentives = sum(incentives.values()) if incentives else 0
