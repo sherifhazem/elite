@@ -21,4 +21,5 @@ from .routes import (
     logs_routes,
     notifications_routes,
     reports_routes,
+    analytics_routes,
 )
