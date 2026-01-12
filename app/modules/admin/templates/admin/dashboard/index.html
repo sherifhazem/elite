@@ -63,6 +63,60 @@
         </div>
     </div>
 
+    <!-- Analytics Summary -->
+    <div class="card shadow-sm admin-card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="fw-semibold mb-0">ملخص التحليلات</h5>
+                    <p class="text-muted small mb-0">مؤشرات سريعة (قابلة للإخفاء لاحقاً).</p>
+                </div>
+            </div>
+            <div class="row g-3 text-center">
+                <div class="col-6 col-lg">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="text-muted small">إجمالي محاولات الاستخدام</div>
+                        <div class="h4 fw-bold mb-0">
+                            {{ (analytics_summary or {}).get("total_usage_attempts")|default(0, true) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="text-muted small">الاستخدامات الناجحة</div>
+                        <div class="h4 fw-bold mb-0">
+                            {{ (analytics_summary or {}).get("successful_usages")|default(0, true) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="text-muted small">الحوافز المطبقة</div>
+                        <div class="h4 fw-bold mb-0">
+                            {{ (analytics_summary or {}).get("incentives_applied")|default(0, true) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="text-muted small">الأعضاء النشطون</div>
+                        <div class="h4 fw-bold mb-0">
+                            {{ (analytics_summary or {}).get("active_members_count")|default(0, true) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="text-muted small">الشركاء النشطون</div>
+                        <div class="h4 fw-bold mb-0">
+                            {{ (analytics_summary or {}).get("active_partners_count")|default(0, true) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Activity and Goals -->
     <div class="row g-3">
         <!-- Recent Activity -->
