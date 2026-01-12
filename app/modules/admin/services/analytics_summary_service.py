@@ -18,16 +18,15 @@ def get_analytics_summary(
 ) -> dict[str, object]:
     """Return analytics summary metrics for the admin dashboard layer."""
 
-    return {
+    incentives = incentives_applied(date_from=date_from, date_to=date_to)
+    summary: dict[str, object] = {
         "total_usage_attempts": total_usage_attempts(
             date_from=date_from, date_to=date_to
         ),
         "successful_usages": successful_usages(
             date_from=date_from, date_to=date_to
         ),
-        "incentives_applied": incentives_applied(
-            date_from=date_from, date_to=date_to
-        ),
+        "incentives_applied": incentives,
         "active_members_count": active_members_count(
             date_from=date_from, date_to=date_to
         ),
@@ -35,3 +34,13 @@ def get_analytics_summary(
             date_from=date_from, date_to=date_to
         ),
     }
+
+    incentives_breakdown = {
+        key: incentives[key]
+        for key in ("first_time", "loyalty")
+        if key in incentives
+    }
+    if incentives_breakdown:
+        summary["incentives_applied_breakdown"] = incentives_breakdown
+
+    return summary
