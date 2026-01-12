@@ -93,7 +93,7 @@
                     <div class="border rounded-3 p-3 h-100">
                         <div class="text-muted small">الحوافز المطبقة</div>
                         <div class="h4 fw-bold mb-0">
-                            {{ (analytics_summary or {}).get("incentives_applied")|default(0, true) }}
+                            {{ ((analytics_summary or {}).get("incentives_applied") or {}).values() | sum }}
                         </div>
                     </div>
                 </div>
