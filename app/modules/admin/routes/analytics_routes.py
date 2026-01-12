@@ -50,6 +50,7 @@ def analytics_summary_export() -> Response:
     summary = get_analytics_summary(date_from=date_from, date_to=date_to)
     filename = "analytics-summary.csv"
     admin_id = getattr(getattr(g, "current_user", None), "id", None)
+    created_at = datetime.utcnow()
     log_entry = ActivityLog(
         admin_id=admin_id,
         action="analytics_export",
@@ -61,7 +62,8 @@ def analytics_summary_export() -> Response:
                 "filename": filename,
             }
         ),
-        timestamp=datetime.utcnow(),
+        created_at=created_at,
+        timestamp=created_at,
     )
     db.session.add(log_entry)
     db.session.commit()
