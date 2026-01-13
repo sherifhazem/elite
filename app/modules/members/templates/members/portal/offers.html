@@ -17,7 +17,10 @@
                 autocomplete="off"
             />
         </div>
-        <button class="offers-filter" type="button">فلترة</button>
+        <button class="offers-filter" type="button" role="button" aria-label="فلترة العروض">
+            <span class="offers-filter__icon" aria-hidden="true"><i class="fa-solid fa-filter"></i></span>
+            <span>فلترة</span>
+        </button>
     </section>
     <section class="offers-body">
         {% if offers %}

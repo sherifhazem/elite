@@ -670,6 +670,22 @@ img {
     font-weight: 700;
     font-size: 0.95rem;
     box-shadow: var(--shadow-soft);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: box-shadow 150ms ease, filter 150ms ease;
+}
+
+.offers-filter:hover,
+.offers-filter:focus-visible {
+    box-shadow: 0 12px 26px rgba(17, 17, 17, 0.2);
+    filter: brightness(1.03);
+}
+
+.offers-filter__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .offers-body {
@@ -689,6 +705,7 @@ img {
 }
 
 .offer-card {
+    position: relative;
     background: var(--card-bg);
     border-radius: 22px;
     padding: 16px 14px 14px;
@@ -698,6 +715,12 @@ img {
     gap: 14px;
     color: var(--portal-text);
     cursor: pointer;
+    transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.offer-card:active {
+    transform: scale(0.99);
+    box-shadow: 0 18px 48px rgba(23, 18, 48, 0.12);
 }
 
 .offer-card__header {
@@ -789,6 +812,8 @@ img {
     display: grid;
     grid-template-columns: 1fr;
     gap: 8px;
+    position: relative;
+    z-index: 1;
 }
 
 .offer-card__action {
@@ -799,6 +824,8 @@ img {
     color: var(--portal-text);
     font-weight: 600;
     font-size: 0.82rem;
+    position: relative;
+    z-index: 1;
 }
 
 .offer-card__action--primary {
@@ -811,6 +838,8 @@ img {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
+    position: relative;
+    z-index: 1;
 }
 
 .offer-card__meta-button {
@@ -821,6 +850,8 @@ img {
     color: var(--portal-text);
     font-weight: 600;
     font-size: 0.82rem;
+    position: relative;
+    z-index: 1;
 }
 
 .offer-card__eligibility {
