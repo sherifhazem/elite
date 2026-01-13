@@ -85,6 +85,37 @@
   background: color-mix(in srgb, var(--text-primary) 12%, transparent);
 }
 
+.alert {
+  width: 100%;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--card-bg) 92%, var(--royal-black));
+  color: var(--royal-black);
+  border: 1px solid color-mix(in srgb, var(--royal-black) 18%, var(--card-bg));
+  font-weight: 600;
+}
+
+.alert-success {
+  background: color-mix(in srgb, var(--card-bg) 85%, var(--soft-green));
+  border-color: color-mix(in srgb, var(--soft-green) 42%, var(--card-bg));
+}
+
+.alert-warning {
+  background: color-mix(in srgb, var(--card-bg) 84%, var(--gold));
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--card-bg));
+}
+
+.alert-danger {
+  background: color-mix(in srgb, var(--card-bg) 82%, #6f1e1e);
+  border-color: color-mix(in srgb, #6f1e1e 50%, var(--card-bg));
+}
+
+.alert-info {
+  background: color-mix(in srgb, var(--card-bg) 90%, var(--royal-black));
+  border-color: color-mix(in srgb, var(--royal-black) 22%, var(--card-bg));
+}
+
 .btn-gradient {
   color: var(--royal-black) !important;
   background: linear-gradient(135deg, var(--gold), var(--gold));
