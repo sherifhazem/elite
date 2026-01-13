@@ -93,7 +93,12 @@
   background: color-mix(in srgb, var(--card-bg) 92%, var(--royal-black));
   color: var(--royal-black);
   border: 1px solid color-mix(in srgb, var(--royal-black) 18%, var(--card-bg));
-  font-weight: 600;
+  font-weight: 500;
+}
+
+.alert strong,
+.alert b {
+  font-weight: 700;
 }
 
 .alert-success {
@@ -112,8 +117,8 @@
 }
 
 .alert-info {
-  background: color-mix(in srgb, var(--card-bg) 90%, var(--royal-black));
-  border-color: color-mix(in srgb, var(--royal-black) 22%, var(--card-bg));
+  background: color-mix(in srgb, var(--card-bg) 88%, var(--bg-primary));
+  border-color: color-mix(in srgb, var(--bg-primary) 45%, var(--card-bg));
 }
 
 .btn-gradient {
