@@ -6,13 +6,13 @@
 
 :root {
     color-scheme: dark;
-    --bg-primary: #1c2d45;
-    --text-primary: #ffffff;
-    --gold: #d4af37;
+    --bg-primary: #1C2D45;
+    --text-primary: #FFFFFF;
+    --gold: #D4AF37;
     --royal-black: #111111;
-    --soft-green: #4caf50;
-    --card-bg: #f5f1e8;
-    --muted-text: #c9d2e3;
+    --soft-green: #4CAF50;
+    --card-bg: #F5F1E8;
+    --muted-text: #C9D2E3;
     --radius-card: 28px;
     --radius-pill: 999px;
     --shadow-soft: 0 24px 60px rgba(23, 18, 48, 0.1);
@@ -23,11 +23,11 @@
     --space-lg: 24px;
     --container-width: 420px;
     --portal-bg: var(--bg-primary);
-    --portal-surface: rgba(23, 37, 59, 0.92);
+    --portal-surface: var(--royal-black);
     --portal-border: rgba(255, 255, 255, 0.12);
     --portal-primary: #4e2b8f;
     --portal-primary-soft: #8c5bff;
-    --portal-text: #1a2233;
+    --portal-text: var(--text-primary);
     --portal-muted: var(--muted-text);
     --color-primary: var(--bg-primary);
     --color-primary-contrast: var(--text-primary);
@@ -36,7 +36,7 @@
     --color-gray-100: #23344d;
     --color-gray-200: #2f435f;
     --color-gray-400: #9fb0c6;
-    --color-gray-600: #c7d2e3;
+    --color-gray-600: var(--muted-text);
     --color-gray-900: var(--royal-black);
     --radius-xl: var(--radius-card);
     --radius-lg: 22px;
@@ -108,7 +108,7 @@ img {
     width: 100%;
     min-height: 100vh;
     max-width: var(--container-width);
-    background: linear-gradient(160deg, #1c2d45, #111111);
+    background: var(--bg-primary);
     box-shadow: 0 30px 80px rgba(6, 10, 20, 0.45);
 }
 
@@ -159,7 +159,7 @@ img {
     right: 0;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    background: rgba(20, 32, 50, 0.98);
+    background: var(--portal-surface);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 10px 12px 12px;
     box-shadow: none;
@@ -179,7 +179,7 @@ img {
     background: none;
     font-size: 0.8rem;
     font-weight: 600;
-    color: #c7d2e3;
+    color: var(--muted-text);
     transition: color 0.2s ease-in-out, background 0.2s ease-in-out;
     z-index: 21;
 }
@@ -198,7 +198,7 @@ img {
 }
 
 .app-nav__item--active {
-    background: rgba(212, 175, 55, 0.18);
+    background: color-mix(in srgb, var(--gold) 18%, transparent);
     color: var(--gold);
 }
 
@@ -364,8 +364,8 @@ img {
 }
 
 .home-hero__cta {
-    background: var(--text-primary);
-    color: var(--portal-primary);
+    background: linear-gradient(135deg, var(--gold), #f4d26a);
+    color: var(--royal-black);
 }
 
 .home-hero__secondary {
@@ -418,7 +418,7 @@ img {
     border-radius: 999px;
     border: none;
     background: linear-gradient(135deg, var(--gold), #f4d26a);
-    color: #ffffff;
+    color: var(--royal-black);
     font-weight: 600;
     letter-spacing: 0.02em;
     box-shadow: var(--shadow-card);
@@ -438,6 +438,22 @@ img {
     box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
 }
 
+.offer-chip,
+.tier-card,
+.offer-card,
+.profile-card,
+.activation-card,
+.notification-item__bubble,
+.notification-thread__bubble,
+.empty-state,
+.app-modal__sheet {
+    --portal-text: var(--royal-black);
+    --portal-muted: color-mix(in srgb, var(--royal-black) 65%, var(--card-bg));
+    --color-gray-600: var(--portal-muted);
+    --color-gray-400: var(--portal-muted);
+    color: var(--portal-text);
+}
+
 .ghost-button--small {
     padding: 0.6rem 1rem;
     font-size: 0.8rem;
@@ -454,7 +470,7 @@ img {
     border-radius: var(--radius-xl);
     overflow: hidden;
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(124, 58, 237, 0.85));
-    color: #ffffff;
+    color: var(--text-primary);
     padding: 1.75rem;
     box-shadow: var(--shadow-card);
 }
@@ -525,9 +541,6 @@ img {
     gap: 8px;
     scroll-snap-align: start;
     color: var(--portal-text);
-    --portal-muted: #6b7280;
-    --color-gray-600: #4b5563;
-    --color-gray-400: #6b7280;
 }
 
 .offer-chip__level {
@@ -573,9 +586,6 @@ img {
     color: var(--portal-text);
     background: var(--card-bg);
     box-shadow: var(--shadow-soft);
-    --portal-muted: #6b7280;
-    --color-gray-600: #4b5563;
-    --color-gray-400: #6b7280;
 }
 
 .tier-card--basic {
@@ -653,9 +663,6 @@ img {
     flex-direction: column;
     gap: 14px;
     color: var(--portal-text);
-    --portal-muted: #6b7280;
-    --color-gray-600: #4b5563;
-    --color-gray-400: #6b7280;
 }
 
 .offer-card__header {
@@ -698,22 +705,22 @@ img {
 
 .offer-card__discount--basic {
     background: rgba(17, 17, 17, 0.08);
-    color: #4b5563;
+    color: var(--portal-muted);
 }
 
 .offer-card__discount--silver {
     background: linear-gradient(135deg, rgba(17, 17, 17, 0.08), rgba(17, 17, 17, 0.12));
-    color: #4b5563;
+    color: var(--portal-muted);
 }
 
 .offer-card__discount--gold {
     background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.3));
-    color: #6d5c2e;
+    color: var(--royal-black);
 }
 
 .offer-card__discount--premium {
     background: linear-gradient(135deg, rgba(17, 17, 17, 0.08), rgba(17, 17, 17, 0.16));
-    color: #4b5563;
+    color: var(--portal-muted);
 }
 
 .offer-card__summary {
@@ -825,7 +832,7 @@ img {
     position: relative;
     z-index: 1;
     padding: 2rem 1.75rem;
-    color: #ffffff;
+    color: var(--text-primary);
     display: grid;
     gap: 1.5rem;
 }
@@ -882,9 +889,6 @@ img {
     gap: var(--space-md);
     box-shadow: 0 32px 80px rgba(6, 10, 20, 0.35);
     background: var(--card-bg);
-    --portal-muted: #6b7280;
-    --color-gray-600: #4b5563;
-    --color-gray-400: #6b7280;
 }
 
 .profile-card[data-tier="silver"] {
@@ -1035,9 +1039,6 @@ img {
     gap: 12px;
     box-shadow: 0 20px 50px rgba(17, 14, 42, 0.08);
     color: var(--portal-text);
-    --portal-muted: #6b7280;
-    --color-gray-600: #4b5563;
-    --color-gray-400: #6b7280;
 }
 
 .activation-card__header {
@@ -1129,7 +1130,7 @@ img {
     border: none;
     padding: 10px 16px;
     font-weight: 600;
-    background: var(--gold);
+    background: linear-gradient(135deg, var(--gold), #f4d26a);
     color: var(--royal-black);
     font-size: 0.9rem;
 }
@@ -1154,9 +1155,6 @@ img {
     box-shadow: 0 12px 32px rgba(17, 14, 42, 0.08);
     position: relative;
     color: var(--portal-text);
-    --portal-muted: #6b7280;
-    --color-gray-600: #4b5563;
-    --color-gray-400: #6b7280;
 }
 
 .notification-item--unread .notification-item__bubble {
@@ -1233,9 +1231,6 @@ img {
     background: var(--card-bg);
     box-shadow: var(--shadow-soft);
     color: var(--portal-text);
-    --portal-muted: #6b7280;
-    --color-gray-600: #4b5563;
-    --color-gray-400: #6b7280;
 }
 
 .notification-thread__title {
@@ -1278,9 +1273,6 @@ img {
     background: var(--card-bg);
     box-shadow: var(--shadow-soft);
     color: var(--portal-text);
-    --portal-muted: #6b7280;
-    --color-gray-600: #4b5563;
-    --color-gray-400: #6b7280;
 }
 
 /* Modal styling for offer details. */
@@ -1312,9 +1304,6 @@ img {
     overflow: hidden;
     animation: modal-in 0.25s ease;
     color: var(--portal-text);
-    --portal-muted: #6b7280;
-    --color-gray-600: #4b5563;
-    --color-gray-400: #6b7280;
 }
 
 .app-modal__header {
@@ -1398,7 +1387,7 @@ img {
     padding: 0.75rem 1rem;
     border-radius: var(--radius-md);
     background: rgba(15, 23, 42, 0.9);
-    color: #ffffff;
+    color: var(--text-primary);
     font-size: 0.85rem;
     box-shadow: var(--shadow-card);
     animation: toast-in 0.3s ease;
@@ -1434,7 +1423,7 @@ img {
     height: 54px;
     border-radius: 999px;
     border: 5px solid rgba(255, 255, 255, 0.2);
-    border-top-color: #ffffff;
+    border-top-color: var(--text-primary);
     animation: spin 0.9s linear infinite;
 }
 

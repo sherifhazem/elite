@@ -25,7 +25,7 @@ The member portal UI theme is centralized in `app/modules/members/static/members
 
 ## Dark Mode (Members Portal)
 
-The Members Portal uses a full dark theme driven by CSS tokens in `app/modules/members/static/members/css/portal_layout.css`.
+The Members Portal uses a permanent dark theme by default, driven entirely by CSS tokens in `app/modules/members/static/members/css/portal_layout.css`. Templates must only inherit these styles (no inline overrides) so the tokens remain the single source of truth.
 
 **Reference colors**
 - Primary Background: `#1C2D45` (`--bg-primary`)
@@ -33,10 +33,12 @@ The Members Portal uses a full dark theme driven by CSS tokens in `app/modules/m
 - Gold: `#D4AF37` (`--gold`)
 - Royal Black: `#111111` (`--royal-black`)
 - Soft Green: `#4CAF50` (`--soft-green`)
+- Card Surface: `#F5F1E8` (`--card-bg`)
+- Muted Text: `#C9D2E3` (`--muted-text`)
 
 **How to adjust**
 - Update the tokens in the `:root` block (e.g., `--bg-primary`, `--text-primary`, `--card-bg`, `--muted-text`) to tune the dark palette without changing templates.
-- Card surfaces inherit from `--card-bg` and use contextual muted tokens for readable contrast across light card surfaces on the dark shell.
+- Card surfaces inherit from `--card-bg` and rely on portal text variables for contrast, keeping the dark shell and light cards readable across the portal.
 
 ---
 
