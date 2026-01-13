@@ -138,8 +138,16 @@ def verify_usage_code(
 
     normalized_code = (code or "").strip()
     session = db.session
+    is_in_txn = False
+    if hasattr(session, "in_transaction"):
+        is_in_txn = session.in_transaction()
+    elif hasattr(session, "get_transaction"):
+        is_in_txn = session.get_transaction() is not None
+    else:
+        is_in_txn = session.is_active
+
     transaction_context = (
-        session.begin_nested() if session.in_transaction() else session.begin()
+        session.begin_nested() if is_in_txn else session.begin()
     )
     with transaction_context:
         offer = Offer.query.filter_by(id=offer_id).with_for_update().first()

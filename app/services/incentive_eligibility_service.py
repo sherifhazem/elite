@@ -54,11 +54,12 @@ def evaluate_offer_eligibility(member_id: int | None, offer_id: int) -> dict:
                 eligible = False
                 reason = "inactive_member"
 
-        if eligible and _partner_rules_enabled(settings):
-            applied_rules.append("active_partner_required")
-            if not is_partner_active(offer.company_id):
-                eligible = False
-                reason = "inactive_partner"
+        # Partner activity check removed to avoid cold-start deadlock
+        # if eligible and _partner_rules_enabled(settings):
+        #     applied_rules.append("active_partner_required")
+        #     if not is_partner_active(offer.company_id):
+        #         eligible = False
+        #         reason = "inactive_partner"
 
     if eligible:
         reason = "eligible"
