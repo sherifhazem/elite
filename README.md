@@ -1,83 +1,145 @@
 # ELITE Platform
 
-منصة ELITE توفّر بوابة للشركات والأعضاء لإدارة العروض والخصومات مع نظام مراجعة وتفعيل متكامل.
+## 1. Project Overview
+- منصة ELITE توفّر بوابة للشركات والأعضاء لإدارة العروض والخصومات مع نظام مراجعة وتفعيل متكامل.
+- What ELITE does today:
+  - Provides a member portal for browsing offers, activating redemptions, and viewing notifications. 
+  - Provides a company (partner) portal for managing offers, monitoring redemptions, and issuing usage verification codes. 
+  - Provides an admin dashboard for managing users, companies, offers, settings, reports, and communications.
+  - Exposes JSON APIs for offers, redemptions, usage-code verification, and notifications.
+- Target users:
+  - **Admin** (admin/superadmin) operating the platform.
+  - **Partner (Company)** managing offers and redemptions.
+  - **Member** browsing offers and activating redemptions.
+- Core value proposition (non-marketing): centralized offer management, onboarding, and verification workflows with role-based access and audit logging.
 
-## متطلبات النشر والإعداد الآمن
-- يجب توفير قيمة `SECRET_KEY` صالحة في المتغيرات البيئية قبل تشغيل التطبيق؛ غيابها يؤدي لإيقاف التشغيل.
-- حماية CSRF يجب أن تبقى مفعّلة (`WTF_CSRF_ENABLED=True`) ولا يمكن تشغيل التطبيق عند تعطيلها أو تفعيل `RELAX_SECURITY_CONTROLS`.
-- نماذج إعدادات الإدارة تتطلب تضمين حقل CSRF مخفي (`csrf_token`) ضمن النموذج لضمان قبول الإرسال.
-- في بيئة الإنتاج، يجب ضبط إعدادات البريد (`MAIL_SERVER`، `MAIL_USERNAME`، `MAIL_PASSWORD`) وربط قاعدة البيانات عبر `SQLALCHEMY_DATABASE_URI`.
-- استخدم ملف `.env` (مثل `.env.example`) لضبط المتغيرات البيئية المطلوبة قبل تشغيل الخادم.
+## 2. System Architecture
+- High-level components:
+  - Flask application factory initializes configuration, extensions (DB, mail, CSRF, login), logging middleware, and blueprints. 
+  - Module packages:
+    - `app/modules/members`: public site, member auth, portal, and member APIs.
+    - `app/modules/companies`: company registration and company portal.
+    - `app/modules/admin`: admin dashboard, reports, settings, and communications.
+  - Service layer for business logic (registration, redemption, usage codes, admin settings).
+  - Data layer using SQLAlchemy models with Flask-Migrate for migrations.
+  - Redis-backed role permission storage and JSON logging to `logs/app.log.json`.
+- Module responsibility boundaries:
+  - **Members**: registration/login, portal pages, offers list, redemptions API, usage-code verification, notifications API.
+  - **Companies**: registration request intake, portal dashboards, offer CRUD, redemption verification, usage codes.
+  - **Admin**: user/company/offer management, site settings, role permissions, analytics/reports, activity log.
+- Request lifecycle (request → response):
+  - Structured logging middleware builds request/trace context, normalizes/cleans payloads, and validates input before route handlers run.
+  - `before_request` attaches `g.current_user`, resolves roles, and enforces protected `/admin` and `/company` access with 401/403 responses for unauthenticated/inactive users.
+  - Route handlers process the request and return responses.
+  - `after_request` refreshes auth cookies for authenticated users and logs structured request cycles with request/trace IDs.
 
-## ملخص التغييرات الأخيرة
-- تحسين صفحة تسجيل الشركات بإبراز الحقول الإلزامية وتنبيه المستخدم قبل الإرسال.
-- تعزيز تجربة المستخدم برسالة واضحة عند نقص البيانات وإرسال بريد ترحيبي يؤكد استلام الطلب.
-- ضبط رسالة الترحيب للشركات الجديدة لتوضيح أن الطلب قيد المراجعة وسيتم التواصل قريبًا.
-- إضافة صفحة تأكيد لطلبات تسجيل الشركات مع توجيه واضح وروابط سريعة للعودة.
-- ربط قوائم المدن ومجالات العمل بجدول قاعدة بيانات مركزي بدل التخزين المحلي لضمان التكامل مع بقية النماذج.
+## 3. Roles & Access Model
+- **Admin**
+  - Capabilities:
+    - Access admin dashboard, users, companies, offers, settings, reports, activity log, and communications views.
+    - Configure admin settings (activity rules, verification settings, offer type toggles) and managed lists (cities/industries).
+    - Superadmin-only: manage role permissions.
+  - Restrictions:
+    - Requires authenticated, active admin/superadmin session.
+    - Non-superadmin users cannot modify superadmin accounts.
+  - Entry points:
+    - `/admin/`, `/admin/dashboard`, `/admin/users`, `/admin/companies`, `/admin/offers`, `/admin/reports`.
+- **Partner (Company)**
+  - Capabilities:
+    - Access company dashboard, manage offers, view redemption history, verify/confirm redemptions, and generate usage codes.
+    - Complete correction requests via `/company/complete_registration/<company_id>`.
+  - Restrictions:
+    - Requires authenticated, active company account with a linked `company_id`.
+    - Suspended companies are redirected away from portal access.
+  - Entry points:
+    - `/company/dashboard`, `/company/offers`, `/company/redemptions`, `/company/usage-codes`, `/company/register`.
+- **Member**
+  - Capabilities:
+    - Access member portal, browse offers, activate redemptions, verify usage codes, and view notifications.
+  - Restrictions:
+    - Requires authenticated, active member account; role-gated for redemption and usage-code verification.
+  - Entry points:
+    - `/portal`, `/portal/offers`, `/api/redemptions`, `/api/usage-codes/verify`, `/api/notifications`.
 
-## Phase 1 Cleanup
-- تمت إزالة منطق مستويات العضوية (Basic/Silver/Gold/Platinum) والترقيات اليدوية والخصومات الثابتة غير المعتمدة على الاستخدام.
-- التدفق المبسط (نموذجي/قابل للتغيير مع تقدم التطوير): Register → Use → Verify → Incentivize (أماكن حجز للتطبيق الفعلي لاحقًا).
+## 4. Core Functional Flows
+- Authentication & sessions:
+  - API login issues a JWT token, sets an HttpOnly cookie, and returns a role-based redirect URL.
+  - Authenticated requests refresh the auth cookie automatically.
+  - Logout clears session state, clears auth cookies, and redirects to the login page.
+  - Password reset flow: request reset → email link to `/reset-password/<token>` → POST to `/api/auth/reset-password/<token>`.
+  - Email verification activates user accounts via `/api/auth/verify/<token>`.
+- Registration:
+  - Member registration via `/api/auth/register` (JSON) or `/register/member` (HTML form).
+  - Company registration via `/company/register` with validation for phone number, city, and industry choices; creates a pending company with an inactive owner and notifies admins.
+  - Company correction flow allows resubmission via `/company/complete_registration/<company_id>`.
+- Offer lifecycle:
+  - Companies create, edit, and delete offers through the company portal; offer classifications are enforced by admin settings and blocked if disabled.
+  - Admins manage global offers in the admin dashboard and can broadcast offer notifications.
+  - Members consume offers through the portal and `/api/offers` list endpoint; discounts remain based on `base_discount`.
+- Usage / verification logic:
+  - Partners generate time-limited usage codes; any existing active code is expired when a new one is created.
+  - Members verify usage codes for a selected offer; eligibility checks apply (active member/partner rules and offer classification toggles).
+  - Verification results include `valid`, `invalid`, `expired`, `usage_limit_reached`, or `not_eligible` and are logged in `ActivityLog`.
+  - Redemption flow: members activate an offer to receive a redemption code and QR token; companies verify and confirm redemption usage.
+- Activity logging:
+  - `ActivityLog` captures usage-code attempts and report export events.
+  - Admins can review activity logs from the admin panel.
 
-## Phase 2 – Admin Settings
-- إضافة قسم إعدادات إدارية يتيح ضبط قواعد النشاط للأعضاء والشركاء (عدد الاستخدامات، نافذة الوقت، انتهاء الصلاحية، ومتطلب العملاء الفريدين).
-- دعم إعدادات رمز التحقق (صيغة الرمز، مدة الصلاحية، الحد الأقصى للاستخدام في الدقيقة) من خلال واجهة إدارة قابلة للتعديل.
-- إمكانية تفعيل أو إيقاف أنواع العروض (عرض أول مرة، الولاء، للأعضاء النشطين فقط، ساعة السعادة، منتصف الأسبوع) دون تغييرات برمجية.
-- إزالة واجهة خصومات العضوية القديمة من إعدادات الإدارة لصالح قواعد النشاط الجديدة.
-- إعدادات الإدارة الآن محايدة بالنسبة لمستويات العضوية، مع تأجيل منطق الاعتماد على الاستخدام للمرحلة اللاحقة.
-- مفاتيح إعدادات الإدارة المخزنة في قاعدة البيانات:
-  - `member_activity_rules`: `{required_usages, time_window_days, active_grace_mode}`
-  - `partner_activity_rules`: `{required_usages, require_unique_customers, time_window_days, active_grace_mode}`
-  - `verification_code`: `{code_format, code_expiry_seconds, max_uses_per_minute}`
-  - `offer_types`: `{first_time_offer, loyalty_offer, active_members_only, happy_hour, mid_week}`
-- يتم تمرير رمز CSRF تلقائيًا مع جميع طلبات AJAX الخاصة بإعدادات الإدارة عبر ترويسة `X-CSRFToken`.
-- تبويب إعدادات الإدارة يعرض في `app/modules/admin/templates/admin/settings.html`؛ التنقل بين التبويبات في نفس الملف بينما يحتوي قسم إعدادات الإدارة على نموذج واحد فقط بدون تكرار.
+## 5. Security Model
+- CSRF enforcement (mandatory):
+  - CSRF protection is enabled by default and startup fails if it is disabled or if relaxed security controls are enabled.
+  - Some auth API endpoints explicitly exempt CSRF for JSON workflows.
+- Role-based access control:
+  - `admin_required`, `company_required`, and `require_role` decorators enforce role checks and active-account status.
+  - The role access matrix allows higher-privileged roles to satisfy lower-privileged requirements.
+- Environment-based configuration:
+  - Production startup requires a `SECRET_KEY`, database URL, and mail configuration before the app boots.
+- Explicitly blocked behaviors:
+  - Unauthenticated access to `/admin` and `/company` (outside the exempt paths) is rejected with 401.
+  - Inactive accounts are blocked with 403 for protected routes.
+  - Company portal access is denied without a company role and linked `company_id`.
 
-## Phase 2 – Partner Offer Classification
-- تلتزم نماذج إنشاء وتعديل عروض الشركاء بإعدادات الإدارة لعناصر التصنيف (عرض أول مرة، الولاء، للأعضاء النشطين فقط، ساعة السعادة، منتصف الأسبوع).
-- يتم حظر حفظ أي عرض جديد أو محدث يختار تصنيفات معطّلة عبر التحقق الخادمي ورسائل خطأ واضحة للمستخدم.
-- تعرض واجهة تحرير العرض الحالة الحالية لكل تصنيف، مع شارة "Disabled" للعناصر الموقوفة تنبيهاً للمستخدمين.
+## 6. Configuration & Environment
+- Required environment variables:
+  - `SECRET_KEY` (always required; startup aborts if missing).
+  - In production: `SQLALCHEMY_DATABASE_URI`, `MAIL_SERVER`, `MAIL_USERNAME`, `MAIL_PASSWORD`.
+- Additional configuration knobs (optional but supported):
+  - `REDIS_URL`, `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`, `TIMEZONE`.
+  - `MAIL_DEFAULT_SENDER`, `MAIL_PORT`, `MAIL_USE_TLS`.
+  - `RELAX_SECURITY_CONTROLS` and `WTF_CSRF_ENABLED` (guarded; disabling CSRF causes startup failure).
+  - `ADMIN_CONTACT_EMAIL` (used for company registration notifications).
+- Runtime assumptions:
+  - SQL database accessible via SQLAlchemy.
+  - Redis available for role permission storage.
+- Production vs development safeguards:
+  - Dev-only blueprints are registered only when `ENV != "production"`.
 
-## Phase 3A – Usage Code & Logging
-- إضافة نموذج UsageCode لإصدار رمز تحقق رقمي مؤقت لكل شريك مع الحد الأقصى للاستخدام.
-- الشركاء يستطيعون إنشاء رمز جديد يدويًا، ويُلغى أي رمز نشط سابق تلقائيًا.
-- الأعضاء يدخلون رمز الاستخدام يدويًا بعد اختيار العرض بدون تطبيق خصومات.
-- يتم تسجيل جميع محاولات الإدخال في ActivityLog مع النتيجة (valid/expired/invalid/usage_limit_reached).
-- إعدادات الإدارة تدعم مدة صلاحية رمز الاستخدام والحد الأقصى للاستخدام عبر مفاتيح:
-  - `verification_code`: `{usage_code_expiry_seconds, usage_code_max_uses_per_window}`
+## 7. Database & Migrations
+- ORM usage:
+  - SQLAlchemy models back users, companies, offers, offer classifications, redemptions, notifications, usage codes, permissions, admin settings, lookup choices, and activity logs.
+- Migration strategy:
+  - Flask-Migrate (Alembic) is configured via the `migrations/` directory.
+- Data integrity rules (as implemented):
+  - Unique constraints on user email/username, company name, lookup choices (`list_type` + `name`), redemption codes, and offer classification per offer.
+  - Usage codes are 4–5 digit strings linked to companies with expiration timestamps.
 
-## Phase 3B – Code Verification
-- تحقق الخادم يتحقق من وجود الرمز وصلاحيته وحدود الاستخدام ضمن نافذة الزمن المحددة في إعدادات الإدارة.
-- النتيجة المعتمدة للتحقق هي واحدة من: valid / expired / invalid / usage_limit_reached.
-- منع التحقق المتكرر لنفس العضو على نفس العرض خلال نافذة صلاحية الرمز.
-- يتم تحديث عداد الاستخدام وتسجيل النتيجة في ActivityLog بنفس المعاملة لضمان الاتساق.
+## 8. Logging & Observability
+- ActivityLog behavior:
+  - Usage-code attempts, report exports, and related metadata are stored in `activity_log`.
+- Request tracing:
+  - Structured logging emits JSON to `logs/app.log.json` and propagates `X-Request-ID`, `X-Trace-ID`, and `X-Parent-ID` headers.
+- Admin visibility:
+  - Admins can view the activity log at `/admin/activity-log`.
 
-## تدفق إعادة تعيين كلمة المرور
-- رابط البريد الإلكتروني أصبح يشير إلى واجهة المستخدم (GET) على المسار `/reset-password/<token>` بدل استدعاء واجهة برمجية مباشرة.
-- صفحة الواجهة تعرض حالة الرابط: إن كان منتهي الصلاحية تُظهر رسالة ودية مع رابط لطلب رابط جديد، وإن كان صالحًا تُظهر نموذج تعيين كلمة المرور الجديدة.
-- نموذج إعادة التعيين يرسل الطلب إلى واجهة الـ API (POST) الموجودة مسبقًا على المسار `/api/auth/reset-password/<token>` مع كلمة المرور الجديدة فقط.
-- بعد نجاح التعيين تظهر رسالة نجاح ويتم توجيه المستخدم تلقائيًا لصفحة تسجيل الدخول.
+## 9. Operational Notes
+- Known limitations (visible in code):
+  - Membership upgrade logic and incentive calculations are placeholder implementations; upgrade requests are not allowed and discounts remain based on `base_discount`.
+- Safe extension boundaries:
+  - Add new role-guarded routes using existing access-control decorators.
+  - Store new admin-configurable settings in `AdminSetting` and role permissions in Redis.
+  - Maintain request validation/cleaning through the existing middleware stack.
 
-### اعتبارات الأمان
-- عدم الإفصاح عن وجود البريد الإلكتروني؛ يتم إرجاع استجابة موحدة عند طلب رابط الاستعادة.
-- الروابط الزمنية تعتمد على الرموز الموقعة والمحددة بزمن انتهاء، ويُفترض استخدامها لمرة واحدة فقط.
-- فصل المسارات بين GET (واجهة المستخدم) وPOST (واجهة الـ API) يحافظ على واجهة برمجية نظيفة ويمنع أخطاء "الطريقة غير مسموحة" عند فتح الروابط من البريد.
-
-## Role-based Login Redirects
-- بعد نجاح تسجيل الدخول يتم توجيه المستخدم تلقائيًا حسب الدور.
-- حسابات الشركات تتجه إلى `/company/dashboard`.
-- الأعضاء العاديون يتجهون إلى `/member/dashboard`.
-- المشرفون (Admins/Superadmins) يتجهون إلى `/admin/dashboard`.
-- إذا تعذر مطابقة الدور يتم الرجوع إلى الصفحة الرئيسية بأمان.
-
-## Company Portal Protection
-- جميع مسارات بوابة الشركات ضمن `/company` (بما في ذلك `/company/dashboard`) تتطلب جلسة مصادقة صالحة.
-- الوصول مسموح فقط لحسابات دورها `company` مع وجود `company_id` مرتبط بالحساب.
-- الزائر غير المصادق يتم توجيهه إلى `/login`.
-- المستخدم المصادق لكن بدون دور شركة أو بدون `company_id` يحصل على استجابة 403 برسالة عامة دون كشف بيانات حساسة.
-
-## Logging
-- يتم تسجيل أحداث منع الوصول إلى بوابة الشركات قبل استجابة 403 عبر الحدث `company_access_denied`.
-- الحقول المسجلة لهذا الحدث هي: `user_id` و`role` و`company_id` و`path`.
-- لا يتم تسجيل أي بيانات حساسة (مثل رموز المصادقة أو تفاصيل الطلب الكاملة).
+## 10. Documentation Changelog
+- **2026-01-13**
+  - Summary: Rewrote README to match current code behavior, architecture, roles, flows, security, configuration, and operational constraints.
+  - Reason: Align documentation with the implemented Flask application as the single source of truth.
