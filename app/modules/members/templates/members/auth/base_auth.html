@@ -40,14 +40,6 @@
   </head>
 
   <body class="auth-body d-flex flex-column min-vh-100">
-      <!-- شاشة الافتتاح (Splash Intro) -->
-    <div id="splash-screen">
-      <div class="splash-content">
-        <img src="{{ url_for('static', filename='members/images/logo.png') }}" alt="ELITE" class="splash-logo">
-        <h2 class="splash-title">ELITE</h2>
-      </div>
-    </div>
-
     <!-- شريط علوي يظهر فقط على الشاشات الكبيرة -->
     <header class="auth-header container py-3 d-none d-md-block">
       <div class="d-flex justify-content-between align-items-center">
@@ -86,7 +78,6 @@
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
       crossorigin="anonymous"
     ></script>
-    <script src="{{ url_for('static', filename='members/js/auth_splash.js') }}" defer></script>
     {% block extra_scripts %}{% endblock %}
 
 

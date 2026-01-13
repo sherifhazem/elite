@@ -46,6 +46,10 @@ The Members Portal uses a permanent dark theme by default, driven entirely by CS
 
 Members authentication screens reuse the same Dark Design System tokens defined in `app/modules/members/static/members/css/portal_layout.css`. The Auth layouts load these tokens directly and apply them through `app/modules/members/static/members/css/auth_layout.css` to keep login, registration, and password flows visually consistent with the Members Portal.
 
+Auth UI does not include a splash screen.
+
+Flash messages in Auth UI are custom-styled to match the Dark Design System rather than relying on Bootstrap defaults.
+
 ---
 
 ## 2. System Architecture
