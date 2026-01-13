@@ -50,44 +50,45 @@ def _generate_numeric_code() -> str:
 def generate_usage_code(partner_id: int) -> UsageCode:
     """Create a fresh usage code for a partner, expiring any active code."""
 
-    with db.session.begin():
-        now = datetime.utcnow()
-        settings = get_usage_code_settings()
+    now = datetime.utcnow()
+    settings = get_usage_code_settings()
 
-        UsageCode.query.filter(UsageCode.expires_at > now).with_for_update().all()
-        active_codes = (
-            UsageCode.query.filter_by(partner_id=partner_id)
+    UsageCode.query.filter(UsageCode.expires_at > now).with_for_update().all()
+    active_codes = (
+        UsageCode.query.filter_by(partner_id=partner_id)
+        .filter(UsageCode.expires_at > now)
+        .with_for_update()
+        .all()
+    )
+    for active in active_codes:
+        active.expires_at = now
+
+    code_value = None
+    for _ in range(30):
+        candidate = _generate_numeric_code()
+        collision = (
+            UsageCode.query.filter_by(code=candidate)
             .filter(UsageCode.expires_at > now)
             .with_for_update()
-            .all()
+            .first()
         )
-        for active in active_codes:
-            active.expires_at = now
+        if collision is None:
+            code_value = candidate
+            break
+    else:  # pragma: no cover - extreme collision edge case
+        raise RuntimeError("Unable to generate a unique usage code.")
 
-        for _ in range(30):
-            candidate = _generate_numeric_code()
-            collision = (
-                UsageCode.query.filter_by(code=candidate)
-                .filter(UsageCode.expires_at > now)
-                .with_for_update()
-                .first()
-            )
-            if collision is None:
-                code_value = candidate
-                break
-        else:  # pragma: no cover - extreme collision edge case
-            raise RuntimeError("Unable to generate a unique usage code.")
-
-        usage_code = UsageCode(
-            code=code_value,
-            partner_id=partner_id,
-            created_at=now,
-            expires_at=now + timedelta(seconds=settings.expiry_seconds),
-            usage_count=0,
-            max_uses_per_window=settings.max_uses_per_window,
-        )
-        db.session.add(usage_code)
-        return usage_code
+    usage_code = UsageCode(
+        code=code_value,
+        partner_id=partner_id,
+        created_at=now,
+        expires_at=now + timedelta(seconds=settings.expiry_seconds),
+        usage_count=0,
+        max_uses_per_window=settings.max_uses_per_window,
+    )
+    db.session.add(usage_code)
+    db.session.commit()
+    return usage_code
 
 
 def log_usage_attempt(
