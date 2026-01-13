@@ -137,7 +137,11 @@ def verify_usage_code(
     """Validate a usage code for a selected offer and record the attempt."""
 
     normalized_code = (code or "").strip()
-    with db.session.begin():
+    session = db.session
+    transaction_context = (
+        session.begin_nested() if session.in_transaction() else session.begin()
+    )
+    with transaction_context:
         offer = Offer.query.filter_by(id=offer_id).with_for_update().first()
         partner_id = offer.company_id if offer else None
 
