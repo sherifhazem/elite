@@ -23,6 +23,23 @@ The member portal UI theme is centralized in `app/modules/members/static/members
 
 ---
 
+## Dark Mode (Members Portal)
+
+The Members Portal uses a full dark theme driven by CSS tokens in `app/modules/members/static/members/css/portal_layout.css`.
+
+**Reference colors**
+- Primary Background: `#1C2D45` (`--bg-primary`)
+- Headings & Text: `#FFFFFF` (`--text-primary`)
+- Gold: `#D4AF37` (`--gold`)
+- Royal Black: `#111111` (`--royal-black`)
+- Soft Green: `#4CAF50` (`--soft-green`)
+
+**How to adjust**
+- Update the tokens in the `:root` block (e.g., `--bg-primary`, `--text-primary`, `--card-bg`, `--muted-text`) to tune the dark palette without changing templates.
+- Card surfaces inherit from `--card-bg` and use contextual muted tokens for readable contrast across light card surfaces on the dark shell.
+
+---
+
 ## 2. System Architecture
 
 ### Flask application and extensions
