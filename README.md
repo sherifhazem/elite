@@ -44,6 +44,10 @@ The members home screen is intentionally minimal and mobile-first. Above-the-fol
 
 The offers screen is designed to feel like a mobile app: a single Arabic title, a pill-shaped search input, and a gold filter button introduce a two-column grid of tappable offer cards. The grid keeps spacing consistent so offers read as compact tiles on small screens while preserving a prominent gold discount badge and RTL alignment throughout.
 
+### UX Polish
+
+Recent refinements are visual and interaction-only updates (icons, focus/hover feedback, and touch states) that keep the existing layout and offer logic intact.
+
 ---
 
 ## Dark Mode (Members Portal)
