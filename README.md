@@ -13,6 +13,16 @@ A centralized, role-driven platform with shared services for offers, redemptions
 
 ---
 
+## UI Theme
+
+The member portal UI theme is centralized in `app/modules/members/static/members/css/portal_layout.css`. Update the design tokens in the `:root` block to adjust colors and sizing across the portal without changing template markup.
+
+**Where to edit:**
+- **Colors:** `--bg-primary`, `--text-primary`, `--gold`, `--royal-black`, `--soft-green`, `--card-bg`, `--muted-text`.
+- **Sizing & layout:** `--radius-card`, `--radius-pill`, `--shadow-soft`, `--space-xs`, `--space-sm`, `--space-md`, `--space-lg`, `--container-width`.
+
+---
+
 ## 2. System Architecture
 
 ### Flask application and extensions
