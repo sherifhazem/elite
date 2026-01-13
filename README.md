@@ -40,6 +40,12 @@ The members home screen is intentionally minimal and mobile-first. Above-the-fol
 
 ---
 
+## Offers UI (Members Portal)
+
+The offers screen is designed to feel like a mobile app: a single Arabic title, a pill-shaped search input, and a gold filter button introduce a two-column grid of tappable offer cards. The grid keeps spacing consistent so offers read as compact tiles on small screens while preserving a prominent gold discount badge and RTL alignment throughout.
+
+---
+
 ## Dark Mode (Members Portal)
 
 The Members Portal uses a permanent dark theme by default, driven entirely by CSS tokens in `app/modules/members/static/members/css/portal_layout.css`. Templates must only inherit these styles (no inline overrides) so the tokens remain the single source of truth.
