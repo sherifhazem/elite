@@ -4,29 +4,18 @@
 {% block title %}الرئيسية · ELITE{% endblock %}
 {% block page_heading %}الرئيسية{% endblock %}
 {% block content %}
-    <section class="home-hero">
-        <div class="home-hero__header">
-            <div class="home-hero__logo" aria-hidden="true"><i class="fa-solid fa-crown"></i></div>
-        </div>
-        <div>
-            <h1 class="home-hero__title">
-                {% if current_user.is_authenticated %}
-                    مرحباً {{ current_user.username }}
-                {% else %}
-                    مرحباً بك في ELITE
-                {% endif %}
-            </h1>
-            <p class="home-hero__text">
-                {% if current_user.is_authenticated %}
-                    تابع أحدث العروض المتاحة واجمع نقاطك بسهولة من الهاتف.
-                {% else %}
-                    قم بتسجيل الدخول لمزامنة نشاطك والوصول إلى أفضل العروض المصممة للأعضاء.
-                {% endif %}
-            </p>
-        </div>
-        <div class="home-hero__actions">
-            <a class="home-hero__cta" href="{{ url_for('portal.member_portal_offers') }}" data-nav-link data-nav-target="offers">استكشف العروض</a>
-            <a class="home-hero__secondary" href="{{ url_for('portal.member_portal_profile') }}" data-nav-link data-nav-target="profile">عرض الملف</a>
+    <section class="home-intro">
+        <h1 class="home-intro__title">العروض</h1>
+        <div class="home-search" role="search">
+            <label class="visually-hidden" for="home-search-input">البحث</label>
+            <input
+                class="home-search__input"
+                id="home-search-input"
+                type="search"
+                name="q"
+                placeholder="ابحث باسم الشريك أو التصنيف"
+                autocomplete="off"
+            />
         </div>
     </section>
     <section class="home-section">
