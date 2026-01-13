@@ -4,14 +4,22 @@
 {% block title %}العروض · ELITE{% endblock %}
 {% block page_heading %}العروض{% endblock %}
 {% block content %}
-    <section class="offers-banner">
-        <div>
-            <h1 class="offers-banner__title">عروض {{ membership_level }} مخصصة لك</h1>
-            <p class="offers-banner__text">اطلع على الخصومات الحالية واضغط على “View Offer” لمشاهدة التفاصيل الفورية.</p>
+    <section class="offers-header">
+        <h1 class="offers-header__title">العروض</h1>
+        <div class="home-search offers-search" role="search">
+            <label class="visually-hidden" for="offers-search-input">البحث</label>
+            <input
+                class="home-search__input"
+                id="offers-search-input"
+                type="search"
+                name="q"
+                placeholder="ابحث باسم الشريك أو التصنيف"
+                autocomplete="off"
+            />
         </div>
-        <span class="offers-banner__badge">{{ membership_level }}</span>
+        <button class="offers-filter" type="button">فلترة</button>
     </section>
-    <section>
+    <section class="offers-body">
         {% if offers %}
             <div class="offers-grid" role="list">
                 {% set level_key = membership_level|lower %}
@@ -47,16 +55,17 @@
                             data-offer-eligibility-reason="{{ eligibility_reason }}"
                         >
                             <header class="offer-card__header">
-                                <div>
+                                <div class="offer-card__title-group">
                                     <h2 class="offer-card__title">{{ offer.title }}</h2>
                                     <p class="offer-card__company">{{ offer.company.name }}</p>
+                                    {% if offer.category is defined and offer.category %}
+                                        <p class="offer-card__category">
+                                            {{ offer.category.name if offer.category.name is defined else offer.category }}
+                                        </p>
+                                    {% endif %}
                                 </div>
                                 <span class="offer-card__discount offer-card__discount--{{ level_key }}">{{ discount_value }}%</span>
                             </header>
-                            <p class="offer-card__summary">{{ offer.description or 'استمتع بخصم حصري ضمن مزايا عضوية ELITE.' }}</p>
-                            {% if offer.company.summary %}
-                                <p class="offer-card__company-summary">{{ offer.company.summary }}</p>
-                            {% endif %}
                             <footer class="offer-card__footer">
                                 <span class="offer-card__validity">
                                     {% if offer.valid_until %}
