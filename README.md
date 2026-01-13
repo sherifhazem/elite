@@ -34,6 +34,12 @@ The Members Portal shell lives in `app/modules/members/templates/members/portal/
 
 ---
 
+## Home UI (Members Portal)
+
+The members home screen is intentionally minimal and mobile-first. Above-the-fold content should be limited to a single Arabic title and a pill-shaped search field, followed by touch-friendly offer cards that reuse the existing card system. Keep the layout uncluttered and RTL-aligned so the page feels like a lightweight mobile app surface rather than a dense landing page.
+
+---
+
 ## Dark Mode (Members Portal)
 
 The Members Portal uses a permanent dark theme by default, driven entirely by CSS tokens in `app/modules/members/static/members/css/portal_layout.css`. Templates must only inherit these styles (no inline overrides) so the tokens remain the single source of truth.

@@ -299,6 +299,42 @@ img {
 }
 
 /* Portal home hero and sections. */
+.home-intro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.home-intro__title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+.home-search {
+    position: relative;
+}
+
+.home-search__input {
+    width: 100%;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--portal-border);
+    background: var(--color-gray-100);
+    color: var(--text-primary);
+    padding: 14px 18px;
+    font-size: 0.95rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.home-search__input::placeholder {
+    color: var(--portal-muted);
+}
+
+.home-search__input:focus {
+    outline: 2px solid color-mix(in srgb, var(--gold) 45%, transparent);
+    outline-offset: 2px;
+}
+
 .home-hero {
     background: linear-gradient(145deg, rgba(78, 43, 143, 0.92), rgba(140, 91, 255, 0.85));
     border-radius: var(--radius-card);
