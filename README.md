@@ -23,6 +23,17 @@ The member portal UI theme is centralized in `app/modules/members/static/members
 
 ---
 
+## Mobile Shell (Members Portal)
+
+The Members Portal shell lives in `app/modules/members/templates/members/portal/base.html`. It is mobile-first, capped at 420px, enforces full-height layout with no horizontal overflow, and keeps the bottom navigation visible with safe-area padding for modern devices.
+
+**Key behaviors:**
+- Use RTL (`dir="rtl"`) for Arabic layouts while keeping Font Awesome icons intact.
+- Keep the bottom navigation markup and links unchanged; only update styling for translucent dark background, rounded container, and gold active icons.
+- Avoid loading new fonts; use `Tajawal` or web-safe fallbacks already available in the stack.
+
+---
+
 ## Dark Mode (Members Portal)
 
 The Members Portal uses a permanent dark theme by default, driven entirely by CSS tokens in `app/modules/members/static/members/css/portal_layout.css`. Templates must only inherit these styles (no inline overrides) so the tokens remain the single source of truth.

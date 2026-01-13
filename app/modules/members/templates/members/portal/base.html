@@ -8,16 +8,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{% block title %}ELITE Mobile Portal{% endblock %}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap"
-        rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         integrity="sha512-VlC5x7r+J1kG0VYLRNvKcJsteVEh9UpAJZciV06Pq4jG3Ejj6+UeJ8V+RaH59RUW2KIiMzH6I0X58F3R9yN9ZA=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ url_for('static', filename='members/css/portal_layout.css') }}" />
     <link rel="icon" href="{{ url_for('static', filename='members/images/logo.png') }}" type="image/png" />
+    <style>
+        .portal-mobile-shell,
+        .portal-mobile-body {
+            height: 100%;
+            font-family: "Tajawal", system-ui, -apple-system, "Segoe UI", sans-serif;
+            overflow-x: hidden;
+        }
+
+        .portal-mobile-shell h1,
+        .portal-mobile-shell h2,
+        .portal-mobile-shell h3,
+        .portal-mobile-shell h4,
+        .portal-mobile-shell h5,
+        .portal-mobile-shell h6 {
+            font-family: inherit;
+        }
+
+        .app-shell {
+            min-height: 100vh;
+            min-height: 100dvh;
+            max-width: 420px;
+            width: 100%;
+            margin: 0 auto;
+            overflow-x: hidden;
+        }
+
+        .app-main {
+            padding-bottom: calc(110px + env(safe-area-inset-bottom));
+            overflow-x: hidden;
+        }
+
+        .app-nav {
+            background: rgba(17, 17, 17, 0.78);
+            border-radius: 28px;
+            margin: 0 16px 16px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .app-nav__item--active,
+        .app-nav__item--active .app-nav__icon {
+            color: var(--gold);
+        }
+    </style>
 </head>
 
 <body class="portal-mobile-body">
