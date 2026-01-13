@@ -23,6 +23,12 @@ The member portal UI theme is centralized in `app/modules/members/static/members
 
 ---
 
+## CSS Refactor (Optional)
+
+The member portal stylesheet has been refactored to remove unused CSS and separate layout rules from shared and screen-specific components, without any visual or functional changes.
+
+---
+
 ## Mobile Shell (Members Portal)
 
 The Members Portal shell lives in `app/modules/members/templates/members/portal/base.html`. It is mobile-first, capped at 420px, enforces full-height layout with no horizontal overflow, and keeps the bottom navigation visible with safe-area padding for modern devices.
