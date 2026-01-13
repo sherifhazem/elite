@@ -1,54 +1,46 @@
-{% extends "core/base.html" %}
+{% extends "members/auth/base_auth.html" %}
 {% block title %}اختر طريقة الانضمام{% endblock %}
 {% block content %}
-<div class="container py-5 text-center">
-    <h1 class="mb-4 fw-bold">اختر طريقة انضمامك إلى ELITE</h1>
-    <p class="text-muted mb-5">اختر المسار الذي يناسبك للبدء بالاستفادة من خدماتنا.</p>
-
-    <div class="row justify-content-center g-4">
-
-        <!-- انضم كعضو -->
-        <div class="col-12 col-md-5">
-            <div class="card shadow-sm p-4 h-100 border-0 rounded-4 hover-shadow transition-all">
-                <h3 class="fw-semibold mb-3 text-primary">👤 انضم كعضو</h3>
-                <p class="text-muted mb-4">
-                    يمكنك التسجيل كعضو للاستفادة من الخصومات والعروض الحصرية المقدمة من شركائنا.
-                </p>
-                <a href="{{ url_for('auth.register_member') }}" class="btn btn-lg btn-outline-primary w-100 fw-bold rounded-pill">
-                    انضم الآن كعضو
-                </a>
-            </div>
-        </div>
-
-        <!-- انضم كشركة -->
-        <div class="col-12 col-md-5">
-            <div class="card shadow-sm p-4 h-100 border-0 rounded-4 hover-shadow transition-all">
-                <h3 class="fw-semibold mb-3 text-success">🏢 انضم كشركة</h3>
-                <p class="text-muted mb-4">
-                    يمكنك التسجيل كشركة لتقديم عروضك الخاصة وجذب عملاء جدد عبر منصة ELITE.
-                </p>
-                <a href="{{ url_for('company.register_company') }}" class="btn btn-lg btn-success w-100 fw-bold rounded-pill">
-                    انضم كشريك الآن
-                </a>
-            </div>
-        </div>
-
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-card__header">
+      <div class="auth-icon">
+        <i class="fa-solid fa-clipboard-list fa-3x"></i>
+      </div>
+      <h2 class="auth-title">اختر طريقة انضمامك إلى ELITE</h2>
+      <p class="auth-subtitle">اختر المسار الذي يناسبك للبدء بالاستفادة من خدماتنا.</p>
     </div>
 
-    <div class="mt-5">
-        <p class="text-muted small">
-            بالفعل لديك حساب؟ <a href="{{ url_for('auth.login') }}" class="fw-semibold text-decoration-none">تسجيل الدخول</a>
-        </p>
+    <div class="auth-card__body">
+      <div class="auth-choice-grid">
+        <div class="auth-option-card">
+          <h4 class="auth-option-card__title">انضم كعضو</h4>
+          <p class="auth-option-card__desc">
+            يمكنك التسجيل كعضو للاستفادة من الخصومات والعروض الحصرية المقدمة من شركائنا.
+          </p>
+          <a href="{{ url_for('auth.register_member') }}" class="btn btn-gradient w-100 py-2">
+            انضم الآن كعضو
+          </a>
+        </div>
+
+        <div class="auth-option-card">
+          <h4 class="auth-option-card__title">انضم كشركة</h4>
+          <p class="auth-option-card__desc">
+            يمكنك التسجيل كشركة لتقديم عروضك الخاصة وجذب عملاء جدد عبر منصة ELITE.
+          </p>
+          <a href="{{ url_for('company.register_company') }}" class="ghost-button auth-ghost">
+            انضم كشريك الآن
+          </a>
+        </div>
+      </div>
+
+      <div class="auth-footer mt-4">
+        <span class="auth-muted">بالفعل لديك حساب؟</span>
+        <a href="{{ url_for('auth.login') }}" class="ghost-button ghost-button--small auth-ghost">
+          تسجيل الدخول
+        </a>
+      </div>
     </div>
+  </div>
 </div>
-
-<style>
-.hover-shadow:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-}
-.transition-all {
-    transition: all 0.3s ease;
-}
-</style>
 {% endblock %}
