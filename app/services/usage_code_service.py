@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import secrets
 
 from app.core.database import db
+from sqlalchemy.orm import lazyload
 from app.models import ActivityLog, Offer, UsageCode
 from app.modules.admin.services.admin_settings_service import get_admin_settings
 from app.services.incentive_eligibility_service import evaluate_offer_eligibility
@@ -47,15 +48,22 @@ def _generate_numeric_code() -> str:
     return str(secrets.randbelow(maximum - minimum + 1) + minimum)
 
 
+def _usage_code_query():
+    """Return a usage code query without eager-loading partner relationships."""
+
+    return UsageCode.query.options(lazyload(UsageCode.partner))
+
+
 def generate_usage_code(partner_id: int) -> UsageCode:
     """Create a fresh usage code for a partner, expiring any active code."""
 
     now = datetime.utcnow()
     settings = get_usage_code_settings()
 
-    UsageCode.query.filter(UsageCode.expires_at > now).with_for_update().all()
+    _usage_code_query().filter(UsageCode.expires_at > now).with_for_update().all()
     active_codes = (
-        UsageCode.query.filter_by(partner_id=partner_id)
+        _usage_code_query()
+        .filter_by(partner_id=partner_id)
         .filter(UsageCode.expires_at > now)
         .with_for_update()
         .all()
@@ -67,7 +75,8 @@ def generate_usage_code(partner_id: int) -> UsageCode:
     for _ in range(30):
         candidate = _generate_numeric_code()
         collision = (
-            UsageCode.query.filter_by(code=candidate)
+            _usage_code_query()
+            .filter_by(code=candidate)
             .filter(UsageCode.expires_at > now)
             .with_for_update()
             .first()
@@ -153,7 +162,8 @@ def verify_usage_code(
             return {"ok": False, "result": "invalid", "message": "Offer not found."}
 
         usage_code = (
-            UsageCode.query.filter_by(partner_id=offer.company_id, code=normalized_code)
+            _usage_code_query()
+            .filter_by(partner_id=offer.company_id, code=normalized_code)
             .order_by(UsageCode.created_at.desc())
             .with_for_update()
             .first()
