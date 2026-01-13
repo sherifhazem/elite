@@ -1,59 +1,46 @@
-{% extends "core/base.html" %}
+{% extends "members/auth/base_auth.html" %}
 {% block title %}الانضمام إلى ELITE{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="text-center mb-5">
-        <h2 class="fw-bold mb-3">انضم إلى برنامج الخصومات ELITE</h2>
-        <p class="text-muted">اختر الطريقة التي تناسبك للانضمام إلى عالم الخصومات والعروض الحصرية</p>
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-card__header">
+      <div class="auth-icon">
+        <i class="fa-solid fa-user-group fa-3x"></i>
+      </div>
+      <h2 class="auth-title">انضم إلى برنامج الخصومات ELITE</h2>
+      <p class="auth-subtitle">اختر الطريقة التي تناسبك للانضمام إلى عالم الخصومات.</p>
     </div>
 
-    <div class="row justify-content-center g-4">
-        <!-- بطاقة الأفراد -->
-        <div class="col-12 col-md-5 col-lg-4">
-            <div class="card shadow-lg border-0 rounded-4 h-100 text-center p-4 hover-scale">
-                <div class="card-body">
-                    <div class="mb-3">
-                        <i class="fa-solid fa-user text-primary fs-1"></i>
-                    </div>
-                    <h5 class="fw-bold mb-3">الانضمام كـ فرد</h5>
-                    <p class="text-muted mb-4">
-                        سجل كعضو فردي للاستفادة من الخصومات والعروض الحصرية التي تقدمها الشركات المشاركة.
-                    </p>
-                    <a href="{{ url_for('auth.register_member') }}" class="btn btn-primary w-100 py-2 fw-semibold">
-                        انضم كعضو
-                    </a>
-                </div>
-            </div>
+    <div class="auth-card__body">
+      <div class="auth-choice-grid">
+        <div class="auth-option-card">
+          <div class="text-center mb-3">
+            <i class="fa-solid fa-user fa-2x auth-icon"></i>
+          </div>
+          <h4 class="auth-option-card__title">الانضمام كفرد</h4>
+          <p class="auth-option-card__desc">
+            سجل كعضو فردي للاستفادة من الخصومات والعروض الحصرية التي تقدمها الشركات المشاركة.
+          </p>
+          <a href="{{ url_for('auth.register_member') }}" class="btn btn-gradient w-100 py-2">
+            انضم كعضو
+          </a>
         </div>
 
-        <!-- بطاقة الشركات -->
-        <div class="col-12 col-md-5 col-lg-4">
-            <div class="card shadow-lg border-0 rounded-4 h-100 text-center p-4 hover-scale">
-                <div class="card-body">
-                    <div class="mb-3">
-                        <i class="fa-solid fa-building text-success fs-1"></i>
-                    </div>
-                    <h5 class="fw-bold mb-3">الانضمام كشركة</h5>
-                    <p class="text-muted mb-4">
-                        انضم كشريك تجاري لتقديم عروض وخصومات حصرية وجذب المزيد من العملاء إلى متجرك أو خدمتك.
-                    </p>
-                    <a href="{{ url_for('company.register_company') }}" class="btn btn-outline-success w-100 py-2 fw-semibold">
-                        انضم كشركة
-                    </a>
-                </div>
-            </div>
+        <div class="auth-option-card">
+          <div class="text-center mb-3">
+            <i class="fa-solid fa-building fa-2x auth-icon"></i>
+          </div>
+          <h4 class="auth-option-card__title">الانضمام كشركة</h4>
+          <p class="auth-option-card__desc">
+            انضم كشريك تجاري لتقديم عروض وخصومات حصرية وجذب المزيد من العملاء إلى متجرك أو خدمتك.
+          </p>
+          <a href="{{ url_for('company.register_company') }}" class="ghost-button auth-ghost">
+            انضم كشركة
+          </a>
         </div>
+      </div>
     </div>
+  </div>
 </div>
-
-<style>
-.hover-scale {
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-.hover-scale:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-}
-</style>
 {% endblock %}
