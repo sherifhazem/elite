@@ -82,17 +82,7 @@ class LoggingContext:
 
         final_marker = route_finished_at or self.route_finished_at or perf_counter()
         total_ms = int((final_marker - self.started_at) * 1000)
-        route_ms = None
-        if self.route_started_at and (route_finished_at or self.route_finished_at):
-            route_ms = max(0, int(((route_finished_at or self.route_finished_at) - self.route_started_at) * 1000))
-
-        timing = {
-            "total_ms": total_ms,
-            "middleware_ms": int(self.middleware_pre_ms + self.middleware_post_ms),
-            "service_ms": int(self.service_ms),
-            "route_ms": route_ms,
-        }
-        return timing
+        return {"total_ms": total_ms}
 
     def to_log_payload(
         self, response_status: int, *, level: str = "INFO", route_finished_at: Optional[float] = None
@@ -110,12 +100,9 @@ class LoggingContext:
             "path": request.path,
             "method": request.method,
             "incoming_payload": self.incoming_payload,
-            "normalized_payload": self.normalized_payload,
-            "cleaned_payload": self.cleaned_payload,
             "outgoing_payload": self.outgoing_payload,
             "breadcrumbs": self.breadcrumbs,
             "validation": self.validation,
-            "normalization": self.normalization,
             "timing": self.compute_timing(route_finished_at),
             "response_status": int(response_status),
         }
