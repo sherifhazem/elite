@@ -62,9 +62,10 @@ def register_logging_middleware(app: Flask) -> None:
         middleware_t0 = perf_counter()
 
         raw_payload = extract_raw_data(request)
+        actual_data = raw_payload.get("json") if isinstance(raw_payload.get("json"), dict) else raw_payload
         request.incoming_payload = raw_payload
-        request.cleaned = raw_payload
-        request.normalized_payload = raw_payload
+        request.cleaned = actual_data
+        request.normalized_payload = actual_data
         ctx.incoming_payload.update(raw_payload)
 
         validation_info = validate(raw_payload)
