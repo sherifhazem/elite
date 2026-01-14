@@ -225,7 +225,6 @@ def verify_usage_code(
             )
             .filter(ActivityLog.result.in_(["valid", "success"]))
             .filter(ActivityLog.created_at >= window_start)
-            .with_for_update(of=ActivityLog)
         )
         if window_end:
             successful_attempts = successful_attempts.filter(
