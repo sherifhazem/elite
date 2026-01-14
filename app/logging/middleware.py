@@ -18,7 +18,6 @@ from .enrichers import (
     snapshot_payload,
 )
 from .logger import get_logger
-from .sanitizers import sanitize_payload
 from app.core.cleaning.request_cleaner import extract_raw_data
 from app.core.validation.validator import validate
 
@@ -63,10 +62,10 @@ def register_logging_middleware(app: Flask) -> None:
         middleware_t0 = perf_counter()
 
         raw_payload = extract_raw_data(request)
-        json_payload = raw_payload.get("json") if isinstance(raw_payload.get("json"), dict) else None
-        incoming_payload = {"json": sanitize_payload(json_payload) if json_payload is not None else None}
-        request.incoming_payload = incoming_payload
-        ctx.incoming_payload.update(incoming_payload)
+        request.incoming_payload = raw_payload
+        request.cleaned = raw_payload
+        request.normalized_payload = raw_payload
+        ctx.incoming_payload.update(raw_payload)
 
         validation_info = validate(raw_payload)
         request.validation_info = validation_info
@@ -174,11 +173,15 @@ def _emit_final_log(ctx, status_code: int, *, level: str = "INFO") -> None:
     ctx.request_id = ctx.request_id or uuid4().hex
     g.request_id = ctx.request_id
     level_value = getattr(logging, level.upper(), logging.INFO)
+    is_success = status_code < HTTPStatus.BAD_REQUEST and level.upper() != "ERROR"
+    if is_success:
+        ctx.breadcrumbs.clear()
     payload = ctx.to_log_payload(status_code, level=level, route_finished_at=ctx.route_finished_at)
     payload.pop("normalized_payload", None)
     payload.pop("cleaned_payload", None)
     payload.pop("normalization", None)
-    if status_code < HTTPStatus.BAD_REQUEST and level.upper() != "ERROR":
+    payload.pop("__diagnostics", None)
+    if is_success:
         payload.pop("breadcrumbs", None)
     logger.log(level_value, "request_cycle", extra={"log_payload": payload})
 
