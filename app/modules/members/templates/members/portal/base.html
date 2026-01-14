@@ -5,7 +5,8 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>{% block title %}ELITE Mobile Portal{% endblock %}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -87,18 +88,8 @@
 
             <a class="app-nav__item {% if active_nav == 'profile' %}app-nav__item--active{% endif %}"
                 href="{{ url_for('portal.member_portal_profile') }}" data-nav-link data-nav-target="profile">
-                <span class="app-nav__icon"><i class="fa-solid fa-user"></i></span>
-                <span class="app-nav__label">الملف</span>
-            </a>
-
-            <a class="app-nav__item {% if active_nav == 'notifications' %}app-nav__item--active{% endif %}"
-                href="{{ url_for('portal.member_portal_notifications') }}" data-nav-link
-                data-nav-target="notifications">
-                <span class="app-nav__icon"><i class="fa-solid fa-bell"></i></span>
-                <span class="app-nav__label">الإشعارات</span>
-                {% if notification_unread_count %}
-                <span class="app-nav__badge" id="notification-count">{{ notification_unread_count }}</span>
-                {% endif %}
+                <span class="app-nav__icon"><i class="fa-solid fa-chart-line"></i></span>
+                <span class="app-nav__label">نشاطي</span>
             </a>
         </nav>
     </div>

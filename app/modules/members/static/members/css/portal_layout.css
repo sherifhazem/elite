@@ -56,6 +56,8 @@ body {
     margin: 0;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+    padding-bottom: calc(75px + env(safe-area-inset-bottom));
+    overflow-x: hidden;
 }
 
 .portal-mobile-body {
@@ -104,18 +106,20 @@ body {
 }
 
 .app-nav {
-    position: sticky;
+    position: fixed;
     bottom: 0;
-    left: 0;
-    right: 0;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: space-around;
+    width: min(100%, var(--container-width));
     background: var(--portal-surface);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 10px 12px 12px;
     box-shadow: none;
     backdrop-filter: none;
     z-index: 20;
+    user-select: none;
 }
 
 /* =========================
@@ -144,6 +148,23 @@ p {
 img {
     max-width: 100%;
     display: block;
+}
+
+a,
+button {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button,
+.app-nav,
+.app-nav__item {
+    user-select: none;
+}
+
+input,
+select,
+textarea {
+    font-size: 16px;
 }
 
 .visually-hidden {
@@ -227,6 +248,12 @@ img {
 .app-nav__badge[data-count="0"]::before {
     opacity: 0;
     pointer-events: none;
+}
+
+@media (min-width: 768px) {
+    .app-nav {
+        display: none;
+    }
 }
 
 .section-headline {
