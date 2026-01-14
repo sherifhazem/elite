@@ -233,7 +233,7 @@ def verify_usage_code(
             )
 
         if member_id is not None:
-            prior_attempt = successful_attempts.filter(
+            prior_attempt = successful_attempts.filter_by(
                 member_id=member_id, offer_id=offer_id
             )
             if prior_attempt.first() is not None:
