@@ -49,14 +49,18 @@
 /* =========================
    Layout / App Shell
    ========================= */
+html,
+body {
+    height: 100dvh;
+    overflow: hidden;
+}
+
 body {
     font-family: inherit;
     background: var(--bg-primary);
     color: var(--text-primary);
     margin: 0;
-    min-height: 100vh;
     -webkit-font-smoothing: antialiased;
-    padding-bottom: calc(75px + env(safe-area-inset-bottom));
     overflow-x: hidden;
 }
 
@@ -72,7 +76,7 @@ body {
     display: flex;
     flex-direction: column;
     width: 100%;
-    min-height: 100vh;
+    height: 100dvh;
     max-width: var(--container-width);
     background: var(--bg-primary);
     box-shadow: 0 30px 80px rgba(6, 10, 20, 0.45);
@@ -92,10 +96,10 @@ body {
 }
 
 .app-main {
-    flex: 1 1 auto;
+    flex: 1;
     overflow-y: auto;
     overscroll-behavior-y: contain;
-    padding-bottom: 84px;
+    padding-bottom: 80px;
 }
 
 .view-container {
@@ -118,7 +122,7 @@ body {
     padding: 10px 12px 12px;
     box-shadow: none;
     backdrop-filter: none;
-    z-index: 20;
+    z-index: 9999;
     user-select: none;
 }
 
@@ -153,6 +157,7 @@ img {
 a,
 button {
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 button,
