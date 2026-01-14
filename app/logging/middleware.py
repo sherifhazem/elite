@@ -19,11 +19,7 @@ from .enrichers import (
 )
 from .logger import get_logger
 from .sanitizers import sanitize_payload
-from app.core.cleaning.request_cleaner import (
-    build_cleaned_payload,
-    extract_raw_data,
-    normalize_data,
-)
+from app.core.cleaning.request_cleaner import extract_raw_data
 from app.core.validation.validator import validate
 
 logger = get_logger()
@@ -64,32 +60,15 @@ def register_logging_middleware(app: Flask) -> None:
         g.request_id = ctx.request_id
         g.trace_id = ctx.trace_id
         g.parent_id = ctx.parent_id
-        ctx.add_breadcrumb("before_request:start")
         middleware_t0 = perf_counter()
 
         raw_payload = extract_raw_data(request)
-        ctx.add_breadcrumb("cleaning:raw_extracted")
+        json_payload = raw_payload.get("json") if isinstance(raw_payload.get("json"), dict) else None
+        incoming_payload = {"json": sanitize_payload(json_payload) if json_payload is not None else None}
+        request.incoming_payload = incoming_payload
+        ctx.incoming_payload.update(incoming_payload)
 
-        normalized_payload = normalize_data(raw_payload)
-        ctx.add_breadcrumb("cleaning:url_normalized")
-        ctx.add_breadcrumb("cleaning:frontend_backend_url_normalized")
-        if normalized_payload.get("normalization"):
-            ctx.normalization.extend(normalized_payload.get("normalization", []))
-
-        cleaned_payload = build_cleaned_payload(raw_payload, normalized_payload)
-        ctx.add_breadcrumb("cleaning:cleaned_data_built")
-
-        request.raw_data = raw_payload
-        request.incoming_payload = raw_payload
-        request.normalized_data = normalized_payload
-        request.normalized_payload = normalized_payload
-        request.cleaned = cleaned_payload
-
-        ctx.incoming_payload.update(sanitize_payload(getattr(request, "incoming_payload", raw_payload)))
-        ctx.normalized_payload.update(sanitize_payload(getattr(request, "normalized_payload", normalized_payload)))
-        ctx.cleaned_payload.update(sanitize_payload(getattr(request, "cleaned", cleaned_payload)))
-
-        validation_info = validate(normalized_payload)
+        validation_info = validate(raw_payload)
         request.validation_info = validation_info
         if validation_info:
             ctx.validation = validation_info
@@ -115,9 +94,8 @@ def register_logging_middleware(app: Flask) -> None:
         ctx.route_finished_at = perf_counter()
         middleware_t0 = perf_counter()
 
-        ctx.add_breadcrumb("after_request:response_ready")
         ctx.outgoing_payload.update(capture_outgoing_response(response))
-        validation_source = ctx.normalized_payload or ctx.incoming_payload
+        validation_source = ctx.incoming_payload
         extracted_validation = extract_validation_state(response, validation_source)
         if ctx.validation and extracted_validation:
             ctx.validation = _merge_validation(ctx.validation, extracted_validation)
@@ -153,7 +131,7 @@ def register_logging_middleware(app: Flask) -> None:
 
         response = _build_error_response(message, safe_status)
         ctx.outgoing_payload.update(capture_outgoing_response(response))
-        validation_source = ctx.normalized_payload or ctx.incoming_payload
+        validation_source = ctx.incoming_payload
         extracted_validation = extract_validation_state(response, validation_source)
         if ctx.validation and extracted_validation:
             ctx.validation = _merge_validation(ctx.validation, extracted_validation)
@@ -197,6 +175,11 @@ def _emit_final_log(ctx, status_code: int, *, level: str = "INFO") -> None:
     g.request_id = ctx.request_id
     level_value = getattr(logging, level.upper(), logging.INFO)
     payload = ctx.to_log_payload(status_code, level=level, route_finished_at=ctx.route_finished_at)
+    payload.pop("normalized_payload", None)
+    payload.pop("cleaned_payload", None)
+    payload.pop("normalization", None)
+    if status_code < HTTPStatus.BAD_REQUEST and level.upper() != "ERROR":
+        payload.pop("breadcrumbs", None)
     logger.log(level_value, "request_cycle", extra={"log_payload": payload})
 
 
