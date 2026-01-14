@@ -271,6 +271,7 @@ def verify_usage_code(
             code_used=normalized_code,
             result="valid",
         )
+        db.session.commit()
         return {
             "ok": True,
             "result": "valid",
