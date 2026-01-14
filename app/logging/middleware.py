@@ -101,7 +101,11 @@ def register_logging_middleware(app: Flask) -> None:
         elif extracted_validation:
             ctx.validation = extracted_validation
         ctx.validation = ctx.validation or {}
-        if ctx.validation and (ctx.validation.get("failures") or extracted_validation):
+        if (
+            response.status_code >= HTTPStatus.BAD_REQUEST
+            and ctx.validation
+            and (ctx.validation.get("failures") or extracted_validation)
+        ):
             ctx.add_breadcrumb("validation:detected_failure")
         ctx.middleware_post_ms += (perf_counter() - middleware_t0) * 1000
 
