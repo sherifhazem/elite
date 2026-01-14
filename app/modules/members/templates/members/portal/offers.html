@@ -17,6 +17,23 @@
                 autocomplete="off"
             />
         </div>
+        {% if offers %}
+            {% set ns = namespace(categories=[]) %}
+            {% for offer in offers %}
+                {% if offer.category is defined and offer.category %}
+                    {% set category_name = offer.category.name if offer.category.name is defined else offer.category %}
+                    {% if category_name not in ns.categories %}
+                        {% set _ = ns.categories.append(category_name) %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            <div class="offers-chips" role="list" aria-label="تصنيفات العروض">
+                <button class="offers-chip offers-chip--active" type="button" data-filter="all">الكل</button>
+                {% for category in ns.categories %}
+                    <button class="offers-chip" type="button" data-filter="{{ category|e }}">{{ category }}</button>
+                {% endfor %}
+            </div>
+        {% endif %}
         <button class="offers-filter" type="button" role="button" aria-label="فلترة العروض">
             <span class="offers-filter__icon" aria-hidden="true"><i class="fa-solid fa-filter"></i></span>
             <span>فلترة</span>
