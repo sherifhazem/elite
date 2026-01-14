@@ -129,15 +129,20 @@ def log_usage_attempt(
 
 
 def verify_usage_code(
-    *,
-    member_id: int | None,
-    offer_id: int,
-    code: str,
+        *,
+        member_id: int | None,
+        offer_id: int,
+        code: str,
 ) -> dict:
-    """Validate a usage code for a selected offer and record the attempt."""
+    """
+    التحقق من كود الاستخدام لعرض محدد وتسجيل المحاولة في سجل النشاطات.
+    تم تحديث الدالة لضمان التوافق مع PostgreSQL وإدارة المعاملات بشكل آمن.
+    """
 
     normalized_code = (code or "").strip()
     session = db.session
+
+    # 1. تحديد حالة المعاملة (Transaction) لضمان الحفظ الصحيح
     is_in_txn = False
     if hasattr(session, "in_transaction"):
         is_in_txn = session.in_transaction()
@@ -146,142 +151,141 @@ def verify_usage_code(
     else:
         is_in_txn = session.is_active
 
-    transaction_context = (
-        session.begin_nested() if is_in_txn else session.begin()
-    )
-    with transaction_context:
-        offer = Offer.query.filter_by(id=offer_id).with_for_update().first()
-        partner_id = offer.company_id if offer else None
+    # استخدام معاملة متداخلة (Nested) إذا كنا داخل معاملة بالفعل، أو معاملة جديدة
+    transaction_context = session.begin_nested() if is_in_txn else session.begin()
 
-        if not normalized_code.isdigit() or len(normalized_code) not in (4, 5):
-            log_usage_attempt(
-                member_id=member_id,
-                partner_id=partner_id,
-                offer_id=offer_id,
-                code_used=normalized_code,
-                result="invalid",
-            )
-            return {"ok": False, "result": "invalid", "message": "Invalid code format."}
+    try:
+        with transaction_context:
+            # 2. جلب بيانات العرض (بدون قفل لتجنب مشاكل الـ Join في Postgres)
+            offer = Offer.query.filter_by(id=offer_id).first()
+            partner_id = offer.company_id if offer else None
 
-        if offer is None or offer.company_id is None:
-            log_usage_attempt(
-                member_id=member_id,
-                partner_id=partner_id,
-                offer_id=offer_id,
-                code_used=normalized_code,
-                result="invalid",
-            )
-            return {"ok": False, "result": "invalid", "message": "Offer not found."}
-
-        usage_code = (
-            _usage_code_query()
-            .filter_by(partner_id=offer.company_id, code=normalized_code)
-            .order_by(UsageCode.created_at.desc())
-            .with_for_update()
-            .first()
-        )
-        if usage_code is None:
-            log_usage_attempt(
-                member_id=member_id,
-                partner_id=partner_id,
-                offer_id=offer_id,
-                code_used=normalized_code,
-                result="invalid",
-            )
-            return {"ok": False, "result": "invalid", "message": "Code is invalid."}
-
-        if usage_code.is_expired():
-            log_usage_attempt(
-                member_id=member_id,
-                partner_id=partner_id,
-                offer_id=offer_id,
-                code_used=normalized_code,
-                result="expired",
-            )
-            return {"ok": False, "result": "expired", "message": "Code has expired."}
-
-        eligibility = evaluate_offer_eligibility(member_id, offer_id)
-        if not eligibility["eligible"]:
-            log_usage_attempt(
-                member_id=member_id,
-                partner_id=partner_id,
-                offer_id=offer_id,
-                code_used=normalized_code,
-                result="not_eligible",
-            )
-            return {
-                "ok": False,
-                "result": "not_eligible",
-                "reason": eligibility["reason"],
-            }
-
-        window_start = usage_code.created_at
-        window_end = usage_code.expires_at
-        successful_attempts = (
-            ActivityLog.query.filter_by(
-                action="usage_code_attempt",
-                partner_id=partner_id,
-                code_used=normalized_code,
-            )
-            .filter(ActivityLog.result.in_(["valid", "success"]))
-            .filter(ActivityLog.created_at >= window_start)
-        )
-        if window_end:
-            successful_attempts = successful_attempts.filter(
-                ActivityLog.created_at <= window_end
-            )
-
-        if member_id is not None:
-            prior_attempt = successful_attempts.filter_by(
-                member_id=member_id, offer_id=offer_id
-            )
-            if prior_attempt.first() is not None:
+            # 3. التحقق من صيغة الكود
+            if not normalized_code.isdigit() or len(normalized_code) not in (4, 5):
                 log_usage_attempt(
                     member_id=member_id,
                     partner_id=partner_id,
                     offer_id=offer_id,
                     code_used=normalized_code,
-                    result="usage_limit_reached",
+                    result="invalid",
+                )
+                return {"ok": False, "result": "invalid", "message": "صيغة الكود غير صحيحة."}
+
+            if offer is None:
+                return {"ok": False, "result": "not_found", "message": "العرض غير موجود."}
+
+            # 4. جلب كود التفعيل الخاص بالشريك (استخدام filter_by بدقة)
+            usage_code = UsageCode.query.filter_by(
+                partner_id=offer.company_id,
+                code=normalized_code
+            ).first()
+
+            if not usage_code:
+                log_usage_attempt(
+                    member_id=member_id,
+                    partner_id=partner_id,
+                    offer_id=offer_id,
+                    code_used=normalized_code,
+                    result="not_found",
+                )
+                return {"ok": False, "result": "not_found", "message": "كود التفعيل غير صحيح."}
+
+            # 5. التحقق من أهلية العضو (Eligibility)
+            eligibility = evaluate_offer_eligibility(member_id, offer_id)
+            if not eligibility["eligible"]:
+                log_usage_attempt(
+                    member_id=member_id,
+                    partner_id=partner_id,
+                    offer_id=offer_id,
+                    code_used=normalized_code,
+                    result="not_eligible",
                 )
                 return {
                     "ok": False,
-                    "result": "usage_limit_reached",
-                    "message": "Usage already verified for this offer.",
+                    "result": "not_eligible",
+                    "message": eligibility.get("reason", "أنت غير مؤهل لهذا العرض.")
                 }
 
-        if successful_attempts.count() >= usage_code.max_uses_per_window:
+            # 6. التحقق من حدود الاستخدام (بدون with_for_update لتجنب خطأ Aggregate functions)
+            window_start = usage_code.created_at
+            window_end = usage_code.expires_at
+
+            successful_attempts_query = ActivityLog.query.filter_by(
+                action="usage_code_attempt",
+                partner_id=partner_id,
+                code_used=normalized_code,
+            ).filter(
+                ActivityLog.result.in_(["valid", "success"]),
+                ActivityLog.created_at >= window_start
+            )
+
+            if window_end:
+                successful_attempts_query = successful_attempts_query.filter(
+                    ActivityLog.created_at <= window_end
+                )
+
+            # التحقق من تكرار الاستخدام لنفس العضو
+            if member_id is not None:
+                prior_attempt = successful_attempts_query.filter_by(
+                    member_id=member_id,
+                    offer_id=offer_id
+                ).first()
+
+                if prior_attempt is not None:
+                    log_usage_attempt(
+                        member_id=member_id,
+                        partner_id=partner_id,
+                        offer_id=offer_id,
+                        code_used=normalized_code,
+                        result="usage_limit_reached",
+                    )
+                    return {
+                        "ok": False,
+                        "result": "usage_limit_reached",
+                        "message": "تم تفعيل هذا العرض مسبقاً لهذا العضو."
+                    }
+
+            # 7. التحقق من الحد الأقصى للاستخدام في النافذة الزمنية
+            if successful_attempts_query.count() >= usage_code.max_uses_per_window:
+                log_usage_attempt(
+                    member_id=member_id,
+                    partner_id=partner_id,
+                    offer_id=offer_id,
+                    code_used=normalized_code,
+                    result="limit_exceeded",
+                )
+                return {"ok": False, "result": "limit_exceeded", "message": "تم الوصول للحد الأقصى لاستخدام الكود."}
+
+            # 8. النجاح: تسجيل النشاط النهائي
             log_usage_attempt(
                 member_id=member_id,
                 partner_id=partner_id,
                 offer_id=offer_id,
                 code_used=normalized_code,
-                result="usage_limit_reached",
+                result="valid",
             )
-            return {
-                "ok": False,
-                "result": "usage_limit_reached",
-                "message": "Usage limit reached.",
-            }
 
-        usage_code.usage_count += 1
-        log_usage_attempt(
-            member_id=member_id,
-            partner_id=partner_id,
-            offer_id=offer_id,
-            code_used=normalized_code,
-            result="valid",
-        )
-        db.session.commit()
+            # تأكيد الحفظ في قاعدة البيانات قبل الخروج من سياق المعاملة
+            session.flush()
+
+            # 9. التزام الحفظ النهائي (Commit)
+        if not is_in_txn:
+            session.commit()
+
         return {
             "ok": True,
             "result": "valid",
-            "message": "Usage verified.",
-            "usage_count": usage_code.usage_count,
-            "max_uses_per_window": usage_code.max_uses_per_window,
-            "expires_at": usage_code.expires_at.isoformat()
-            if usage_code.expires_at
-            else None,
+            "message": "تم تفعيل العرض بنجاح.",
+            "usage_count": successful_attempts_query.count() + 1,
+            "max_uses": usage_code.max_uses_per_window,
+            "expires_at": window_end.isoformat() if window_end else None
         }
+
+    except Exception as e:
+        session.rollback()
+        # تسجيل الخطأ في الـ Logs للنظام
+        current_app.logger.error(f"Error in verify_usage_code: {str(e)}")
+        return {"ok": False, "result": "error", "message": "حدث خطأ أثناء معالجة الطلب."}
 
 
 __all__ = [
