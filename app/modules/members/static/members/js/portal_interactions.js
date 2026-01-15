@@ -230,7 +230,6 @@
             }
             track.dataset.hydrated = "true";
             track.innerHTML = "";
-            const membershipLevel = track.dataset.membershipLevel || "Basic";
             offers.slice(0, 6).forEach((offer) => {
                 const chip = document.createElement("article");
                 chip.className = "offer-chip";
@@ -242,10 +241,8 @@
                 chip.dataset.offerCompanyDescription = offer.company_description || "";
                 chip.dataset.offerDescription = offer.description || "";
                 chip.dataset.offerDiscount = Math.round(offer.discount_percent || offer.base_discount || 0);
-                chip.dataset.offerLevel = membershipLevel;
                 chip.dataset.offerValid = offer.valid_until ? offer.valid_until.split("T")[0] : "مستمر";
                 chip.innerHTML = `
-                    <div class="offer-chip__level">${membershipLevel}</div>
                     <h3 class="offer-chip__title">${offer.title}</h3>
                     <p class="offer-chip__company">${chip.dataset.offerCompany}</p>
                     <span class="offer-chip__discount">${chip.dataset.offerDiscount}%</span>
@@ -307,7 +304,6 @@
             return;
         }
         modalTitle.textContent = source.dataset.offerTitle || "Offer";
-        const level = source.dataset.offerLevel || "Basic";
         const discount = source.dataset.offerDiscount || "0";
         const company = source.dataset.offerCompany || "ELITE Partner";
         const companyId = source.dataset.offerCompanyId || "";
@@ -317,7 +313,6 @@
         modalBody.innerHTML = `
             <article class="offer-modal">
                 <p><strong>الشركة:</strong> ${company}</p>
-                <p><strong>مستوى العضوية:</strong> ${level}</p>
                 <p><strong>نسبة الخصم:</strong> ${discount}%</p>
                 <p><strong>صالح حتى:</strong> ${valid}</p>
                 ${description ? `<p>${description}</p>` : ""}
