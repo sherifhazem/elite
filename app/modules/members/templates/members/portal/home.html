@@ -45,7 +45,6 @@
                             data-offer-discount="{{ discount_value }}"
                             data-offer-valid="{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'مستمر' }}"
                         >
-                            <div class="offer-chip__level">TODO: Incentives will be calculated based on verified usage.</div>
                             <h3 class="offer-chip__title">{{ offer.title }}</h3>
                             <p class="offer-chip__company">{{ offer.company.name if offer.company else 'عرض حصري' }}</p>
                             <span class="offer-chip__discount">{{ discount_value }}%</span>
@@ -62,6 +61,6 @@
     </section>
     <section class="home-section">
         <h2 class="section-headline__title">المكافآت</h2>
-        <p class="text-muted">TODO: Incentives will be calculated based on verified usage.</p>
+        <p class="text-muted">عروض حصرية للأعضاء النشطين</p>
     </section>
 {% endblock %}
