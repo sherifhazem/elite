@@ -41,8 +41,8 @@
 }
 
 .auth-card__body .form-label {
-  color: var(--royal-black);
-  font-weight: 500;
+  color: #000000;
+  font-weight: 600;
 }
 
 .auth-card__body .form-text {
@@ -50,13 +50,15 @@
 }
 
 .auth-title {
-  color: var(--text-primary);
+  color: #000000;
+  /* Fixed: Was var(--text-primary) which is white */
   font-weight: 700;
   margin-bottom: 0.5rem;
 }
 
 .auth-subtitle {
-  color: var(--muted-text);
+  color: #6b7280;
+  /* Fixed: Darker gray for better visibility */
   margin: 0;
 }
 
@@ -128,6 +130,7 @@
   box-shadow: var(--shadow-soft);
   border-radius: var(--radius-pill);
   font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .btn-gradient:hover {
@@ -136,15 +139,21 @@
 
 .auth-input {
   border-radius: var(--radius-md);
-  border: 1px solid color-mix(in srgb, var(--royal-black) 12%, transparent);
+  border: 1px solid #d1d5db;
+  /* Lighter border for better contrast */
   padding: 0.85rem 1rem;
   font-size: 1rem;
-  background-color: var(--card-bg);
-  color: var(--royal-black);
+  background-color: #ffffff;
+  /* FORCE white background */
+  color: #000000;
+  /* FORCE black text */
+  font-weight: 500;
 }
 
 .auth-input::placeholder {
-  color: color-mix(in srgb, var(--royal-black) 40%, var(--card-bg));
+  color: #6b7280;
+  /* Darker placeholder (gray-500) */
+  font-weight: 400;
 }
 
 .auth-input:focus {
@@ -248,6 +257,7 @@
 }
 
 @media (max-width: 380px) {
+
   .auth-card__header,
   .auth-card__body {
     padding: 1.5rem 1rem;

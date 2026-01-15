@@ -7,76 +7,90 @@
     <div class="col-12 col-lg-10 d-flex justify-content-center">
       <div class="auth-card w-100 shadow-sm" style="max-width: 620px;" dir="rtl">
         <div class="text-center mb-4">
-          <div class="mb-3">
-            <i class="fa-solid fa-building fa-3x text-gradient"></i>
+          <div class="auth-icon">
+            <i class="fa-solid fa-building fa-3x"></i>
           </div>
-          <h2 class="fw-bold mb-2" style="color: var(--brand-primary);">تسجيل شركتك في ELITE</h2>
+          <h2 class="auth-title mb-2">تسجيل شركتك في ELITE</h2>
           <p class="text-muted">املأ بيانات شركتك للانضمام إلى شركائنا وتقديم عروضك الخاصة.</p>
         </div>
 
-        <form id="register-company-form" method="post" class="needs-validation text-end" novalidate>
+        <form id="register-company-form" method="post" class="needs-validation text-start" novalidate>
           {{ form.hidden_tag() }}
           {% include "companies/_csrf_field.html" %}
 
-          <p class="text-danger small text-end mb-3">
+          <p class="text-danger small text-start mb-3">
             الحقول المميزة بالعلامة (<span class="text-danger">*</span>) ضرورية لإتمام طلب التسجيل.
           </p>
 
           <div class="row g-3">
             <div class="col-12">
-              <label class="form-label fw-semibold d-block text-end">اسم الشركة <span class="text-danger">*</span></label>
-              {{ form.company_name(class="form-control auth-input text-end", placeholder="اسم الشركة", required=True) }}
+              <label class="form-label fw-semibold d-block text-start">اسم الشركة <span
+                  class="text-danger">*</span></label>
+              {{ form.company_name(class="form-control auth-input text-start", placeholder="اسم الشركة", required=True)
+              }}
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold d-block text-end">البريد الإلكتروني للشركة <span class="text-danger">*</span></label>
-              {{ form.email(class="form-control auth-input text-start", dir="ltr", placeholder="company@example.com", required=True) }}
+              <label class="form-label fw-semibold d-block text-start">البريد الإلكتروني للشركة <span
+                  class="text-danger">*</span></label>
+              {{ form.email(class="form-control auth-input text-start", dir="ltr", placeholder="company@example.com",
+              required=True) }}
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold d-block text-end">رقم الهاتف <span class="text-danger">*</span></label>
-              {{ form.phone_number(class="form-control auth-input text-start", dir="ltr", placeholder="05xxxxxxxx", required=True) }}
+              <label class="form-label fw-semibold d-block text-start">رقم الهاتف <span
+                  class="text-danger">*</span></label>
+              {{ form.phone_number(class="form-control auth-input text-start", dir="ltr", placeholder="05xxxxxxxx",
+              required=True) }}
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold d-block text-end">مجال عمل الشركة <span class="text-danger">*</span></label>
-              {{ form.industry(class="form-select auth-input text-end", required=True) }}
+              <label class="form-label fw-semibold d-block text-start">مجال عمل الشركة <span
+                  class="text-danger">*</span></label>
+              {{ form.industry(class="form-select auth-input text-start", required=True) }}
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold d-block text-end">اسم المدينة <span class="text-danger">*</span></label>
-              {{ form.city(class="form-select auth-input text-end", required=True) }}
+              <label class="form-label fw-semibold d-block text-start">اسم المدينة <span
+                  class="text-danger">*</span></label>
+              {{ form.city(class="form-select auth-input text-start", required=True) }}
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold d-block text-end">رابط الموقع الإلكتروني</label>
-              {{ form.website_url(class="form-control auth-input text-start", dir="ltr", placeholder="https://example.com") }}
+              <label class="form-label fw-semibold d-block text-start">رابط الموقع الإلكتروني</label>
+              {{ form.website_url(class="form-control auth-input text-start", dir="ltr",
+              placeholder="https://example.com") }}
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold d-block text-end">رابط التواصل الاجتماعي <span class="text-danger">*</span></label>
-              {{ form.social_url(class="form-control auth-input text-start", dir="ltr", placeholder="https://instagram.com/yourbrand", required=True) }}
+              <label class="form-label fw-semibold d-block text-start">رابط التواصل الاجتماعي <span
+                  class="text-danger">*</span></label>
+              {{ form.social_url(class="form-control auth-input text-start", dir="ltr",
+              placeholder="https://instagram.com/yourbrand", required=True) }}
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold d-block text-end">كلمة المرور <span class="text-danger">*</span></label>
-              {{ form.password(class="form-control auth-input text-start", dir="ltr", placeholder="••••••••", required=True) }}
+              <label class="form-label fw-semibold d-block text-start">كلمة المرور <span
+                  class="text-danger">*</span></label>
+              {{ form.password(class="form-control auth-input text-start", dir="ltr", placeholder="••••••••",
+              required=True) }}
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-semibold d-block text-end">نبذة عن الشركة</label>
-              {{ form.description(class="form-control auth-input text-end", rows="3", dir="rtl", placeholder="أدخل وصفًا مختصرًا عن نشاط شركتك") }}
+              <label class="form-label fw-semibold d-block text-start">نبذة عن الشركة</label>
+              {{ form.description(class="form-control auth-input text-start", rows="3", dir="rtl", placeholder="أدخل
+              وصفًا مختصرًا عن نشاط شركتك") }}
             </div>
           </div>
 
-          <div id="company-error" class="text-danger small mt-3 mb-2 text-end" role="alert"></div>
+          <div id="company-error" class="text-danger small mt-3 mb-2 text-start" role="alert"></div>
 
           <button type="submit" id="register-company-submit" class="btn btn-gradient w-100 py-2 mt-2">
             إرسال طلب الانضمام
           </button>
 
-          <div class="text-center text-md-end mt-4">
-            <p class="text-muted mb-0 text-end">
+          <div class="text-center text-md-start mt-4">
+            <p class="text-muted mb-0 text-start">
               لديك حساب بالفعل؟
               <a href="{{ url_for('auth.login') }}" class="fw-semibold text-decoration-none text-primary">
                 تسجيل الدخول
