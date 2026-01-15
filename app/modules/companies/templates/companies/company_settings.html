@@ -2,7 +2,7 @@
 <!-- UPDATED: Responsive Company Portal with Restricted Editable Fields. -->
 {% extends "companies/base.html" %}
 
-{% block portal_title %}Settings{% endblock %}
+{% block portal_title %}الإعدادات{% endblock %}
 
 {% block portal_content %}
     {% set owner_email = company.owner.email if company and company.owner and company.owner.email else (current_user.email if current_user else '') %}
@@ -15,10 +15,10 @@
         <form id="company-settings-form" data-action="{{ url_for('company_portal.company_settings') }}" class="settings-form" novalidate enctype="multipart/form-data">
             {% include "companies/_csrf_field.html" %}
             <fieldset class="settings-section">
-                <legend>Account overview</legend>
+                <legend>نظرة عامة على الحساب</legend>
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <label for="company-name" class="form-label">Company name</label>
+                        <label for="company-name" class="form-label">اسم الشركة</label>
                         <input
                             type="text"
                             class="form-control"
@@ -31,7 +31,7 @@
                         <div class="form-text text-warning-emphasis">هذا الحقل لا يمكن تعديله إلا بموافقة الإدارة.</div>
                     </div>
                     <div class="col-md-6">
-                        <label for="company-email" class="form-label">Account email</label>
+                        <label for="company-email" class="form-label">البريد الإلكتروني للحساب</label>
                         <input
                             type="email"
                             class="form-control"
@@ -45,7 +45,7 @@
                     </div>
                     {% if registration_value is not none %}
                         <div class="col-md-6">
-                            <label for="company-registration" class="form-label">Registration number</label>
+                            <label for="company-registration" class="form-label">رقم السجل</label>
                             <input
                                 type="text"
                                 class="form-control"
@@ -61,14 +61,14 @@
                 </div>
             </fieldset>
             <fieldset class="settings-section">
-                <legend>Company profile</legend>
+                <legend>ملف الشركة</legend>
                 <div class="row g-4">
                     <div class="col-12">
-                        <label for="company-description" class="form-label">Description</label>
-                        <textarea class="form-control" id="company-description" name="description" rows="4" placeholder="Describe your company benefits">{{ company.description or '' }}</textarea>
+                        <label for="company-description" class="form-label">الوصف</label>
+                        <textarea class="form-control" id="company-description" name="description" rows="4" placeholder="صف مزايا شركتك">{{ company.description or '' }}</textarea>
                     </div>
                     <div class="col-12 col-md-6">
-                        <label for="company-logo" class="form-label">Logo</label>
+                        <label for="company-logo" class="form-label">الشعار</label>
                         <input
                             type="file"
                             class="form-control"
@@ -84,7 +84,7 @@
                             <img
                                 id="company-logo-preview"
                                 src="{{ company.logo_url or url_for('static', filename='companies/images/logo-placeholder.svg') }}"
-                                alt="{{ company.name }} logo"
+                                alt="{{ company.name }} شعار"
                                 class="img-fluid rounded shadow-sm border"
                             >
                         </div>
@@ -92,25 +92,25 @@
                 </div>
             </fieldset>
             <fieldset class="settings-section">
-                <legend>Notifications</legend>
+                <legend>الإشعارات</legend>
                 <div class="row g-3">
                     <div class="col-12 col-sm-6">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="notify-email" name="notify_email" {% if preferences.email %}checked{% endif %}>
-                            <label class="form-check-label" for="notify-email">Email updates</label>
+                            <label class="form-check-label" for="notify-email">تحديثات البريد الإلكتروني</label>
                         </div>
                     </div>
                     <div class="col-12 col-sm-6">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="notify-sms" name="notify_sms" {% if preferences.sms %}checked{% endif %}>
-                            <label class="form-check-label" for="notify-sms">SMS alerts</label>
+                            <label class="form-check-label" for="notify-sms">تنبيهات الرسائل النصية</label>
                         </div>
                     </div>
                 </div>
             </fieldset>
             <div class="settings-actions">
-                <button type="reset" class="btn btn-elite-outline">Reset</button>
-                <button type="submit" class="btn btn-elite-primary" id="settings-submit-btn">Save changes</button>
+                <button type="reset" class="btn btn-elite-outline">إعادة ضبط</button>
+                <button type="submit" class="btn btn-elite-primary" id="settings-submit-btn">حفظ التغييرات</button>
             </div>
         </form>
     </section>

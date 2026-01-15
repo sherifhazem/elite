@@ -3,21 +3,21 @@
 <!-- UPDATED: Responsive Company Portal with Restricted Editable Fields. -->
 {% extends "companies/base.html" %}
 
-{% block portal_title %}Offers{% endblock %}
+{% block portal_title %}العروض{% endblock %}
 
 {% block portal_content %}
     <section class="company-page-intro">
         <div>
-            <h2 class="section-title">Manage Company Offers</h2>
-            <p class="section-subtitle">Create, update, or disable offers with a responsive workspace designed for every device.</p>
+            <h2 class="section-title">إدارة عروض الشركة</h2>
+            <p class="section-subtitle">أنشئ العروض أو حدّثها أو عطّلها عبر مساحة عمل مرنة لكل الأجهزة.</p>
         </div>
         <div class="intro-actions">
             <div class="search-field">
-                <label for="offer-search" class="visually-hidden">Search offers</label>
-                <input id="offer-search" type="search" class="form-control" placeholder="Search offers">
+                <label for="offer-search" class="visually-hidden">البحث في العروض</label>
+                <input id="offer-search" type="search" class="form-control" placeholder="ابحث في العروض">
             </div>
             <a class="btn btn-elite-primary" id="offer-add-btn" href="{{ url_for('company_portal.offer_new') }}">
-                Add Offer
+                إضافة عرض
             </a>
         </div>
     </section>
@@ -28,13 +28,13 @@
                 <table class="table align-middle" id="offers-table" data-offer-count="{{ offers|length }}">
                     <thead>
                         <tr>
-                            <th scope="col" data-sort-key="title">Title</th>
-                            <th scope="col" data-sort-key="base_discount">Base Discount</th>
-                            <th scope="col" data-sort-key="start_date">Start Date</th>
-                            <th scope="col" data-sort-key="valid_until">Valid Until</th>
-                            <th scope="col">Status</th>
-                            <th scope="col">Feedback</th>
-                            <th scope="col">Actions</th>
+                            <th scope="col" data-sort-key="title">العنوان</th>
+                            <th scope="col" data-sort-key="base_discount">نسبة الخصم الأساسية</th>
+                            <th scope="col" data-sort-key="start_date">تاريخ البداية</th>
+                            <th scope="col" data-sort-key="valid_until">ساري حتى</th>
+                            <th scope="col">الحالة</th>
+                            <th scope="col">التقييمات</th>
+                            <th scope="col">الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -52,8 +52,8 @@
                             <tr data-offer='{{ offer_payload | tojson }}'>
                                 <td class="offer-title">{{ offer.title }}</td>
                                 <td>{{ '%.2f%%'|format(offer.base_discount) }}</td>
-                                <td>{{ offer.start_date.strftime('%Y-%m-%d') if offer.start_date else 'Not set' }}</td>
-                                <td>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'No expiry' }}</td>
+                                <td>{{ offer.start_date.strftime('%Y-%m-%d') if offer.start_date else 'غير محدد' }}</td>
+                                <td>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'بدون انتهاء' }}</td>
                                 <td>
                                     {% set is_expired = offer.valid_until is not none and offer.valid_until < now %}
                                     {% set status_classes = {
@@ -62,12 +62,12 @@
                                         'archived': 'secondary'
                                     } %}
                                     {% set status_labels = {
-                                        'active': 'Active' if not is_expired else 'Expired',
-                                        'paused': 'Stopped',
-                                        'archived': 'Archived'
+                                        'active': 'نشط' if not is_expired else 'منتهي',
+                                        'paused': 'موقوف مؤقتًا',
+                                        'archived': 'مؤرشف'
                                     } %}
                                     <span class="badge bg-{{ status_classes.get(offer.status, 'secondary') }}">
-                                        {{ status_labels.get(offer.status, 'Unknown') }}
+                                        {{ status_labels.get(offer.status, 'غير معروف') }}
                                     </span>
                                 </td>
                                 <td>
@@ -75,19 +75,19 @@
                                 </td>
                                 <td>
                                     <div class="table-action-group">
-                                        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('company_portal.offer_edit', offer_id=offer.id) }}">Edit</a>
+                                        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('company_portal.offer_edit', offer_id=offer.id) }}">تعديل</a>
                                         {% if offer.status != 'active' %}
-                                            <button class="btn btn-sm btn-outline-success offer-activate" data-offer-id="{{ offer.id }}">Activate</button>
+                                            <button class="btn btn-sm btn-outline-success offer-activate" data-offer-id="{{ offer.id }}">تفعيل</button>
                                         {% endif %}
-                                        <button class="btn btn-sm btn-outline-warning offer-stop" data-offer-id="{{ offer.id }}">Pause</button>
-                                        <button class="btn btn-sm btn-outline-dark offer-archive" data-offer-id="{{ offer.id }}">Archive</button>
-                                        <button class="btn btn-sm btn-outline-danger offer-delete" data-offer-id="{{ offer.id }}">Delete</button>
+                                        <button class="btn btn-sm btn-outline-warning offer-stop" data-offer-id="{{ offer.id }}">إيقاف مؤقت</button>
+                                        <button class="btn btn-sm btn-outline-dark offer-archive" data-offer-id="{{ offer.id }}">أرشفة</button>
+                                        <button class="btn btn-sm btn-outline-danger offer-delete" data-offer-id="{{ offer.id }}">حذف</button>
                                     </div>
                                 </td>
                             </tr>
                         {% else %}
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">No offers yet. Click "Add Offer" to create one.</td>
+                                <td colspan="6" class="text-center text-muted py-4">لا توجد عروض بعد. اضغط على "إضافة عرض" لإنشاء عرض جديد.</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -112,51 +112,51 @@
                             <h3 class="offer-card-title">{{ offer.title }}</h3>
                             {% set is_expired = offer.valid_until is not none and offer.valid_until < now %}
                             {% set status_labels = {
-                                'active': 'Active' if not is_expired else 'Expired',
-                                'paused': 'Stopped',
-                                'archived': 'Archived'
+                                'active': 'نشط' if not is_expired else 'منتهي',
+                                'paused': 'موقوف مؤقتًا',
+                                'archived': 'مؤرشف'
                             } %}
                             <span class="badge offer-status {{ 'is-active' if offer.status == 'active' and not is_expired else 'is-muted' }}">
-                                {{ status_labels.get(offer.status, 'Unknown') }}
+                                {{ status_labels.get(offer.status, 'غير معروف') }}
                             </span>
                         </header>
                         <dl class="offer-card-meta">
                             <div>
-                                <dt>Discount</dt>
+                                <dt>الخصم</dt>
                                 <dd>{{ '%.2f%%'|format(offer.base_discount) }}</dd>
                             </div>
                             <div>
-                                <dt>Starts</dt>
-                                <dd>{{ offer.start_date.strftime('%Y-%m-%d') if offer.start_date else 'Not set' }}</dd>
+                                <dt>يبدأ في</dt>
+                                <dd>{{ offer.start_date.strftime('%Y-%m-%d') if offer.start_date else 'غير محدد' }}</dd>
                             </div>
                             <div>
-                                <dt>Valid Until</dt>
-                                <dd>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'No expiry' }}</dd>
+                                <dt>ساري حتى</dt>
+                                <dd>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'بدون انتهاء' }}</dd>
                             </div>
                             <div>
-                                <dt>Feedback</dt>
+                                <dt>التقييمات</dt>
                                 <dd>{{ feedback_totals.get(offer.id, 0) }}</dd>
                             </div>
                             {% if offer.description %}
                                 <div class="offer-card-description">
-                                    <dt>Description</dt>
+                                    <dt>الوصف</dt>
                                     <dd>{{ offer.description }}</dd>
                                 </div>
                             {% endif %}
                         </dl>
                         <div class="offer-card-actions">
-                            <a class="btn btn-sm btn-elite-outline" href="{{ url_for('company_portal.offer_edit', offer_id=offer.id) }}">Edit</a>
+                            <a class="btn btn-sm btn-elite-outline" href="{{ url_for('company_portal.offer_edit', offer_id=offer.id) }}">تعديل</a>
                             {% if offer.status != 'active' %}
-                                <button class="btn btn-sm btn-outline-success offer-activate" data-offer-id="{{ offer.id }}">Activate</button>
+                                <button class="btn btn-sm btn-outline-success offer-activate" data-offer-id="{{ offer.id }}">تفعيل</button>
                             {% endif %}
-                            <button class="btn btn-sm btn-outline-warning offer-stop" data-offer-id="{{ offer.id }}">Pause</button>
-                            <button class="btn btn-sm btn-outline-dark offer-archive" data-offer-id="{{ offer.id }}">Archive</button>
-                            <button class="btn btn-sm btn-outline-danger offer-delete" data-offer-id="{{ offer.id }}">Delete</button>
+                            <button class="btn btn-sm btn-outline-warning offer-stop" data-offer-id="{{ offer.id }}">إيقاف مؤقت</button>
+                            <button class="btn btn-sm btn-outline-dark offer-archive" data-offer-id="{{ offer.id }}">أرشفة</button>
+                            <button class="btn btn-sm btn-outline-danger offer-delete" data-offer-id="{{ offer.id }}">حذف</button>
                         </div>
                     </article>
                 {% endfor %}
             {% else %}
-                <p class="text-muted mb-0">No offers yet. Tap "Add Offer" to create one.</p>
+                <p class="text-muted mb-0">لا توجد عروض بعد. اضغط على "إضافة عرض" لإنشاء عرض جديد.</p>
             {% endif %}
         </div>
     </section>

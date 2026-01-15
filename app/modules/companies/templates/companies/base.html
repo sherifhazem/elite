@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{% block title %}Elite Company Portal{% endblock %}</title>
+    <title>{% block title %}بوابة شركات Elite{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -31,10 +31,10 @@
                     {% if company and company.logo_url %}
                         <img src="{{ company.logo_url }}" alt="{{ company.name }}" class="company-brand-logo">
                     {% else %}
-                        <span class="fw-semibold">{{ company.name[:1]|upper if company and company.name else 'C' }}</span>
+                        <span class="fw-semibold">{{ company.name[:1]|upper if company and company.name else 'ش' }}</span>
                     {% endif %}
                 </span>
-                <span class="fw-semibold">Company Portal</span>
+                <span class="fw-semibold">بوابة الشركات</span>
             </a>
             <button
                 class="btn btn-outline-light d-lg-none"
@@ -43,7 +43,7 @@
                 data-bs-target="#companySidebar"
                 aria-controls="companySidebar"
                 aria-expanded="false"
-                aria-label="Toggle navigation"
+                aria-label="تبديل التنقل"
             >
                 <i class="fas fa-bars"></i>
             </button>
@@ -76,41 +76,41 @@
                         {% if company and company.logo_url %}
                             <img src="{{ company.logo_url }}" alt="{{ company.name }}" class="img-fluid">
                         {% else %}
-                            <span class="fw-semibold">{{ company.name[:1]|upper if company and company.name else 'C' }}</span>
+                            <span class="fw-semibold">{{ company.name[:1]|upper if company and company.name else 'ش' }}</span>
                         {% endif %}
                     </div>
-                    <h2 class="h6 mb-1">{{ company.name if company else 'Company' }}</h2>
-                    <p class="text-muted small mb-0">Welcome to your company workspace.</p>
+                    <h2 class="h6 mb-1">{{ company.name if company else 'شركة' }}</h2>
+                    <p class="text-muted small mb-0">مرحبًا بك في مساحة عمل شركتك.</p>
                 </div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_dashboard_overview')) %}active{% endif %}" href="{{ url_for('company_portal.company_dashboard_overview') }}">
                             <i class="fas fa-gauge-high me-2"></i>
-                            <span>Dashboard</span>
+                            <span>لوحة التحكم</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_offers_list')) %}active{% endif %}" href="{{ url_for('company_portal.company_offers_list') }}">
                             <i class="fas fa-gift me-2"></i>
-                            <span>Offers</span>
+                            <span>العروض</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_redemptions_history')) %}active{% endif %}" href="{{ url_for('company_portal.company_redemptions_history') }}">
                             <i class="fas fa-receipt me-2"></i>
-                            <span>Redemptions</span>
+                            <span>عمليات الاستبدال</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_usage_codes')) %}active{% endif %}" href="{{ url_for('company_portal.company_usage_codes') }}">
                             <i class="fas fa-key me-2"></i>
-                            <span>Usage Codes</span>
+                            <span>أكواد الاستخدام</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_settings')) %}active{% endif %}" href="{{ url_for('company_portal.company_settings') }}">
                             <i class="fas fa-gear me-2"></i>
-                            <span>Settings</span>
+                            <span>الإعدادات</span>
                         </a>
                     </li>
                 </ul>
@@ -133,8 +133,8 @@
                     {% endwith %}
                     <header class="company-page-header d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
                         <div>
-                            <h1 class="h3 mb-1">{% block portal_title %}Company Portal{% endblock %}</h1>
-                            <p class="text-muted mb-0">{% block portal_subtitle %}Manage offers, customers, and communication preferences with ease.{% endblock %}</p>
+                            <h1 class="h3 mb-1">{% block portal_title %}بوابة الشركات{% endblock %}</h1>
+                            <p class="text-muted mb-0">{% block portal_subtitle %}أدر العروض والعملاء وتفضيلات التواصل بسهولة.{% endblock %}</p>
                         </div>
                         {% block portal_header_actions %}{% endblock %}
                     </header>
@@ -145,7 +145,7 @@
             </main>
             <footer class="company-footer py-3 border-top">
                 <div class="container-fluid px-4">
-                    <small class="text-muted">&copy; Elite Rewards Platform. All rights reserved.</small>
+                    <small class="text-muted">&copy; منصة مكافآت Elite. جميع الحقوق محفوظة.</small>
                 </div>
             </footer>
         </div>

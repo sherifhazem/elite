@@ -1,18 +1,18 @@
 {% extends "companies/base.html" %}
 
-{% block title %}Complete Company Registration{% endblock %}
+{% block title %}إكمال تسجيل الشركة{% endblock %}
 
-{% block portal_title %}Complete Registration{% endblock %}
-{% block portal_subtitle %}Update your company details before resubmitting for review.{% endblock %}
+{% block portal_title %}إكمال التسجيل{% endblock %}
+{% block portal_subtitle %}حدّث بيانات شركتك قبل إعادة الإرسال للمراجعة.{% endblock %}
 
 {% block portal_content %}
     <div class="row justify-content-center">
         <div class="col-12 col-lg-8 col-xl-6">
             <div class="card shadow-sm border-0">
                 <div class="card-body p-4">
-                    <h2 class="h4 mb-3 text-center">Review company details</h2>
+                    <h2 class="h4 mb-3 text-center">مراجعة بيانات الشركة</h2>
                     <p class="text-muted text-center mb-4">
-                        Confirm the information below and adjust anything that changed before resubmitting to the ELITE team.
+                        أكّد المعلومات أدناه وعدّل أي بيانات تغيّرت قبل إعادة الإرسال لفريق Elite.
                     </p>
                     <form
                         method="post"
@@ -22,38 +22,38 @@
                         {% include "companies/_csrf_field.html" %}
 
                         <div class="mb-3">
-                            <label class="form-label">Company name</label>
+                            <label class="form-label">اسم الشركة</label>
                             <input type="text" name="name" class="form-control" value="{{ company.name or '' }}" required>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Email</label>
+                            <label class="form-label">البريد الإلكتروني</label>
                             <input type="email" name="email" class="form-control" value="{{ company.email or '' }}" required>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Contact number</label>
+                            <label class="form-label">رقم التواصل</label>
                             <input type="text" name="contact_number" class="form-control" value="{{ company.contact_number or '' }}">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Website</label>
+                            <label class="form-label">الموقع الإلكتروني</label>
                             <input type="url" name="website_url" class="form-control" value="{{ company.website_url or '' }}">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Short description</label>
+                            <label class="form-label">وصف مختصر</label>
                             <textarea name="description" class="form-control" rows="4">{{ company.description or '' }}</textarea>
                         </div>
 
                         <div class="text-end mt-4">
-                            <button type="submit" class="btn btn-elite-primary">Submit for review</button>
+                            <button type="submit" class="btn btn-elite-primary">إرسال للمراجعة</button>
                         </div>
                     </form>
                 </div>
             </div>
             <p class="text-center text-muted mt-3 mb-0">
-                Need help? Contact the ELITE support team for guidance.
+                هل تحتاج للمساعدة؟ تواصل مع فريق دعم Elite للحصول على الإرشادات.
             </p>
         </div>
     </div>
