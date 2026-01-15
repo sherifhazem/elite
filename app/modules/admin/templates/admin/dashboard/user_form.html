@@ -28,18 +28,7 @@
                         %}required{% endif %}
                         placeholder="{{ 'Leave blank to keep current password' if user else '' }}">
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="membership_level">Membership Level</label>
-                    <!-- FIX: Logout, Current User, Role Access, Membership Dropdown – Desktop Admin Context. -->
-                    <select class="form-select" id="membership_level" name="membership_level">
-                        {% for level in membership_levels %}
-                        <option value="{{ level }}" {% if (user and user.membership_level==level) or (not user and
-                            level=='Basic' ) %}selected{% endif %}>
-                            {{ level }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+
                 {% if can_manage_roles %}
                 <div class="col-md-6">
                     <label class="form-label" for="role">Role</label>

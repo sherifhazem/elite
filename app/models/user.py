@@ -47,9 +47,6 @@ class User(UserMixin, db.Model):
         "admin": {"admin", "superadmin"},
         "superadmin": {"superadmin"},
     }
-    #: Supported membership levels ordered from entry to highest tier.
-    MEMBERSHIP_LEVELS = ("Basic", "Silver", "Gold", "Premium")
-    MEMBERSHIP_LEVEL_MAP = {level.lower(): level for level in MEMBERSHIP_LEVELS}
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -66,12 +63,6 @@ class User(UserMixin, db.Model):
         default=True,
         nullable=False,
         doc="Flag indicating if the account is active and allowed to authenticate.",
-    )
-    # TODO: Incentives will be calculated based on verified usage.
-    membership_level = db.Column(
-        db.String(50),
-        nullable=True,
-        doc="Legacy placeholder for incentive tracking pending usage verification.",
     )
     joined_at = db.Column(db.DateTime, default=datetime.utcnow)
     company_id = db.Column(
@@ -195,48 +186,6 @@ class User(UserMixin, db.Model):
             permission = existing_permissions.get(name)
             if permission and permission not in self.permissions:
                 self.permissions.append(permission)
-
-    # ------------------------------------------------------------------
-    # Incentive placeholders
-    # ------------------------------------------------------------------
-    @classmethod
-    def normalize_membership_level(cls, level: str) -> str:
-        """TODO: Incentives will be calculated based on verified usage."""
-
-        if level is None:
-            return ""
-        normalized = str(level).strip().lower()
-        return cls.MEMBERSHIP_LEVEL_MAP.get(normalized, "")
-
-    def update_membership_level(self, level: str | None) -> None:
-        """TODO: Incentives will be calculated based on verified usage."""
-
-        normalized = self.normalize_membership_level(level or "")
-        if not normalized:
-            allowed = ", ".join(self.MEMBERSHIP_LEVELS)
-            raise ValueError(f"Membership level must be one of: {allowed}.")
-        self.membership_level = normalized
-
-    def membership_rank(self) -> int:
-        """TODO: Incentives will be calculated based on verified usage."""
-
-        normalized = self.normalize_membership_level(self.membership_level or "Basic")
-        if not normalized:
-            return 0
-        return self.MEMBERSHIP_LEVELS.index(normalized)
-
-    def can_upgrade_to(self, new_level: str) -> bool:
-        """TODO: Incentives will be calculated based on verified usage."""
-
-        normalized = self.normalize_membership_level(new_level or "")
-        if not normalized:
-            return False
-        return self.membership_rank() < self.MEMBERSHIP_LEVELS.index(normalized)
-
-    def get_membership_discount(self, default: float = 0.0) -> float:
-        """TODO: Incentives will be calculated based on verified usage."""
-
-        return float(default or 0.0)
 
 
 __all__ = ["User", "user_permissions"]

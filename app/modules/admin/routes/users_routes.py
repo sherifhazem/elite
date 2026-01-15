@@ -56,11 +56,7 @@ def _can_assign_superadmin(actor: User | None) -> bool:
     return bool(actor and actor.is_superadmin)
 
 
-def _resolve_membership_level(level: str | None) -> str:
-    """Normalize the membership value from form submissions."""
 
-    normalized = User.normalize_membership_level(level or "Basic")
-    return normalized or "Basic"
 
 
 @admin.route("/users", endpoint="dashboard_users")
@@ -102,7 +98,7 @@ def add_user() -> str:
         username = (cleaned.get("username") or "").strip()
         email = (cleaned.get("email") or "").strip()
         password = cleaned.get("password") or ""
-        membership_level = _resolve_membership_level(cleaned.get("membership_level", "Basic"))
+
         is_active = _parse_boolean(cleaned.get("is_active"))
         desired_role = cleaned.get("role", "member")
 
@@ -110,9 +106,12 @@ def add_user() -> str:
             flash("Username, email, and password are required to create a user.", "danger")
             return redirect(url_for("admin.add_user"))
 
-        user = User(username=username, email=email, membership_level=membership_level)
+        user = User(username=username, email=email)
         user.set_password(password)
         user.is_active = is_active
+        
+        # Default role assignment logging
+        # ...
 
         if can_manage_roles:
             normalized_role = (desired_role or "member").strip().lower()
@@ -163,7 +162,6 @@ def add_user() -> str:
         section_title="Add User",
         user=None,
         role_choices=User.ROLE_CHOICES,
-        membership_choices=User.MEMBERSHIP_LEVELS,
     )
 
 
@@ -183,7 +181,7 @@ def edit_user(user_id: int) -> str:
         username = (cleaned.get("username") or "").strip()
         email = (cleaned.get("email") or "").strip()
         password = cleaned.get("password") or ""
-        membership_level = _resolve_membership_level(cleaned.get("membership_level", "Basic"))
+
         is_active = _parse_boolean(cleaned.get("is_active"))
         desired_role = cleaned.get("role", user.role)
         if not username or not email:
@@ -192,7 +190,6 @@ def edit_user(user_id: int) -> str:
 
         user.username = username
         user.email = email
-        user.membership_level = membership_level
         user.is_active = is_active
 
         if password:
@@ -228,7 +225,6 @@ def edit_user(user_id: int) -> str:
         section_title="Edit User",
         user=user,
         role_choices=User.ROLE_CHOICES,
-        membership_choices=User.MEMBERSHIP_LEVELS,
     )
 
 

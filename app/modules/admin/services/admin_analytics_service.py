@@ -13,27 +13,10 @@ from app.core.database import db
 from app.models import Company, Offer, User
 
 
-def _normalize_membership(level: str | None) -> str:
-    """Return a normalized membership name recognised by the dashboard."""
-
-    if not level:
-        return "Basic"
-    normalized = level.strip().title()
-    return normalized if normalized in User.MEMBERSHIP_LEVELS else "Basic"
-
-
 def get_user_summary() -> Dict[str, object]:
-    """Return aggregated statistics for users and memberships."""
+    """Return aggregated statistics for users."""
 
     total_users = db.session.query(func.count(User.id)).scalar() or 0
-
-    membership_counts: Dict[str, int] = {level: 0 for level in User.MEMBERSHIP_LEVELS}
-    for level, count in (
-        db.session.query(User.membership_level, func.count(User.id))
-        .group_by(User.membership_level)
-        .all()
-    ):
-        membership_counts[_normalize_membership(level)] += int(count or 0)
 
     last_week = datetime.utcnow() - timedelta(days=7)
     new_users = (
@@ -46,7 +29,6 @@ def get_user_summary() -> Dict[str, object]:
     return {
         "total_users": int(total_users),
         "new_last_7_days": int(new_users),
-        "membership_counts": membership_counts,
     }
 
 
@@ -131,13 +113,7 @@ def get_offer_summary() -> Dict[str, object]:
     }
 
 
-def get_membership_distribution() -> Dict[str, object]:
-    """Return pie-chart friendly membership distribution data."""
 
-    counts = get_user_summary()["membership_counts"]  # type: ignore[index]
-    labels = list(counts.keys())
-    values = [counts[label] for label in labels]
-    return {"labels": labels, "values": values}
 
 
 def get_recent_activity(days: int = 7) -> Dict[str, List[Dict[str, object]]]:
@@ -165,3 +141,27 @@ def get_recent_activity(days: int = 7) -> Dict[str, List[Dict[str, object]]]:
         current += timedelta(days=1)
 
     return {"timeline": timeline}
+
+
+def get_membership_distribution() -> Dict[str, List[object]]:
+    """Return distribution of users by status (Active vs Inactive).
+    
+    Replaces the legacy membership tier distribution.
+    """
+    total_active = (
+        db.session.query(func.count(User.id))
+        .filter(User.is_active.is_(True))
+        .scalar()
+        or 0
+    )
+    total_inactive = (
+        db.session.query(func.count(User.id))
+        .filter(User.is_active.is_(False))
+        .scalar()
+        or 0
+    )
+
+    return {
+        "labels": ["Active", "Inactive"],
+        "values": [int(total_active), int(total_inactive)],
+    }

@@ -7,161 +7,103 @@
 {% block title %}الملف الشخصي · ELITE{% endblock %}
 {% block page_heading %}ملفي{% endblock %}
 {% block content %}
-    <section>
-        <article
-            class="profile-card"
-            id="membership-card"
-            data-tier="{{ membership_card.level_key }}"
-            data-member-name="{{ membership_card.name }}"
-            data-member-level="{{ membership_card.level }}"
-            data-member-code="{{ membership_card.code }}"
-            data-member-joined="{{ membership_card.joined }}"
-        >
-            <header class="profile-card__header">
-                <div>
-                    <h1 class="profile-card__title">{{ membership_card.name }}</h1>
-                    <p class="profile-card__label">عضوية رقم {{ membership_card.code }}</p>
-                </div>
-                <span class="profile-card__badge">{{ membership_card.level }}</span>
-            </header>
-            <div class="profile-card__details">
-                <div>
-                    <p class="profile-card__label">تاريخ الانضمام</p>
-                    <p class="profile-card__value">{{ membership_card.joined }}</p>
-                </div>
-                <div>
-                    <p class="profile-card__label">الحالة</p>
-                    <p class="profile-card__value">{{ 'مفعل' if current_user.is_authenticated and current_user.is_active else 'غير مفعل' }}</p>
-                </div>
+<section>
+    <article class="profile-card" id="membership-card" data-member-name="{{ membership_card.name }}"
+        data-member-code="{{ membership_card.code }}" data-member-joined="{{ membership_card.joined }}">
+        <header class="profile-card__header">
+            <div>
+                <h1 class="profile-card__title">{{ membership_card.name }}</h1>
+                <p class="profile-card__label">عضوية رقم {{ membership_card.code }}</p>
             </div>
-        </article>
-        <div class="profile-actions">
-            <button class="cta-button" type="button" id="upgrade-entry" data-scroll-target="#upgrade-panel">Upgrade Membership</button>
-            <button class="ghost-button" type="button" id="download-card">Download My Card</button>
-            <a
-                class="ghost-button logout-button"
-                id="logout-action"
-                href="{{ url_for('auth.logout') }}"
-                role="button"
-                rel="nofollow"
-            >تسجيل الخروج</a>
+        </header>
+        <div class="profile-card__details">
+            <div>
+                <p class="profile-card__label">تاريخ الانضمام</p>
+                <p class="profile-card__value">{{ membership_card.joined }}</p>
+            </div>
+            <div>
+                <p class="profile-card__label">الحالة</p>
+                <p class="profile-card__value">{{ 'مفعل' if current_user.is_authenticated and current_user.is_active
+                    else 'غير مفعل' }}</p>
+            </div>
         </div>
-    </section>
-    <section class="upgrade-panel" id="upgrade-panel">
-        <header class="panel-header">
-            <h2 class="panel-header__title">ترقية المستوى</h2>
-            <p class="panel-header__subtitle">اختر المستوى التالي لفتح مزايا إضافية.</p>
-        </header>
-        {% if current_user.is_authenticated %}
-            {% if available_upgrades %}
-                <form id="membership-upgrade-form" class="upgrade-form" onsubmit="upgradeMembership(event)">
-                    <label class="profile-card__label" for="new_membership_level">اختر المستوى الجديد</label>
-                    <select
-                        class="upgrade-form__select"
-                        name="new_level"
-                        id="new_membership_level"
-                        data-current-level="{{ membership_level }}"
-                        required
-                    >
-                        <option value="" selected disabled>اختر المستوى</option>
-                        {% for level in available_upgrades %}
-                            <option value="{{ level }}">{{ level }}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit">تأكيد الترقية</button>
-                </form>
-            {% else %}
-                <div class="empty-state">
-                    <p>أنت بالفعل في أعلى مستوى. استمتع بمزايا Premium!</p>
+    </article>
+    <div class="profile-actions">
+        <button class="ghost-button" type="button" id="download-card">Download My Card</button>
+        <a class="ghost-button logout-button" id="logout-action" href="{{ url_for('auth.logout') }}" role="button"
+            rel="nofollow">تسجيل الخروج</a>
+    </div>
+</section>
+<section class="activations-panel" id="activations-panel">
+    <header class="panel-header">
+        <h2 class="panel-header__title">تفعيلاتي</h2>
+        <p class="panel-header__subtitle">تتبع رموز التفعيل التي أنشأتها وحالتها الحالية.</p>
+    </header>
+    {% if not current_user.is_authenticated %}
+    <div class="empty-state">
+        <p>قم بتسجيل الدخول لرؤية سجل التفعيلات الخاصة بك.</p>
+    </div>
+    {% elif activations %}
+    <div class="activation-list" role="list">
+        {% for redemption in activations %}
+        {% set status = redemption.status or 'pending' %}
+        {% set status_label = {'pending': 'قيد التفعيل', 'redeemed': 'تم الاستخدام', 'expired': 'منتهي'}.get(status,
+        status) %}
+        <article class="activation-card" data-redemption-code="{{ redemption.redemption_code }}"
+            data-redemption-status="{{ status }}" data-offer-title="{{ redemption.offer.title }}"
+            data-offer-description="{{ (redemption.offer.description or '')|e }}"
+            data-company-id="{{ redemption.company.id }}" data-company-name="{{ redemption.company.name }}"
+            data-company-summary="{{ redemption.company.summary|e }}"
+            data-company-description="{{ (redemption.company.description or '')|e }}" role="listitem">
+            <header class="activation-card__header">
+                <div>
+                    <h3 class="activation-card__title">{{ redemption.offer.title }}</h3>
+                    <p class="activation-card__meta">{{ redemption.company.name }}</p>
+                    <p class="activation-card__meta">كود: <span data-activation-code>{{ redemption.redemption_code
+                            }}</span></p>
                 </div>
-            {% endif %}
-        {% else %}
-            <div class="empty-state">
-                <p>قم بتسجيل الدخول لإدارة ملف العضوية والترقية.</p>
-            </div>
-        {% endif %}
-    </section>
-    <section class="activations-panel" id="activations-panel">
-        <header class="panel-header">
-            <h2 class="panel-header__title">تفعيلاتي</h2>
-            <p class="panel-header__subtitle">تتبع رموز التفعيل التي أنشأتها وحالتها الحالية.</p>
-        </header>
-        {% if not current_user.is_authenticated %}
-            <div class="empty-state">
-                <p>قم بتسجيل الدخول لرؤية سجل التفعيلات الخاصة بك.</p>
-            </div>
-        {% elif activations %}
-            <div class="activation-list" role="list">
-                {% for redemption in activations %}
-                    {% set status = redemption.status or 'pending' %}
-                    {% set status_label = {'pending': 'قيد التفعيل', 'redeemed': 'تم الاستخدام', 'expired': 'منتهي'}.get(status, status) %}
-                    <article
-                        class="activation-card"
-                        data-redemption-code="{{ redemption.redemption_code }}"
-                        data-redemption-status="{{ status }}"
-                        data-offer-title="{{ redemption.offer.title }}"
-                        data-offer-description="{{ (redemption.offer.description or '')|e }}"
-                        data-company-id="{{ redemption.company.id }}"
-                        data-company-name="{{ redemption.company.name }}"
-                        data-company-summary="{{ redemption.company.summary|e }}"
-                        data-company-description="{{ (redemption.company.description or '')|e }}"
-                        role="listitem"
-                    >
-                        <header class="activation-card__header">
-                            <div>
-                                <h3 class="activation-card__title">{{ redemption.offer.title }}</h3>
-                                <p class="activation-card__meta">{{ redemption.company.name }}</p>
-                                <p class="activation-card__meta">كود: <span data-activation-code>{{ redemption.redemption_code }}</span></p>
-                            </div>
-                            <span class="activation-card__status activation-card__status--{{ status }}">{{ status_label }}</span>
-                        </header>
-                        <dl class="activation-card__details">
-                            <div>
-                                <dt>تاريخ الإنشاء</dt>
-                                <dd>{{ redemption.created_at.strftime('%Y-%m-%d %H:%M') if redemption.created_at else '—' }}</dd>
-                            </div>
-                            <div>
-                                <dt>انتهاء الصلاحية</dt>
-                                <dd>
-                                    {% if redemption.status == 'pending' and redemption.expires_at %}
-                                        {{ redemption.expires_at.strftime('%Y-%m-%d %H:%M') }}
-                                    {% elif redemption.status == 'redeemed' and redemption.redeemed_at %}
-                                        تم الاستخدام في {{ redemption.redeemed_at.strftime('%Y-%m-%d %H:%M') }}
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                </dd>
-                            </div>
-                        </dl>
-                        <footer class="activation-card__actions">
-                            <button
-                                class="ghost-button"
-                                type="button"
-                                data-open-redemption
-                                data-redemption-code="{{ redemption.redemption_code }}"
-                                data-redemption-url="{{ url_for('redemption.get_qrcode_image', code=redemption.redemption_code) }}"
-                            >
-                                عرض رمز QR
-                            </button>
-                            <button
-                                class="ghost-button"
-                                type="button"
-                                data-redemption-details
-                                data-redemption-code="{{ redemption.redemption_code }}"
-                            >
-                                فتح التفاصيل
-                            </button>
-                            <button class="ghost-button" type="button" data-copy-redemption data-redemption-code="{{ redemption.redemption_code }}">
-                                نسخ الكود
-                            </button>
-                        </footer>
-                    </article>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="empty-state">
-                <p>لم تقم بتفعيل أي عروض حتى الآن. استخدم زر “تفعيل العرض” من قائمة العروض للبدء.</p>
-            </div>
-        {% endif %}
-    </section>
+                <span class="activation-card__status activation-card__status--{{ status }}">{{ status_label }}</span>
+            </header>
+            <dl class="activation-card__details">
+                <div>
+                    <dt>تاريخ الإنشاء</dt>
+                    <dd>{{ redemption.created_at.strftime('%Y-%m-%d %H:%M') if redemption.created_at else '—' }}</dd>
+                </div>
+                <div>
+                    <dt>انتهاء الصلاحية</dt>
+                    <dd>
+                        {% if redemption.status == 'pending' and redemption.expires_at %}
+                        {{ redemption.expires_at.strftime('%Y-%m-%d %H:%M') }}
+                        {% elif redemption.status == 'redeemed' and redemption.redeemed_at %}
+                        تم الاستخدام في {{ redemption.redeemed_at.strftime('%Y-%m-%d %H:%M') }}
+                        {% else %}
+                        —
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+            <footer class="activation-card__actions">
+                <button class="ghost-button" type="button" data-open-redemption
+                    data-redemption-code="{{ redemption.redemption_code }}"
+                    data-redemption-url="{{ url_for('redemption.get_qrcode_image', code=redemption.redemption_code) }}">
+                    عرض رمز QR
+                </button>
+                <button class="ghost-button" type="button" data-redemption-details
+                    data-redemption-code="{{ redemption.redemption_code }}">
+                    فتح التفاصيل
+                </button>
+                <button class="ghost-button" type="button" data-copy-redemption
+                    data-redemption-code="{{ redemption.redemption_code }}">
+                    نسخ الكود
+                </button>
+            </footer>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>لم تقم بتفعيل أي عروض حتى الآن. استخدم زر “تفعيل العرض” من قائمة العروض للبدء.</p>
+    </div>
+    {% endif %}
+</section>
 {% endblock %}

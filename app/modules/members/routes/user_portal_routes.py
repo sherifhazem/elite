@@ -17,7 +17,6 @@ from app.core.database import db
 from app.models import Notification, Offer, User
 from app.modules.members.auth.utils import AUTH_COOKIE_NAME, get_user_from_token
 from app.modules.members.services.member_notifications_service import (
-    notify_membership_upgrade,
     notify_offer_feedback,
 )
 from app.modules.companies.services.company_offers_service import (
@@ -75,19 +74,16 @@ def _extract_token() -> Optional[str]:
     return None
 
 
-def _resolve_user_context() -> Tuple[Optional[User], str]:
-    """Return the authenticated user (if any) and normalized membership level."""
+def _resolve_user_context() -> Optional[User]:
+    """Return the authenticated user (if any)."""
 
-    membership_level = "Basic"
     user: Optional[User] = None
 
     token = _extract_token()
     if token:
         user = get_user_from_token(token)
-        if user is not None and user.membership_level:
-            membership_level = user.membership_level
 
-    return user, membership_level or "Basic"
+    return user
 
 
 def _unread_notification_count(user: Optional[User]) -> int:
@@ -98,7 +94,7 @@ def _unread_notification_count(user: Optional[User]) -> int:
     return Notification.query.filter_by(user_id=user.id, is_read=False).count()
 
 
-def _membership_card_payload(user: Optional[User], membership_level: str) -> Dict[str, str]:
+def _membership_card_payload(user: Optional[User]) -> Dict[str, str]:
     """Return metadata required to paint the digital membership card."""
 
     code = "000000"
@@ -114,22 +110,19 @@ def _membership_card_payload(user: Optional[User], membership_level: str) -> Dic
         "code": code,
         "joined": joined,
         "name": name,
-        "level": membership_level or "Basic",
-        "level_key": (membership_level or "Basic").strip().lower() or "basic",
     }
 
 
 # Render the portal home view summarizing the member's benefits.
 @portal.route("/", methods=["GET"], endpoint="member_portal_home")
 def member_portal_home():
-    user, membership_level = _resolve_user_context()
+    user = _resolve_user_context()
     if user is None:
         return _redirect_to_login()
     featured_offers = Offer.query.order_by(Offer.created_at.desc()).limit(6).all()
     return render_template(
         "members/portal/home.html",
         user=user,
-        membership_level=membership_level,
         featured_offers=featured_offers,
         notification_unread_count=_unread_notification_count(user),
         active_nav="home",
@@ -147,10 +140,10 @@ def member_portal_home_alias():
 # Display the personalized offers list calculated for the user's tier.
 @portal.route("/offers", methods=["GET"], endpoint="member_portal_offers")
 def member_portal_offers():
-    user, membership_level = _resolve_user_context()
+    user = _resolve_user_context()
     if user is None:
         return _redirect_to_login()
-    offers_data = get_portal_offers_with_company(membership_level)
+    offers_data = get_portal_offers_with_company()
     offer_runtime_flags = {
         offer.id: get_offer_runtime_flags(user.id if user else None, offer.id)
         for offer in offers_data
@@ -158,7 +151,6 @@ def member_portal_offers():
     return render_template(
         "members/portal/offers.html",
         user=user,
-        membership_level=membership_level,
         offers=offers_data,
         offer_runtime_flags=offer_runtime_flags,
         notification_unread_count=_unread_notification_count(user),
@@ -170,30 +162,18 @@ def member_portal_offers():
 # Present the member's profile details and upgrade prompts.
 @portal.route("/profile", methods=["GET"], endpoint="member_portal_profile")
 def member_portal_profile():
-    user, membership_level = _resolve_user_context()
+    user = _resolve_user_context()
     if user is None:
         return _redirect_to_login()
-    available_upgrades = []
     activations = []
-    upgrade_success = request.args.get("upgraded") == "1"
-    if user is not None:
-        # Present only the membership tiers that are higher than the current one.
-        current_rank = user.membership_rank()
-        available_upgrades = [
-            level
-            for index, level in enumerate(User.MEMBERSHIP_LEVELS)
-            if index > current_rank
-        ]
+    
     if user is not None:
         activations = list_user_redemptions_with_context(user.id)
 
     return render_template(
         "members/portal/profile.html",
         user=user,
-        membership_level=membership_level,
-        membership_card=_membership_card_payload(user, membership_level),
-        available_upgrades=available_upgrades,
-        upgrade_success=upgrade_success,
+        membership_card=_membership_card_payload(user),
         activations=activations,
         notification_unread_count=_unread_notification_count(user),
         active_nav="profile",
@@ -205,7 +185,7 @@ def member_portal_profile():
 def user_activations():
     """Return the authenticated member's activations as JSON payload."""
 
-    user, _ = _resolve_user_context()
+    user = _resolve_user_context()
     if user is None:
         return jsonify({"error": "Unauthorized"}), 401
     activations = list_user_redemptions_with_context(user.id)
@@ -234,7 +214,7 @@ def user_activations():
 def offer_feedback(offer_id: int):
     """Handle lightweight feedback interactions for the given offer."""
 
-    user, _ = _resolve_user_context()
+    user = _resolve_user_context()
     if user is None:
         return jsonify({"error": "Unauthorized"}), 401
     offer = Offer.query.get_or_404(offer_id)
@@ -259,7 +239,7 @@ def offer_feedback(offer_id: int):
 def company_brief(company_id: int):
     """Return a lightweight company profile for the portal modal."""
 
-    user, _ = _resolve_user_context()
+    user = _resolve_user_context()
     if user is None:
         return jsonify({"error": "Unauthorized"}), 401
     company = get_company_brief(company_id)
@@ -272,7 +252,7 @@ def company_brief(company_id: int):
 def member_portal_notifications():
     """Render the notifications center view for the authenticated member."""
 
-    user, membership_level = _resolve_user_context()
+    user = _resolve_user_context()
     if user is None:
         return _redirect_to_login()
     unread_count = _unread_notification_count(user)
@@ -287,60 +267,9 @@ def member_portal_notifications():
     return render_template(
         "members/portal/notifications.html",
         user=user,
-        membership_level=membership_level,
         notifications=notifications_list,
         unread_count=unread_count,
         notification_unread_count=unread_count,
         active_nav="notifications",
         current_year=datetime.utcnow().year,
-    )
-
-
-@portal.route("/upgrade", methods=["POST"], endpoint="upgrade_membership")
-def upgrade_membership():
-    """Upgrade the authenticated user's membership level when permitted."""
-
-    # Authenticate the request using the same helper leveraged by the portal views.
-    token = _extract_token()
-    user = get_user_from_token(token) if token else None
-    if user is None:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
-    desired_level = payload.get("new_level", "")
-    normalized_level = User.normalize_membership_level(desired_level)
-    if not normalized_level:
-        return (
-            jsonify({"error": "Invalid level", "allowed_levels": User.MEMBERSHIP_LEVELS}),
-            400,
-        )
-
-    if not user.can_upgrade_to(normalized_level):
-        return (
-            jsonify({
-                "error": "Upgrade not permitted",
-                "message": "Choose a level higher than your current membership.",
-            }),
-            400,
-        )
-
-    try:
-        previous_level = user.membership_level
-        user.update_membership_level(normalized_level)
-        db.session.commit()
-    except ValueError as error:
-        db.session.rollback()
-        return jsonify({"error": str(error)}), 400
-
-    notify_membership_upgrade(user.id, previous_level or "Basic", normalized_level)
-
-    return (
-        jsonify(
-            {
-                "message": f"Membership upgraded to {normalized_level}",
-                "redirect_url": url_for("portal.member_portal_profile", upgraded="1"),
-                "new_level": normalized_level,
-            }
-        ),
-        200,
     )

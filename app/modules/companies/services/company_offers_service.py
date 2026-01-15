@@ -37,9 +37,7 @@ def _summarize_company(company: Optional[Company], *, length: int = 140) -> str:
     return f"{description[:length].rstrip()}…"
 
 
-def get_portal_offers_with_company(
-    membership_level: str | None = None,
-) -> List[OfferCompanyBundle]:
+def get_portal_offers_with_company() -> List[OfferCompanyBundle]:
     """Return offer records enriched with linked company data for the portal."""
     # TODO: Incentives will be calculated based on verified usage.
     offers: Iterable[Offer] = (
