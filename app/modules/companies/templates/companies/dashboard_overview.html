@@ -2,25 +2,25 @@
 <!-- UPDATED: Responsive Company Portal with Restricted Editable Fields. -->
 {% extends "companies/base.html" %}
 
-{% block portal_title %}Dashboard{% endblock %}
+{% block portal_title %}لوحة التحكم{% endblock %}
 
 {% block portal_content %}
     <section class="dashboard-metrics">
         <article class="metric-card metric-card--primary">
             <div class="metric-card-body">
-                <h2 class="metric-title">Active Offers</h2>
+                <h2 class="metric-title">العروض النشطة</h2>
                 <p class="metric-value">{{ active_offers }}</p>
             </div>
         </article>
         <article class="metric-card metric-card--accent">
             <div class="metric-card-body">
-                <h2 class="metric-title">Total Redemptions</h2>
+                <h2 class="metric-title">إجمالي الاستبدالات</h2>
                 <p class="metric-value">{{ total_redeemed }}</p>
             </div>
         </article>
         <article class="metric-card metric-card--neutral">
             <div class="metric-card-body">
-                <h2 class="metric-title">Customers Served</h2>
+                <h2 class="metric-title">العملاء المخدومون</h2>
                 <p class="metric-value">{{ unique_customers }}</p>
             </div>
         </article>
@@ -29,48 +29,53 @@
     <section class="dashboard-panels">
         <div class="dashboard-panel">
             <div class="panel-header">
-                <h3 class="panel-title">Latest Redemption</h3>
+                <h3 class="panel-title">أحدث عملية استبدال</h3>
             </div>
             <div class="panel-body">
+                {% set redemption_status_labels = {
+                    'redeemed': 'مستبدل',
+                    'pending': 'قيد الانتظار',
+                    'expired': 'منتهي'
+                } %}
                 {% if last_redemption %}
                     <dl class="panel-meta">
                         <div>
-                            <dt>Code</dt>
+                            <dt>الرمز</dt>
                             <dd>{{ last_redemption.redemption_code }}</dd>
                         </div>
                         <div>
-                            <dt>Status</dt>
+                            <dt>الحالة</dt>
                             <dd>
                                 <span class="badge bg-{{ 'success' if last_redemption.status == 'redeemed' else 'secondary' }} text-uppercase">
-                                    {{ last_redemption.status }}
+                                    {{ redemption_status_labels.get(last_redemption.status, 'غير معروف') }}
                                 </span>
                             </dd>
                         </div>
                         <div>
-                            <dt>Processed</dt>
+                            <dt>تمت المعالجة</dt>
                             <dd>
                                 {{ (last_redemption.redeemed_at or last_redemption.created_at).strftime('%Y-%m-%d %H:%M') if last_redemption.created_at else '—' }}
                             </dd>
                         </div>
                     </dl>
                 {% else %}
-                    <p class="text-muted mb-0">No redemptions yet.</p>
+                    <p class="text-muted mb-0">لا توجد استبدالات حتى الآن.</p>
                 {% endif %}
             </div>
         </div>
         <div class="dashboard-panel">
             <div class="panel-header">
-                <h3 class="panel-title">Recent Redemptions</h3>
+                <h3 class="panel-title">الاستبدالات الأخيرة</h3>
             </div>
             <div class="panel-body">
                 <div class="table-responsive dashboard-table-wrapper">
                     <table class="table align-middle mb-0">
                         <thead>
                             <tr>
-                                <th scope="col">Code</th>
-                                <th scope="col">Member</th>
-                                <th scope="col">Created</th>
-                                <th scope="col">Status</th>
+                                <th scope="col">الرمز</th>
+                                <th scope="col">العضو</th>
+                                <th scope="col">تاريخ الإنشاء</th>
+                                <th scope="col">الحالة</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -81,13 +86,15 @@
                                         <td>{{ redemption.user.username if redemption.user else '—' }}</td>
                                         <td>{{ redemption.created_at.strftime('%Y-%m-%d %H:%M') if redemption.created_at else '—' }}</td>
                                         <td>
-                                            <span class="badge bg-{{ 'success' if redemption.status == 'redeemed' else 'secondary' }} text-uppercase">{{ redemption.status }}</span>
+                                            <span class="badge bg-{{ 'success' if redemption.status == 'redeemed' else 'secondary' }} text-uppercase">
+                                                {{ redemption_status_labels.get(redemption.status, 'غير معروف') }}
+                                            </span>
                                         </td>
                                     </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">No redemption activity yet.</td>
+                                    <td colspan="4" class="text-center text-muted py-4">لا توجد حركة استبدال بعد.</td>
                                 </tr>
                             {% endif %}
                         </tbody>
@@ -98,27 +105,29 @@
                         {% for redemption in recent_redemptions %}
                             <article class="dashboard-redemption-card">
                                 <div class="redemption-card-row">
-                                    <span class="label">Code</span>
+                                    <span class="label">الرمز</span>
                                     <span class="value">{{ redemption.redemption_code }}</span>
                                 </div>
                                 <div class="redemption-card-row">
-                                    <span class="label">Member</span>
+                                    <span class="label">العضو</span>
                                     <span class="value">{{ redemption.user.username if redemption.user else '—' }}</span>
                                 </div>
                                 <div class="redemption-card-row">
-                                    <span class="label">Created</span>
+                                    <span class="label">تاريخ الإنشاء</span>
                                     <span class="value">{{ redemption.created_at.strftime('%Y-%m-%d %H:%M') if redemption.created_at else '—' }}</span>
                                 </div>
                                 <div class="redemption-card-row">
-                                    <span class="label">Status</span>
+                                    <span class="label">الحالة</span>
                                     <span class="value">
-                                        <span class="badge bg-{{ 'success' if redemption.status == 'redeemed' else 'secondary' }} text-uppercase">{{ redemption.status }}</span>
+                                        <span class="badge bg-{{ 'success' if redemption.status == 'redeemed' else 'secondary' }} text-uppercase">
+                                            {{ redemption_status_labels.get(redemption.status, 'غير معروف') }}
+                                        </span>
                                     </span>
                                 </div>
                             </article>
                         {% endfor %}
                     {% else %}
-                        <p class="text-muted mb-0">No redemption activity yet.</p>
+                        <p class="text-muted mb-0">لا توجد حركة استبدال بعد.</p>
                     {% endif %}
                 </div>
             </div>

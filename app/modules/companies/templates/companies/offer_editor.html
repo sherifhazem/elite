@@ -1,7 +1,7 @@
 {% extends "companies/base.html" %}
 
 {% set is_edit = offer is not none %}
-{% set page_heading = page_title or ('Edit Offer' if is_edit else 'Add Offer') %}
+{% set page_heading = page_title or ('تعديل العرض' if is_edit else 'إضافة عرض') %}
 
 {% block portal_title %}{{ page_heading }}{% endblock %}
 
@@ -11,12 +11,12 @@
         <div>
             <h2 class="section-title">{{ page_heading }}</h2>
             <p class="section-subtitle">
-                Define the details, timing, and visuals for your company offer. You can return later to pause,
-                archive, or reactivate it.
+                حدّد تفاصيل العرض وتوقيته والعناصر البصرية الخاصة به. يمكنك العودة لاحقًا لإيقافه مؤقتًا،
+                أو أرشفته، أو إعادة تفعيله.
             </p>
         </div>
         <div class="intro-actions">
-            <a class="btn btn-elite-outline" href="{{ url_for('company_portal.company_offers_list') }}">Back to offers</a>
+            <a class="btn btn-elite-outline" href="{{ url_for('company_portal.company_offers_list') }}">العودة إلى العروض</a>
         </div>
     </header>
 
@@ -25,7 +25,7 @@
         <div class="card-body">
             <div class="row g-4">
                 <div class="col-12 col-lg-7">
-                    <label for="offer-title" class="form-label">Offer name</label>
+                    <label for="offer-title" class="form-label">اسم العرض</label>
                     <input
                         type="text"
                         class="form-control"
@@ -33,22 +33,22 @@
                         name="title"
                         value="{{ offer.title if offer else '' }}"
                         required
-                        placeholder="e.g., Weekend Saver"
+                        placeholder="مثال: عرض نهاية الأسبوع"
                     >
                 </div>
                 <div class="col-12 col-md-5">
-                    <label for="offer-status" class="form-label">Status</label>
+                    <label for="offer-status" class="form-label">الحالة</label>
                     <select class="form-select" id="offer-status" name="status">
                         {% set current_status = offer.status if offer else 'active' %}
-                        <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
-                        <option value="paused" {% if current_status == 'paused' %}selected{% endif %}>Paused</option>
-                        <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>Archived</option>
+                        <option value="active" {% if current_status == 'active' %}selected{% endif %}>نشط</option>
+                        <option value="paused" {% if current_status == 'paused' %}selected{% endif %}>موقوف مؤقتًا</option>
+                        <option value="archived" {% if current_status == 'archived' %}selected{% endif %}>مؤرشف</option>
                     </select>
                 </div>
                 <div class="col-12 col-md-7">
-                    <span class="form-label d-block">Classifications (optional)</span>
+                    <span class="form-label d-block">التصنيفات (اختياري)</span>
                     <p class="form-text mb-2">
-                        Classifications disabled in Admin Settings cannot be saved to new or updated offers.
+                        التصنيفات المعطلة في إعدادات الإدارة لا يمكن حفظها في العروض الجديدة أو المحدّثة.
                     </p>
                     <div class="row g-2">
                         {% set selected_classifications = offer.classification_values if offer else [] %}
@@ -67,7 +67,7 @@
                                     <label class="form-check-label" for="offer-classification-{{ key }}">
                                         {{ label }}
                                         {% if not is_enabled %}
-                                            <span class="badge bg-light text-dark border ms-2">Disabled</span>
+                                            <span class="badge bg-light text-dark border ms-2">معطل</span>
                                         {% endif %}
                                     </label>
                                 </div>
@@ -76,7 +76,7 @@
                     </div>
                 </div>
                 <div class="col-12 col-md-4">
-                    <label for="offer-base-discount" class="form-label">Base discount (%)</label>
+                    <label for="offer-base-discount" class="form-label">نسبة الخصم الأساسية (%)</label>
                     <input
                         type="number"
                         step="0.01"
@@ -89,7 +89,7 @@
                     >
                 </div>
                 <div class="col-12 col-md-4">
-                    <label for="offer-start-date" class="form-label">Start date</label>
+                    <label for="offer-start-date" class="form-label">تاريخ البداية</label>
                     <input
                         type="date"
                         class="form-control"
@@ -99,7 +99,7 @@
                     >
                 </div>
                 <div class="col-12 col-md-4">
-                    <label for="offer-valid-until" class="form-label">End date</label>
+                    <label for="offer-valid-until" class="form-label">تاريخ الانتهاء</label>
                     <input
                         type="date"
                         class="form-control"
@@ -109,17 +109,17 @@
                     >
                 </div>
                 <div class="col-12">
-                    <label for="offer-description" class="form-label">Description</label>
+                    <label for="offer-description" class="form-label">الوصف</label>
                     <textarea
                         class="form-control"
                         id="offer-description"
                         name="description"
                         rows="4"
-                        placeholder="Explain the offer, eligibility, or redemption steps"
+                        placeholder="اشرح العرض وشروطه أو خطوات الاستبدال"
                     >{{ offer.description if offer else '' }}</textarea>
                 </div>
                 <div class="col-12 col-md-6">
-                    <label for="offer-image" class="form-label">Offer image (optional)</label>
+                    <label for="offer-image" class="form-label">صورة العرض (اختياري)</label>
                     <input
                         type="file"
                         class="form-control"
@@ -127,29 +127,29 @@
                         name="image_file"
                         accept="image/png,image/jpeg,image/webp,image/svg+xml"
                     >
-                    <div class="form-text">PNG, JPG, WEBP, or SVG up to 4MB.</div>
+                    <div class="form-text">PNG أو JPG أو WEBP أو SVG حتى 4MB.</div>
                 </div>
                 {% if offer and offer.image_url %}
                     <div class="col-12 col-md-6 d-flex flex-column">
-                        <span class="form-label">Current image</span>
+                        <span class="form-label">الصورة الحالية</span>
                         <div class="border rounded p-2 bg-light d-flex justify-content-center">
-                            <img src="{{ offer.image_url }}" alt="{{ offer.title }} image" class="img-fluid" style="max-height: 180px;">
+                            <img src="{{ offer.image_url }}" alt="{{ offer.title }} صورة" class="img-fluid" style="max-height: 180px;">
                         </div>
                     </div>
                 {% endif %}
                 <div class="col-12">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="offer-send-notifications" name="send_notifications">
-                        <label class="form-check-label" for="offer-send-notifications">Send notifications to members</label>
+                        <label class="form-check-label" for="offer-send-notifications">إرسال إشعارات للأعضاء</label>
                     </div>
                 </div>
             </div>
         </div>
         <div class="card-footer d-flex justify-content-between align-items-center">
-            <span class="text-muted">You can pause or archive the offer later from the list view.</span>
+            <span class="text-muted">يمكنك إيقاف العرض مؤقتًا أو أرشفته لاحقًا من قائمة العروض.</span>
             <div class="d-flex gap-2">
-                <a class="btn btn-elite-outline" href="{{ url_for('company_portal.company_offers_list') }}">Cancel</a>
-                <button type="submit" class="btn btn-elite-primary">Save offer</button>
+                <a class="btn btn-elite-outline" href="{{ url_for('company_portal.company_offers_list') }}">إلغاء</a>
+                <button type="submit" class="btn btn-elite-primary">حفظ العرض</button>
             </div>
         </div>
     </form>
