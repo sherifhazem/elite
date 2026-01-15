@@ -72,6 +72,19 @@ def get_list(list_type: str, *, active_only: bool = True) -> List[str]:
     return [row.name for row in query.order_by(LookupChoice.name.asc()).all()]
 
 
+def get_industry_items(*, active_only: bool = True) -> List[Dict[str, str | None]]:
+    """Return industry items with icon metadata for admin use."""
+
+    _ensure_storage_ready()
+    query = LookupChoice.query.filter_by(list_type="industries")
+    if active_only:
+        query = query.filter_by(active=True)
+    return [
+        {"name": row.name, "icon": row.icon}
+        for row in query.order_by(LookupChoice.name.asc()).all()
+    ]
+
+
 def update_settings(list_type: str, new_values: Iterable[str]) -> List[str]:
     """Replace the entire list while enforcing uniqueness and non-empty values."""
 
@@ -236,6 +249,35 @@ def update_item(
     return get_list(normalized_type, active_only=True)
 
 
+def update_industry_icon(name: str, icon: str | None) -> List[Dict[str, str | None]]:
+    """Set or clear the icon for a specific industry."""
+
+    _ensure_storage_ready()
+    value = _normalize_value(name)
+    if not value:
+        raise ValueError("العنصر المطلوب مفقود.")
+
+    entry = LookupChoice.query.filter_by(list_type="industries", name=value).first()
+    if not entry:
+        raise ValueError("لم يتم العثور على العنصر المطلوب.")
+
+    entry.icon = icon or None
+    db.session.commit()
+
+    _LOGGER.info(
+        "Admin settings change applied",
+        extra={
+            "log_payload": {
+                "admin_settings_action": "update_industry_icon",
+                "status": "success",
+                "value": value,
+                "icon": entry.icon,
+            }
+        },
+    )
+    return get_industry_items(active_only=False)
+
+
 __all__ = [
     "get_all_settings",
     "get_list",
@@ -245,4 +287,6 @@ __all__ = [
     "add_item",
     "delete_item",
     "update_item",
+    "get_industry_items",
+    "update_industry_icon",
 ]

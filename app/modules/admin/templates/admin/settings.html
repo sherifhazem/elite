@@ -129,23 +129,46 @@
                             <thead>
                                 <tr>
                                     <th scope="col">الاسم</th>
+                                    <th scope="col" class="text-center">الأيقونة</th>
                                     <th scope="col" class="text-end">الإجراءات</th>
                                 </tr>
                             </thead>
                             <tbody data-list-table="industries">
                                 {% if industries %}
                                     {% for industry in industries %}
-                                        <tr data-value="{{ industry }}">
-                                            <td class="fw-medium">{{ industry }}</td>
+                                        <tr data-value="{{ industry.name }}" data-icon="{{ industry.icon or '' }}">
+                                            <td class="fw-medium">{{ industry.name }}</td>
+                                            <td class="text-center">
+                                                {% if industry.icon %}
+                                                    <img
+                                                        src="{{ industry_icons_base }}{{ industry.icon }}"
+                                                        alt="{{ industry.name }}"
+                                                        class="img-fluid"
+                                                        style="max-height: 32px;"
+                                                    >
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
                                             <td class="text-end">
                                                 <div class="btn-group" role="group">
+                                                    <button
+                                                        class="btn btn-sm btn-outline-secondary js-link-icon"
+                                                        type="button"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#industryIconModal"
+                                                        data-industry-name="{{ industry.name }}"
+                                                        data-industry-icon="{{ industry.icon or '' }}"
+                                                    >
+                                                        🎯 ربط أيقونة
+                                                    </button>
                                                     <button
                                                         class="btn btn-sm btn-outline-primary js-edit-item"
                                                         type="button"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#editItemModal"
                                                         data-list-type="industries"
-                                                        data-current-value="{{ industry }}"
+                                                        data-current-value="{{ industry.name }}"
                                                     >
                                                         ✏️ تعديل
                                                     </button>
@@ -153,7 +176,7 @@
                                                         class="btn btn-sm btn-outline-danger js-delete-item"
                                                         type="button"
                                                         data-list-type="industries"
-                                                        data-value="{{ industry }}"
+                                                        data-value="{{ industry.name }}"
                                                     >
                                                         🗑 حذف
                                                     </button>
@@ -163,7 +186,7 @@
                                     {% endfor %}
                                 {% else %}
                                     <tr class="js-empty-row" data-list-type="industries">
-                                        <td colspan="2" class="text-center text-muted py-4">لا توجد مجالات عمل مسجلة.</td>
+                                        <td colspan="3" class="text-center text-muted py-4">لا توجد مجالات عمل مسجلة.</td>
                                     </tr>
                                 {% endif %}
                             </tbody>
@@ -428,6 +451,52 @@
         </div>
     </div>
 </div>
+<div
+    class="modal fade"
+    id="industryIconModal"
+    tabindex="-1"
+    aria-labelledby="industryIconModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="industryIconModalLabel">ربط أيقونة بالمجال</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="industryIconForm">
+                <div class="modal-body">
+                    <input type="hidden" id="industryIconName" name="name">
+                    <div class="mb-3">
+                        <label class="form-label" for="industryIconSelect">اختر الأيقونة</label>
+                        <select class="form-select" id="industryIconSelect" name="icon">
+                            <option value="">بدون أيقونة</option>
+                            {% for icon in industry_icons %}
+                                <option value="{{ icon }}">{{ icon }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="text-muted">المعاينة:</span>
+                        <div class="border rounded p-2 bg-light">
+                            <img
+                                id="industryIconPreview"
+                                src=""
+                                alt="Industry icon preview"
+                                class="img-fluid d-none"
+                                style="max-height: 48px;"
+                            >
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -437,12 +506,15 @@
             "selected_tab": selected_tab,
             "cities": cities,
             "industries": industries,
+            "industry_icons": industry_icons,
+            "industry_icons_base": industry_icons_base,
             "admin_settings": admin_settings,
             "endpoints": {
                 "add_city": url_for('admin.add_city'),
                 "add_industry": url_for('admin.add_industry'),
                 "update_city": url_for('admin.update_city'),
                 "update_industry": url_for('admin.update_industry'),
+                "update_industry_icon": url_for('admin.update_industry_icon'),
                 "delete_city": url_for('admin.delete_city'),
                 "delete_industry": url_for('admin.delete_industry'),
                 "save_admin_settings": url_for('admin.save_admin_settings'),
