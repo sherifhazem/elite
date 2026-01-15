@@ -23,6 +23,17 @@ The member portal UI theme is centralized in `app/modules/members/static/members
 
 ---
 
+## Static Assets
+
+**Shared icons (used across roles)**
+- `app/core/static/shared/icons/`
+
+**Member-facing banners**
+- Shared banners uploaded by admin and shown to members: `app/core/static/shared/banners/`
+- Member portal banners/featured images: `app/modules/members/static/members/banners/`
+
+---
+
 ## CSS Refactor (Optional)
 
 The member portal stylesheet has been refactored to remove unused CSS and separate layout rules from shared and screen-specific components, without any visual or functional changes.
@@ -336,6 +347,9 @@ Flash messages in Auth UI are custom-styled to match the Dark Design System rath
 ---
 
 ## 10. Documentation Changelog
+- **Date:** 2026-01-13  
+- **Summary:** Added static asset directories for member banners and role-specific icons  
+- **Reason:** Clarify where to place new images/icons for member, partner, and admin UI
 - **Date:** 2026-01-13  
 - **Summary:** Complete rewrite of README to reflect actual code behavior and architecture  
 - **Reason:** Establish a single, authoritative source of truth for the ELITE platform
