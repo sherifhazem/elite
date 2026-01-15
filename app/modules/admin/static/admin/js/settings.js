@@ -13,11 +13,24 @@
         console.error('Failed to parse admin settings context', error);
     }
 
+    const normalizeIndustry = (item) => {
+        if (typeof item === 'string') {
+            return { name: item, icon: '' };
+        }
+        return {
+            name: item?.name || '',
+            icon: item?.icon || '',
+        };
+    };
+
     const registry = {
         cities: Array.isArray(context.cities) ? [...context.cities] : [],
-        industries: Array.isArray(context.industries) ? [...context.industries] : [],
+        industries: Array.isArray(context.industries)
+            ? context.industries.map(normalizeIndustry)
+            : [],
     };
     const endpoints = context.endpoints || {};
+    const industryIconsBase = context.industry_icons_base || '';
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
     const toastElement = document.getElementById('adminToast');
@@ -29,6 +42,13 @@
     const editItemName = document.getElementById('editItemName');
     const editCurrentValue = document.getElementById('editCurrentValue');
     const editModal = editModalElement ? bootstrap.Modal.getOrCreateInstance(editModalElement) : null;
+
+    const iconModalElement = document.getElementById('industryIconModal');
+    const iconForm = document.getElementById('industryIconForm');
+    const iconNameInput = document.getElementById('industryIconName');
+    const iconSelect = document.getElementById('industryIconSelect');
+    const iconPreview = document.getElementById('industryIconPreview');
+    const iconModal = iconModalElement ? bootstrap.Modal.getOrCreateInstance(iconModalElement) : null;
 
     const entityKey = (listType) => (listType === 'industries' ? 'industry' : 'city');
     const endpointFor = (action, listType) => endpoints[`${action}_${entityKey(listType)}`];
@@ -55,11 +75,35 @@
 
     function buildRow(listType, value) {
         const row = document.createElement('tr');
-        row.dataset.value = value;
+        const isIndustry = listType === 'industries';
+        const item = isIndustry ? normalizeIndustry(value) : { name: value };
+        row.dataset.value = item.name;
+        if (isIndustry) {
+            row.dataset.icon = item.icon || '';
+        }
 
         const nameCell = document.createElement('td');
         nameCell.className = 'fw-medium';
-        nameCell.textContent = value;
+        nameCell.textContent = item.name;
+
+        let iconCell = null;
+        if (isIndustry) {
+            iconCell = document.createElement('td');
+            iconCell.className = 'text-center';
+            if (item.icon) {
+                const iconImage = document.createElement('img');
+                iconImage.src = `${industryIconsBase}${item.icon}`;
+                iconImage.alt = item.name;
+                iconImage.className = 'img-fluid';
+                iconImage.style.maxHeight = '32px';
+                iconCell.appendChild(iconImage);
+            } else {
+                const placeholder = document.createElement('span');
+                placeholder.className = 'text-muted';
+                placeholder.textContent = '—';
+                iconCell.appendChild(placeholder);
+            }
+        }
 
         const actionsCell = document.createElement('td');
         actionsCell.className = 'text-end';
@@ -67,11 +111,23 @@
         group.className = 'btn-group';
         group.setAttribute('role', 'group');
 
+        if (isIndustry) {
+            const iconButton = document.createElement('button');
+            iconButton.type = 'button';
+            iconButton.className = 'btn btn-sm btn-outline-secondary js-link-icon';
+            iconButton.dataset.industryName = item.name;
+            iconButton.dataset.industryIcon = item.icon || '';
+            iconButton.setAttribute('data-bs-toggle', 'modal');
+            iconButton.setAttribute('data-bs-target', '#industryIconModal');
+            iconButton.textContent = '🎯 ربط أيقونة';
+            group.appendChild(iconButton);
+        }
+
         const editButton = document.createElement('button');
         editButton.type = 'button';
         editButton.className = 'btn btn-sm btn-outline-primary js-edit-item';
         editButton.dataset.listType = listType;
-        editButton.dataset.currentValue = value;
+        editButton.dataset.currentValue = item.name;
         editButton.setAttribute('data-bs-toggle', 'modal');
         editButton.setAttribute('data-bs-target', '#editItemModal');
         editButton.textContent = '✏️ تعديل';
@@ -80,7 +136,7 @@
         deleteButton.type = 'button';
         deleteButton.className = 'btn btn-sm btn-outline-danger js-delete-item';
         deleteButton.dataset.listType = listType;
-        deleteButton.dataset.value = value;
+        deleteButton.dataset.value = item.name;
         deleteButton.textContent = '🗑 حذف';
 
         group.appendChild(editButton);
@@ -88,6 +144,9 @@
         actionsCell.appendChild(group);
 
         row.appendChild(nameCell);
+        if (iconCell) {
+            row.appendChild(iconCell);
+        }
         row.appendChild(actionsCell);
         return row;
     }
@@ -103,7 +162,7 @@
             emptyRow.className = 'js-empty-row';
             emptyRow.dataset.listType = listType;
             const emptyCell = document.createElement('td');
-            emptyCell.colSpan = 2;
+            emptyCell.colSpan = listType === 'industries' ? 3 : 2;
             emptyCell.className = 'text-center text-muted py-4';
             emptyCell.textContent = listType === 'cities' ? 'لا توجد مدن مسجلة.' : 'لا توجد مجالات عمل مسجلة.';
             emptyRow.appendChild(emptyCell);
@@ -122,7 +181,10 @@
             showToast(data?.message || 'تعذر تحديث القائمة.', true);
             return;
         }
-        registry[listType] = data.items;
+        registry[listType] =
+            listType === 'industries'
+                ? data.items.map(normalizeIndustry)
+                : data.items;
         renderList(listType);
         setFeedback(listType, null);
         showToast(data.message || 'تم الحفظ بنجاح.');
@@ -246,12 +308,68 @@
         });
     }
 
+    function updateIconPreview(iconName) {
+        if (!iconPreview) return;
+        if (!iconName) {
+            iconPreview.src = '';
+            iconPreview.classList.add('d-none');
+            return;
+        }
+        iconPreview.src = `${industryIconsBase}${iconName}`;
+        iconPreview.classList.remove('d-none');
+    }
+
+    function bindIndustryIconModal() {
+        if (!iconForm || !iconSelect || !iconNameInput) return;
+
+        root.addEventListener('click', (event) => {
+            const trigger = event.target.closest('.js-link-icon');
+            if (!trigger) return;
+
+            const industryName = trigger.dataset.industryName || '';
+            const currentIcon = trigger.dataset.industryIcon || '';
+            iconNameInput.value = industryName;
+            iconSelect.value = currentIcon;
+            updateIconPreview(currentIcon);
+        });
+
+        iconSelect.addEventListener('change', () => {
+            updateIconPreview(iconSelect.value);
+        });
+
+        iconForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const industryName = iconNameInput.value || '';
+            if (!industryName) {
+                showToast('تعذر تحديد المجال المطلوب.', true);
+                return;
+            }
+
+            try {
+                const url = endpoints.update_industry_icon;
+                const data = await postJSON(url, {
+                    name: industryName,
+                    icon: iconSelect.value || '',
+                });
+                handleSuccess('industries', data);
+                if (iconModal) {
+                    iconModal.hide();
+                }
+            } catch (error) {
+                const message = error.response?.message || 'تعذر ربط الأيقونة.';
+                setFeedback('industries', message);
+                showToast(message, true);
+            }
+        });
+    }
+
     function bootstrapPage() {
         renderList('cities');
         renderList('industries');
         bindAddForms();
         bindDeleteActions();
         bindEditModal();
+        bindIndustryIconModal();
     }
 
     bootstrapPage();
