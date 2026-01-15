@@ -52,8 +52,18 @@ def _extract_value(*keys: str) -> str:
 def _extract_tab() -> str:
     """Normalize the requested tab with a safe default."""
 
-    cleaned = getattr(request, "cleaned", {}) or {}
-    tab = (cleaned.get("tab") or "").strip().lower()
+    # Prioritize standard query parameters for GET requests
+    tab = request.args.get("tab")
+
+    # Fallback to cleaned context if available
+    if not tab:
+        cleaned = getattr(request, "cleaned", {}) or {}
+        if "combined" in cleaned and isinstance(cleaned["combined"], dict):
+            tab = cleaned["combined"].get("tab")
+        else:
+            tab = cleaned.get("tab")
+
+    tab = (str(tab) if tab else "").strip().lower()
     return (
         tab
         if tab in {"cities", "industries", "admin_settings"}
@@ -238,7 +248,11 @@ def save_site_settings_roles() -> Response:
         save_role_permissions,
     )
 
-    payload = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
+    cleaned = getattr(request, "cleaned", {}) or {}
+    if "combined" in cleaned and isinstance(cleaned["combined"], dict):
+        cleaned = cleaned["combined"]
+
+    payload = {k: v for k, v in cleaned.items() if not k.startswith("__")}
     updated_permissions = payload.get("role_permissions")
     if not isinstance(updated_permissions, dict):
         return _settings_error_response("صيغة البيانات غير صالحة.")
@@ -299,7 +313,11 @@ def fetch_industries() -> Response:
 def save_admin_settings() -> Response:
     """Persist admin-configurable settings such as activity rules and toggles."""
 
-    payload = getattr(request, "cleaned", None) or request.form or request.get_json(silent=True) or {}
+    cleaned = getattr(request, "cleaned", {}) or {}
+    if "combined" in cleaned and isinstance(cleaned["combined"], dict):
+        cleaned = cleaned["combined"]
+
+    payload = cleaned or request.form or request.get_json(silent=True) or {}
     try:
         admin_settings_service.save_admin_settings(payload)
     except ValueError as exc:
