@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Action Required: Update Your ELITE Application</title>
+    <title>إجراء مطلوب: تحديث طلب الانضمام إلى ELITE</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f8f9fa; color: #212529; margin: 0; padding: 0; }
         .container { max-width: 640px; margin: 0 auto; padding: 32px 24px; background-color: #ffffff; }
@@ -14,15 +14,15 @@
 </head>
 <body>
     <div class="container">
-        <h2>Action Required for {{ company_name }}</h2>
-        <p>Thank you for submitting your application to join ELITE. Our review team needs a few updates before we can activate your partner account.</p>
+        <h2>إجراء مطلوب لـ {{ company_name }}</h2>
+        <p>شكرًا لتقديم طلب الانضمام إلى ELITE. يحتاج فريق المراجعة إلى بعض التحديثات قبل تفعيل حساب الشريك.</p>
         <div class="notes">
-            <strong>Reviewer notes:</strong>
+            <strong>ملاحظات المراجع:</strong>
             <p>{{ admin_notes }}</p>
         </div>
-        <p>Please use the secure link below to reopen your application and provide the requested corrections.</p>
-        <a class="cta" href="{{ correction_link }}" target="_blank" rel="noopener">Update Application</a>
-        <p class="footer">If you have any questions, reply to this email and we will be happy to help.</p>
+        <p>يرجى استخدام الرابط الآمن أدناه لإعادة فتح الطلب وتقديم التصحيحات المطلوبة.</p>
+        <a class="cta" href="{{ correction_link }}" target="_blank" rel="noopener">تحديث الطلب</a>
+        <p class="footer">إذا كانت لديك أي أسئلة، يرجى الرد على هذه الرسالة وسنكون سعداء بمساعدتك.</p>
     </div>
 </body>
 </html>

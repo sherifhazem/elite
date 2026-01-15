@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Welcome to ELITE Partners</title>
+    <title>مرحبًا بك في شركاء ELITE</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f8f9fa; color: #212529; margin: 0; padding: 0; }
         .container { max-width: 640px; margin: 0 auto; padding: 32px 24px; background-color: #ffffff; }
@@ -13,15 +13,15 @@
 </head>
 <body>
     <div class="container">
-        <h2>Welcome to ELITE Partners!</h2>
-        <p>We are excited to confirm that <strong>{{ company_name }}</strong> has been approved to join the ELITE marketplace.</p>
-        <p>Your team can now sign in to the partner portal to publish offers, manage redemptions, and connect with members.</p>
+        <h2>مرحبًا بك في شركاء ELITE!</h2>
+        <p>يسعدنا تأكيد أن <strong>{{ company_name }}</strong> تمت الموافقة على انضمامها إلى سوق ELITE.</p>
+        <p>يمكن لفريقك الآن تسجيل الدخول إلى بوابة الشركاء لنشر العروض، وإدارة عمليات الاسترداد، والتواصل مع الأعضاء.</p>
         {% if portal_link %}
-            <a class="cta" href="{{ portal_link }}" target="_blank" rel="noopener">Go to Partner Portal</a>
+            <a class="cta" href="{{ portal_link }}" target="_blank" rel="noopener">الانتقال إلى بوابة الشركاء</a>
         {% else %}
-            <p>Please log in using your ELITE credentials to access the partner portal.</p>
+            <p>يرجى تسجيل الدخول باستخدام بيانات اعتماد ELITE للوصول إلى بوابة الشركاء.</p>
         {% endif %}
-        <p class="footer">Need help getting started? Reply to this email and our support team will assist you.</p>
+        <p class="footer">هل تحتاج إلى مساعدة للبدء؟ رد على هذه الرسالة وسيقوم فريق الدعم بمساعدتك.</p>
     </div>
 </body>
 </html>
