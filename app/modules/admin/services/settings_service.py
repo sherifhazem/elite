@@ -84,7 +84,7 @@ def get_industry_items(*, active_only: bool = True) -> List[Dict[str, str | None
     if active_only:
         query = query.filter_by(active=True)
     return [
-        {"name": row.name, "icon": row.icon}
+        {"name": str(row.name), "icon": str(row.icon) if row.icon else None}
         for row in query.order_by(LookupChoice.name.asc()).all()
     ]
 

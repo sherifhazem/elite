@@ -76,7 +76,9 @@
     function buildRow(listType, value) {
         const row = document.createElement('tr');
         const isIndustry = listType === 'industries';
-        const item = isIndustry ? normalizeIndustry(value) : { name: value };
+        // Registry values are already normalized for industries
+        const item = isIndustry ? value : { name: value };
+
         row.dataset.value = item.name;
         if (isIndustry) {
             row.dataset.icon = item.icon || '';
