@@ -42,7 +42,11 @@ def _seed_defaults() -> None:
             db.session.add(
                 LookupChoice(list_type=list_type, name=normalized, active=True)
             )
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 def _validate_type(list_type: str) -> str:

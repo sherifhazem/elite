@@ -47,6 +47,12 @@ def health_check():
     return jsonify({"status": "ok"})
 
 
+@main.route("/favicon.ico")
+def favicon():
+    """Serve a placeholder for the favicon to prevent 404 errors."""
+    return "", 204
+
+
 __all__ = [
     "main",
     "users",

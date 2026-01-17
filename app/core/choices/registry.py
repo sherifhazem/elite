@@ -20,7 +20,11 @@ def _load_managed_list(list_type: str, fallback: Iterable[str]) -> List[str]:
             return [value for value in values if value]
     except Exception:
         # Settings may be unavailable during boot or tests; fall back gracefully.
-        pass
+        try:
+            from app.models import db
+            db.session.rollback()
+        except Exception:
+            pass
     return list(fallback)
 
 
