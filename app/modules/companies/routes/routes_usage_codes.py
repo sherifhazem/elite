@@ -46,6 +46,16 @@ def company_usage_codes_generate():
     """Generate a new usage code for the authenticated partner."""
 
     company = _current_company()
+    if company.status == "correction":
+        return (
+            jsonify(
+                {
+                    "error": "Account suspended",
+                    "message": "الحساب معلق جزئيا. فضلا استكمال الاجرائات المطلوبه لتفعيل الحساب",
+                }
+            ),
+            HTTPStatus.FORBIDDEN,
+        )
     usage_code = generate_usage_code(company.id)
     return (
         jsonify(

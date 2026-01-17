@@ -55,6 +55,8 @@ def register_logging_middleware(app: Flask) -> None:
 
     @app.before_request
     def _start_observation() -> None:
+        from app.core.cleaning.request_cleaner import normalize_data, build_cleaned_payload
+        
         ctx = build_logging_context()
         g.request_id = ctx.request_id
         g.trace_id = ctx.trace_id
@@ -62,13 +64,16 @@ def register_logging_middleware(app: Flask) -> None:
         middleware_t0 = perf_counter()
 
         raw_payload = extract_raw_data(request)
-        actual_data = raw_payload.get("json") if isinstance(raw_payload.get("json"), dict) else raw_payload
+        normalized_payload = normalize_data(raw_payload)
+        cleaned_payload = build_cleaned_payload(raw_payload, normalized_payload)
+        
         request.incoming_payload = raw_payload
-        request.cleaned = actual_data
-        request.normalized_payload = actual_data
+        request.normalized_payload = normalized_payload
+        request.cleaned = cleaned_payload
+        
         ctx.incoming_payload.update(raw_payload)
 
-        validation_info = validate(raw_payload)
+        validation_info = validate(cleaned_payload) # Use cleaned payload for validation
         request.validation_info = validation_info
         if validation_info:
             ctx.validation = validation_info

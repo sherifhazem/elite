@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -10,59 +11,50 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap"
-        rel="stylesheet"
-    >
+        rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         integrity="sha512-DT0QO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1Gq3h45p2QPRdhR+M3XwEnG7qqg=="
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-    />
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ url_for('static', filename='companies/company_portal.css') }}">
     {% block extra_head %}{% endblock %}
 </head>
+
 <body class="company-portal-body">
     <nav class="navbar navbar-expand-lg navbar-dark company-navbar fixed-top shadow-sm">
         <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('company_portal.company_dashboard_overview') }}">
+            <a class="navbar-brand d-flex align-items-center gap-2"
+                href="{{ url_for('company_portal.company_dashboard_overview') }}">
                 <span class="company-brand-icon d-inline-flex align-items-center justify-content-center rounded-circle">
                     {% if company and company.logo_url %}
-                        <img src="{{ company.logo_url }}" alt="{{ company.name }}" class="company-brand-logo">
+                    <img src="{{ company.logo_url }}" alt="{{ company.name }}" class="company-brand-logo">
                     {% else %}
-                        <span class="fw-semibold">{{ company.name[:1]|upper if company and company.name else 'ش' }}</span>
+                    <span class="fw-semibold">{{ company.name[:1]|upper if company and company.name else 'ش' }}</span>
                     {% endif %}
                 </span>
                 <span class="fw-semibold">بوابة الشركات</span>
             </a>
-            <button
-                class="btn btn-outline-light d-lg-none"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#companySidebar"
-                aria-controls="companySidebar"
-                aria-expanded="false"
-                aria-label="تبديل التنقل"
-            >
+            <button class="btn btn-outline-light d-lg-none" type="button" data-bs-toggle="collapse"
+                data-bs-target="#companySidebar" aria-controls="companySidebar" aria-expanded="false"
+                aria-label="تبديل التنقل">
                 <i class="fas fa-bars"></i>
             </button>
             <div class="d-flex align-items-center gap-3">
                 {% if company %}
-                    <div class="text-white text-end small d-none d-md-block">
-                        <div class="fw-semibold">{{ company.name }}</div>
-                        <div class="text-white-50">{{ company.contact_number or '' }}</div>
-                    </div>
+                <div class="text-white text-end small d-none d-md-block">
+                    <div class="fw-semibold">{{ company.name }}</div>
+                    <div class="text-white-50">{{ company.contact_number or '' }}</div>
+                </div>
                 {% endif %}
                 {% if current_user and current_user.is_authenticated %}
-                    <div class="text-white text-end small">
-                        <div>{{ current_user.username }}</div>
-                        <div class="text-white-50">{{ current_user.email }}</div>
-                    </div>
-                    <a class="btn btn-outline-light btn-sm" href="{{ url_for('auth.logout') }}">
-                        <i class="fa-solid fa-right-from-bracket me-2"></i>
-                        <span>تسجيل الخروج</span>
-                    </a>
+                <div class="text-white text-end small">
+                    <div>{{ current_user.username }}</div>
+                    <div class="text-white-50">{{ current_user.email }}</div>
+                </div>
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('auth.logout') }}">
+                    <i class="fa-solid fa-right-from-bracket me-2"></i>
+                    <span>تسجيل الخروج</span>
+                </a>
                 {% endif %}
             </div>
         </div>
@@ -74,9 +66,10 @@
                 <div class="company-sidebar-profile text-center px-3 mb-4">
                     <div class="company-avatar rounded-circle mx-auto mb-3">
                         {% if company and company.logo_url %}
-                            <img src="{{ company.logo_url }}" alt="{{ company.name }}" class="img-fluid">
+                        <img src="{{ company.logo_url }}" alt="{{ company.name }}" class="img-fluid">
                         {% else %}
-                            <span class="fw-semibold">{{ company.name[:1]|upper if company and company.name else 'ش' }}</span>
+                        <span class="fw-semibold">{{ company.name[:1]|upper if company and company.name else 'ش'
+                            }}</span>
                         {% endif %}
                     </div>
                     <h2 class="h6 mb-1">{{ company.name if company else 'شركة' }}</h2>
@@ -84,31 +77,36 @@
                 </div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_dashboard_overview')) %}active{% endif %}" href="{{ url_for('company_portal.company_dashboard_overview') }}">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_dashboard_overview')) %}active{% endif %}"
+                            href="{{ url_for('company_portal.company_dashboard_overview') }}">
                             <i class="fas fa-gauge-high me-2"></i>
                             <span>لوحة التحكم</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_offers_list')) %}active{% endif %}" href="{{ url_for('company_portal.company_offers_list') }}">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_offers_list')) %}active{% endif %}"
+                            href="{{ url_for('company_portal.company_offers_list') }}">
                             <i class="fas fa-gift me-2"></i>
                             <span>العروض</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_redemptions_history')) %}active{% endif %}" href="{{ url_for('company_portal.company_redemptions_history') }}">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_redemptions_history')) %}active{% endif %}"
+                            href="{{ url_for('company_portal.company_redemptions_history') }}">
                             <i class="fas fa-receipt me-2"></i>
                             <span>عمليات الاستبدال</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_usage_codes')) %}active{% endif %}" href="{{ url_for('company_portal.company_usage_codes') }}">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_usage_codes')) %}active{% endif %}"
+                            href="{{ url_for('company_portal.company_usage_codes') }}">
                             <i class="fas fa-key me-2"></i>
                             <span>أكواد الاستخدام</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_settings')) %}active{% endif %}" href="{{ url_for('company_portal.company_settings') }}">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_settings')) %}active{% endif %}"
+                            href="{{ url_for('company_portal.company_settings') }}">
                             <i class="fas fa-gear me-2"></i>
                             <span>الإعدادات</span>
                         </a>
@@ -119,22 +117,33 @@
         <div class="company-content flex-grow-1 d-flex flex-column">
             <main class="company-main flex-grow-1">
                 <div class="container-fluid px-4 py-4">
+                    {% if company and company.status == 'correction' %}
+                    <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <div>
+                            الحساب معلق جزئيا فضلا استكمال الاجرائات المطلوبه لتفعيل الحساب
+                        </div>
+                    </div>
+                    {% endif %}
                     {% with messages = get_flashed_messages(with_categories=True) %}
-                        {% if messages %}
-                            <div class="mb-3">
-                                {% for category, message in messages %}
-                                    <div class="alert alert-{{ 'info' if category in ['message', 'info'] else category }} alert-dismissible fade show" role="alert">
-                                        {{ message }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                    {% if messages %}
+                    <div class="mb-3">
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ 'info' if category in ['message', 'info'] else category }} alert-dismissible fade show"
+                            role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     {% endwith %}
-                    <header class="company-page-header d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+                    <header
+                        class="company-page-header d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
                         <div>
                             <h1 class="h3 mb-1">{% block portal_title %}بوابة الشركات{% endblock %}</h1>
-                            <p class="text-muted mb-0">{% block portal_subtitle %}أدر العروض والعملاء وتفضيلات التواصل بسهولة.{% endblock %}</p>
+                            <p class="text-muted mb-0">{% block portal_subtitle %}أدر العروض والعملاء وتفضيلات التواصل
+                                بسهولة.{% endblock %}</p>
                         </div>
                         {% block portal_header_actions %}{% endblock %}
                     </header>
@@ -185,4 +194,5 @@
     {% block portal_scripts %}{% endblock %}
     {% block extra_scripts %}{% endblock %}
 </body>
+
 </html>

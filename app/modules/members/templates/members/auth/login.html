@@ -14,33 +14,24 @@
 
     <div class="auth-card__body">
       <form id="login-form" novalidate data-success-redirect="{{ url_for('portal.member_portal_home') }}">
-        <div class="mb-3 text-start">
-          <label for="login-email" class="form-label">البريد الإلكتروني</label>
-          <input
-            type="email"
-            id="login-email"
-            name="email"
-            class="form-control auth-input"
-            placeholder="بريدك الإلكتروني"
-            autocomplete="email"
-            required
-          />
+        <div class="auth-field">
+          <label for="login-email" class="auth-field__label">البريد الإلكتروني</label>
+          <div class="auth-field__input">
+            <input type="email" id="login-email" name="email" class="form-control auth-input"
+              placeholder="بريدك الإلكتروني" autocomplete="email" dir="ltr" required />
+          </div>
         </div>
 
-        <div class="mb-3 text-start">
-          <label for="login-password" class="form-label">كلمة المرور</label>
-          <input
-            type="password"
-            id="login-password"
-            name="password"
-            class="form-control auth-input"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            required
-          />
+        <div class="auth-field">
+          <label for="login-password" class="auth-field__label">كلمة المرور</label>
+          <div class="auth-field__input">
+            <input type="password" id="login-password" name="password" class="form-control auth-input"
+              placeholder="••••••••" autocomplete="current-password" dir="ltr" required />
+          </div>
         </div>
 
         <div id="login-error" class="text-danger small mb-3" role="alert"></div>
+
 
         <a href="{{ url_for('auth.forgot_password') }}" class="ghost-button ghost-button--small auth-ghost">
           هل نسيت كلمة المرور؟

@@ -248,6 +248,9 @@ def offer_new() -> str:
     """Render the offer creation form in a dedicated workspace."""
 
     company = _current_company()
+    if company.status == "correction":
+        flash("الحساب معلق جزئيا. لا يمكن إنشاء عروض جديدة.", "warning")
+        return redirect(url_for("company_portal.company_dashboard_overview"))
     offer_type_availability = _get_offer_type_availability()
     return render_template(
         "companies/offer_editor.html",
@@ -266,6 +269,19 @@ def offer_create():
     """Persist a new offer and optionally broadcast notifications."""
 
     company = _current_company()
+    if company.status == "correction":
+        if request.is_json:
+            return (
+                jsonify(
+                    {
+                        "ok": False,
+                        "message": "الحساب معلق جزئيا. لا يمكن نشر العروض.",
+                    }
+                ),
+                HTTPStatus.FORBIDDEN,
+            )
+        flash("الحساب معلق جزئيا. لا يمكن نشر العروض.", "warning")
+        return redirect(url_for("company_portal.company_offers_list"))
     offer_type_availability = _get_offer_type_availability()
     allowed_classifications = {
         key for key, enabled in offer_type_availability.items() if enabled
@@ -328,6 +344,9 @@ def offer_edit(offer_id: int) -> str:
     """Return the pre-filled offer form for inline editing."""
 
     company = _current_company()
+    if company.status == "correction":
+        flash("الحساب معلق جزئيا. لا يمكن تعديل العروض.", "warning")
+        return redirect(url_for("company_portal.company_dashboard_overview"))
     offer = Offer.query.filter_by(company_id=company.id, id=offer_id).first_or_404()
     offer_type_availability = _get_offer_type_availability()
     return render_template(
@@ -351,6 +370,19 @@ def offer_update(offer_id: int):
     """Update an existing offer ensuring it belongs to the current company."""
 
     company = _current_company()
+    if company.status == "correction":
+        if request.is_json:
+            return (
+                jsonify(
+                    {
+                        "ok": False,
+                        "message": "الحساب معلق جزئيا. لا يمكن تعديل العروض.",
+                    }
+                ),
+                HTTPStatus.FORBIDDEN,
+            )
+        flash("الحساب معلق جزئيا. لا يمكن تعديل العروض.", "warning")
+        return redirect(url_for("company_portal.company_offers_list"))
     offer = Offer.query.filter_by(company_id=company.id, id=offer_id).first_or_404()
 
     offer_type_availability = _get_offer_type_availability()
