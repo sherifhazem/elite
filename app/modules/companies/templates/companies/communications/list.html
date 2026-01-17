@@ -1,0 +1,52 @@
+{% extends "companies/base.html" %}
+
+{% block portal_title %}الرسائل{% endblock %}
+{% block portal_subtitle %}تواصل مع إدارة النظام{% endblock %}
+
+{% block portal_header_actions %}
+<a href="{{ url_for('company_portal.company_messages_new') }}" class="btn btn-primary">
+    <i class="fas fa-pen me-2"></i>
+    رسالة جديدة
+</a>
+{% endblock %}
+
+{% block portal_content %}
+<div class="card shadow-sm">
+    <div class="list-group list-group-flush">
+        {% for conversation in pagination.items %}
+        <a href="{{ url_for('company_portal.company_messages_view', conversation_id=conversation.id) }}"
+            class="list-group-item list-group-item-action p-4 d-flex align-items-center gap-3">
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h5 class="mb-0 {{ 'fw-bold' if has_unread_messages(conversation) else '' }}">
+                        {{ conversation.subject }}
+                    </h5>
+                    <small class="text-muted">{{ conversation.updated_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                </div>
+                <p class="mb-0 text-muted text-truncate" style="max-width: 600px;">
+                    {% if conversation.last_message %}
+                    {{ conversation.last_message.body }}
+                    {% else %}
+                    لا توجد رسائل
+                    {% endif %}
+                </p>
+            </div>
+            {% if has_unread_messages(conversation) %}
+            <span class="badge bg-primary rounded-pill">جديد</span>
+            {% endif %}
+        </a>
+        {% else %}
+        <div class="p-5 text-center text-muted">
+            <i class="fas fa-inbox fa-3x mb-3"></i>
+            <p>لا توجد محادثات حالياً</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <div class="card-footer">
+        <!-- Pagination controls here -->
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

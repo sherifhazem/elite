@@ -1,0 +1,56 @@
+{% extends "members/portal/base.html" %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h1 class="h3 mb-1">الرسائل</h1>
+        <p class="text-muted mb-0">تواصل مع إدارة النظام للاستفسارات والمساعدة.</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('portal.member_messages_new') }}" class="btn btn-primary rounded-pill px-4">
+            <i class="fas fa-edit me-2"></i>
+            رسالة جديدة
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="list-group list-group-flush rounded-4 overflow-hidden">
+        {% for conversation in pagination.items %}
+        <a href="{{ url_for('portal.member_messages_view', conversation_id=conversation.id) }}"
+            class="list-group-item list-group-item-action p-4 border-bottom-0 border-start border-4 {{ 'border-primary bg-light-subtle' if has_unread_messages(conversation) else 'border-transparent' }}">
+            <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                <h6 class="mb-0 {{ 'fw-bold text-dark' if has_unread_messages(conversation) else 'text-muted' }}">
+                    {{ conversation.subject }}
+                </h6>
+                <small class="text-muted">{{ conversation.updated_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
+            <p class="mb-1 text-muted text-truncate" style="max-width: 80%;">
+                {% if conversation.last_message %}
+                <span class="{{ 'fw-semibold' if has_unread_messages(conversation) else '' }}">
+                    {{ conversation.last_message.sender.username }}:
+                </span>
+                {{ conversation.last_message.body }}
+                {% else %}
+                لا توجد رسائل
+                {% endif %}
+            </p>
+        </a>
+        {% else %}
+        <div class="p-5 text-center">
+            <div class="mb-3 text-muted">
+                <i class="fas fa-comments fa-3x opacity-50"></i>
+            </div>
+            <h5 class="text-muted fw-normal">لا توجد محادثات</h5>
+            <p class="text-muted small">ابدأ أول محادثة مع الدعم الفني الان.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if pagination.pages > 1 %}
+<div class="d-flex justify-content-center mt-4">
+    <!-- Simple pagination -->
+</div>
+{% endif %}
+{% endblock %}

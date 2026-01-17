@@ -8,6 +8,7 @@ from .notification_routes import notifications
 from .user_routes import users
 from .user_portal_routes import portal
 from .usage_code_routes import usage_codes
+from . import communication_routes
 from app.services.access_control import resolve_user_from_request
 
 

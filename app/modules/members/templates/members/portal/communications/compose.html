@@ -1,0 +1,51 @@
+{% extends "members/portal/base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center mb-4 gap-3">
+            <a href="{{ url_for('portal.member_messages_list') }}" class="btn btn-light rounded-circle shadow-sm"
+                style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-times text-muted"></i>
+            </a>
+            <h1 class="h4 mb-0">رسالة جديدة</h1>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <form action="{{ url_for('portal.member_messages_new') }}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">الموضوع</label>
+                        <input type="text" class="form-control form-control-lg bg-light border-0" name="subject"
+                            required placeholder="عنوان استفسارك">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">الرسالة</label>
+                        <textarea class="form-control form-control-lg bg-light border-0" name="body" rows="6" required
+                            placeholder="تفاصيل الرسالة..."></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">المرفقات</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control form-control-lg bg-light border-0" name="attachments"
+                                multiple>
+                        </div>
+                        <div class="form-text mt-2">يمكنك رفع عدة ملفات (PDF, الصور)</div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            إرسال
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

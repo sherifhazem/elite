@@ -85,6 +85,12 @@
                 <span class="app-nav__label">العروض</span>
             </a>
 
+            <a class="app-nav__item {% if active_nav == 'messages' %}app-nav__item--active{% endif %}"
+                href="{{ url_for('portal.member_messages_list') }}" data-nav-link data-nav-target="messages">
+                <span class="app-nav__icon"><i class="fa-solid fa-comment-dots"></i></span>
+                <span class="app-nav__label">الرسائل</span>
+            </a>
+
             <a class="app-nav__item {% if active_nav == 'profile' %}app-nav__item--active{% endif %}"
                 href="{{ url_for('portal.member_portal_profile') }}" data-nav-link data-nav-target="profile">
                 <span class="app-nav__icon"><i class="fa-solid fa-chart-line"></i></span>

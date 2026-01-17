@@ -12,6 +12,7 @@ from .redemption import Redemption
 from .lookup_choice import LookupChoice
 from .admin_setting import AdminSetting
 from .usage_code import UsageCode
+from .communication import Conversation, Message, Attachment
 
 __all__ = [
     "db",
@@ -26,4 +27,7 @@ __all__ = [
     "LookupChoice",
     "AdminSetting",
     "UsageCode",
+    "Conversation",
+    "Message",
+    "Attachment",
 ]

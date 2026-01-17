@@ -1,0 +1,143 @@
+{% extends "members/portal/base.html" %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4 gap-3">
+    <a href="{{ url_for('portal.member_messages_list') }}" class="btn btn-light rounded-circle shadow-sm"
+        style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+        <i class="fas fa-arrow-right text-muted"></i>
+    </a>
+    <div>
+        <h1 class="h4 mb-0">{{ conversation.subject }}</h1>
+        <small class="text-muted">آخر تحديث: {{ conversation.updated_at.strftime('%Y-%m-%d %H:%M') }}</small>
+    </div>
+</div>
+
+<div id="messages-container" class="d-flex flex-column gap-3 mb-4 pb-5">
+    {% for message in conversation.messages %}
+    <div class="message-card d-flex flex-column {{ 'align-items-end' if message.sender_id == user.id else 'align-items-start' }}"
+        data-id="{{ message.id }}">
+        <div class="card border-0 shadow-sm rounded-4 px-3 py-2"
+            style="max-width: 85%; {{ 'background-color: #e3f2fd; border-bottom-right-radius: 4px !important;' if message.sender_id == user.id else 'background-color: #fff; border-bottom-left-radius: 4px !important;' }}">
+            <div class="d-flex justify-content-between align-items-center mb-1 gap-3">
+                <small class="fw-bold {{ 'text-primary' if message.sender_id == user.id else 'text-dark' }}">
+                    {{ message.sender.username }}
+                </small>
+            </div>
+            <p class="mb-0 text-break">{{ message.body }}</p>
+
+            {% if message.attachments.count() > 0 %}
+            <div class="mt-2 pt-2 border-top border-opacity-10 border-dark">
+                <div class="d-flex flex-wrap gap-2">
+                    {% for file in message.attachments %}
+                    <a href="{{ url_for('static', filename=file.file_path) }}" target="_blank"
+                        class="badge bg-white text-dark border text-decoration-none py-2 px-3 rounded-pill">
+                        <i class="fas fa-paperclip me-1 text-muted"></i>
+                        {{ file.filename }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <small class="text-muted mt-1 mx-2" style="font-size: 0.75rem;">
+            {{ message.created_at.strftime('%H:%M') }}
+        </small>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Reply Box -->
+<div class="position-fixed bottom-0 start-0 w-100 bg-white border-top shadow-lg p-3"
+    style="z-index: 1000; padding-bottom: calc(1rem + env(safe-area-inset-bottom));">
+    <div class="container-lg">
+        <form action="{{ url_for('portal.member_messages_reply', conversation_id=conversation.id) }}" method="POST"
+            enctype="multipart/form-data" class="d-flex gap-2 align-items-end">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <button type="button" class="btn btn-light rounded-circle shadow-sm flex-shrink-0"
+                onclick="document.getElementById('attachInput').click()" style="width: 44px; height: 44px;">
+                <i class="fas fa-paperclip text-secondary"></i>
+            </button>
+            <input type="file" id="attachInput" name="attachments" multiple hidden>
+
+            <div class="flex-grow-1 bg-light rounded-4 px-3 py-2">
+                <textarea name="body" class="form-control bg-transparent border-0 shadow-none p-0" rows="1"
+                    placeholder="اكتب ردك هنا..." style="resize: none; min-height: 24px; max-height: 100px;"
+                    oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary rounded-circle shadow-sm flex-shrink-0"
+                style="width: 44px; height: 44px;">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const currentUserId = {{ user.id }};
+    let lastMessageId = 0;
+
+    document.querySelectorAll('.message-card').forEach(card => {
+        const id = parseInt(card.dataset.id);
+        if (id > lastMessageId) lastMessageId = id;
+    });
+
+    // Scroll to bottom initially
+    window.scrollTo(0, document.body.scrollHeight);
+
+    async function syncMessages() {
+        try {
+            const response = await fetch(`{{ url_for('portal.member_messages_sync', conversation_id=conversation.id) }}?last_id=${lastMessageId}`);
+            const data = await response.json();
+
+            if (data.messages && data.messages.length > 0) {
+                const container = document.getElementById('messages-container');
+                data.messages.forEach(msg => {
+                    if (msg.id <= lastMessageId) return;
+
+                    const isOwn = msg.sender_id === currentUserId;
+                    const wrapper = document.createElement('div');
+                    wrapper.className = `message-card d-flex flex-column ${isOwn ? 'align-items-end' : 'align-items-start'}`;
+                    wrapper.dataset.id = msg.id;
+
+                    let attachmentsHtml = '';
+                    if (msg.attachments && msg.attachments.length > 0) {
+                        attachmentsHtml = `
+                            <div class="mt-2 pt-2 border-top border-opacity-10 border-dark">
+                                <div class="d-flex flex-wrap gap-2">
+                                    ${msg.attachments.map(a => `
+                                        <a href="${a.url}" target="_blank" class="badge bg-white text-dark border text-decoration-none py-2 px-3 rounded-pill">
+                                            <i class="fas fa-paperclip me-1 text-muted"></i> ${a.filename}
+                                        </a>
+                                    `).join('')}
+                                </div>
+                            </div>`;
+                    }
+
+                    wrapper.innerHTML = `
+                        <div class="card border-0 shadow-sm rounded-4 px-3 py-2"
+                            style="max-width: 85%; ${isOwn ? 'background-color: #e3f2fd; border-bottom-right-radius: 4px !important;' : 'background-color: #fff; border-bottom-left-radius: 4px !important;'}">
+                            <div class="d-flex justify-content-between align-items-center mb-1 gap-3">
+                                <small class="fw-bold ${isOwn ? 'text-primary' : 'text-dark'}">${msg.sender_name}</small>
+                            </div>
+                            <p class="mb-0 text-break">${msg.body}</p>
+                            ${attachmentsHtml}
+                        </div>
+                        <small class="text-muted mt-1 mx-2" style="font-size: 0.75rem;">${msg.created_at}</small>
+                    `;
+                    container.appendChild(wrapper);
+                    lastMessageId = msg.id;
+                });
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }
+        } catch (error) {
+            console.error('Sync error:', error);
+        }
+    }
+
+    setInterval(syncMessages, 5000);
+</script>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "admin/dashboard/admin_base.html" %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-md-between mb-4">
+    <div>
+        <h1 class="h3 mb-1">صندوق الرسائل</h1>
+        <p class="text-muted mb-0">إدارة المحادثات والتواصل الداخلي.</p>
+    </div>
+    <div class="mt-3 mt-md-0">
+        <a class="btn btn-primary" href="{{ url_for('admin.compose_communication') }}">
+            ✉️ رسالة جديدة
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="list-group list-group-flush">
+        {% for conversation in pagination.items %}
+        <a href="{{ url_for('admin.communication_detail', conversation_id=conversation.id) }}"
+            class="list-group-item list-group-item-action p-4 d-flex align-items-center gap-3">
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h5 class="mb-0 {{ 'fw-bold' if has_unread_messages(conversation) else '' }}">
+                        {{ conversation.subject }}
+                    </h5>
+                    <small class="text-muted">{{ conversation.updated_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                </div>
+                <p class="mb-0 text-muted text-truncate" style="max-width: 600px;">
+                    {% if conversation.last_message %}
+                    {{ conversation.last_message.sender.username }}: {{ conversation.last_message.body }}
+                    {% else %}
+                    لا توجد رسائل
+                    {% endif %}
+                </p>
+                <small class="text-info">
+                    {{ conversation.participants.count() }} مشارك
+                </small>
+            </div>
+            {% if has_unread_messages(conversation) %}
+            <span class="badge bg-primary rounded-pill">جديد</span>
+            {% endif %}
+        </a>
+        {% else %}
+        <div class="p-5 text-center text-muted">
+            <i class="fas fa-inbox fa-3x mb-3"></i>
+            <p>لا توجد رسائل.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination controls (simplified) -->
+    {% if pagination.pages > 1 %}
+    <div class="card-footer d-flex justify-content-center">
+        <nav>
+            <ul class="pagination">
+                {% if pagination.has_prev %}
+                <li class="page-item"><a class="page-link"
+                        href="{{ url_for('admin.communication_history', page=pagination.prev_num) }}">السابق</a></li>
+                {% endif %}
+                {% if pagination.has_next %}
+                <li class="page-item"><a class="page-link"
+                        href="{{ url_for('admin.communication_history', page=pagination.next_num) }}">التالي</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
