@@ -80,7 +80,7 @@ def register_logging_middleware(app: Flask) -> None:
             ctx.add_breadcrumb("validation:detected_failure")
             response = _build_error_response(
                 {
-                    "message": "Invalid request payload.",
+                    "message": "تعذر إرسال الطلب. يرجى التأكد من تعبئة جميع الحقول المطلوبة بشكل صحيح قبل الإرسال.",
                     "errors": validation_info.get("errors") or validation_info,
                     "request_id": getattr(g, "request_id", None),
                 },
