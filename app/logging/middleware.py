@@ -81,7 +81,6 @@ def register_logging_middleware(app: Flask) -> None:
             response = _build_error_response(
                 {
                     "message": "تعذر إرسال الطلب. يرجى التأكد من تعبئة جميع الحقول المطلوبة بشكل صحيح قبل الإرسال.",
-                    "errors": validation_info.get("errors") or validation_info,
                     "request_id": getattr(g, "request_id", None),
                 },
                 HTTPStatus.BAD_REQUEST,
