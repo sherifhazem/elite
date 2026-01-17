@@ -141,3 +141,11 @@ def member_messages_sync(conversation_id):
             } for m in messages
         ]
     }
+@portal.route("/api/messages/unread-count", endpoint="get_member_unread_count")
+def get_member_unread_count():
+    """Endpoint for global unread message count badge."""
+    user = _resolve_user_context()
+    if user is None:
+        return {"unread_count": 0}, 401
+    count = CommunicationService.get_unread_count(user.id)
+    return {"unread_count": count}

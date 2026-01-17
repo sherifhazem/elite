@@ -219,7 +219,8 @@ def communication_lookup() -> Response:
     """Return JSON payloads used for recipient autocomplete search widgets."""
     _ensure_admin_context()
 
-    query_text = (request.args.get("query") or "").strip()
+    # Match 'q' from admin_communications_compose.js
+    query_text = (request.args.get("q") or request.args.get("query") or "").strip()
     lookup_type = (request.args.get("type") or "user").strip().lower()
 
     results: List[Dict[str, object]] = []
@@ -234,7 +235,7 @@ def communication_lookup() -> Response:
             results.append(
                 {
                     "id": company.id,
-                    "label": company.name,
+                    "name": company.name,  # Match 'item.name' in JS
                     "type": "company",
                 }
             )
@@ -253,7 +254,7 @@ def communication_lookup() -> Response:
             results.append(
                 {
                     "id": user.id,
-                    "label": f"{user.username} ({user.email})",
+                    "name": f"{user.username} ({user.email})",  # Match 'item.name' in JS
                     "type": "user",
                 }
             )
@@ -284,3 +285,9 @@ def communication_sync(conversation_id: int):
             } for m in messages
         ]
     }
+@admin.route("/api/communications/unread-count")
+@admin_required
+def get_admin_unread_count():
+    """Endpoint for global unread message count badge."""
+    count = CommunicationService.get_unread_count(g.current_user.id)
+    return jsonify({"unread_count": count})

@@ -245,7 +245,16 @@ Flash messages in Auth UI are custom-styled to match the Dark Design System rath
 - Partners confirm usage via `PUT /api/redemptions/<code>/confirm`.
 - QR codes are served via `GET /api/redemptions/<code>/qrcode`.
 
+### Internal Messaging System
+- **Real-time Communication:** Enables direct messaging between Admins, Partners, and Members.
+- **Polling Sync:** Uses client-side polling (every 5-30 seconds) for near-instant message updates without page refreshes.
+- **Unread Indicators:** Global unread badges with pulsing animations in the sidebar and navigation bars for all user roles.
+- **Broadcast System:** Admins can send bulk messages to "All Users", "All Companies", or manually selected recipients.
+- **Attachment Support:** Secure file sharing (PDF, images, etc.) within message threads, stored in `app/core/static/uploads/attachments`.
+- **Portal Integration:** Notifications link directly to the relevant conversation inside the Admin, Company, or Member portal.
+
 ---
+
 
 ## 5. Security Model
 

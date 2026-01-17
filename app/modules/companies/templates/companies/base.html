@@ -17,6 +17,31 @@
         integrity="sha512-DT0QO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1Gq3h45p2QPRdhR+M3XwEnG7qqg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ url_for('static', filename='companies/company_portal.css') }}">
+    <style>
+        @keyframes pulse-soft {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.95);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .pulse-badge {
+            animation: pulse-soft 2s infinite ease-in-out;
+            box-shadow: 0 0 8px rgba(220, 53, 69, 0.4);
+            font-size: 0.75rem;
+            padding: 0.25em 0.6em;
+        }
+    </style>
     {% block extra_head %}{% endblock %}
 </head>
 
@@ -115,7 +140,11 @@
                         <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_messages_list')) %}active{% endif %}"
                             href="{{ url_for('company_portal.company_messages_list') }}">
                             <i class="fas fa-envelope me-2"></i>
-                            <span>التواصل</span>
+                            <span class="flex-grow-1">التواصل</span>
+                            <span id="global-unread-badge"
+                                class="badge rounded-pill bg-danger ms-2 {% if unread_messages_count == 0 %}d-none{% endif %} pulse-badge">
+                                {{ unread_messages_count }}
+                            </span>
                         </a>
                     </li>
                 </ul>
@@ -197,6 +226,28 @@
                 return originalFetch(input, config);
             };
         }
+    </script>
+    <script>
+        async function updateUnreadCount() {
+            try {
+                const response = await fetch('{{ url_for("company_portal.get_company_unread_count") }}');
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('global-unread-badge');
+                    if (badge) {
+                        if (data.unread_count > 0) {
+                            badge.innerText = data.unread_count;
+                            badge.classList.remove('d-none');
+                        } else {
+                            badge.classList.add('d-none');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching unread count:', error);
+            }
+        }
+        setInterval(updateUnreadCount, 30000);
     </script>
     {% block portal_scripts %}{% endblock %}
     {% block extra_scripts %}{% endblock %}

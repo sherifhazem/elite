@@ -283,6 +283,14 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         is_admin = normalized_role in {"admin", "superadmin"}
         is_superadmin = normalized_role == "superadmin"
 
+        from app.services.communication_service import CommunicationService
+        unread_messages_count = 0
+        if user and getattr(user, "is_authenticated", False):
+            try:
+                unread_messages_count = CommunicationService.get_unread_count(user.id)
+            except Exception:
+                unread_messages_count = 0
+
         return {
             "current_user": user,
             "role": normalized_role,  # <--- أُضيف لضمان عمل {{ role }} في القوالب
@@ -292,6 +300,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             "is_admin": is_admin,
             "is_superadmin": is_superadmin,
             "get_offer_runtime_flags": get_offer_runtime_flags,
+            "unread_messages_count": unread_messages_count,
         }
 
     with app.app_context():

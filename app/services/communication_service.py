@@ -71,7 +71,7 @@ class CommunicationService:
 
         # Handle attachments
         if attachment_files:
-            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'attachments')
+            upload_folder = os.path.join(current_app.static_folder, 'uploads', 'attachments')
             os.makedirs(upload_folder, exist_ok=True)
 
             for file_storage in attachment_files:
