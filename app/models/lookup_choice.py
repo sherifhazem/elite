@@ -14,6 +14,7 @@ class LookupChoice(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     list_type = db.Column(db.String(32), nullable=False, index=True)
     name = db.Column(db.String(255), nullable=False)
+    icon = db.Column(db.String(255), nullable=True)
     active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 

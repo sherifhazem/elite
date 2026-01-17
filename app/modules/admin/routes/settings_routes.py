@@ -3,9 +3,20 @@
 from __future__ import annotations
 
 from http import HTTPStatus
+from pathlib import Path
 from typing import Dict
 
-from flask import abort, flash, jsonify, redirect, render_template, request, Response, url_for
+from flask import (
+    abort,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    Response,
+    url_for,
+)
 from flask_login import current_user
 
 from app.services.access_control import admin_required
@@ -17,7 +28,10 @@ from .. import admin
 def _settings_success_response(list_type: str, message: str | None = None) -> Response:
     """Return a JSON response containing the refreshed list data."""
 
-    items = settings_service.get_list(list_type)
+    if list_type == "industries":
+        items = settings_service.get_industry_items(active_only=False)
+    else:
+        items = settings_service.get_list(list_type, active_only=False)
     payload = {"status": "success", "items": items, "list_type": list_type}
     if message:
         payload["message"] = message
@@ -71,6 +85,22 @@ def _extract_tab() -> str:
     )
 
 
+def _get_available_industry_icons() -> list[str]:
+    """Return available industry icon filenames from the shared static directory."""
+
+    icons_dir = Path(current_app.static_folder) / "shared" / "icons"
+    if not icons_dir.exists():
+        return []
+
+    allowed_suffixes = {".png", ".svg", ".jpg", ".jpeg", ".webp"}
+    icons = [
+        path.name
+        for path in icons_dir.iterdir()
+        if path.is_file() and path.suffix.lower() in allowed_suffixes
+    ]
+    return sorted(icons)
+
+
 def _handle_add_item(list_type: str) -> Response:
     """Shared handler for add endpoints."""
 
@@ -78,10 +108,10 @@ def _handle_add_item(list_type: str) -> Response:
     if not (name or "").strip():
         return _settings_error_response("الاسم مطلوب.", reason="empty_value")
     try:
-        items = settings_service.add_item(list_type, name)
+        settings_service.add_item(list_type, name)
     except ValueError as exc:
         return _settings_error_response(str(exc), reason="validation_failed")
-    return jsonify({"status": "success", "items": items, "list_type": list_type})
+    return _settings_success_response(list_type)
 
 
 def _handle_update_item(list_type: str) -> Response:
@@ -101,10 +131,10 @@ def _handle_update_item(list_type: str) -> Response:
     if not (new_name or "").strip():
         return _settings_error_response("الاسم مطلوب.", reason="empty_value")
     try:
-        items = settings_service.update_item(list_type, current_value, new_name)
+        settings_service.update_item(list_type, current_value, new_name)
     except ValueError as exc:
         return _settings_error_response(str(exc), reason="validation_failed")
-    return jsonify({"status": "success", "items": items, "list_type": list_type})
+    return _settings_success_response(list_type)
 
 
 def _handle_delete_item(list_type: str) -> Response:
@@ -114,10 +144,10 @@ def _handle_delete_item(list_type: str) -> Response:
     if not (target or "").strip():
         return _settings_error_response("قيمة غير صالحة للحذف.", reason="missing_target")
     try:
-        items = settings_service.delete_item(list_type, target)
+        settings_service.delete_item(list_type, target)
     except ValueError as exc:
         return _settings_error_response(str(exc), reason="validation_failed")
-    return jsonify({"status": "success", "items": items, "list_type": list_type})
+    return _settings_success_response(list_type)
 
 
 @admin.route("/settings", endpoint="settings_home")
@@ -127,7 +157,8 @@ def settings_home() -> str:
 
     selected_tab = _extract_tab()
     cities = settings_service.get_list("cities", active_only=False)
-    industries = settings_service.get_list("industries", active_only=False)
+    industries = settings_service.get_industry_items(active_only=False)
+    industry_icons = _get_available_industry_icons()
     admin_settings = admin_settings_service.get_admin_settings()
     return render_template(
         "admin/settings.html",
@@ -135,6 +166,8 @@ def settings_home() -> str:
         active_page="settings",
         cities=cities,
         industries=industries,
+        industry_icons=industry_icons,
+        industry_icons_base=url_for("static", filename="shared/icons/"),
         admin_settings=admin_settings,
         selected_tab=selected_tab,
     )
@@ -172,6 +205,40 @@ def update_industry() -> Response:
     """Rename an existing industry entry."""
 
     return _handle_update_item("industries")
+
+
+@admin.route(
+    "/settings/update_industry_icon",
+    methods=["POST"],
+    endpoint="update_industry_icon",
+)
+@admin_required
+def update_industry_icon() -> Response:
+    """Update the icon assigned to an industry entry."""
+
+    name = _extract_value("name", "industry", "current_value", "value")
+    icon = _extract_value("icon", "icon_name", "icon_value")
+    if not (name or "").strip():
+        return _settings_error_response("العنصر المطلوب مفقود.", reason="missing_target")
+
+    normalized_icon = (icon or "").strip()
+    available_icons = set(_get_available_industry_icons())
+    if normalized_icon and normalized_icon not in available_icons:
+        return _settings_error_response("الأيقونة المختارة غير متاحة.", reason="invalid_icon")
+
+    try:
+        items = settings_service.update_industry_icon(name, normalized_icon or None)
+    except ValueError as exc:
+        return _settings_error_response(str(exc), reason="validation_failed")
+
+    return jsonify(
+        {
+            "status": "success",
+            "items": items,
+            "list_type": "industries",
+            "message": "تم تحديث الأيقونة بنجاح.",
+        }
+    )
 
 
 @admin.route("/settings/delete_city", methods=["POST"], endpoint="delete_city")
