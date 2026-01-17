@@ -25,9 +25,31 @@ def register_company():
         return jsonify(result), status
 
     if not form.validate_on_submit():
-        for errors in form.errors.values():
-            for err in errors:
-                flash(err, "danger")
+        missing_fields_labels = []
+        other_errors = []
+
+        # Collect errors
+        for field_name, errors in form.errors.items():
+            field = getattr(form, field_name)
+            label = field.label.text
+            for error in errors:
+                # Check for common "required" error messages
+                if error in ("هذا الحقل إلزامي.", "اختر مجال العمل", "اختر المدينة", "This field is required."):
+                    missing_fields_labels.append(label)
+                else:
+                    other_errors.append(f"{label}: {error}")
+        
+        # Flash consolidated missing fields message
+        if missing_fields_labels:
+            flash(
+                f"فضلاً تأكد من تعبئة الحقول الضرورية: {', '.join(missing_fields_labels)}",
+                "danger"
+            )
+
+        # Flash other specific errors
+        for err in other_errors:
+            flash(err, "danger")
+
         return render_template("companies/register_company.html", form=form), HTTPStatus.BAD_REQUEST
 
     payload = {k: v for k, v in getattr(request, "cleaned", {}).items() if not k.startswith("__")}

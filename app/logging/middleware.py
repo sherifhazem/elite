@@ -78,14 +78,16 @@ def register_logging_middleware(app: Flask) -> None:
 
         if validation_info and not validation_info.get("is_valid", True):
             ctx.add_breadcrumb("validation:detected_failure")
-            response = _build_error_response(
-                {
-                    "message": "تعذر إرسال الطلب. يرجى التأكد من تعبئة جميع الحقول المطلوبة بشكل صحيح قبل الإرسال.",
-                    "request_id": getattr(g, "request_id", None),
-                },
-                HTTPStatus.BAD_REQUEST,
-            )
-            return response
+            # Only intercept JSON/API requests; let HTML forms handle validation errors in their routes.
+            if request.path.startswith("/api") or request.is_json:
+                response = _build_error_response(
+                    {
+                        "message": "تعذر إرسال الطلب. يرجى التأكد من تعبئة جميع الحقول المطلوبة بشكل صحيح قبل الإرسال.",
+                        "request_id": getattr(g, "request_id", None),
+                    },
+                    HTTPStatus.BAD_REQUEST,
+                )
+                return response
 
     @app.after_request
     def _finalize_logging(response: Response):
