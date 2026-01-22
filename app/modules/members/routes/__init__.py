@@ -3,7 +3,7 @@
 from flask import Blueprint, jsonify, redirect, url_for
 
 from .offer_routes import offers
-from .redemption_routes import redemption
+from .offer_routes import offers
 from .notification_routes import notifications
 from .user_routes import users
 from .user_portal_routes import portal
@@ -58,7 +58,7 @@ __all__ = [
     "main",
     "users",
     "offers",
-    "redemption",
+
     "portal",
     "notifications",
     "usage_codes",

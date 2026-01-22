@@ -115,13 +115,7 @@
                             <span>العروض</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_redemptions_history')) %}active{% endif %}"
-                            href="{{ url_for('company_portal.company_redemptions_history') }}">
-                            <i class="fas fa-receipt me-2"></i>
-                            <span>عمليات الاستبدال</span>
-                        </a>
-                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_usage_codes')) %}active{% endif %}"
                             href="{{ url_for('company_portal.company_usage_codes') }}">

@@ -2,20 +2,9 @@
 
 Key fields:
 - ``title`` and ``description``: Offer content details.
-- ``base_discount``: Minimum discount applied to all members.
-- ``start_date``: Optional activation date.
-- ``valid_until``: Optional expiration timestamp.
-- ``image_url``: Optional visual used to promote the offer.
-
-Relationships:
-- ``company``: Company that owns the offer.
-- ``redemptions``: Redemptions generated from the offer.
 """
-
 from datetime import datetime
-
 from app.core.database import db
-
 
 OFFER_CLASSIFICATION_TYPES = (
     "first_time_offer",
@@ -46,12 +35,7 @@ class Offer(db.Model):
     # Establish relationship with Company for easy access to related offers
     company = db.relationship("Company", backref="offers")
 
-    redemptions = db.relationship(
-        "Redemption",
-        back_populates="offer",
-        lazy="dynamic",
-        cascade="all, delete-orphan",
-    )
+
 
     classifications = db.relationship(
         "OfferClassification",

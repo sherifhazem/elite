@@ -33,7 +33,6 @@ class User(UserMixin, db.Model):
     - ``company``: Linked company when the user is a business account.
     - ``notifications``: In-app notifications targeting the user.
     - ``permissions``: Optional fine-grained permissions.
-    - ``redemptions``: Offer redemptions created by the user.
     """
 
     __tablename__ = "users"
@@ -100,13 +99,7 @@ class User(UserMixin, db.Model):
         doc="Optional fine-grained permissions granted in addition to the primary role.",
     )
 
-    redemptions = db.relationship(
-        "Redemption",
-        back_populates="user",
-        lazy="dynamic",
-        cascade="all, delete-orphan",
-        doc="Offer redemption activations created by the member.",
-    )
+
 
     # ------------------------------------------------------------------
     # Representations & authentication helpers

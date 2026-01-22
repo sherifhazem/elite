@@ -8,7 +8,6 @@ from .company import Company
 from .offer import Offer, OfferClassification
 from .notification import Notification
 from .activity_log import ActivityLog
-from .redemption import Redemption
 from .lookup_choice import LookupChoice
 from .admin_setting import AdminSetting
 from .usage_code import UsageCode
@@ -21,7 +20,6 @@ __all__ = [
     "Offer",
     "OfferClassification",
     "Notification",
-    "Redemption",
     "Permission",
     "ActivityLog",
     "LookupChoice",

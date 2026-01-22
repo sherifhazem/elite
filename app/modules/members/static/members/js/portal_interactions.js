@@ -242,9 +242,17 @@
                 chip.dataset.offerDescription = offer.description || "";
                 chip.dataset.offerDiscount = Math.round(offer.discount_percent || offer.base_discount || 0);
                 chip.dataset.offerValid = offer.valid_until ? offer.valid_until.split("T")[0] : "مستمر";
+                const industryIcon = offer.industry_icon || 'fix.png';
                 chip.innerHTML = `
-                    <h3 class="offer-chip__title">${offer.title}</h3>
-                    <p class="offer-chip__company">${chip.dataset.offerCompany}</p>
+                    <h3 class="offer-chip__title">
+                        <img src="/static/shared/icons/${industryIcon}" alt=""
+                             class="offer-chip__industry-icon" aria-hidden="true"
+                             onerror="this.style.display='none'">
+                        ${offer.title}
+                    </h3>
+                    <div class="offer-chip__company-wrapper">
+                        <p class="offer-chip__company">${chip.dataset.offerCompany}</p>
+                    </div>
                     <span class="offer-chip__discount">${chip.dataset.offerDiscount}%</span>
                 `;
                 chip.addEventListener("click", () => openOfferModal(chip));
@@ -317,11 +325,10 @@
                 <p><strong>صالح حتى:</strong> ${valid}</p>
                 ${description ? `<p>${description}</p>` : ""}
                 ${summary ? `<p class="text-muted">${summary}</p>` : ""}
-                ${
-                    companyId
-                        ? `<button class="ghost-button" type="button" data-modal-company data-company-id="${companyId}" data-company-name="${company}" data-company-summary="${summary}" data-company-description="${source.dataset.offerCompanyDescription || ""}">عن الشركة</button>`
-                        : ""
-                }
+                ${companyId
+                ? `<button class="ghost-button" type="button" data-modal-company data-company-id="${companyId}" data-company-name="${company}" data-company-summary="${summary}" data-company-description="${source.dataset.offerCompanyDescription || ""}">عن الشركة</button>`
+                : ""
+            }
                 <div class="usage-code-entry">
                     <h4>توثيق الاستخدام</h4>
                     <p class="text-muted">أدخل رمز الاستخدام الذي يقدمه الشريك لإتمام التحقق.</p>
@@ -447,23 +454,20 @@
                         <dd>${redeemedLabel}</dd>
                     </div>
                 </dl>
-                ${
-                    qrUrl
-                        ? `<img class="redemption-modal__qr" src="${qrUrl}?t=${Date.now()}" alt="Offer QR Code" loading="lazy">`
-                        : ""
-                }
+                ${qrUrl
+                ? `<img class="redemption-modal__qr" src="${qrUrl}?t=${Date.now()}" alt="Offer QR Code" loading="lazy">`
+                : ""
+            }
                 <div class="redemption-modal__actions">
                     <button class="cta-button" type="button" data-copy-code>Copy Code</button>
-                    ${
-                        qrUrl
-                            ? `<button class="ghost-button" type="button" data-download-qr>Download QR</button>`
-                            : ""
-                    }
-                    ${
-                        qrUrl
-                            ? `<a class="ghost-button" href="${qrUrl}" target="_blank" rel="noopener" data-open-qr>Open QR</a>`
-                            : ""
-                    }
+                    ${qrUrl
+                ? `<button class="ghost-button" type="button" data-download-qr>Download QR</button>`
+                : ""
+            }
+                    ${qrUrl
+                ? `<a class="ghost-button" href="${qrUrl}" target="_blank" rel="noopener" data-open-qr>Open QR</a>`
+                : ""
+            }
                 </div>
             </div>
         `;

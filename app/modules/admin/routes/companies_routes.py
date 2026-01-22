@@ -5,6 +5,7 @@ from __future__ import annotations
 from flask import flash, redirect, render_template, request, url_for
 
 from app.services.access_control import admin_required
+from app.core.choices import get_industries
 
 from .. import admin
 from ..services.company_management_service import (
@@ -72,6 +73,7 @@ def edit_company(company_id: int) -> str:
     return render_template(
         "admin/dashboard/company_edit.html",
         company=company,
+        industries=get_industries(),
         active_page="companies",
     )
 

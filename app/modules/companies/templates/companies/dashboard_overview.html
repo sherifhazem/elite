@@ -5,132 +5,35 @@
 {% block portal_title %}لوحة التحكم{% endblock %}
 
 {% block portal_content %}
-    <section class="dashboard-metrics">
-        <article class="metric-card metric-card--primary">
-            <div class="metric-card-body">
-                <h2 class="metric-title">العروض النشطة</h2>
-                <p class="metric-value">{{ active_offers }}</p>
-            </div>
-        </article>
-        <article class="metric-card metric-card--accent">
-            <div class="metric-card-body">
-                <h2 class="metric-title">إجمالي الاستبدالات</h2>
-                <p class="metric-value">{{ total_redeemed }}</p>
-            </div>
-        </article>
-        <article class="metric-card metric-card--neutral">
-            <div class="metric-card-body">
-                <h2 class="metric-title">العملاء المخدومون</h2>
-                <p class="metric-value">{{ unique_customers }}</p>
-            </div>
-        </article>
-    </section>
+<section class="dashboard-metrics">
+    <article class="metric-card metric-card--primary">
+        <div class="metric-card-body">
+            <h2 class="metric-title">العروض النشطة</h2>
+            <p class="metric-value">{{ active_offers }}</p>
+        </div>
+    </article>
+    <article class="metric-card metric-card--accent">
+        <div class="metric-card-body">
+            <h2 class="metric-title">إجمالي الاستبدالات</h2>
+            <p class="metric-value">{{ total_redeemed }}</p>
+        </div>
+    </article>
+    <article class="metric-card metric-card--neutral">
+        <div class="metric-card-body">
+            <h2 class="metric-title">العملاء المخدومون</h2>
+            <p class="metric-value">{{ unique_customers }}</p>
+        </div>
+    </article>
+</section>
 
-    <section class="dashboard-panels">
-        <div class="dashboard-panel">
-            <div class="panel-header">
-                <h3 class="panel-title">أحدث عملية استبدال</h3>
-            </div>
-            <div class="panel-body">
-                {% set redemption_status_labels = {
-                    'redeemed': 'مستبدل',
-                    'pending': 'قيد الانتظار',
-                    'expired': 'منتهي'
-                } %}
-                {% if last_redemption %}
-                    <dl class="panel-meta">
-                        <div>
-                            <dt>الرمز</dt>
-                            <dd>{{ last_redemption.redemption_code }}</dd>
-                        </div>
-                        <div>
-                            <dt>الحالة</dt>
-                            <dd>
-                                <span class="badge bg-{{ 'success' if last_redemption.status == 'redeemed' else 'secondary' }} text-uppercase">
-                                    {{ redemption_status_labels.get(last_redemption.status, 'غير معروف') }}
-                                </span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt>تمت المعالجة</dt>
-                            <dd>
-                                {{ (last_redemption.redeemed_at or last_redemption.created_at).strftime('%Y-%m-%d %H:%M') if last_redemption.created_at else '—' }}
-                            </dd>
-                        </div>
-                    </dl>
-                {% else %}
-                    <p class="text-muted mb-0">لا توجد استبدالات حتى الآن.</p>
-                {% endif %}
-            </div>
+<section class="dashboard-panels">
+    <div class="dashboard-panel">
+        <div class="panel-header">
+            <h3 class="panel-title">أحدث عملية استبدال</h3>
         </div>
-        <div class="dashboard-panel">
-            <div class="panel-header">
-                <h3 class="panel-title">الاستبدالات الأخيرة</h3>
-            </div>
-            <div class="panel-body">
-                <div class="table-responsive dashboard-table-wrapper">
-                    <table class="table align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th scope="col">الرمز</th>
-                                <th scope="col">العضو</th>
-                                <th scope="col">تاريخ الإنشاء</th>
-                                <th scope="col">الحالة</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if recent_redemptions %}
-                                {% for redemption in recent_redemptions %}
-                                    <tr>
-                                        <td>{{ redemption.redemption_code }}</td>
-                                        <td>{{ redemption.user.username if redemption.user else '—' }}</td>
-                                        <td>{{ redemption.created_at.strftime('%Y-%m-%d %H:%M') if redemption.created_at else '—' }}</td>
-                                        <td>
-                                            <span class="badge bg-{{ 'success' if redemption.status == 'redeemed' else 'secondary' }} text-uppercase">
-                                                {{ redemption_status_labels.get(redemption.status, 'غير معروف') }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">لا توجد حركة استبدال بعد.</td>
-                                </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="dashboard-cards" aria-hidden="true">
-                    {% if recent_redemptions %}
-                        {% for redemption in recent_redemptions %}
-                            <article class="dashboard-redemption-card">
-                                <div class="redemption-card-row">
-                                    <span class="label">الرمز</span>
-                                    <span class="value">{{ redemption.redemption_code }}</span>
-                                </div>
-                                <div class="redemption-card-row">
-                                    <span class="label">العضو</span>
-                                    <span class="value">{{ redemption.user.username if redemption.user else '—' }}</span>
-                                </div>
-                                <div class="redemption-card-row">
-                                    <span class="label">تاريخ الإنشاء</span>
-                                    <span class="value">{{ redemption.created_at.strftime('%Y-%m-%d %H:%M') if redemption.created_at else '—' }}</span>
-                                </div>
-                                <div class="redemption-card-row">
-                                    <span class="label">الحالة</span>
-                                    <span class="value">
-                                        <span class="badge bg-{{ 'success' if redemption.status == 'redeemed' else 'secondary' }} text-uppercase">
-                                            {{ redemption_status_labels.get(redemption.status, 'غير معروف') }}
-                                        </span>
-                                    </span>
-                                </div>
-                            </article>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-muted mb-0">لا توجد حركة استبدال بعد.</p>
-                    {% endif %}
-                </div>
-            </div>
+        <div class="panel-body">
+            <p class="text-muted mb-0">لا توجد حركة استبدال بعد.</p>
         </div>
-    </section>
+    </div>
+</section>
 {% endblock %}

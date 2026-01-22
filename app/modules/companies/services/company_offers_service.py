@@ -8,7 +8,7 @@ from typing import Dict, Iterable, List, Optional
 
 from sqlalchemy.orm import joinedload
 
-from app.models import Company, Offer
+from app.models import Company, Offer, LookupChoice
 
 
 @dataclass
@@ -37,19 +37,32 @@ def _summarize_company(company: Optional[Company], *, length: int = 140) -> str:
     return f"{description[:length].rstrip()}…"
 
 
-def get_portal_offers_with_company() -> List[OfferCompanyBundle]:
+def get_portal_offers_with_company(limit: Optional[int] = None, featured: bool = False) -> List[OfferCompanyBundle]:
     """Return offer records enriched with linked company data for the portal."""
-    # TODO: Incentives will be calculated based on verified usage.
-    offers: Iterable[Offer] = (
-        Offer.query.options(joinedload(Offer.company))
-        .filter(Offer.status == "active")
-        .order_by(Offer.valid_until.asc())
-        .all()
-    )
+    # Pre-fetch industry icons to avoid multiple DB queries
+    industry_icons = {
+        row.name: row.icon 
+        for row in LookupChoice.query.filter_by(list_type="industries").all()
+    }
+
+    query = Offer.query.options(joinedload(Offer.company)).filter(Offer.status == "active")
+    
+    if featured:
+        query = query.order_by(Offer.created_at.desc())
+    else:
+        query = query.order_by(Offer.valid_until.asc())
+
+    if limit:
+        query = query.limit(limit)
+
+    offers: Iterable[Offer] = query.all()
 
     results: List[OfferCompanyBundle] = []
     for offer in offers:
         company = offer.company
+        industry_name = company.industry if company else None
+        industry_icon = industry_icons.get(industry_name) if industry_name else None
+        
         bundle = OfferCompanyBundle(
             id=offer.id,
             title=offer.title,
@@ -62,6 +75,9 @@ def get_portal_offers_with_company() -> List[OfferCompanyBundle]:
                 "name": company.name if company else "شريك ELITE",
                 "summary": _summarize_company(company),
                 "description": (company.description or "") if company else "",
+                "logo_url": company.logo_url if company else None,
+                "industry": industry_name,
+                "industry_icon": industry_icon,
             },
         )
         results.append(bundle)
@@ -79,6 +95,8 @@ def get_company_brief(company_id: int) -> Optional[Dict[str, object]]:
         "name": company.name,
         "description": company.description or "",
         "summary": _summarize_company(company, length=220),
+        "logo_url": company.logo_url,
+        "industry": company.industry,
     }
 
 

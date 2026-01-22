@@ -4,62 +4,58 @@
 {% block title %}الرئيسية · ELITE{% endblock %}
 {% block page_heading %}الرئيسية{% endblock %}
 {% block content %}
-    <section class="home-intro">
-        <h1 class="home-intro__title">العروض</h1>
-        <div class="home-search" role="search">
-            <label class="visually-hidden" for="home-search-input">البحث</label>
-            <input
-                class="home-search__input"
-                id="home-search-input"
-                type="search"
-                name="q"
-                placeholder="ابحث باسم الشريك أو التصنيف"
-                autocomplete="off"
-            />
+<section class="home-intro">
+    <h1 class="home-intro__title">العروض</h1>
+    <div class="home-search" role="search">
+        <label class="visually-hidden" for="home-search-input">البحث</label>
+        <input class="home-search__input" id="home-search-input" type="search" name="q"
+            placeholder="ابحث باسم الشريك أو التصنيف" autocomplete="off" />
+    </div>
+</section>
+<section class="home-section">
+    <div class="section-headline">
+        <h2 class="section-headline__title">عروض مختارة</h2>
+        <button class="section-headline__link" type="button" data-nav-link data-nav-target="offers"
+            data-route="{{ url_for('portal.member_portal_offers') }}">
+            عرض الكل
+        </button>
+    </div>
+    <div class="featured-carousel" data-featured-carousel>
+        <div class="featured-carousel__track" data-featured-track>
+            {% set featured_offers = featured_offers | default([]) %}
+            {% if featured_offers %}
+            {% for offer in featured_offers %}
+            {% set discount_value = '%.0f'|format(offer.base_discount) %}
+            <article class="offer-chip" data-offer-id="{{ offer.id }}" data-offer-title="{{ offer.title }}"
+                data-offer-company="{{ offer.company.name if offer.company else 'شريك ELITE' }}"
+                data-offer-discount="{{ discount_value }}"
+                data-offer-valid="{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'مستمر' }}">
+                <h3 class="offer-chip__title">
+                    {% set industry_icon = offer.company.industry_icon or 'fix.png' %}
+                    <img src="{{ url_for('static', filename='shared/icons/' + industry_icon) }}" alt=""
+                        class="offer-chip__industry-icon" aria-hidden="true" onerror="this.style.display='none'">
+                    {{ offer.title }}
+                </h3>
+                <div class="offer-chip__company-wrapper">
+                    {% if offer.company.logo_url %}
+                    <img src="{{ offer.company.logo_url }}" alt="{{ offer.company.name }} logo"
+                        class="offer-chip__company-logo">
+                    {% endif %}
+                    <p class="offer-chip__company">{{ offer.company.name if offer.company.name else 'عرض حصري' }}</p>
+                </div>
+                <span class="offer-chip__discount">{{ discount_value }}%</span>
+            </article>
+            {% endfor %}
+            {% else %}
+            <article class="offer-chip offer-chip--placeholder" data-featured-placeholder>
+                <h3 class="offer-chip__title">سنقترح عروضاً بمجرد تسجيل الدخول</h3>
+                <p class="offer-chip__company">تابعنا يومياً للحصول على تحديثات جديدة.</p>
+            </article>
+            {% endif %}
         </div>
-    </section>
-    <section class="home-section">
-        <div class="section-headline">
-            <h2 class="section-headline__title">عروض مختارة</h2>
-            <button
-                class="section-headline__link"
-                type="button"
-                data-nav-link
-                data-nav-target="offers"
-                data-route="{{ url_for('portal.member_portal_offers') }}"
-            >
-                عرض الكل
-            </button>
-        </div>
-        <div class="featured-carousel" data-featured-carousel>
-            <div class="featured-carousel__track" data-featured-track>
-                {% set featured_offers = featured_offers | default([]) %}
-                {% if featured_offers %}
-                    {% for offer in featured_offers %}
-                        {% set discount_value = '%.0f'|format(offer.base_discount) %}
-                        <article
-                            class="offer-chip"
-                            data-offer-id="{{ offer.id }}"
-                            data-offer-title="{{ offer.title }}"
-                            data-offer-company="{{ offer.company.name if offer.company else 'شريك ELITE' }}"
-                            data-offer-discount="{{ discount_value }}"
-                            data-offer-valid="{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'مستمر' }}"
-                        >
-                            <h3 class="offer-chip__title">{{ offer.title }}</h3>
-                            <p class="offer-chip__company">{{ offer.company.name if offer.company else 'عرض حصري' }}</p>
-                            <span class="offer-chip__discount">{{ discount_value }}%</span>
-                        </article>
-                    {% endfor %}
-                {% else %}
-                    <article class="offer-chip offer-chip--placeholder" data-featured-placeholder>
-                        <h3 class="offer-chip__title">سنقترح عروضاً بمجرد تسجيل الدخول</h3>
-                        <p class="offer-chip__company">تابعنا يومياً للحصول على تحديثات جديدة.</p>
-                    </article>
-                {% endif %}
-            </div>
-        </div>
-    </section>
-    <section class="home-section">
-        <p class="text-muted">عروض حصرية للأعضاء النشطين</p>
-    </section>
+    </div>
+</section>
+<section class="home-section">
+    <p class="text-muted">عروض حصرية للأعضاء النشطين</p>
+</section>
 {% endblock %}

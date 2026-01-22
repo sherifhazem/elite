@@ -304,13 +304,12 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         }
 
     with app.app_context():
-        from app.models import Company, Offer, Permission, Redemption, User  # noqa: F401
+        from app.models import Company, Offer, Permission, User  # noqa: F401
 
     from app.modules.members.routes import (
         main as main_blueprint,
         notifications,
         offers,
-        redemption,
         usage_codes,
         users,
     )
@@ -332,7 +331,6 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.register_blueprint(offers, url_prefix="/api/offers")
     app.register_blueprint(companies, url_prefix="/api/companies")
     app.register_blueprint(users, url_prefix="/api/users")
-    app.register_blueprint(redemption)
     app.register_blueprint(usage_codes)
     app.register_blueprint(notifications)
 

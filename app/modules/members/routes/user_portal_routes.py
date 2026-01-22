@@ -23,9 +23,7 @@ from app.modules.companies.services.company_offers_service import (
     get_company_brief,
     get_portal_offers_with_company,
 )
-from app.modules.members.services.member_redemption_service import (
-    list_user_redemptions_with_context,
-)
+
 from app.services.incentive_eligibility_service import get_offer_runtime_flags
 
 portal = Blueprint(
@@ -119,7 +117,7 @@ def member_portal_home():
     user = _resolve_user_context()
     if user is None:
         return _redirect_to_login()
-    featured_offers = Offer.query.order_by(Offer.created_at.desc()).limit(6).all()
+    featured_offers = get_portal_offers_with_company(limit=6, featured=True)
     return render_template(
         "members/portal/home.html",
         user=user,
@@ -165,45 +163,19 @@ def member_portal_profile():
     user = _resolve_user_context()
     if user is None:
         return _redirect_to_login()
-    activations = []
-    
-    if user is not None:
-        activations = list_user_redemptions_with_context(user.id)
+
 
     return render_template(
         "members/portal/profile.html",
         user=user,
         membership_card=_membership_card_payload(user),
-        activations=activations,
         notification_unread_count=_unread_notification_count(user),
         active_nav="profile",
         current_year=datetime.utcnow().year,
     )
 
 
-@portal.route("/activations", methods=["GET"], endpoint="member_portal_activations")
-def user_activations():
-    """Return the authenticated member's activations as JSON payload."""
 
-    user = _resolve_user_context()
-    if user is None:
-        return jsonify({"error": "Unauthorized"}), 401
-    activations = list_user_redemptions_with_context(user.id)
-    normalized = []
-    for item in activations:
-        normalized.append(
-            {
-                "id": item["id"],
-                "status": item["status"],
-                "redemption_code": item["redemption_code"],
-                "created_at": item["created_at"].isoformat() if item["created_at"] else None,
-                "redeemed_at": item["redeemed_at"].isoformat() if item["redeemed_at"] else None,
-                "expires_at": item["expires_at"].isoformat() if item["expires_at"] else None,
-                "offer": item["offer"],
-                "company": item["company"],
-            }
-        )
-    return jsonify({"items": normalized})
 
 
 @portal.route(

@@ -5,118 +5,107 @@
 {% block portal_title %}الإعدادات{% endblock %}
 
 {% block portal_content %}
-    {% set owner_email = company.owner.email if company and company.owner and company.owner.email else (current_user.email if current_user else '') %}
-    {% if company is not none and company.registration_number is defined %}
-        {% set registration_value = company.registration_number or '' %}
-    {% else %}
-        {% set registration_value = none %}
-    {% endif %}
-    <section class="settings-layout">
-        <form id="company-settings-form" data-action="{{ url_for('company_portal.company_settings') }}" class="settings-form" novalidate enctype="multipart/form-data">
-            {% include "companies/_csrf_field.html" %}
-            <fieldset class="settings-section">
-                <legend>نظرة عامة على الحساب</legend>
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <label for="company-name" class="form-label">اسم الشركة</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            id="company-name"
-                            name="name"
-                            value="{{ company.name }}"
-                            readonly
-                            data-restricted-field
-                        >
-                        <div class="form-text text-warning-emphasis">هذا الحقل لا يمكن تعديله إلا بموافقة الإدارة.</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="company-email" class="form-label">البريد الإلكتروني للحساب</label>
-                        <input
-                            type="email"
-                            class="form-control"
-                            id="company-email"
-                            name="account_email"
-                            value="{{ owner_email }}"
-                            readonly
-                            data-restricted-field
-                        >
-                        <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة.</div>
-                    </div>
-                    {% if registration_value is not none %}
-                        <div class="col-md-6">
-                            <label for="company-registration" class="form-label">رقم السجل</label>
-                            <input
-                                type="text"
-                                class="form-control"
-                                id="company-registration"
-                                name="registration_number"
-                                value="{{ registration_value }}"
-                                readonly
-                                data-restricted-field
-                            >
-                            <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة.</div>
-                        </div>
-                    {% endif %}
+{% set owner_email = company.owner.email if company and company.owner and company.owner.email else (current_user.email
+if current_user else '') %}
+{% if company is not none and company.registration_number is defined %}
+{% set registration_value = company.registration_number or '' %}
+{% else %}
+{% set registration_value = none %}
+{% endif %}
+<section class="settings-layout">
+    <form id="company-settings-form" data-action="{{ url_for('company_portal.company_settings') }}"
+        class="settings-form" novalidate enctype="multipart/form-data">
+        {% include "companies/_csrf_field.html" %}
+        <fieldset class="settings-section">
+            <legend>نظرة عامة على الحساب</legend>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label for="company-name" class="form-label">اسم الشركة</label>
+                    <input type="text" class="form-control" id="company-name" name="name" value="{{ company.name }}"
+                        readonly data-restricted-field>
+                    <div class="form-text text-warning-emphasis">هذا الحقل لا يمكن تعديله إلا بموافقة الإدارة.</div>
                 </div>
-            </fieldset>
-            <fieldset class="settings-section">
-                <legend>ملف الشركة</legend>
-                <div class="row g-4">
-                    <div class="col-12">
-                        <label for="company-description" class="form-label">الوصف</label>
-                        <textarea class="form-control" id="company-description" name="description" rows="4" placeholder="صف مزايا شركتك">{{ company.description or '' }}</textarea>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label for="company-logo" class="form-label">الشعار</label>
-                        <input
-                            type="file"
-                            class="form-control"
-                            id="company-logo"
-                            name="logo_file"
-                            accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                        >
-                        <div class="form-text">الرجاء رفع لوجو بقياس 400×120 بحد أقصى وحجم أقل من 2MB.</div>
-                    </div>
-                    <div class="col-12 col-md-6 d-flex align-items-end">
-                        <div class="logo-preview-wrapper">
-                            <div class="form-text mb-1">معاينة اللوجو الحالي</div>
-                            <img
-                                id="company-logo-preview"
-                                src="{{ company.logo_url or url_for('static', filename='companies/images/logo-placeholder.svg') }}"
-                                alt="{{ company.name }} شعار"
-                                class="img-fluid rounded shadow-sm border"
-                            >
-                        </div>
-                    </div>
+                <div class="col-md-6">
+                    <label for="company-email" class="form-label">البريد الإلكتروني للحساب</label>
+                    <input type="email" class="form-control" id="company-email" name="account_email"
+                        value="{{ owner_email }}" readonly data-restricted-field>
+                    <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة.</div>
                 </div>
-            </fieldset>
-            <fieldset class="settings-section">
-                <legend>الإشعارات</legend>
-                <div class="row g-3">
-                    <div class="col-12 col-sm-6">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="notify-email" name="notify_email" {% if preferences.email %}checked{% endif %}>
-                            <label class="form-check-label" for="notify-email">تحديثات البريد الإلكتروني</label>
-                        </div>
-                    </div>
-                    <div class="col-12 col-sm-6">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="notify-sms" name="notify_sms" {% if preferences.sms %}checked{% endif %}>
-                            <label class="form-check-label" for="notify-sms">تنبيهات الرسائل النصية</label>
-                        </div>
-                    </div>
+                {% if registration_value is not none %}
+                <div class="col-md-6">
+                    <label for="company-industry" class="form-label">مجال العمل</label>
+                    <input type="text" class="form-control" id="company-industry" name="industry"
+                        value="{{ company.industry or '' }}" readonly data-restricted-field>
+                    <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة للتعديل.</div>
                 </div>
-            </fieldset>
-            <div class="settings-actions">
-                <button type="reset" class="btn btn-elite-outline">إعادة ضبط</button>
-                <button type="submit" class="btn btn-elite-primary" id="settings-submit-btn">حفظ التغييرات</button>
+                <div class="col-md-6">
+                    <label for="company-registration" class="form-label">رقم السجل</label>
+                    <input type="text" class="form-control" id="company-registration" name="registration_number"
+                        value="{{ registration_value }}" readonly data-restricted-field>
+                    <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة.</div>
+                </div>
+                {% else %}
+                <div class="col-md-6">
+                    <label for="company-industry" class="form-label">مجال العمل</label>
+                    <input type="text" class="form-control" id="company-industry" name="industry"
+                        value="{{ company.industry or '' }}" readonly data-restricted-field>
+                    <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة للتعديل.</div>
+                </div>
+                {% endif %}
             </div>
-        </form>
-    </section>
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="settings-toast-container"></div>
+        </fieldset>
+        <fieldset class="settings-section">
+            <legend>ملف الشركة</legend>
+            <div class="row g-4">
+                <div class="col-12">
+                    <label for="company-description" class="form-label">الوصف</label>
+                    <textarea class="form-control" id="company-description" name="description" rows="4"
+                        placeholder="صف مزايا شركتك">{{ company.description or '' }}</textarea>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label for="company-logo" class="form-label">الشعار</label>
+                    <input type="file" class="form-control" id="company-logo" name="logo_file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml">
+                    <div class="form-text">الرجاء رفع لوجو بقياس 400×120 بحد أقصى وحجم أقل من 2MB.</div>
+                </div>
+                <div class="col-12 col-md-6 d-flex align-items-end">
+                    <div class="logo-preview-wrapper">
+                        <div class="form-text mb-1">معاينة اللوجو الحالي</div>
+                        <img id="company-logo-preview"
+                            src="{{ company.logo_url or url_for('static', filename='companies/images/logo-placeholder.svg') }}"
+                            alt="{{ company.name }} شعار" class="img-fluid rounded shadow-sm border">
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+        <fieldset class="settings-section">
+            <legend>الإشعارات</legend>
+            <div class="row g-3">
+                <div class="col-12 col-sm-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="notify-email" name="notify_email" {% if
+                            preferences.email %}checked{% endif %}>
+                        <label class="form-check-label" for="notify-email">تحديثات البريد الإلكتروني</label>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="notify-sms" name="notify_sms" {% if
+                            preferences.sms %}checked{% endif %}>
+                        <label class="form-check-label" for="notify-sms">تنبيهات الرسائل النصية</label>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+        <div class="settings-actions">
+            <button type="reset" class="btn btn-elite-outline">إعادة ضبط</button>
+            <button type="submit" class="btn btn-elite-primary" id="settings-submit-btn">حفظ التغييرات</button>
+        </div>
+    </form>
+</section>
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="settings-toast-container"></div>
 {% endblock %}
 
 {% block portal_scripts %}
-    <script src="{{ url_for('static', filename='companies/js/company_settings.js') }}" defer></script>
+<script src="{{ url_for('static', filename='companies/js/company_settings.js') }}" defer></script>
 {% endblock %}

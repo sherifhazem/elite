@@ -1,14 +1,6 @@
-"""Company model representing a business collaborating with ELITE.
+"""Company model representing a business collaborating with ELITE."""
 
-Key fields:
-- ``name``: Company name.
-- ``status``: Moderation state such as ``pending``.
-- ``notification_preferences``: Mutable JSON storing contact preferences.
-
-Relationships:
-- ``owner``: The primary user who owns the company account.
-- ``redemptions``: Offer redemptions associated with the company.
-"""
+from __future__ import annotations
 
 from datetime import datetime
 
@@ -57,12 +49,7 @@ class Company(db.Model):
         uselist=False,
     )
 
-    redemptions = db.relationship(
-        "Redemption",
-        back_populates="company",
-        lazy="dynamic",
-        cascade="all, delete-orphan",
-    )
+
 
     # Convenience properties pulled from notification preferences/owner
     @property
@@ -98,6 +85,17 @@ class Company(db.Model):
     def industry(self, value: str | None) -> None:
         prefs = _safe_preferences(self)
         prefs["industry"] = value or None
+
+    @property
+    def industry_icon(self) -> str | None:
+        """Return the icon filename associated with the company's industry."""
+        if not self.industry:
+            return None
+        from app.models.lookup_choice import LookupChoice
+        choice = LookupChoice.query.filter_by(
+            list_type="industries", name=self.industry, active=True
+        ).first()
+        return choice.icon if choice else None
 
     @property
     def website_url(self) -> str | None:

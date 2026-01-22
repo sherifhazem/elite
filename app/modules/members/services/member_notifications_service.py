@@ -279,53 +279,8 @@ def _company_recipient_ids(company_id: int) -> List[int]:
     return recipients
 
 
-def notify_offer_redemption_activity(
-    *,
-    redemption,
-    event: str = "activated",
-    timestamp: Optional[datetime] = None,
-) -> None:
-    """Send offer redemption notifications to both the member and company."""
 
-    if redemption is None:
-        return
 
-    resolved_timestamp = timestamp or redemption.redeemed_at or redemption.created_at
-    metadata = {
-        "offer_id": redemption.offer_id,
-        "company_id": redemption.company_id,
-        "user_id": redemption.user_id,
-        "redemption_code": redemption.redemption_code,
-        "event": event,
-        "redeemed_at": resolved_timestamp.isoformat() if resolved_timestamp else None,
-    }
-
-    try:
-        queue_notification(
-            redemption.user_id,
-            type="offer_redeemed",
-            title="تم تفعيل العرض",
-            message=f"تم إنشاء رمز {redemption.redemption_code} لعرضك.",
-            link_url=url_for("portal.member_portal_profile"),
-            metadata=metadata,
-        )
-    except Exception:  # pragma: no cover - defensive notification guard
-        pass
-
-    for recipient_id in _company_recipient_ids(redemption.company_id):
-        try:
-            queue_notification(
-                recipient_id,
-                type="offer_redeemed",
-                title="تم إنشاء تفعيل جديد",
-                message=(
-                    f"العضو #{redemption.user_id} أنشأ كود {redemption.redemption_code} للعرض"
-                ),
-                link_url=url_for("company_portal.company_redemptions_history"),
-                metadata=metadata,
-            )
-        except Exception:  # pragma: no cover - defensive notification guard
-            continue
 
 
 def notify_offer_feedback(
@@ -578,7 +533,7 @@ __all__ = [
     "send_welcome_notification",
     "ensure_welcome_notification",
     "notify_membership_upgrade",
-    "notify_offer_redemption_activity",
+
     "notify_offer_feedback",
     "fetch_offer_feedback_counts",
     "create_notification_task",

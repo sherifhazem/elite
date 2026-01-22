@@ -32,7 +32,7 @@ function showToast(message, variant = 'primary') {
 
 async function deleteOffer(offerId) {
     if (!offerId) return;
-    if (!confirm('Are you sure you want to delete this offer? This cannot be undone.')) return;
+    if (!confirm('هل أنت متأكد من رغبتك في حذف هذا العرض؟ لا يمكن التراجع عن هذا الإجراء.')) return;
 
     try {
         const response = await fetch(OFFER_ENDPOINTS.delete(offerId), {
@@ -42,14 +42,14 @@ async function deleteOffer(offerId) {
         const data = await response.json();
 
         if (!response.ok || !data.ok) {
-            throw new Error(data.message || 'Unable to delete offer.');
+            throw new Error(data.message || 'تعذر حذف العرض.');
         }
 
-        showToast('Offer deleted.', 'success');
+        showToast('تم حذف العرض بنجاح.', 'success');
         setTimeout(() => window.location.reload(), 300);
     } catch (error) {
         console.error('Offer deletion failed', error);
-        showToast(error.message || 'Unable to delete offer.', 'danger');
+        showToast(error.message || 'تعذر حذف العرض.', 'danger');
     }
 }
 
@@ -57,12 +57,12 @@ async function updateOfferStatus(offerId, status) {
     if (!offerId) return;
 
     const statusMessages = {
-        paused: 'pause this offer',
-        archived: 'archive this offer',
-        active: 'activate this offer',
+        paused: 'إيقاف هذا العرض مؤقتاً',
+        archived: 'أرشفة هذا العرض',
+        active: 'تفعيل هذا العرض',
     };
-    const confirmationLabel = statusMessages[status] || 'update this offer';
-    if (!confirm(`Are you sure you want to ${confirmationLabel}?`)) return;
+    const confirmationLabel = statusMessages[status] || 'تحديث هذا العرض';
+    if (!confirm(`هل أنت متأكد من رغبتك في ${confirmationLabel}؟`)) return;
 
     const payload = { status };
     if (status === 'paused') {
@@ -79,19 +79,19 @@ async function updateOfferStatus(offerId, status) {
         const data = await response.json();
 
         if (!response.ok || !data.ok) {
-            throw new Error(data.message || 'Unable to update offer.');
+            throw new Error(data.message || 'تعذر تحديث العرض.');
         }
 
         const successMessages = {
-            paused: 'Offer paused.',
-            archived: 'Offer archived.',
-            active: 'Offer activated.',
+            paused: 'تم إيقاف العرض مؤقتاً.',
+            archived: 'تم أرشفة العرض.',
+            active: 'تم تفعيل العرض.',
         };
-        showToast(successMessages[status] || 'Offer updated.', 'success');
+        showToast(successMessages[status] || 'تم تحديث العرض.', 'success');
         setTimeout(() => window.location.reload(), 350);
     } catch (error) {
         console.error('Offer status update failed', error);
-        showToast(error.message || 'Unable to update offer.', 'danger');
+        showToast(error.message || 'تعذر تحديث العرض.', 'danger');
     }
 }
 

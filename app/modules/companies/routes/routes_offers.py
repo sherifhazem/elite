@@ -25,11 +25,11 @@ from app.utils.company_context import _current_company
 
 ALLOWED_OFFER_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "svg"}
 CLASSIFICATION_LABELS = {
-    "first_time_offer": "First-time offer",
-    "loyalty_offer": "Loyalty offer",
-    "active_members_only": "Active members only",
-    "happy_hour": "Happy hour",
-    "mid_week": "Mid-week",
+    "first_time_offer": "عرض للمرة الأولى",
+    "loyalty_offer": "عرض ولاء",
+    "active_members_only": "للأعضاء النشطين فقط",
+    "happy_hour": "ساعة السعادة",
+    "mid_week": "منتصف الأسبوع",
 }
 
 
@@ -102,22 +102,22 @@ def _parse_offer_payload(
     image_url = (data.get("image_url") or getattr(existing_offer, "image_url", "") or "").strip()
 
     if status not in {"active", "paused", "archived"}:
-        return {}, "Status must be one of: active, paused, archived."
+        return {}, "يجب أن تكون الحالة واحدة من: active, paused, archived."
 
     if not title:
-        return {}, "Title is required."
+        return {}, "العنوان مطلوب."
 
     try:
         base_discount = float(base_discount_raw)
     except ValueError:
-        return {}, "Base discount must be numeric."
+        return {}, "يجب أن يكون الخصم الأساسي رقماً."
 
     start_date = None
     if start_date_raw:
         try:
             start_date = datetime.strptime(start_date_raw, "%Y-%m-%d")
         except ValueError:
-            return {}, "Start date must follow YYYY-MM-DD format."
+            return {}, "يجب أن يتبع تاريخ البدء تنسيق YYYY-MM-DD."
     elif existing_offer is not None:
         start_date = existing_offer.start_date
 
@@ -126,12 +126,12 @@ def _parse_offer_payload(
         try:
             valid_until = datetime.strptime(valid_until_raw, "%Y-%m-%d")
         except ValueError:
-            return {}, "Valid until must follow YYYY-MM-DD format."
+            return {}, "يجب أن يتبع تاريخ الانتهاء تنسيق YYYY-MM-DD."
     elif existing_offer is not None:
         valid_until = existing_offer.valid_until
 
     if start_date and valid_until and start_date > valid_until:
-        return {}, "Start date cannot be later than the end date."
+        return {}, "لا يمكن أن يكون تاريخ البدء متأخراً عن تاريخ الانتهاء."
 
     has_classifications = "classifications" in data
     raw_classifications = data.get("classifications", [])
@@ -142,7 +142,7 @@ def _parse_offer_payload(
     classifications = [value.strip() for value in raw_classifications if str(value).strip()]
     invalid_classifications = [c for c in classifications if c not in OFFER_CLASSIFICATION_TYPES]
     if invalid_classifications:
-        return {}, "One or more classifications are not supported."
+        return {}, "واحد أو أكثر من التصنيفات غير مدعومة."
 
     if allowed_classifications is not None:
         disabled_selected = [
@@ -153,7 +153,7 @@ def _parse_offer_payload(
         if disabled_selected:
             readable = [CLASSIFICATION_LABELS.get(value, value) for value in disabled_selected]
             return {}, (
-                "The following classifications are disabled by Admin Settings: "
+                "التصنيفات التالية معطلة في إعدادات المسؤول: "
                 + ", ".join(readable)
                 + "."
             )
@@ -195,11 +195,11 @@ def _handle_offer_image_upload(offer: Offer) -> str:
     filename = secure_filename(upload.filename)
     extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if extension not in ALLOWED_OFFER_IMAGE_EXTENSIONS:
-        raise ValueError("Unsupported file type. Please upload PNG, JPG, or WEBP.")
+        raise ValueError("نوع ملف غير مدعوم. يرجى رفع ملف بصيغة PNG أو JPG أو WEBP.")
 
     max_bytes = 4 * 1024 * 1024
     if upload.content_length and upload.content_length > max_bytes:
-        raise ValueError("File exceeds the 4MB size limit.")
+        raise ValueError("حجم الملف يتجاوز الحد المسموح به (4 ميجابايت).")
 
     target_dir = os.path.join(
         current_app.root_path,
@@ -257,7 +257,7 @@ def offer_new() -> str:
         company=company,
         offer=None,
         action_url=url_for("company_portal.offer_create"),
-        page_title="Create Offer",
+        page_title="إضافة عرض جديد",
         classification_choices=CLASSIFICATION_LABELS,
         classification_availability=offer_type_availability,
     )
@@ -331,7 +331,7 @@ def offer_create():
 
     if request.is_json:
         return jsonify({"ok": True, "offer_id": offer.id})
-    flash("Offer created successfully.", "success")
+    flash("تم إنشاء العرض بنجاح.", "success")
     return redirect(url_for("company_portal.company_offers_list"))
 
 
@@ -354,7 +354,7 @@ def offer_edit(offer_id: int) -> str:
         company=company,
         offer=offer,
         action_url=url_for("company_portal.offer_update", offer_id=offer_id),
-        page_title="Edit Offer",
+        page_title="تعديل العرض",
         classification_choices=CLASSIFICATION_LABELS,
         classification_availability=offer_type_availability,
     )
@@ -431,7 +431,7 @@ def offer_update(offer_id: int):
 
     if request.is_json:
         return jsonify({"ok": True, "offer_id": offer.id})
-    flash("Offer updated successfully.", "success")
+    flash("تم تحديث العرض بنجاح.", "success")
     return redirect(url_for("company_portal.company_offers_list"))
 
 
@@ -451,5 +451,5 @@ def offer_delete(offer_id: int):
 
     if request.is_json:
         return jsonify({"ok": True})
-    flash("Offer removed successfully.", "success")
+    flash("تم حذف العرض بنجاح.", "success")
     return redirect(url_for("company_portal.company_offers_list"))

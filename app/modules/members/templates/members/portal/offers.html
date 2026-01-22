@@ -60,8 +60,19 @@
             data-offer-eligibility-reason="{{ eligibility_reason }}">
             <header class="offer-card__header">
                 <div class="offer-card__title-group">
-                    <h2 class="offer-card__title">{{ offer.title }}</h2>
-                    <p class="offer-card__company">{{ offer.company.name }}</p>
+                    <h2 class="offer-card__title">
+                        {% set industry_icon = offer.company.industry_icon or 'fix.png' %}
+                        <img src="{{ url_for('static', filename='shared/icons/' + industry_icon) }}" alt=""
+                            class="offer-card__industry-icon" aria-hidden="true" onerror="this.style.display='none'">
+                        {{ offer.title }}
+                    </h2>
+                    <div class="offer-card__company-wrapper">
+                        {% if offer.company.logo_url %}
+                        <img src="{{ offer.company.logo_url }}" alt="{{ offer.company.name }} logo"
+                            class="offer-card__company-logo">
+                        {% endif %}
+                        <p class="offer-card__company">{{ offer.company.name }}</p>
+                    </div>
                     {% if offer.category is defined and offer.category %}
                     <p class="offer-card__category">
                         {{ offer.category.name if offer.category.name is defined else offer.category }}
@@ -80,10 +91,7 @@
                 </span>
                 <div class="offer-card__buttons">
                     <button class="offer-card__action" type="button" data-offer-action>View Offer</button>
-                    <button class="offer-card__action offer-card__action--primary" type="button" data-offer-activate{%
-                        if not is_eligible %} disabled aria-disabled="true" {% endif %}>
-                        تفعيل العرض
-                    </button>
+
                 </div>
             </footer>
             {% if not is_eligible and eligibility_label %}

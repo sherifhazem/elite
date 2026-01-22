@@ -145,11 +145,11 @@ body {
    Shared Components
    ========================= */
 h1,
- h2,
- h3,
- h4,
- h5,
- h6 {
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: "Poppins", sans-serif;
     margin: 0;
     color: inherit;
@@ -606,6 +606,33 @@ textarea {
     font-size: 1rem;
     font-weight: 700;
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.offer-chip__industry-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.offer-chip__company-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.offer-chip__company-logo {
+    display: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    object-fit: contain;
+    background: #fff;
+    border: 1px solid rgba(17, 17, 17, 0.05);
+    flex-shrink: 0;
 }
 
 .offer-chip__company {
@@ -769,10 +796,38 @@ textarea {
     font-size: 1rem;
     font-weight: 600;
     font-family: "Tajawal", sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.offer-card__industry-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.offer-card__company-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0 0;
+}
+
+.offer-card__company-logo {
+    display: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    object-fit: contain;
+    background: #fff;
+    border: 1px solid rgba(17, 17, 17, 0.05);
+    flex-shrink: 0;
 }
 
 .offer-card__company {
-    margin: 4px 0 0;
+    margin: 0;
     color: var(--portal-muted);
     font-size: 0.84rem;
     font-weight: 400;
@@ -952,6 +1007,16 @@ textarea {
     margin: 0;
     font-size: 1rem;
     font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.activation-card__industry-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    flex-shrink: 0;
 }
 
 .activation-card__status {
@@ -959,6 +1024,31 @@ textarea {
     padding: 6px 12px;
     font-size: 0.78rem;
     font-weight: 600;
+}
+
+.activation-card__company-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0;
+}
+
+.activation-card__company-logo {
+    display: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    object-fit: contain;
+    background: #fff;
+    border: 1px solid rgba(17, 17, 17, 0.05);
+    flex-shrink: 0;
+}
+
+.activation-card__meta {
+    font-size: 0.84rem;
+    color: var(--portal-muted);
+    font-weight: 400;
+    margin: 0;
 }
 
 .activation-card__status--pending {
@@ -1126,6 +1216,7 @@ textarea {
         transform: translate(-50%, -10px);
         opacity: 0;
     }
+
     to {
         transform: translate(-50%, 0);
         opacity: 1;
@@ -1137,6 +1228,7 @@ textarea {
         transform: translateY(20px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
