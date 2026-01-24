@@ -193,6 +193,17 @@ def verify_usage_code(
             # 5. التحقق من أهلية العضو (Eligibility)
             eligibility = evaluate_offer_eligibility(member_id, offer_id)
             if not eligibility["eligible"]:
+                reason_code = eligibility.get("reason", "unknown")
+                
+                # Eligibility failure messages (Arabic)
+                messages = {
+                    "already_claimed": "عذراً، هذا العرض مخصص للاستخدام مرة واحدة فقط.",
+                    "loyalty_requirement_not_met": "عذراً، هذا العرض مخصص لعملاء الولاء (يتطلب استخدامين سابقين).",
+                    "inactive_member": "عذراً، هذا العرض مخصص للأعضاء النشطين فقط.",
+                    "disabled_offer": "هذا العرض غير متاح حالياً.",
+                    "inactive_partner": "الشريك غير نشط حالياً."
+                }
+                
                 log_usage_attempt(
                     member_id=member_id,
                     partner_id=partner_id,
@@ -203,7 +214,7 @@ def verify_usage_code(
                 return {
                     "ok": False,
                     "result": "not_eligible",
-                    "message": eligibility.get("reason", "أنت غير مؤهل لهذا العرض.")
+                    "message": messages.get(reason_code, "أنت غير مؤهل لهذا العرض.")
                 }
 
             # 6. التحقق من حدود الاستخدام (بدون with_for_update لتجنب خطأ Aggregate functions)

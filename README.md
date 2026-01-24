@@ -227,6 +227,11 @@ Flash messages in Auth UI are custom-styled to match the Dark Design System rath
 ### Offer lifecycle
 - Partners create, edit, and delete offers through the company portal.
 - Offers include base discount, availability dates, status, and classifications.
+- **Offer Types Logic:**
+  - **First-Time Offer**: Visible to all. One-time use per *specific offer* for each member.
+  - **Loyalty Offer**: Visible only after 2 successful usages with the same partner.
+  - **Active Members Only / Happy Hour**: Visible only to members meeting admin-defined activity thresholds.
+  - **Midweek / Default**: Visible to all members without restrictions.
 - Members browse offers via the portal and offers API.
 - Admins manage offers globally through the admin dashboard.
 

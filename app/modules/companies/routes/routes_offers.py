@@ -27,7 +27,7 @@ ALLOWED_OFFER_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "svg"}
 CLASSIFICATION_LABELS = {
     "first_time_offer": "عرض للمرة الأولى",
     "loyalty_offer": "عرض ولاء",
-    "active_members_only": "لكل الاعضاء",
+    "active_members_only": "للاعضاء النشطين فقط",
     "happy_hour": "ساعة السعادة",
     "mid_week": "منتصف الأسبوع",
 }
