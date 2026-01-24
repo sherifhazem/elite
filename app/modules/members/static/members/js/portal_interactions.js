@@ -231,32 +231,49 @@
             track.dataset.hydrated = "true";
             track.innerHTML = "";
             offers.slice(0, 6).forEach((offer) => {
-                const chip = document.createElement("article");
-                chip.className = "offer-chip";
-                chip.dataset.offerId = offer.id;
-                chip.dataset.offerTitle = offer.title;
-                chip.dataset.offerCompany = offer.company || (offer.company_id ? `شريك رقم ${offer.company_id}` : "شريك ELITE");
-                chip.dataset.offerCompanyId = offer.company_id || "";
-                chip.dataset.offerCompanySummary = offer.company_summary || "";
-                chip.dataset.offerCompanyDescription = offer.company_description || "";
-                chip.dataset.offerDescription = offer.description || "";
-                chip.dataset.offerDiscount = Math.round(offer.discount_percent || offer.base_discount || 0);
-                chip.dataset.offerValid = offer.valid_until ? offer.valid_until.split("T")[0] : "مستمر";
+                const card = document.createElement("article");
+                card.className = "offer-card";
+                card.dataset.offerId = offer.id;
+                card.dataset.offerTitle = offer.title;
+                card.dataset.offerCompany = offer.company || (offer.company_id ? `شريك رقم ${offer.company_id}` : "شريك ELITE");
+                card.dataset.offerCompanyId = offer.company_id || "";
+                card.dataset.offerCompanySummary = offer.company_summary || "";
+                card.dataset.offerCompanyDescription = offer.company_description || "";
+                card.dataset.offerDescription = offer.description || "";
+                card.dataset.offerDiscount = Math.round(offer.discount_percent || offer.base_discount || 0);
+                card.dataset.offerValid = offer.valid_until ? offer.valid_until.split("T")[0] : "مستمر";
                 const industryIcon = offer.industry_icon || 'fix.png';
-                chip.innerHTML = `
-                    <h3 class="offer-chip__title">
-                        <img src="/static/shared/icons/${industryIcon}" alt=""
-                             class="offer-chip__industry-icon" aria-hidden="true"
-                             onerror="this.style.display='none'">
-                        ${offer.title}
-                    </h3>
-                    <div class="offer-chip__company-wrapper">
-                        <p class="offer-chip__company">${chip.dataset.offerCompany}</p>
+
+                // Match the structure of offer_card_macro.html
+                card.innerHTML = `
+                    <div class="offer-card__header">
+                         <div class="offer-tags">
+                            <!-- Spacer or dynamic tags could go here if available in API response -->
+                            <div></div>
+                         </div>
+                        <div class="offer-card__icon-frame">
+                            <img src="/static/shared/icons/${industryIcon}" alt=""
+                                class="offer-card__industry-icon" aria-hidden="true"
+                                onerror="this.style.display='none'">
+                        </div>
                     </div>
-                    <span class="offer-chip__discount">${chip.dataset.offerDiscount}%</span>
+
+                    <h3 class="offer-card__title">${offer.title}</h3>
+                    
+                    <div class="offer-card__discount-wrapper">
+                        <span class="offer-card__discount">${card.dataset.offerDiscount}%</span>
+                        <span class="offer-card__discount-label">خصم</span>
+                    </div>
+
+                    <div class="offer-card__company-wrapper">
+                         <div class="offer-card__company-logo-placeholder">
+                            ${card.dataset.offerCompany.charAt(0)}
+                        </div>
+                        <p class="offer-card__company">${card.dataset.offerCompany}</p>
+                    </div>
                 `;
-                chip.addEventListener("click", () => openOfferModal(chip));
-                track.appendChild(chip);
+                card.addEventListener("click", () => openOfferModal(card));
+                track.appendChild(card);
             });
         } catch (error) {
             console.error("Failed to hydrate featured carousel", error);
@@ -601,13 +618,11 @@
             button.dataset.enhanced = "true";
             button.addEventListener("click", (event) => {
                 event.stopPropagation();
-                const card = button.closest(".offer-card") || button.closest(".offer-chip");
+                const card = button.closest(".offer-card");
                 openOfferModal(card);
             });
         });
-        viewContainer.querySelectorAll(".offer-chip").forEach((chip) => {
-            chip.addEventListener("click", () => openOfferModal(chip));
-        });
+
         viewContainer.querySelectorAll("[data-offer-company]").forEach((button) => {
             if (button.dataset.enhanced === "true") {
                 return;

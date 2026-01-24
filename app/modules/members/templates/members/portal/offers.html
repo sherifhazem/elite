@@ -1,7 +1,9 @@
 <!-- LINKED: Shared Offers & Redemptions Integration (no schema changes) -->
 <!-- FIXED: Mobile-First User Portal Design (Member-Only) -->
+<!-- UI SYNC: Offer design unified across Home and Offers views -->
 {% extends 'members/portal/base.html' %}
 {% block title %}العروض · ELITE{% endblock %}
+{% from 'members/portal/components/offer_card_macro.html' import render_offer_card %}
 {% block page_heading %}العروض{% endblock %}
 {% block content %}
 <section class="offers-header">
@@ -36,77 +38,9 @@
 <section class="offers-body">
     {% if offers %}
     <div class="offers-grid" role="list">
-        {% set eligibility_labels = {
-        'inactive_member': 'العضوية غير نشطة حالياً. يرجى التواصل مع الدعم.',
-        'inactive_partner': 'الشريك غير نشط حالياً. يرجى المحاولة لاحقاً.',
-        'disabled_offer': 'تم إيقاف هذا العرض مؤقتاً.'
-        } %}
         {% for offer in offers %}
         {% set runtime = offer_runtime_flags.get(offer.id, {}) %}
-        {% set is_visible = runtime.get('is_visible', True) %}
-        {% if is_visible %}
-        {% set is_eligible = runtime.get('is_eligible', True) %}
-        {% set eligibility_reason = runtime.get('reason', '') %}
-        {% set eligibility_label = eligibility_labels.get(eligibility_reason, '') %}
-        {% set discount_value = '%.0f'|format(offer.membership_discount) %}
-        <article class="offer-card" role="listitem" tabindex="0" data-offer-id="{{ offer.id }}"
-            data-offer-title="{{ offer.title }}" data-offer-company="{{ offer.company.name }}"
-            data-offer-company-id="{{ offer.company.id }}" data-offer-company-summary="{{ offer.company.summary|e }}"
-            data-offer-company-description="{{ (offer.company.description or '')|e }}"
-            data-offer-description="{{ (offer.description or '')|e }}" data-offer-discount="{{ discount_value }}"
-            data-offer-base="{{ '%.0f'|format(offer.base_discount) }}"
-            data-offer-valid="{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'مستمر' }}"
-            data-offer-eligible="{{ 'true' if is_eligible else 'false' }}"
-            data-offer-eligibility-reason="{{ eligibility_reason }}">
-            <header class="offer-card__header">
-                <div class="offer-card__title-group">
-                    <h2 class="offer-card__title">
-                        {% set industry_icon = offer.company.industry_icon or 'fix.png' %}
-                        <img src="{{ url_for('static', filename='shared/icons/' + industry_icon) }}" alt=""
-                            class="offer-card__industry-icon" aria-hidden="true" onerror="this.style.display='none'">
-                        {{ offer.title }}
-                    </h2>
-                    <div class="offer-card__company-wrapper">
-                        {% if offer.company.logo_url %}
-                        <img src="{{ offer.company.logo_url }}" alt="{{ offer.company.name }} logo"
-                            class="offer-card__company-logo">
-                        {% endif %}
-                        <p class="offer-card__company">{{ offer.company.name }}</p>
-                    </div>
-                    {% if offer.category is defined and offer.category %}
-                    <p class="offer-card__category">
-                        {{ offer.category.name if offer.category.name is defined else offer.category }}
-                    </p>
-                    {% endif %}
-                </div>
-                <span class="offer-card__discount">{{ discount_value }}%</span>
-            </header>
-            <footer class="offer-card__footer">
-                <span class="offer-card__validity">
-                    {% if offer.valid_until %}
-                    صالح حتى {{ offer.valid_until.strftime('%d %B %Y') }}
-                    {% else %}
-                    عرض مستمر
-                    {% endif %}
-                </span>
-                <div class="offer-card__buttons">
-                    <button class="offer-card__action" type="button" data-offer-action>View Offer</button>
-
-                </div>
-            </footer>
-            {% if not is_eligible and eligibility_label %}
-            <p class="offer-card__eligibility">{{ eligibility_label }}</p>
-            {% endif %}
-            <div class="offer-card__meta-actions">
-                <button class="offer-card__meta-button" type="button" data-offer-company>
-                    عن الشركة
-                </button>
-                <button class="offer-card__meta-button" type="button" data-offer-feedback data-feedback-action="like">
-                    أعجبني العرض
-                </button>
-            </div>
-        </article>
-        {% endif %}
+        {{ render_offer_card(offer, show_runtime_status=True, runtime_flags=runtime) }}
         {% endfor %}
     </div>
     {% else %}

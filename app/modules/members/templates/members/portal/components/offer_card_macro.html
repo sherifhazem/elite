@@ -1,0 +1,80 @@
+{% macro render_offer_card(offer, show_runtime_status=False, runtime_flags=None) %}
+{% set discount_value = '%.0f'|format(offer.base_discount if offer.base_discount is defined else
+offer.membership_discount) %}
+{% set is_eligible = True %}
+{% set eligibility_label = '' %}
+
+{% if show_runtime_status and runtime_flags %}
+{% set is_visible = runtime_flags.get('is_visible', True) %}
+{% set is_eligible = runtime_flags.get('is_eligible', True) %}
+{% set eligibility_reason = runtime_flags.get('reason', '') %}
+{% set eligibility_labels = {
+'inactive_member': 'العضوية غير نشطة حالياً. يرجى التواصل مع الدعم.',
+'inactive_partner': 'الشريك غير نشط حالياً. يرجى المحاولة لاحقاً.',
+'disabled_offer': 'تم إيقاف هذا العرض مؤقتاً.'
+} %}
+{% set eligibility_label = eligibility_labels.get(eligibility_reason, '') %}
+{% endif %}
+
+<article class="offer-card" role="listitem" tabindex="0" data-offer-id="{{ offer.id }}"
+    data-offer-title="{{ offer.title }}"
+    data-offer-company="{{ offer.company.name if offer.company else 'شريك ELITE' }}"
+    data-offer-discount="{{ discount_value }}"
+    data-offer-valid="{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'مستمر' }}"
+    data-offer-eligible="{{ 'true' if is_eligible else 'false' }}">
+
+    <div class="offer-card__header">
+        {% if offer.classification_values %}
+        <div class="offer-tags">
+            {% set tag_details = {
+            'first_time_offer': {'label': 'استخدام أول مرة'},
+            'loyalty_offer': {'label': 'عرض الولاء'},
+            'mid_week': {'label': 'وسط الأسبوع'},
+            'happy_hour': {'label': 'ساعة السعادة'},
+            'active_members_only': {'label': 'للأعضاء النشطين'}
+            } %}
+            {% set type_key = offer.classification_values[0] %}
+            {% if type_key in tag_details %}
+            <span class="offer-tag offer-tag--{{ type_key }}">
+                {{ tag_details[type_key].label }}
+            </span>
+            {% endif %}
+        </div>
+        {% else %}
+        <!-- Spacer if no tags, to keep icon on right -->
+        <div></div>
+        {% endif %}
+
+        <div class="offer-card__icon-frame">
+            {% set industry_icon = offer.company.industry_icon or 'fix.png' %}
+            <img src="{{ url_for('static', filename='shared/icons/' + industry_icon) }}" alt=""
+                class="offer-card__industry-icon" aria-hidden="true" onerror="this.style.display='none'">
+        </div>
+    </div>
+
+    <h3 class="offer-card__title">{{ offer.title }}</h3>
+
+    <div class="offer-card__discount-wrapper">
+        <span class="offer-card__discount">{{ discount_value }}%</span>
+        <span class="offer-card__discount-label">خصم</span>
+    </div>
+
+    <div class="offer-card__company-wrapper">
+        {% if offer.company and offer.company.logo_url %}
+        <img src="{{ offer.company.logo_url }}" alt="{{ offer.company.name }} logo" class="offer-card__company-logo">
+        {% else %}
+        <div class="offer-card__company-logo-placeholder">
+            {{ offer.company.name[0] if offer.company and offer.company.name else 'E' }}
+        </div>
+        {% endif %}
+        <p class="offer-card__company">{{ offer.company.name if offer.company and offer.company.name else 'عرض حصري' }}
+        </p>
+    </div>
+
+    {% if show_runtime_status and not is_eligible and eligibility_label %}
+    <div class="offer-card__overlay">
+        <p class="offer-card__eligibility">{{ eligibility_label }}</p>
+    </div>
+    {% endif %}
+</article>
+{% endmacro %}
