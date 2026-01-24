@@ -248,8 +248,17 @@
                 card.innerHTML = `
                     <div class="offer-card__header">
                          <div class="offer-tags">
-                            <!-- Spacer or dynamic tags could go here if available in API response -->
-                            <div></div>
+                            ${(offer.classification_values && offer.classification_values.length > 0) ? (function () {
+                        const type = offer.classification_values[0];
+                        const labels = {
+                            'first_time_offer': 'اول مره',
+                            'loyalty_offer': 'عرض الولاء',
+                            'mid_week': 'منتصف الاسبوع',
+                            'happy_hour': 'ساعة السعادة',
+                            'active_members_only': 'للأعضاء النشطين'
+                        };
+                        return `<span class="offer-tag offer-tag--${type}">${labels[type] || type}</span>`;
+                    })() : '<div></div>'}
                          </div>
                         <div class="offer-card__icon-frame">
                             <img src="/static/shared/icons/${industryIcon}" alt=""

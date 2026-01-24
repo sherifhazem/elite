@@ -22,6 +22,7 @@ class OfferCompanyBundle:
     valid_until: Optional[object]
     membership_discount: float
     company: Dict[str, object]
+    classification_values: List[str]
 
 
 def _summarize_company(company: Optional[Company], *, length: int = 140) -> str:
@@ -45,7 +46,7 @@ def get_portal_offers_with_company(limit: Optional[int] = None, featured: bool =
         for row in LookupChoice.query.filter_by(list_type="industries").all()
     }
 
-    query = Offer.query.options(joinedload(Offer.company)).filter(Offer.status == "active")
+    query = Offer.query.options(joinedload(Offer.company), joinedload(Offer.classifications)).filter(Offer.status == "active")
     
     if featured:
         query = query.order_by(Offer.created_at.desc())
@@ -79,6 +80,7 @@ def get_portal_offers_with_company(limit: Optional[int] = None, featured: bool =
                 "industry": industry_name,
                 "industry_icon": industry_icon,
             },
+            classification_values=offer.classification_values,
         )
         results.append(bundle)
     return results

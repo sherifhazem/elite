@@ -630,41 +630,35 @@ textarea {
 }
 
 .offer-tags {
+    position: absolute;
+    top: 13px;
+    left: 10px;
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
+    z-index: 5;
 }
 
 .offer-tag {
-    padding: 2px 8px;
-    border-radius: 6px;
+    padding: 3px 10px;
+    border-radius: 8px;
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 800;
+    color: var(--gold);
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
+    border: 1px solid var(--gold);
+    white-space: nowrap;
+    line-height: 1;
 }
 
-.offer-tag--first_time_offer {
-    background: #E0F2FE;
-    color: #0369A1;
-}
-
-.offer-tag--loyalty_offer {
-    background: #FEF3C7;
-    color: #92400E;
-}
-
-.offer-tag--mid_week {
-    background: #F3E8FF;
-    color: #6B21A8;
-}
-
-.offer-tag--happy_hour {
-    background: #FFEDD5;
-    color: #9A3412;
-}
-
+.offer-tag--first_time_offer,
+.offer-tag--loyalty_offer,
+.offer-tag--mid_week,
+.offer-tag--happy_hour,
 .offer-tag--active_members_only {
-    background: #DCFCE7;
-    color: #166534;
+    /* Unified gold theme requested */
+    color: var(--gold);
+    border-color: var(--gold);
 }
 
 .offer-card__title {

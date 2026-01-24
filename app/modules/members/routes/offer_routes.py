@@ -34,6 +34,7 @@ def _serialize_offer(offer: Offer, membership_level: str) -> dict:
         "company_summary": (offer.company.description or "")[:140] if offer.company else "",
         "company_description": (offer.company.description or "") if offer.company else "",
         "industry_icon": offer.company.industry_icon if offer.company else None,
+        "classification_values": offer.classification_values,
         "created_at": offer.created_at.isoformat() if offer.created_at else None,
     }
 
