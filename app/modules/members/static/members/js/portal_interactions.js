@@ -1074,6 +1074,111 @@
         });
     }
 
+    function bindOffersFilter() {
+        if (!viewContainer) {
+            return;
+        }
+        const searchInput = viewContainer.querySelector("#offers-search-input");
+        const filterTrigger = viewContainer.querySelector("[data-filter-trigger]");
+        const cards = viewContainer.querySelectorAll(".offers-grid .offer-card");
+
+        let selectedCategories = [];
+
+        function applyFilters() {
+            const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+            cards.forEach((card) => {
+                const title = (card.dataset.offerTitle || "").toLowerCase();
+                const company = (card.dataset.companyName || "").toLowerCase();
+                const cardCategory = card.dataset.category || "";
+
+                const matchesSearch = !query || title.includes(query) || company.includes(query);
+                const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(cardCategory);
+
+                if (matchesSearch && matchesCategory) {
+                    card.style.display = "";
+                    card.style.animation = "fade-in 0.3s ease-out forwards";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+
+            // Handle empty state
+            const grid = viewContainer.querySelector(".offers-grid");
+            const emptyState = viewContainer.querySelector(".empty-state") || (function () {
+                if (!grid) return null;
+                const es = document.createElement("div");
+                es.className = "empty-state";
+                es.innerHTML = "<p>لا توجد نتائج تطابق بحثك.</p>";
+                es.style.display = "none";
+                grid.parentNode.insertBefore(es, grid.nextSibling);
+                return es;
+            })();
+
+            const visibleCards = Array.from(cards).filter((c) => c.style.display !== "none");
+
+            if (visibleCards.length === 0) {
+                if (grid) grid.style.display = "none";
+                if (emptyState) emptyState.style.display = "block";
+            } else {
+                if (grid) grid.style.display = "grid";
+                if (emptyState) emptyState.style.display = "none";
+            }
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener("input", applyFilters);
+        }
+
+        if (filterTrigger) {
+            filterTrigger.addEventListener("click", () => {
+                if (!modal || !modalBody || !modalTitle) return;
+
+                const categories = JSON.parse(filterTrigger.dataset.categories || "[]");
+                modalTitle.textContent = "تصفية العروض";
+
+                let html = '<div class="filter-category-list">';
+                categories.forEach(cat => {
+                    const isChecked = selectedCategories.includes(cat);
+                    html += `
+                        <div class="filter-category-item" data-category-row>
+                            <label for="cat-${cat}">${cat}</label>
+                            <input type="checkbox" id="cat-${cat}" value="${cat}" ${isChecked ? 'checked' : ''} data-filter-checkbox>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                html += `
+                    <div class="filter-modal-actions">
+                        <button class="cta-button" type="button" data-apply-filter>تم</button>
+                    </div>
+                `;
+
+                modalBody.innerHTML = html;
+
+                // Event delegation for row clicks
+                modalBody.querySelectorAll("[data-category-row]").forEach(row => {
+                    row.addEventListener("click", (e) => {
+                        if (e.target.tagName !== 'INPUT') {
+                            const cb = row.querySelector('input');
+                            cb.checked = !cb.checked;
+                        }
+                    });
+                });
+
+                modalBody.querySelector("[data-apply-filter]").addEventListener("click", () => {
+                    selectedCategories = Array.from(modalBody.querySelectorAll("[data-filter-checkbox]:checked"))
+                        .map(cb => cb.value);
+                    applyFilters();
+                    closeModal();
+                });
+
+                modal.removeAttribute("hidden");
+                document.body.style.overflow = "hidden";
+            });
+        }
+    }
+
     /** Attach listeners for inline navigation links. */
     function bindInlineNavigation() {
         viewContainer.querySelectorAll("[data-nav-link]").forEach((link) => {
@@ -1088,6 +1193,7 @@
         bindActivationButtons();
         bindProfileActions();
         bindNotificationActions();
+        bindOffersFilter();
         hydrateFeaturedCarousel();
     }
 

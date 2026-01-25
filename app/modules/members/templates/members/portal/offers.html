@@ -7,33 +7,28 @@
 {% block page_heading %}العروض{% endblock %}
 {% block content %}
 <section class="offers-header">
-    <h1 class="offers-header__title">العروض</h1>
     <div class="home-search offers-search" role="search">
         <label class="visually-hidden" for="offers-search-input">البحث</label>
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
         <input class="home-search__input" id="offers-search-input" type="search" name="q"
             placeholder="ابحث باسم الشريك أو التصنيف" autocomplete="off" />
     </div>
     {% if offers %}
     {% set ns = namespace(categories=[]) %}
     {% for offer in offers %}
-    {% if offer.category is defined and offer.category %}
-    {% set category_name = offer.category.name if offer.category.name is defined else offer.category %}
+    {% if offer.company.industry %}
+    {% set category_name = offer.company.industry %}
     {% if category_name not in ns.categories %}
     {% set _ = ns.categories.append(category_name) %}
     {% endif %}
     {% endif %}
     {% endfor %}
-    <div class="offers-chips" role="list" aria-label="تصنيفات العروض">
-        <button class="offers-chip offers-chip--active" type="button" data-filter="all">الكل</button>
-        {% for category in ns.categories %}
-        <button class="offers-chip" type="button" data-filter="{{ category|e }}">{{ category }}</button>
-        {% endfor %}
-    </div>
-    {% endif %}
-    <button class="offers-filter" type="button" role="button" aria-label="فلترة العروض">
-        <span class="offers-filter__icon" aria-hidden="true"><i class="fa-solid fa-filter"></i></span>
-        <span>فلترة</span>
+    <button class="offers-filter-trigger" type="button" data-filter-trigger
+        data-categories='{{ ns.categories | tojson | e }}'>
+        <i class="fa-solid fa-sliders"></i>
+        <span>تصفية حسب التصنيف</span>
     </button>
+    {% endif %}
 </section>
 <section class="offers-body">
     {% if offers %}

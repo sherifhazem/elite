@@ -19,9 +19,10 @@ offer.membership_discount) %}
 <article class="offer-card" role="listitem" tabindex="0" data-offer-id="{{ offer.id }}"
     data-offer-title="{{ offer.title }}"
     data-offer-company="{{ offer.company.name if offer.company else 'شريك ELITE' }}"
-    data-offer-discount="{{ discount_value }}"
+    data-company-name="{{ offer.company.name if offer.company else '' }}" data-offer-discount="{{ discount_value }}"
     data-offer-valid="{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'مستمر' }}"
-    data-offer-eligible="{{ 'true' if is_eligible else 'false' }}">
+    data-offer-eligible="{{ 'true' if is_eligible else 'false' }}"
+    data-category="{{ offer.company.industry if offer.company and offer.company.industry else '' }}">
 
     <div class="offer-card__header">
         {% if offer.classification_values %}
