@@ -149,6 +149,14 @@
                             <span>Reports</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {% if current_page == 'sms_logs' %}active{% endif %}"
+                            href="{{ url_for('admin.sms_logs') }}" data-bs-toggle="tooltip" data-bs-placement="right"
+                            title="SMS Logs">
+                            <i class="fas fa-sms me-3"></i>
+                            <span>سجلات SMS</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </aside>

@@ -12,6 +12,8 @@ from .lookup_choice import LookupChoice
 from .admin_setting import AdminSetting
 from .usage_code import UsageCode
 from .communication import Conversation, Message, Attachment
+from .sms_log import SMSLog
+from .verification_code import VerificationCode
 
 __all__ = [
     "db",
@@ -28,4 +30,6 @@ __all__ = [
     "Conversation",
     "Message",
     "Attachment",
+    "SMSLog",
+    "VerificationCode",
 ]

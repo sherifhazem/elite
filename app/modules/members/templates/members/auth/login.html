@@ -15,10 +15,10 @@
     <div class="auth-card__body">
       <form id="login-form" novalidate data-success-redirect="{{ url_for('portal.member_portal_home') }}">
         <div class="auth-field">
-          <label for="login-email" class="auth-field__label">البريد الإلكتروني</label>
+          <label for="login-identifier" class="auth-field__label">رقم الجوال أو البريد الإلكتروني</label>
           <div class="auth-field__input">
-            <input type="email" id="login-email" name="email" class="form-control auth-input"
-              placeholder="بريدك الإلكتروني" autocomplete="email" dir="ltr" required />
+            <input type="text" id="login-identifier" name="identifier" class="form-control auth-input"
+              placeholder="5xxxxxxxx" autocomplete="username" dir="ltr" required />
           </div>
         </div>
 

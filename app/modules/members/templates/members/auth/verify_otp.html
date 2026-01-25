@@ -1,0 +1,100 @@
+{% extends "members/auth/base_auth.html" %}
+{% block title %}التحقق من رقم الجوال{% endblock %}
+
+{% block content %}
+<div class="auth-shell">
+    <div class="auth-card">
+        <div class="auth-card__header">
+            <div class="auth-icon">
+                <i class="fa-solid fa-shield-halved fa-3x"></i>
+            </div>
+            <h2 class="auth-title">التحقق من الرمز</h2>
+            <p class="auth-subtitle">تم إرسال رمز التحقق إلى جوالك.</p>
+        </div>
+
+        <div class="auth-card__body">
+            <form id="otp-form" novalidate data-phone="{{ phone_number }}">
+                <div class="auth-field">
+                    <label for="otp-code" class="auth-field__label">رمز التحقق</label>
+                    <div class="auth-field__input">
+                        <input type="text" id="otp-code" name="code" class="form-control auth-input" placeholder="XXXX"
+                            autocomplete="one-time-code" dir="ltr" required maxlength="4" />
+                    </div>
+                </div>
+
+                <div id="otp-error" class="text-danger small mb-3" role="alert"></div>
+
+                <button type="submit" id="otp-submit" class="btn btn-gradient w-100 py-2">
+                    تحقق
+                </button>
+
+                <div class="auth-footer mt-4">
+                    <button type="button" id="resend-otp" class="ghost-button ghost-button--small auth-ghost">
+                        إعادة إرسال الرمز
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="toast-banner" id="otp-toast" role="status" aria-live="polite">
+    <div class="me-2"><i class="fa-solid fa-check fa-lg"></i></div>
+    <span id="otp-toast-message">تم التحقق بنجاح!</span>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('otp-form');
+        const codeInput = document.getElementById('otp-code');
+        const submitButton = document.getElementById('otp-submit');
+        const errorMessage = document.getElementById('otp-error');
+        const resendButton = document.getElementById('resend-otp');
+        const phone = form.dataset.phone;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = codeInput.value.trim();
+            if (!code) return;
+
+            errorMessage.textContent = '';
+            submitButton.disabled = true;
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch('/api/auth/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ phone, code })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    window.location.replace(data.redirect_url || '/portal/');
+                } else {
+                    errorMessage.textContent = data.message || 'Error validating code';
+                }
+            } catch (err) {
+                errorMessage.textContent = 'حدث خطأ. حاول مرة أخرى.';
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+
+        resendButton.addEventListener('click', async () => {
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch('/api/auth/resend-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ phone })
+                });
+                if (res.ok) alert('تم إرسال الرمز مجدداً');
+                else alert('فشل إرسال الرمز');
+            } catch (e) { console.error(e); }
+        });
+    });
+</script>
+{% endblock %}

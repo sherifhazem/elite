@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('register-form');
     const usernameInput = document.getElementById('username');
-    const emailInput = document.getElementById('register-email');
+    const phoneInput = document.getElementById('register-phone'); // Changed from email
     const passwordInput = document.getElementById('register-password');
     const submitButton = document.getElementById('register-submit');
     const errorMessage = document.getElementById('register-error');
@@ -21,11 +21,17 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
         const username = (usernameInput.value || '').trim();
-        const email = (emailInput.value || '').trim();
+        const phone = (phoneInput.value || '').trim(); // Phone
         const password = passwordInput.value || '';
 
-        if (!username || !email || !password) {
+        if (!username || !phone || !password) {
             errorMessage.textContent = 'يرجى تعبئة جميع الحقول المطلوبة.';
+            return;
+        }
+
+        // Basic phone validation (starts with 5, 9 digits)
+        if (!/^5[0-9]{8}$/.test(phone)) {
+            errorMessage.textContent = 'رقم الجوال يجب أن يكون 9 أرقام ويبدأ بـ 5 (مثال: 5xxxxxxxx)';
             return;
         }
 
@@ -42,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken
                 },
-                body: JSON.stringify({ username, email, password }),
+                body: JSON.stringify({ username, phone, password }), // Payload updated
             });
 
             const data = await response.json();

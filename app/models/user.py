@@ -57,6 +57,18 @@ class User(UserMixin, db.Model):
         nullable=False,
         doc="Application-wide role (member, company, admin, superadmin)",
     )
+    phone_number = db.Column(
+        db.String(20), 
+        unique=True, 
+        nullable=True,
+        doc="Mobile phone number used for authentication and alerts."
+    )
+    is_phone_verified = db.Column(
+        db.Boolean, 
+        default=False,
+        nullable=False,
+        doc="Flag indicating if the phone number has been verified via OTP."
+    )
     is_active = db.Column(
         db.Boolean,
         default=True,

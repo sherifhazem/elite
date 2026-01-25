@@ -1,0 +1,79 @@
+{% extends "members/auth/base_auth.html" %}
+{% block title %}ربط رقم الجوال{% endblock %}
+
+{% block content %}
+<div class="auth-shell">
+    <div class="auth-card">
+        <div class="auth-card__header">
+            <div class="auth-icon">
+                <i class="fa-solid fa-mobile-screen-button fa-3x"></i>
+            </div>
+            <h2 class="auth-title">ربط رقم الجوال</h2>
+            <p class="auth-subtitle">للاستمرار في استخدام ELITE، يرجى إضافة رقم جوالك وتأكيده.</p>
+        </div>
+
+        <div class="auth-card__body">
+            <form id="link-phone-form" novalidate data-user-id="{{ user_id }}">
+                <div class="auth-field">
+                    <label for="phone" class="auth-field__label">رقم الجوال</label>
+                    <div class="auth-field__input">
+                        <input type="tel" id="phone" name="phone" class="form-control auth-input"
+                            placeholder="5xxxxxxxx" autocomplete="tel" dir="ltr" required pattern="^5[0-9]{8}$"
+                            title="رقم الجوال يجب أن يبدأ بـ 5 ويتكون من 9 أرقام" />
+                    </div>
+                </div>
+
+                <div id="link-error" class="text-danger small mb-3" role="alert"></div>
+
+                <button type="submit" id="link-submit" class="btn btn-gradient w-100 py-2">
+                    إرسال رمز التحقق
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('link-phone-form');
+        const phoneInput = document.getElementById('phone');
+        const submitButton = document.getElementById('link-submit');
+        const errorMessage = document.getElementById('link-error');
+        const userId = form.dataset.userId;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const phone = phoneInput.value.trim();
+            if (!phone || !/^5[0-9]{8}$/.test(phone)) {
+                errorMessage.textContent = 'يرجى إدخال رقم جوال صحيح (مثال: 5xxxxxxxx)';
+                return;
+            }
+
+            errorMessage.textContent = '';
+            submitButton.disabled = true;
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch('/api/auth/link-phone', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ user_id: userId, phone })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    window.location.replace(`/verify-otp?phone=${phone}`);
+                } else {
+                    errorMessage.textContent = data.message || 'حدث خطأ أثناء ربط الرقم.';
+                }
+            } catch (err) {
+                errorMessage.textContent = 'حدث خطأ. حاول مرة أخرى.';
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+    });
+</script>
+{% endblock %}

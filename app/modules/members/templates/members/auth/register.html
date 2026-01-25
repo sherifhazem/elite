@@ -23,10 +23,11 @@
         </div>
 
         <div class="auth-field">
-          <label for="register-email" class="auth-field__label">البريد الإلكتروني</label>
+          <label for="register-phone" class="auth-field__label">رقم الجوال</label>
           <div class="auth-field__input">
-            <input type="email" id="register-email" name="email" class="form-control auth-input"
-              placeholder="name@example.com" autocomplete="email" dir="ltr" required />
+            <input type="tel" id="register-phone" name="phone" class="form-control auth-input" placeholder="5xxxxxxxx"
+              autocomplete="tel" dir="ltr" required pattern="[0-9]{9,}"
+              title="رقم الجوال يجب أن يبدأ بـ 5 ويتكون من 9 أرقام" />
           </div>
         </div>
 

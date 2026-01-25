@@ -35,6 +35,7 @@ from app.services.mailer import send_email, send_member_welcome_email
 from app.modules.members.services.member_notifications_service import (
     send_welcome_notification,
 )
+from app.services.sms_service import SMSService
 from .utils import (
     AUTH_COOKIE_NAME,
     clear_auth_cookie,
@@ -107,54 +108,50 @@ def _register_member_from_payload(payload: Dict[str, str]) -> Tuple[Response, in
     """Create a member account using the supplied payload values."""
 
     username = (payload.get("username") or "").strip()
-    email = (payload.get("email") or "").strip().lower()
+    phone = (payload.get("phone") or "").strip()
     password = payload.get("password")
 
-    if not username or not email or not password:
+    if not username or not phone or not password:
         return (
-            jsonify({"error": "username, email, and password are required."}),
+            jsonify({"error": "الاسم ورقم الجوال وكلمة المرور مطلوبة."}),
             HTTPStatus.BAD_REQUEST,
         )
 
     User = _get_user_model()
+    # Check if username or phone already exists
     existing_user = User.query.filter(
-        or_(User.username == username, User.email == email)
+        or_(User.username == username, User.phone_number == phone)
     ).first()
+    
     if existing_user:
         return (
-            jsonify({"error": "A user with that username or email already exists."}),
+            jsonify({"error": "اسم المستخدم أو رقم الجوال مسجل مسبقاً."}),
             HTTPStatus.BAD_REQUEST,
         )
 
-    user = User(username=username, email=email)
+    user = User(username=username, phone_number=phone)
     user.set_password(password)
     user.role = "member"
-    user.membership_level = "Basic"
-    user.is_active = True
+    user.is_active = True # Active but phone not verified yet
+    user.is_phone_verified = False
 
     db = _get_db()
     db.session.add(user)
     db.session.commit()
 
-    send_member_welcome_email(user=user)
-    _dispatch_member_welcome_notification(user)
-
-    token = create_token(user.id)
+    # Send OTP
+    sms_service = SMSService()
+    sms_service.send_otp(phone, purpose='registration')
 
     response = {
         "id": user.id,
         "username": user.username,
-        "email": user.email,
+        "phone": user.phone_number,
         "role": user.role,
-        "is_active": user.is_active,
-        "membership_level": user.membership_level,
-        "token": token,
-        "redirect_url": url_for("portal.member_portal_home"),
-        "message": "User registered successfully.",
+        "redirect_url": url_for("auth.verify_otp_page", phone=phone),
+        "message": "تم التسجيل بنجاح. يرجى التحقق من رقم الجوال.",
     }
-    json_response = jsonify(response)
-    set_auth_cookie(json_response, token)
-    return json_response, HTTPStatus.CREATED
+    return jsonify(response), HTTPStatus.CREATED
 
 
 @auth.route("/api/auth/register", methods=["GET", "POST"], endpoint="api_register")
@@ -197,7 +194,7 @@ def register_member():
     cleaned = getattr(request, "cleaned", {}) or {}
     payload = {
         "username": (cleaned.get("username") or "").strip(),
-        "email": (cleaned.get("email") or "").strip().lower(),
+        "phone": (cleaned.get("phone") or "").strip(),
         "password": cleaned.get("password"),
     }
     response, status = _register_member_from_payload(payload)
@@ -212,13 +209,114 @@ def register_member():
     return response, status
 
 
-@auth.route(
-    "/auth/register/member", methods=["GET", "POST"], endpoint="register_member_legacy"
-)
+@auth.route("/auth/register/member", methods=["GET", "POST"], endpoint="register_member_legacy")
 def register_member_legacy():
     """Preserve the historic /auth/register/member path."""
 
     return register_member()
+
+
+@auth.route("/verify-otp", methods=["GET"], endpoint="verify_otp_page")
+def verify_otp_page():
+    """Render the OTP verification page."""
+    phone = request.args.get('phone')
+    if not phone:
+        return redirect(url_for('auth.register_member'))
+    return render_template("members/auth/verify_otp.html", phone_number=phone)
+
+
+@auth.post("/api/auth/verify-otp", endpoint="api_verify_otp")
+@csrf.exempt
+def api_verify_otp():
+    """Verify the submitted OTP code."""
+    payload = _extract_json()
+    phone = payload.get('phone')
+    code = payload.get('code')
+
+    if not phone or not code:
+        return jsonify({"message": "رقم الجوال والرمز مطلوبان."}), HTTPStatus.BAD_REQUEST
+
+    sms_service = SMSService()
+    if sms_service.verify_otp(phone, code, purpose='registration'):
+        User = _get_user_model()
+        user = User.query.filter_by(phone_number=phone).first()
+        if user:
+            user.is_phone_verified = True
+            db = _get_db()
+            db.session.commit()
+            
+            # Send welcome SMS
+            sms_service.send_welcome(phone)
+            
+            # Auto login after verification
+            login_user(user)
+            token = create_token(user.id)
+            response = jsonify({
+                "message": "تم التحقق بنجاح.",
+                "redirect_url": url_for("portal.member_portal_home"),
+                "token": token
+            })
+            set_auth_cookie(response, token)
+            return response, HTTPStatus.OK
+            
+        return jsonify({"message": "المستخدم غير موجود."}), HTTPStatus.NOT_FOUND
+    
+    return jsonify({"message": "الرمز غير صحيح أو منتهي الصلاحية."}), HTTPStatus.BAD_REQUEST
+
+
+@auth.post("/api/auth/resend-otp", endpoint="api_resend_otp")
+@csrf.exempt
+def api_resend_otp():
+    """Resend a new OTP to the user's phone."""
+    payload = _extract_json()
+    phone = payload.get('phone')
+    if not phone:
+        return jsonify({"message": "رقم الجوال مطلوب."}), HTTPStatus.BAD_REQUEST
+
+    sms_service = SMSService()
+    sms_service.send_otp(phone, purpose='registration')
+    return jsonify({"message": "تم إرسال الرمز بنجاح."}), HTTPStatus.OK
+
+
+@auth.route("/link-phone", methods=["GET"], endpoint="link_phone_page")
+def link_phone_page():
+    """Render the phone linking page for legacy users."""
+    user_id = request.args.get('id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    return render_template("members/auth/link_phone.html", user_id=user_id)
+
+
+@auth.post("/api/auth/link-phone", endpoint="api_link_phone")
+@csrf.exempt
+def api_link_phone():
+    """Link a phone number to an existing user account."""
+    payload = _extract_json()
+    user_id = payload.get('user_id')
+    phone = payload.get('phone')
+
+    if not user_id or not phone:
+        return jsonify({"message": "بيانات غير مكتملة."}), HTTPStatus.BAD_REQUEST
+
+    User = _get_user_model()
+    # Check if phone is already taken
+    existing = User.query.filter_by(phone_number=phone).first()
+    if existing:
+        return jsonify({"message": "رقم الجوال مسجل مسبقاً لمستخدم آخر."}), HTTPStatus.BAD_REQUEST
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "المستخدم غير موجود."}), HTTPStatus.NOT_FOUND
+
+    user.phone_number = phone
+    user.is_phone_verified = False
+    db = _get_db()
+    db.session.commit()
+
+    sms_service = SMSService()
+    sms_service.send_otp(phone, purpose='registration')
+
+    return jsonify({"message": "تم ربط الرقم، يرجى التحقق."}), HTTPStatus.OK
 
 
 @auth.post("/api/auth/login", endpoint="api_login")
@@ -227,44 +325,62 @@ def api_login() -> tuple:
     """Authenticate a user and return a signed JWT token."""
 
     payload = _extract_json()
-    email = (payload.get("email") or "").strip().lower()
+    identifier = (payload.get("identifier") or "").strip()
     password = payload.get("password")
 
-    if not email or not password:
+    if not identifier or not password:
         return (
-            jsonify({"error": "email and password are required."}),
+            jsonify({"error": "رقم الجوال/البريد وكلمة المرور مطلوبة."}),
             HTTPStatus.BAD_REQUEST,
         )
 
     User = _get_user_model()
-    user = User.query.filter_by(email=email).first()
+    # Login by phone OR email
+    user = User.query.filter(or_(User.phone_number == identifier, User.email == identifier)).first()
+    
     if not user or not user.check_password(password):
         return (
-            jsonify({"error": "Invalid credentials."}),
+            jsonify({"error": "بيانات الدخول غير صحيحة."}),
             HTTPStatus.UNAUTHORIZED,
         )
 
     if not user.is_active:
         return (
-            jsonify({"error": "Account is inactive. Please contact support."}),
+            jsonify({"error": "الحساب غير نشط. يرجى التواصل مع الدعم."}),
             HTTPStatus.FORBIDDEN,
         )
 
+    # Legacy user handling: If logged in via email and phone not verified
+    if not user.phone_number or not user.is_phone_verified:
+        # We allow session but marked as needing phone link
+        # However, the requirement says "prompt for phone verify to continue"
+        # Let's send a flag to the frontend to redirect to a phone linking page
+        if not user.phone_number:
+             return jsonify({
+                 "requires_phone": True,
+                 "id": user.id,
+                 "message": "يرجى تسجيل رقم الجوال للاستمرار."
+             }), HTTPStatus.OK
+        else:
+             # Phone exists but not verified
+             return jsonify({
+                 "requires_verification": True,
+                 "phone": user.phone_number,
+                 "message": "يرجى تأكيد رقم الجوال."
+             }), HTTPStatus.OK
+
     token = create_token(user.id)
-    # Establish the Flask-Login session before deciding where to send the user.
+    # Establish the Flask-Login session
     from flask_login import logout_user
     logout_user()
     login_user(user)
-    # Read from Flask-Login's current_user after the session has been created.
+    
+    # ... (rest of the logic remains similar)
     role_source = current_user if current_user.is_authenticated else user
     member_role, company_role, admin_role, superadmin_role = user.ROLE_CHOICES
-    # Prefer the documented member dashboard path when it exists; otherwise keep the legacy portal.
-    member_dashboard_path = "/member/dashboard"
-    member_dashboard_url = member_dashboard_path
-    if not any(
-        rule.rule == member_dashboard_path for rule in current_app.url_map.iter_rules()
-    ):
-        member_dashboard_url = url_for("portal.member_portal_home")
+    
+    member_dashboard_url = url_for("portal.member_portal_home")
+    
     role_redirects = {
         member_role: member_dashboard_url,
         company_role: url_for("company_portal.company_dashboard_overview"),
@@ -272,17 +388,15 @@ def api_login() -> tuple:
         superadmin_role: url_for("admin.dashboard_alias"),
     }
     normalized_role = getattr(role_source, "normalized_role", None) or role_source.role
-    # Fall back to the home page when the role is unknown or unsupported.
     redirect_url = role_redirects.get(normalized_role, url_for("main.index"))
-    response = jsonify(
-        {
-            "token": token,
-            "token_type": "Bearer",
-            "role": user.role,
-            "is_active": user.is_active,
-            "redirect_url": redirect_url,
-        }
-    )
+    
+    response = jsonify({
+        "token": token,
+        "token_type": "Bearer",
+        "role": user.role,
+        "is_active": user.is_active,
+        "redirect_url": redirect_url,
+    })
     clear_auth_cookie(response)
     set_auth_cookie(response, token)
     return response, HTTPStatus.OK
@@ -379,45 +493,47 @@ def verify_email(token: str):
 
 @auth.route("/api/auth/reset-request", methods=["POST"], endpoint="request_password_reset")
 def request_password_reset():
-    """Send a password reset email containing a one-time token link."""
+    """Send a password reset email or SMS containing a one-time token link."""
 
     data = {k: v for k, v in (getattr(request, "cleaned", {}) or {}).items() if not k.startswith("__")}
-    email = (data.get("email") or "").strip().lower()
-    if not email:
+    identifier = (data.get("identifier") or "").strip().lower()
+    
+    if not identifier:
         return (
-            jsonify({"message": "البريد الإلكتروني مطلوب لإرسال رابط الاستعادة"}),
+            jsonify({"message": "البريد الإلكتروني أو رقم الجوال مطلوب لإرسال رابط الاستعادة"}),
             HTTPStatus.BAD_REQUEST,
         )
+    
     User = _get_user_model()
-    user = User.query.filter_by(email=email).first()
-    # Always return a generic response to avoid revealing whether the email exists.
+    # Find user by email or phone
+    user = User.query.filter(or_(User.email == identifier, User.phone_number == identifier)).first()
+    
+    # Always return a generic response for security, unless it's a validation error
+    success_msg = "إذا كان الحساب مسجلاً لدينا، ستصلك رسالة لإعادة تعيين كلمة المرور."
+    
     if not user:
-        return (
-            jsonify(
-                {
-                    "message": "If the email is registered, you will receive a password reset link."
-                }
-            ),
-            HTTPStatus.OK,
-        )
+        return jsonify({"message": success_msg}), HTTPStatus.OK
 
-    # Issue a password reset token and deliver the reset instructions.
-    token = generate_token(user.email)
+    # Issue a password reset token
+    token = generate_token(user.email or user.phone_number) # generate_token usually takes an identifier
     reset_url = f"{request.host_url}reset-password/{token}"
-    send_email(
-        user.email,
-        "Reset Your Elite Discounts Password",
-        "core/emails/password_reset.html",
-        {"reset_url": reset_url, "recipient_name": user.username or user.email},
-    )
-    return (
-        jsonify(
-            {
-                "message": "If the email is registered, you will receive a password reset link."
-            }
-        ),
-        HTTPStatus.OK,
-    )
+    
+    # Determine delivery method
+    if user.phone_number == identifier or (not user.email and user.phone_number):
+        # Send via SMS
+        sms_service = SMSService()
+        message = f"رابط إعادة تعيين كلمة المرور لـ ELITE: {reset_url}"
+        sms_service.send_sms(user.phone_number, message)
+    else:
+        # Send via Email
+        send_email(
+            user.email,
+            "Reset Your Elite Discounts Password",
+            "core/emails/password_reset.html",
+            {"reset_url": reset_url, "recipient_name": user.username or user.email},
+        )
+        
+    return jsonify({"message": success_msg}), HTTPStatus.OK
 
 
 @auth.route("/reset-password/<token>", methods=["GET"], endpoint="reset_password_form")

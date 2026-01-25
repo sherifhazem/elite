@@ -1,7 +1,7 @@
 // Handles member login submission, validation, and feedback.
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('login-form');
-    const emailInput = document.getElementById('login-email');
+    const identifierInput = document.getElementById('login-identifier');
     const passwordInput = document.getElementById('login-password');
     const submitButton = document.getElementById('login-submit');
     const errorMessage = document.getElementById('login-error');
@@ -19,11 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const email = (emailInput.value || '').trim();
+        const identifier = (identifierInput.value || '').trim();
         const password = passwordInput.value || '';
 
-        if (!email || !password) {
-            errorMessage.textContent = 'يرجى إدخال البريد الإلكتروني وكلمة المرور.';
+        if (!identifier || !password) {
+            errorMessage.textContent = 'يرجى إدخال رقم الجوال/البريد وكلمة المرور.';
             return;
         }
 
@@ -40,13 +40,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ identifier, password }),
             });
 
             const data = await response.json();
 
             if (!response.ok) {
                 errorMessage.textContent = data?.error || 'فشل تسجيل الدخول. تحقق من البيانات.';
+                return;
+            }
+
+            // Handle legacy user needs (phone link or verification)
+            if (data.requires_phone) {
+                window.location.replace(`/link-phone?id=${data.id}`);
+                return;
+            }
+            if (data.requires_verification) {
+                window.location.replace(`/verify-otp?phone=${data.phone}`);
                 return;
             }
 

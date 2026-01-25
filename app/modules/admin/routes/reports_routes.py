@@ -18,7 +18,7 @@ from flask import (
     g,
 )
 
-from app.models import User, Company, Offer
+from app.models import User, Company, Offer, SMSLog
 from app.services.access_control import admin_required
 
 from app.modules.admin.services.admin_analytics_service import (
@@ -142,4 +142,19 @@ def export_pdf() -> Any:
         mimetype="application/pdf",
         as_attachment=True,
         download_name="elite-reports.pdf",
+    )
+
+
+@admin.route("/reports/sms-logs", endpoint="sms_logs")
+@admin_required
+def sms_logs() -> str:
+    """Render the SMS messages log report."""
+    page = request.args.get('page', 1, type=int)
+    logs = SMSLog.query.order_by(SMSLog.sent_at.desc()).paginate(page=page, per_page=20)
+    
+    return render_template(
+        "admin/dashboard/sms_logs.html",
+        logs=logs,
+        section_title="سجلات الرسائل النصية",
+        active_page="sms_logs"
     )

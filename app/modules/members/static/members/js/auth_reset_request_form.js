@@ -1,7 +1,7 @@
 // Handles password reset request submission and messaging.
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('reset-request-form');
-    const emailInput = document.getElementById('reset-email');
+    const identifierInput = document.getElementById('reset-identifier');
     const submitButton = document.getElementById('reset-submit');
     const feedback = document.getElementById('reset-feedback');
 
@@ -16,14 +16,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const email = (emailInput.value || '').trim();
+        const identifier = (identifierInput.value || '').trim();
 
-        if (!email) {
-            setFeedback('يرجى إدخال البريد الإلكتروني.', false);
+        if (!identifier) {
+            setFeedback('يرجى إدخال البريد الإلكتروني أو رقم الجوال.', false);
             return;
         }
 
-        setFeedback('جاري إرسال الرابط إلى بريدك الإلكتروني...', true);
+        setFeedback('جاري معالجة طلبك...', true);
         submitButton.disabled = true;
         submitButton.textContent = 'جارٍ الإرسال...';
 
@@ -36,18 +36,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken
                 },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ identifier }),
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                const message = data?.message || 'تعذر إرسال الرابط. تحقق من البريد الإلكتروني وأعد المحاولة.';
+                const message = data?.message || 'تعذر إرسال الطلب. تحقق من البيانات وأعد المحاولة.';
                 setFeedback(message, false);
                 return;
             }
 
-            setFeedback('إذا كان البريد الإلكتروني مسجلاً لدينا، ستصلك رسالة لإعادة تعيين كلمة المرور.', true);
+            setFeedback('إذا كان الحساب مسجلاً لدينا، ستصلك رسالة لإعادة تعيين كلمة المرور عبر البريد أو الجوال.', true);
         } catch (error) {
             console.error('Password reset request failed', error);
             setFeedback('حدث خطأ غير متوقع. حاول مرة أخرى لاحقًا.', false);
