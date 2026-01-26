@@ -139,14 +139,23 @@
         --elite-mobile-bg: #111827;
         --elite-mobile-surface: #f4f5f7;
         --elite-mobile-text: #f9fafb;
-        --elite-mobile-muted: rgba(249, 250, 251, 0.7);
+        --elite-mobile-muted: #7b8798;
         --elite-mobile-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+        --elite-mobile-card-bg: #f5f1e8;
+        --elite-mobile-card-radius: 24px;
+        --elite-mobile-card-shadow: 0 24px 60px rgba(23, 18, 48, 0.1);
     }
 
     .company-portal-body {
         background: var(--elite-mobile-bg);
         color: var(--elite-mobile-text);
         padding-top: 3.25rem;
+    }
+
+    .company-navbar {
+        background: linear-gradient(135deg, rgba(31, 59, 112, 0.95), rgba(39, 72, 137, 0.92));
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .company-shell {
@@ -224,6 +233,7 @@
         padding: 1.25rem 1.1rem;
         background-color: var(--elite-mobile-surface);
         box-shadow: var(--elite-mobile-shadow);
+        color: var(--elite-text);
     }
 
     .btn,
@@ -267,8 +277,27 @@
 
     .dashboard-panel,
     .metric-card,
-    .offer-card {
-        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+    .offer-card,
+    .redemption-card,
+    .redemption-card-item,
+    .settings-form {
+        background: var(--elite-mobile-card-bg);
+        border-radius: var(--elite-mobile-card-radius);
+        box-shadow: var(--elite-mobile-card-shadow);
+    }
+
+    .metric-title,
+    .panel-meta dt,
+    .offer-card-meta dt,
+    .section-subtitle,
+    .scan-hint,
+    .redemption-card-row .label,
+    .redemption-card-item .label {
+        color: var(--elite-mobile-muted);
+    }
+
+    .metric-value {
+        color: var(--elite-primary);
     }
 }
 
