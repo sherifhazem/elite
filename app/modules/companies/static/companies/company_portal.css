@@ -185,8 +185,8 @@
 
     .company-sidebar .nav-link {
         border-radius: 999px;
-        padding: 0.6rem 1rem;
-        min-height: 44px;
+        padding: 0.7rem 1.2rem;
+        min-height: 48px;
         font-size: 0.95rem;
         background: rgba(248, 250, 252, 0.08);
         color: var(--elite-mobile-text);
@@ -196,6 +196,8 @@
 
     .company-sidebar .nav-link i {
         color: var(--elite-mobile-text);
+        font-size: 1.05rem;
+        width: 20px;
     }
 
     .company-sidebar .nav-link.active,
@@ -222,6 +224,45 @@
         padding: 1.25rem 1.1rem;
         background-color: var(--elite-mobile-surface);
         box-shadow: var(--elite-mobile-shadow);
+    }
+
+    .btn,
+    .btn-elite-primary,
+    .btn-elite-outline {
+        min-height: 44px;
+        padding: 0.65rem 1.5rem;
+    }
+
+    .company-page-content {
+        gap: 2rem;
+    }
+
+    .offer-card {
+        gap: 1.25rem;
+        padding: 1.5rem;
+    }
+
+    .dashboard-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        padding: 0.5rem;
+    }
+
+    .panel-header,
+    .panel-body {
+        padding: 1.25rem 1.4rem;
+    }
+
+    .settings-form {
+        gap: 2rem;
+        padding: 1.75rem;
+    }
+
+    .offer-card-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.9rem;
     }
 
     .dashboard-panel,
