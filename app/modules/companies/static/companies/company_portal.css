@@ -135,19 +135,99 @@
 }
 
 @media (max-width: 991.98px) {
+    :root {
+        --elite-mobile-bg: #111827;
+        --elite-mobile-surface: #f4f5f7;
+        --elite-mobile-text: #f9fafb;
+        --elite-mobile-muted: rgba(249, 250, 251, 0.7);
+        --elite-mobile-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+    }
+
+    .company-portal-body {
+        background: var(--elite-mobile-bg);
+        color: var(--elite-mobile-text);
+        padding-top: 3.25rem;
+    }
+
     .company-shell {
         flex-direction: column;
+        background: var(--elite-mobile-bg);
     }
 
     .company-sidebar {
         width: 100%;
         border-right: none;
-        border-bottom: 1px solid var(--elite-border);
+        border-bottom: 1px solid rgba(248, 250, 252, 0.12);
         box-shadow: none;
+        background: rgba(15, 23, 42, 0.9);
+        backdrop-filter: blur(10px);
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .company-sidebar-inner {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        min-height: 4rem;
+    }
+
+    .company-sidebar-profile {
+        display: none;
+    }
+
+    .company-sidebar .nav {
+        flex-wrap: nowrap;
+        gap: 0.5rem;
     }
 
     .company-sidebar .nav-link {
-        border-radius: 8px;
+        border-radius: 999px;
+        padding: 0.6rem 1rem;
+        min-height: 44px;
+        font-size: 0.95rem;
+        background: rgba(248, 250, 252, 0.08);
+        color: var(--elite-mobile-text);
+        white-space: nowrap;
+        scroll-snap-align: start;
+    }
+
+    .company-sidebar .nav-link i {
+        color: var(--elite-mobile-text);
+    }
+
+    .company-sidebar .nav-link.active,
+    .company-sidebar .nav-link:hover,
+    .company-sidebar .nav-link:focus {
+        background: rgba(224, 179, 65, 0.24);
+        color: #fff;
+    }
+
+    .company-page-header {
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+        background: rgba(17, 24, 39, 0.92);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid rgba(248, 250, 252, 0.15);
+        padding-top: 1rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .company-main > .container-fluid {
+        max-width: 420px;
+        margin: 0 auto;
+        padding: 1.25rem 1.1rem;
+        background-color: var(--elite-mobile-surface);
+        box-shadow: var(--elite-mobile-shadow);
+    }
+
+    .dashboard-panel,
+    .metric-card,
+    .offer-card {
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
     }
 }
 
