@@ -5,7 +5,7 @@
 
     // Cache DOM references used across interactions.
     const shell = document.getElementById("app-shell");
-    const headerTitle = document.getElementById("portal-page-title");
+    const headerTitle = document.getElementById("portal-page-text");
     const viewContainer = document.getElementById("portal-view");
     const toastStack = document.getElementById("toast-container");
     const loadingOverlay = document.getElementById("loading-indicator");
@@ -131,7 +131,7 @@
         viewContainer.innerHTML = nextView.innerHTML;
         viewContainer.dataset.currentView = nextView.dataset.currentView || navTarget || "";
 
-        const nextHeader = sourceDocument.getElementById("portal-page-title");
+        const nextHeader = sourceDocument.getElementById("portal-page-text");
         if (nextHeader && headerTitle) {
             headerTitle.textContent = nextHeader.textContent.trim();
         }
