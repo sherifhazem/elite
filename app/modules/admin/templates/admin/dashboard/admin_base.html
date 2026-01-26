@@ -51,7 +51,11 @@
 <body class="admin-body">
     <nav class="navbar navbar-expand-lg navbar-dark admin-navbar fixed-top shadow-sm">
         <div class="container-fluid">
-            <span class="navbar-brand fw-semibold">Elite Admin Console</span>
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('admin.dashboard_home') }}">
+                <img src="{{ url_for('static', filename='shared/icons/elite_logo.png') }}" alt="Elite Logo"
+                    style="height: 36px; width: auto;">
+                <span class="fw-semibold">Elite Admin Console</span>
+            </a>
             <button class="btn btn-outline-light d-lg-none sidebar-toggle" type="button" data-bs-toggle="collapse"
                 data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false"
                 aria-label="Toggle navigation">

@@ -146,10 +146,13 @@ def company_settings():
 
         company.description = description or None
         company.logo_url = saved_logo_url or company.logo_url
-        company.notification_preferences = {
-            "email": notifications_email,
-            "sms": notifications_sms,
-        }
+        
+        # Merge notification preferences to avoid wiping out other data like industry/phone
+        prefs = get_notification_preferences(company)
+        updated_prefs = dict(prefs)
+        updated_prefs["email"] = notifications_email
+        updated_prefs["sms"] = notifications_sms
+        company.notification_preferences = updated_prefs
         db.session.commit()
 
         success_message = "تم حفظ التغييرات بنجاح."

@@ -59,15 +59,18 @@ def edit_company(company_id: int) -> str:
     company = get_company(company_id)
     if request.method == "POST":
         cleaned = getattr(request, "cleaned", {}) or {}
-        update_company(
-            company,
-            {
-                "name": cleaned.get("name", company.name),
-                "email": cleaned.get("email", company.email),
-                "city": cleaned.get("city", company.city),
-                "industry": cleaned.get("industry", company.industry),
-            },
-        )
+        # Construct update payload only from fields actually present in the form.
+        # This prevents accidental overwriting of fields with None or empty values.
+        payload = {
+            "name": cleaned.get("name"),
+            "email": cleaned.get("email"),
+            "city": cleaned.get("city"),
+            "industry": cleaned.get("industry"),
+        }
+        # Filter out None values to let update_company keep existing data
+        payload = {k: v for k, v in payload.items() if v is not None}
+        
+        update_company(company, payload)
         flash("Company updated successfully.", "success")
         return redirect(url_for("admin.view_company", company_id=company.id))
     return render_template(

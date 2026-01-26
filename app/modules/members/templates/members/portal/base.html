@@ -85,7 +85,11 @@
 <body class="portal-mobile-body">
     <div class="app-shell" id="app-shell" data-active-nav="{{ active_nav }}">
         <header class="app-header" id="portal-header">
-            <div class="header-title" id="portal-page-title">{% block page_heading %}ELITE{% endblock %}</div>
+            <div class="header-title d-flex align-items-center justify-content-center gap-2" id="portal-page-title">
+                <img src="{{ url_for('static', filename='shared/icons/elite_logo.png') }}" alt="Elite"
+                    style="height: 32px; width: auto; object-fit: contain;">
+                {% block page_heading %}{% endblock %}
+            </div>
         </header>
         <main class="app-main" id="portal-main" role="main">
             <section class="view-container" id="portal-view" data-current-view="{{ active_nav }}">

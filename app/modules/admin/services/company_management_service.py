@@ -39,13 +39,30 @@ def get_company(company_id: int) -> Company:
 def update_company(company: Company, payload: dict[str, str]) -> None:
     """Update editable company fields and persist changes."""
 
-    company.name = payload.get("name", company.name)
-    company.email = payload.get("email", company.email)
-    company.city = payload.get("city", company.city)
-    company.industry = payload.get("industry", company.industry)
-    company.contact_number = payload.get("contact_number", company.contact_number)
-    company.website_url = payload.get("website_url", company.website_url)
-    company.social_url = payload.get("social_url", company.social_url)
+    # Only update fields if they are explicitly present in the payload and NOT None.
+    # This ensures that partial updates from forms or status changes do not 
+    # accidentally wipe out existing data like industry or contact info.
+    if payload.get("name") is not None:
+        company.name = payload["name"]
+    
+    if payload.get("email") is not None:
+        company.email = payload["email"]
+    
+    if payload.get("city") is not None:
+        company.city = payload["city"]
+    
+    if payload.get("industry") is not None:
+        company.industry = payload["industry"]
+    
+    if payload.get("contact_number") is not None:
+        company.contact_number = payload["contact_number"]
+    
+    if payload.get("website_url") is not None:
+        company.website_url = payload["website_url"]
+    
+    if payload.get("social_url") is not None:
+        company.social_url = payload["social_url"]
+    
     db.session.commit()
 
 
