@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 import secrets
 
 from app.core.database import db
+from flask import current_app
+from sqlalchemy import or_
 from sqlalchemy.orm import lazyload
 from app.models import ActivityLog, Offer, UsageCode
 from app.modules.admin.services.admin_settings_service import get_admin_settings
 from app.services.incentive_eligibility_service import evaluate_offer_eligibility
+
+
+USAGE_CODE_MAX_USES = 10
 
 
 @dataclass(frozen=True)
@@ -28,11 +33,7 @@ def get_usage_code_settings() -> UsageCodeSettings:
         or verification.get("code_expiry_seconds")
         or 300
     )
-    max_uses_per_window = int(
-        verification.get("usage_code_max_uses_per_window")
-        or verification.get("max_uses_per_minute")
-        or 5
-    )
+    max_uses_per_window = USAGE_CODE_MAX_USES
     return UsageCodeSettings(
         expiry_seconds=max(expiry_seconds, 1),
         max_uses_per_window=max(max_uses_per_window, 1),
@@ -54,17 +55,26 @@ def _usage_code_query():
     return UsageCode.query.options(lazyload(UsageCode.partner))
 
 
-def generate_usage_code(partner_id: int) -> UsageCode:
+def _active_usage_code_filter(query, now: datetime):
+    """Restrict a usage code query to active (non-expired) codes."""
+
+    return query.filter(
+        or_(UsageCode.expires_at.is_(None), UsageCode.expires_at > now)
+    )
+
+
+def generate_usage_code(partner_id: int, *, commit: bool = True) -> UsageCode:
     """Create a fresh usage code for a partner, expiring any active code."""
 
     now = datetime.utcnow()
     settings = get_usage_code_settings()
 
-    _usage_code_query().filter(UsageCode.expires_at > now).with_for_update().all()
+    _active_usage_code_filter(_usage_code_query(), now).with_for_update().all()
     active_codes = (
-        _usage_code_query()
-        .filter_by(partner_id=partner_id)
-        .filter(UsageCode.expires_at > now)
+        _active_usage_code_filter(
+            _usage_code_query().filter_by(partner_id=partner_id),
+            now,
+        )
         .with_for_update()
         .all()
     )
@@ -75,9 +85,10 @@ def generate_usage_code(partner_id: int) -> UsageCode:
     for _ in range(30):
         candidate = _generate_numeric_code()
         collision = (
-            _usage_code_query()
-            .filter_by(code=candidate)
-            .filter(UsageCode.expires_at > now)
+            _active_usage_code_filter(
+                _usage_code_query().filter_by(code=candidate),
+                now,
+            )
             .with_for_update()
             .first()
         )
@@ -91,12 +102,15 @@ def generate_usage_code(partner_id: int) -> UsageCode:
         code=code_value,
         partner_id=partner_id,
         created_at=now,
-        expires_at=now + timedelta(seconds=settings.expiry_seconds),
+        expires_at=None,
         usage_count=0,
         max_uses_per_window=settings.max_uses_per_window,
     )
     db.session.add(usage_code)
-    db.session.commit()
+    if commit:
+        db.session.commit()
+    else:
+        db.session.flush()
     return usage_code
 
 
@@ -175,10 +189,14 @@ def verify_usage_code(
                 return {"ok": False, "result": "not_found", "message": "العرض غير موجود."}
 
             # 4. جلب كود التفعيل الخاص بالشريك (استخدام filter_by بدقة)
-            usage_code = UsageCode.query.filter_by(
-                partner_id=offer.company_id,
-                code=normalized_code
-            ).first()
+            usage_code = (
+                UsageCode.query.filter_by(
+                    partner_id=offer.company_id,
+                    code=normalized_code,
+                )
+                .with_for_update()
+                .first()
+            )
 
             if not usage_code:
                 log_usage_attempt(
@@ -189,6 +207,16 @@ def verify_usage_code(
                     result="not_found",
                 )
                 return {"ok": False, "result": "not_found", "message": "كود التفعيل غير صحيح."}
+
+            if usage_code.is_expired():
+                log_usage_attempt(
+                    member_id=member_id,
+                    partner_id=partner_id,
+                    offer_id=offer_id,
+                    code_used=normalized_code,
+                    result="expired",
+                )
+                return {"ok": False, "result": "expired", "message": "انتهت صلاحية الكود."}
 
             # 5. التحقق من أهلية العضو (Eligibility)
             eligibility = evaluate_offer_eligibility(member_id, offer_id)
@@ -217,7 +245,7 @@ def verify_usage_code(
                     "message": messages.get(reason_code, "أنت غير مؤهل لهذا العرض.")
                 }
 
-            # 6. التحقق من حدود الاستخدام (بدون with_for_update لتجنب خطأ Aggregate functions)
+            # 6. التحقق من حدود الاستخدام
             window_start = usage_code.created_at
             window_end = usage_code.expires_at
 
@@ -257,7 +285,8 @@ def verify_usage_code(
                     }
 
             # 7. التحقق من الحد الأقصى للاستخدام في النافذة الزمنية
-            if successful_attempts_query.count() >= usage_code.max_uses_per_window:
+            if usage_code.usage_count >= usage_code.max_uses_per_window:
+                generate_usage_code(partner_id, commit=False)
                 log_usage_attempt(
                     member_id=member_id,
                     partner_id=partner_id,
@@ -265,7 +294,11 @@ def verify_usage_code(
                     code_used=normalized_code,
                     result="limit_exceeded",
                 )
-                return {"ok": False, "result": "limit_exceeded", "message": "تم الوصول للحد الأقصى لاستخدام الكود."}
+                return {
+                    "ok": False,
+                    "result": "limit_exceeded",
+                    "message": "تم تحديث الكود بعد استهلاك الحد الأقصى.",
+                }
 
             # 8. النجاح: تسجيل النشاط النهائي
             log_usage_attempt(
@@ -275,6 +308,7 @@ def verify_usage_code(
                 code_used=normalized_code,
                 result="valid",
             )
+            usage_code.usage_count += 1
 
             # تأكيد الحفظ في قاعدة البيانات قبل الخروج من سياق المعاملة
             session.flush()
@@ -283,11 +317,14 @@ def verify_usage_code(
         if not is_in_txn:
             session.commit()
 
+        if usage_code.usage_count >= usage_code.max_uses_per_window:
+            generate_usage_code(partner_id, commit=False)
+
         return {
             "ok": True,
             "result": "valid",
             "message": "تم تفعيل العرض بنجاح.",
-            "usage_count": successful_attempts_query.count() + 1,
+            "usage_count": usage_code.usage_count,
             "max_uses": usage_code.max_uses_per_window,
             "expires_at": window_end.isoformat() if window_end else None
         }

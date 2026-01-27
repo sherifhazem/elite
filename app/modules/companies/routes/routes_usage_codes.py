@@ -6,6 +6,7 @@ from datetime import datetime
 from http import HTTPStatus
 
 from flask import jsonify, render_template
+from sqlalchemy import or_
 
 from app.models import UsageCode
 from app.services.access_control import company_required
@@ -24,7 +25,7 @@ def company_usage_codes() -> str:
     now = datetime.utcnow()
     active_code = (
         UsageCode.query.filter_by(partner_id=company.id)
-        .filter(UsageCode.expires_at > now)
+        .filter(or_(UsageCode.expires_at.is_(None), UsageCode.expires_at > now))
         .order_by(UsageCode.created_at.desc())
         .first()
     )
@@ -72,4 +73,52 @@ def company_usage_codes_generate():
     )
 
 
-__all__ = ["company_usage_codes", "company_usage_codes_generate"]
+@company_portal.route(
+    "/usage-codes/current",
+    methods=["GET"],
+    endpoint="company_usage_codes_current",
+)
+@company_required
+def company_usage_codes_current():
+    """Fetch the current usage code for the authenticated partner."""
+
+    company = _current_company()
+    if company.status == "correction":
+        return (
+            jsonify(
+                {
+                    "error": "Account suspended",
+                    "message": "الحساب معلق جزئيا. فضلا استكمال الاجرائات المطلوبه لتفعيل الحساب",
+                }
+            ),
+            HTTPStatus.FORBIDDEN,
+        )
+
+    now = datetime.utcnow()
+    active_code = (
+        UsageCode.query.filter_by(partner_id=company.id)
+        .filter(or_(UsageCode.expires_at.is_(None), UsageCode.expires_at > now))
+        .order_by(UsageCode.created_at.desc())
+        .first()
+    )
+
+    if active_code is None:
+        active_code = generate_usage_code(company.id)
+
+    return jsonify(
+        {
+            "code": active_code.code,
+            "expires_at": active_code.expires_at.isoformat()
+            if active_code.expires_at
+            else None,
+            "usage_count": active_code.usage_count,
+            "max_uses_per_window": active_code.max_uses_per_window,
+        }
+    )
+
+
+__all__ = [
+    "company_usage_codes",
+    "company_usage_codes_generate",
+    "company_usage_codes_current",
+]

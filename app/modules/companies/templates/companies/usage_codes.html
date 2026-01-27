@@ -1,7 +1,7 @@
 {% extends "companies/base.html" %}
 
 {% block portal_title %}أكواد الاستخدام{% endblock %}
-{% block portal_subtitle %}أنشئ وشارك كود استخدام صالحًا لفترة قصيرة مع الأعضاء.{% endblock %}
+{% block portal_subtitle %}يتم إنشاء كود الاستخدام تلقائياً ويبقى فعالاً حتى استبداله بعد 10 استخدامات.{% endblock %}
 
 {% block portal_content %}
 <div class="row g-4">
@@ -11,7 +11,7 @@
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
                     <div>
                         <h2 class="h5 mb-2">كود الاستخدام الحالي</h2>
-                        <p class="text-muted mb-0">شارك هذا الكود مع الأعضاء لتأكيد الاستخدام.</p>
+                        <p class="text-muted mb-0">شارك هذا الكود مع الأعضاء لتأكيد الاستخدام، ويتم تحديثه تلقائياً.</p>
                     </div>
                     <button class="btn btn-elite-primary" type="button" data-generate-usage-code>
                         إنشاء كود جديد
@@ -24,9 +24,9 @@
 
                 <div class="usage-code-meta mt-3">
                     <div>
-                        <span class="text-muted small">ينتهي في</span>
+                        <span class="text-muted small">الصلاحية</span>
                         <div data-usage-code-expires>
-                            {{ active_code.expires_at.strftime("%Y-%m-%d %H:%M") if active_code and active_code.expires_at else "—" }}
+                            {{ active_code.expires_at.strftime("%Y-%m-%d %H:%M") if active_code and active_code.expires_at else "مفتوحة" }}
                         </div>
                     </div>
                     <div>
@@ -40,7 +40,7 @@
                 </div>
 
                 <p class="text-muted small mt-3 mb-0">
-                    إنشاء كود جديد يُلغي صلاحية أي كود نشط تلقائيًا.
+                    يتم إنشاء الكود وتحديثه تلقائياً كل 10 استخدامات بدون الحاجة لتحديث الصفحة.
                 </p>
             </div>
         </div>
