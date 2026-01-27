@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 import secrets
 
 from app.core.database import db
@@ -102,7 +102,7 @@ def generate_usage_code(partner_id: int, *, commit: bool = True) -> UsageCode:
         code=code_value,
         partner_id=partner_id,
         created_at=now,
-        expires_at=None,
+        expires_at=now + timedelta(seconds=settings.expiry_seconds),
         usage_count=0,
         max_uses_per_window=settings.max_uses_per_window,
     )
