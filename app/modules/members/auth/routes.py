@@ -383,7 +383,7 @@ def api_login() -> tuple:
     
     role_redirects = {
         member_role: member_dashboard_url,
-        company_role: url_for("company_portal.company_dashboard_overview"),
+        company_role: url_for("company_portal.company_usage_codes"),
         admin_role: url_for("admin.dashboard_alias"),
         superadmin_role: url_for("admin.dashboard_alias"),
     }
