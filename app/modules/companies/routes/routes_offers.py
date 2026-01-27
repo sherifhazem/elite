@@ -250,7 +250,7 @@ def offer_new() -> str:
     company = _current_company()
     if company.status == "correction":
         flash("الحساب معلق جزئيا. لا يمكن إنشاء عروض جديدة.", "warning")
-        return redirect(url_for("company_portal.company_dashboard_overview"))
+        return redirect(url_for("company_portal.company_offers_list"))
     offer_type_availability = _get_offer_type_availability()
     return render_template(
         "companies/offer_editor.html",
@@ -346,7 +346,7 @@ def offer_edit(offer_id: int) -> str:
     company = _current_company()
     if company.status == "correction":
         flash("الحساب معلق جزئيا. لا يمكن تعديل العروض.", "warning")
-        return redirect(url_for("company_portal.company_dashboard_overview"))
+        return redirect(url_for("company_portal.company_offers_list"))
     offer = Offer.query.filter_by(company_id=company.id, id=offer_id).first_or_404()
     offer_type_availability = _get_offer_type_availability()
     return render_template(

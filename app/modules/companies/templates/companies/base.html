@@ -69,7 +69,7 @@
 
             <div class="ms-auto d-flex align-items-center">
                 <a class="navbar-brand d-flex align-items-center gap-3 me-0"
-                    href="{{ url_for('company_portal.company_dashboard_overview') }}">
+                    href="{{ url_for('company_portal.company_usage_codes') }}">
                     <span class="fw-semibold d-none d-md-inline">بوابة الشركات</span>
                     <img src="{{ url_for('static', filename='shared/icons/elite_logo.png') }}" alt="Elite Logo"
                         style="height: 36px; width: auto;">
@@ -95,10 +95,10 @@
                 </div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_dashboard_overview')) %}active{% endif %}"
-                            href="{{ url_for('company_portal.company_dashboard_overview') }}">
-                            <i class="fas fa-gauge-high me-2"></i>
-                            <span>لوحة التحكم</span>
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_usage_codes')) %}active{% endif %}"
+                            href="{{ url_for('company_portal.company_usage_codes') }}">
+                            <i class="fas fa-key me-2"></i>
+                            <span>أكواد الاستخدام</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -106,14 +106,6 @@
                             href="{{ url_for('company_portal.company_offers_list') }}">
                             <i class="fas fa-gift me-2"></i>
                             <span>العروض</span>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_usage_codes')) %}active{% endif %}"
-                            href="{{ url_for('company_portal.company_usage_codes') }}">
-                            <i class="fas fa-key me-2"></i>
-                            <span>أكواد الاستخدام</span>
                         </a>
                     </li>
                     <li class="nav-item">
