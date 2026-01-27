@@ -4,54 +4,86 @@ document.addEventListener("DOMContentLoaded", () => {
     const expiresValue = document.querySelector("[data-usage-code-expires]");
     const usageValue = document.querySelector("[data-usage-code-usage]");
 
-    if (!generateButton) {
+    if (!codeValue) {
         return;
     }
 
     const formatDateTime = (isoString) => {
         if (!isoString) {
-            return "—";
+            return "مفتوحة";
         }
         const date = new Date(isoString);
         if (Number.isNaN(date.getTime())) {
-            return "—";
+            return "مفتوحة";
         }
         return date.toLocaleString();
     };
 
-    generateButton.addEventListener("click", async () => {
-        generateButton.disabled = true;
+    const updateUsageCode = (payload) => {
+        if (codeValue) {
+            codeValue.textContent = payload.code || "—";
+        }
+        if (expiresValue) {
+            expiresValue.textContent = formatDateTime(payload.expires_at);
+        }
+        if (usageValue) {
+            const used = payload.usage_count ?? 0;
+            const max = payload.max_uses_per_window ?? "—";
+            usageValue.textContent = `${used} / ${max}`;
+        }
+    };
+
+    const fetchCurrentCode = async () => {
         try {
-            const response = await fetch("/company/usage-codes/generate", {
-                method: "POST",
+            const response = await fetch("/company/usage-codes/current", {
+                method: "GET",
                 headers: {
-                    "Content-Type": "application/json",
                     "X-Requested-With": "XMLHttpRequest",
                 },
                 credentials: "include",
-                body: JSON.stringify({}),
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) {
                 throw new Error(payload.error || "Unable to generate code.");
             }
 
-            if (codeValue) {
-                codeValue.textContent = payload.code || "—";
-            }
-            if (expiresValue) {
-                expiresValue.textContent = formatDateTime(payload.expires_at);
-            }
-            if (usageValue) {
-                const used = payload.usage_count ?? 0;
-                const max = payload.max_uses_per_window ?? "—";
-                usageValue.textContent = `${used} / ${max}`;
-            }
+            updateUsageCode(payload);
         } catch (error) {
             console.error("Usage code generation failed", error);
-            alert(error.message || "Unable to generate usage code.");
-        } finally {
-            generateButton.disabled = false;
+            if (generateButton) {
+                generateButton.disabled = false;
+            }
         }
-    });
+    };
+
+    if (generateButton) {
+        generateButton.addEventListener("click", async () => {
+            generateButton.disabled = true;
+            try {
+                const response = await fetch("/company/usage-codes/generate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({}),
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(payload.error || "Unable to generate code.");
+                }
+
+                updateUsageCode(payload);
+            } catch (error) {
+                console.error("Usage code generation failed", error);
+                alert(error.message || "Unable to generate usage code.");
+            } finally {
+                generateButton.disabled = false;
+            }
+        });
+    }
+
+    fetchCurrentCode();
+    window.setInterval(fetchCurrentCode, 10000);
 });

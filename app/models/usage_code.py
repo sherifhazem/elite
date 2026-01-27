@@ -14,7 +14,7 @@ class UsageCode(db.Model):
     code = db.Column(db.String(5), nullable=False, index=True)
     partner_id = db.Column(db.Integer, db.ForeignKey("companies.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    expires_at = db.Column(db.DateTime, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=True)
     usage_count = db.Column(db.Integer, default=0, nullable=False)
     max_uses_per_window = db.Column(db.Integer, nullable=False)
 
