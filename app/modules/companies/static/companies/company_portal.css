@@ -387,6 +387,30 @@
     gap: 1.5rem;
 }
 
+.company-messages {
+    overflow-x: hidden;
+}
+
+.company-messages .list-group-item {
+    flex-wrap: wrap;
+}
+
+.company-messages .company-message-preview {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.company-messages .message-card {
+    max-width: min(100%, 85%);
+}
+
+.company-messages .message-card .card-text,
+.company-messages .message-card a {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+}
+
 /* Dashboard */
 .dashboard-metrics {
     display: grid;
