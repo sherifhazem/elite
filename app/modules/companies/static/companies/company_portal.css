@@ -845,6 +845,35 @@
     text-align: center;
 }
 
+@media (max-width: 575.98px) {
+    .usage-code-card .card-body {
+        align-items: center;
+        text-align: center;
+    }
+
+    .usage-code-display {
+        width: 100%;
+        font-size: 2rem;
+        letter-spacing: 0.2rem;
+        padding: 1.25rem;
+    }
+
+    .usage-code-generate {
+        align-self: center;
+        width: 100%;
+        max-width: 220px;
+    }
+
+    .usage-code-meta {
+        gap: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .usage-code-meta div {
+        font-weight: 600;
+    }
+}
+
 /* Offer Type Tags */
 .offer-tags {
     display: flex;
