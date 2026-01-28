@@ -11,12 +11,13 @@
 {% endblock %}
 
 {% block portal_content %}
-<div class="card shadow-sm">
+<div class="company-messages">
+    <div class="card shadow-sm">
     <div class="list-group list-group-flush">
         {% for conversation in pagination.items %}
         <a href="{{ url_for('company_portal.company_messages_view', conversation_id=conversation.id) }}"
             class="list-group-item list-group-item-action p-4 d-flex align-items-center gap-3">
-            <div class="flex-grow-1">
+            <div class="flex-grow-1 company-message-preview">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <h5 class="mb-0 {{ 'fw-bold' if has_unread_messages(conversation) else '' }}">
                         {{ conversation.subject }}
@@ -44,9 +45,10 @@
     </div>
 
     {% if pagination.pages > 1 %}
-    <div class="card-footer">
-        <!-- Pagination controls here -->
-    </div>
+        <div class="card-footer">
+            <!-- Pagination controls here -->
+        </div>
     {% endif %}
+    </div>
 </div>
 {% endblock %}
