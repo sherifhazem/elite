@@ -350,24 +350,36 @@ def api_login() -> tuple:
             HTTPStatus.FORBIDDEN,
         )
 
+    normalized_role = user.normalized_role
+    is_admin_account = normalized_role in {"admin", "superadmin"}
+
     # Legacy user handling: If logged in via email and phone not verified
-    if not user.phone_number or not user.is_phone_verified:
+    if not is_admin_account and (not user.phone_number or not user.is_phone_verified):
         # We allow session but marked as needing phone link
         # However, the requirement says "prompt for phone verify to continue"
         # Let's send a flag to the frontend to redirect to a phone linking page
         if not user.phone_number:
-             return jsonify({
-                 "requires_phone": True,
-                 "id": user.id,
-                 "message": "يرجى تسجيل رقم الجوال للاستمرار."
-             }), HTTPStatus.OK
-        else:
-             # Phone exists but not verified
-             return jsonify({
-                 "requires_verification": True,
-                 "phone": user.phone_number,
-                 "message": "يرجى تأكيد رقم الجوال."
-             }), HTTPStatus.OK
+            return (
+                jsonify(
+                    {
+                        "requires_phone": True,
+                        "id": user.id,
+                        "message": "يرجى تسجيل رقم الجوال للاستمرار.",
+                    }
+                ),
+                HTTPStatus.OK,
+            )
+        # Phone exists but not verified
+        return (
+            jsonify(
+                {
+                    "requires_verification": True,
+                    "phone": user.phone_number,
+                    "message": "يرجى تأكيد رقم الجوال.",
+                }
+            ),
+            HTTPStatus.OK,
+        )
 
     token = create_token(user.id)
     # Establish the Flask-Login session
