@@ -120,8 +120,8 @@
                             href="{{ url_for('company_portal.company_messages_list') }}">
                             <i class="fas fa-envelope me-2"></i>
                             <span class="flex-grow-1">التواصل</span>
-                            <span id="global-unread-badge"
-                                class="badge rounded-pill bg-danger ms-2 {% if unread_messages_count == 0 %}d-none{% endif %} pulse-badge">
+                            <span
+                                class="badge rounded-pill bg-danger ms-2 js-unread-badge {% if unread_messages_count == 0 %}d-none{% endif %} pulse-badge">
                                 {{ unread_messages_count }}
                             </span>
                         </a>
@@ -174,6 +174,35 @@
             </footer>
         </div>
     </div>
+    <nav class="company-mobile-nav" aria-label="Primary navigation">
+        <a class="company-mobile-nav__item {% if current_path.startswith(url_for('company_portal.company_usage_codes')) %}company-mobile-nav__item--active{% endif %}"
+            href="{{ url_for('company_portal.company_usage_codes') }}">
+            <span class="company-mobile-nav__icon"><i class="fas fa-key"></i></span>
+            <span class="company-mobile-nav__label">الأكواد</span>
+        </a>
+        <a class="company-mobile-nav__item {% if current_path.startswith(url_for('company_portal.company_offers_list')) %}company-mobile-nav__item--active{% endif %}"
+            href="{{ url_for('company_portal.company_offers_list') }}">
+            <span class="company-mobile-nav__icon"><i class="fas fa-gift"></i></span>
+            <span class="company-mobile-nav__label">العروض</span>
+        </a>
+        <a class="company-mobile-nav__item {% if current_path.startswith(url_for('company_portal.company_messages_list')) %}company-mobile-nav__item--active{% endif %}"
+            href="{{ url_for('company_portal.company_messages_list') }}">
+            <span class="company-mobile-nav__icon position-relative">
+                <i class="fas fa-envelope"></i>
+                <span
+                    class="badge rounded-circle bg-danger position-absolute top-0 start-100 translate-middle p-1 js-unread-badge {% if unread_messages_count == 0 %}d-none{% endif %} pulse-badge"
+                    style="font-size: 0.6rem; min-width: 1.2rem; min-height: 1.2rem; display: flex; align-items: center; justify-content: center;">
+                    {{ unread_messages_count }}
+                </span>
+            </span>
+            <span class="company-mobile-nav__label">الرسائل</span>
+        </a>
+        <a class="company-mobile-nav__item {% if current_path.startswith(url_for('company_portal.company_settings')) %}company-mobile-nav__item--active{% endif %}"
+            href="{{ url_for('company_portal.company_settings') }}">
+            <span class="company-mobile-nav__icon"><i class="fas fa-gear"></i></span>
+            <span class="company-mobile-nav__label">الإعدادات</span>
+        </a>
+    </nav>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='companies/js/company_sidebar_toggle.js') }}" defer></script>
     <script>
@@ -212,15 +241,15 @@
                 const response = await fetch('{{ url_for("company_portal.get_company_unread_count") }}');
                 if (response.ok) {
                     const data = await response.json();
-                    const badge = document.getElementById('global-unread-badge');
-                    if (badge) {
+                    const badges = document.querySelectorAll('.js-unread-badge');
+                    badges.forEach((badge) => {
                         if (data.unread_count > 0) {
                             badge.innerText = data.unread_count;
                             badge.classList.remove('d-none');
                         } else {
                             badge.classList.add('d-none');
                         }
-                    }
+                    });
                 }
             } catch (error) {
                 console.error('Error fetching unread count:', error);
