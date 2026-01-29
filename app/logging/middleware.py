@@ -185,15 +185,52 @@ def _emit_final_log(ctx, status_code: int, *, level: str = "INFO") -> None:
     g.request_id = ctx.request_id
     level_value = getattr(logging, level.upper(), logging.INFO)
     is_success = status_code < HTTPStatus.BAD_REQUEST and level.upper() != "ERROR"
+    
     if is_success:
         ctx.breadcrumbs.clear()
+        
     payload = ctx.to_log_payload(status_code, level=level, route_finished_at=ctx.route_finished_at)
+    
+    # 1. Strip redundant/internal fields
     payload.pop("normalized_payload", None)
     payload.pop("cleaned_payload", None)
     payload.pop("normalization", None)
     payload.pop("__diagnostics", None)
+    
+    # 2. Make incoming_payload concise
+    if "incoming_payload" in payload:
+        inc = payload["incoming_payload"]
+        if is_success:
+            inc.pop("headers", None) # Remove bulky headers for success logs
+        
+        # Remove empty fields
+        if not inc.get("json"): inc.pop("json", None)
+        if not inc.get("form"): inc.pop("form", None)
+        if not inc.get("query"): inc.pop("query", None)
+        if not inc.get("combined"): inc.pop("combined", None)
+
+    # 3. Make outgoing_payload concise
+    if "outgoing_payload" in payload:
+        out = payload["outgoing_payload"]
+        if is_success and out.get("json"):
+            # Truncate large success responses to keep logs concise
+            resp_str = str(out["json"])
+            if len(resp_str) > 500:
+                out["json"] = {"_truncated": True, "size": len(resp_str), "preview": resp_str[:200] + "..."}
+        
+        if not out.get("error"): out.pop("error", None)
+        if not out.get("redirect"): out.pop("redirect", None)
+
+    # 4. Remove breadcrumbs and trace/parent IDs if success to save space
     if is_success:
         payload.pop("breadcrumbs", None)
+        if not payload.get("parent_id"): payload.pop("parent_id", None)
+        # We keep trace_id and request_id as they are vital for correlation
+
+    # 5. Handle validation info
+    if is_success:
+        payload.pop("validation", None)
+
     logger.log(level_value, "request_cycle", extra={"log_payload": payload})
 
 

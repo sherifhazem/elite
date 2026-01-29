@@ -53,8 +53,13 @@ class RequestAwareFormatter(logging.Formatter):
         if request_id:
             payload.setdefault("request_id", request_id)
 
-        payload.setdefault("trace_id", getattr(g, "trace_id", None) or request.headers.get("X-Trace-ID"))
-        payload.setdefault("parent_id", getattr(g, "parent_id", None) or request.headers.get("X-Parent-ID"))
+        trace_id = getattr(g, "trace_id", None) or request.headers.get("X-Trace-ID")
+        if trace_id:
+            payload.setdefault("trace_id", trace_id)
+
+        parent_id = getattr(g, "parent_id", None) or request.headers.get("X-Parent-ID")
+        if parent_id:
+            payload.setdefault("parent_id", parent_id)
 
         user_id = getattr(g, "user_id", None)
         current_user = getattr(g, "current_user", None)
@@ -82,15 +87,17 @@ class RequestAwareFormatter(logging.Formatter):
             "file": record.filename,
             "function": record.funcName,
             "line": record.lineno,
-            "request_id": getattr(record, "request_id", None),
-            "user_id": getattr(record, "user_id", None),
-            "path": getattr(record, "path", None),
-            "method": getattr(record, "method", None),
         }
+        
+        for attr in ("request_id", "user_id", "path", "method"):
+            val = getattr(record, attr, None)
+            if val is not None:
+                base_payload[attr] = val
 
         if isinstance(payload, dict):
             merged = {**payload}
-            merged.setdefault("timestamp", base_payload["timestamp"])
+            if not merged.get("timestamp"):
+                merged["timestamp"] = base_payload["timestamp"]
             merged.setdefault("level", record.levelname)
             merged.setdefault("file", record.filename)
             merged.setdefault("function", record.funcName)
@@ -164,18 +171,18 @@ def initialize_logging(app: Flask | None = None) -> logging.Logger:
 
     _ensure_log_file()
 
-    file_handler, console_handler = _build_handlers()
+    file_handler, _ = _build_handlers()
 
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
     root_logger.setLevel(logging.INFO)
     root_logger.addHandler(file_handler)
-    root_logger.addHandler(console_handler)
 
     for logger_name in (_APP_LOGGER_NAME, "flask.app", "werkzeug"):
         logger = logging.getLogger(logger_name)
         logger.handlers.clear()
-        logger.setLevel(logging.INFO)
+        level = logging.WARNING if logger_name == "werkzeug" else logging.INFO
+        logger.setLevel(level)
         logger.propagate = True
 
     if app is not None:
