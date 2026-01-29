@@ -190,7 +190,7 @@ def verify_usage_code(
 
             # 4. جلب كود التفعيل الخاص بالشريك (استخدام filter_by بدقة)
             usage_code = (
-                UsageCode.query.filter_by(
+                _usage_code_query().filter_by(
                     partner_id=offer.company_id,
                     code=normalized_code,
                 )

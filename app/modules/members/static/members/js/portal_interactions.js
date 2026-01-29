@@ -429,6 +429,10 @@
                     }
                     showToast("تم توثيق الاستخدام بنجاح.");
                     usageInput.value = "";
+                    setTimeout(() => {
+                        closeModal();
+                        refreshCurrentView(false);
+                    }, 1500);
                 } catch (error) {
                     console.error("Usage code verification failed", error);
                     showToast(error.message || "تعذر التحقق من الرمز.", "error");

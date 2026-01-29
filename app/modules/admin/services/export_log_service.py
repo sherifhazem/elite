@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta
 
+from sqlalchemy.orm import lazyload
 from app.core.database import db
 from app.models import ActivityLog
 
@@ -19,7 +20,14 @@ def _has_recent_export(
     window_start: datetime,
 ) -> bool:
     query = (
-        ActivityLog.query.filter_by(admin_id=admin_id, action=action)
+        ActivityLog.query.options(
+            lazyload(ActivityLog.admin),
+            lazyload(ActivityLog.company),
+            lazyload(ActivityLog.member),
+            lazyload(ActivityLog.partner),
+            lazyload(ActivityLog.offer),
+        )
+        .filter_by(admin_id=admin_id, action=action)
         .filter(ActivityLog.created_at >= window_start)
         .filter(ActivityLog.details.contains(filename))
         .with_for_update()

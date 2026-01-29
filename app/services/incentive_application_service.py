@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, time, timedelta
 
+from sqlalchemy.orm import lazyload
 from app.core.database import db
 from app.models import ActivityLog, Offer
 from app.modules.admin.services.admin_settings_service import get_admin_settings
@@ -59,11 +60,19 @@ def _has_recent_incentive(
     window_end: datetime | None,
     for_update: bool = False,
 ) -> bool:
-    query = ActivityLog.query.filter_by(
-        action="incentive_applied",
-        member_id=member_id,
-        offer_id=offer_id,
-        result=incentive_result,
+    query = (
+        ActivityLog.query.options(
+            lazyload(ActivityLog.admin),
+            lazyload(ActivityLog.company),
+            lazyload(ActivityLog.member),
+            lazyload(ActivityLog.partner),
+            lazyload(ActivityLog.offer),
+        ).filter_by(
+            action="incentive_applied",
+            member_id=member_id,
+            offer_id=offer_id,
+            result=incentive_result,
+        )
     )
     if for_update:
         query = query.with_for_update()
@@ -88,7 +97,12 @@ def apply_incentive(
         settings = get_admin_settings()
         with db.session.begin():
             eligibility = evaluate_offer_eligibility(member_id, offer_id)
-            offer = Offer.query.filter_by(id=offer_id).with_for_update().first()
+            offer = (
+                Offer.query.options(lazyload(Offer.company))
+                .filter_by(id=offer_id)
+                .with_for_update()
+                .first()
+            )
 
             if not eligibility.get("eligible") or offer is None:
                 return {
