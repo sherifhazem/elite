@@ -47,7 +47,7 @@ def verify_usage_code_endpoint():
         if not k.startswith("__")
     }
     offer_id = payload.get("offer_id")
-    code = (payload.get("code") or "").strip()
+    code = (payload.get("code") or payload.get("usage_code") or "").strip()
     if offer_id in (None, "") or not code:
         return (
             jsonify({"error": "offer_id and code are required."}),
