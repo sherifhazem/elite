@@ -11,7 +11,7 @@ from flask import current_app, flash, jsonify, redirect, render_template, reques
 from werkzeug.utils import secure_filename
 
 from app.core.database import db
-from app.models import Offer
+from app.models import ActivityLog, Offer
 from app.models.offer import OFFER_CLASSIFICATION_TYPES, OfferClassification
 from app.modules.members.services.member_notifications_service import (
     broadcast_new_offer,
@@ -227,18 +227,33 @@ def company_offers_list() -> str:
     """Display the offer management table scoped to the current company."""
 
     company = _current_company()
+    now = datetime.utcnow()
     offers = (
         Offer.query.filter_by(company_id=company.id)
         .order_by(Offer.created_at.desc())
         .all()
     )
     feedback_totals = fetch_offer_feedback_counts(company.id)
+    active_offers = (
+        Offer.query.filter_by(company_id=company.id, status="active")
+        .filter((Offer.valid_until.is_(None)) | (Offer.valid_until >= now))
+        .count()
+    )
+    inactive_offers = max(len(offers) - active_offers, 0)
+    total_activations = (
+        ActivityLog.query.filter_by(
+            action="usage_code_attempt", result="valid", partner_id=company.id
+        ).count()
+    )
     return render_template(
         "companies/offers_list.html",
         company=company,
         offers=offers,
-        now=datetime.utcnow(),
+        now=now,
         feedback_totals=feedback_totals,
+        active_offers=active_offers,
+        inactive_offers=inactive_offers,
+        total_activations=total_activations,
     )
 
 

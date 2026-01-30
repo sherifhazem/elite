@@ -22,6 +22,40 @@
     </div>
 </section>
 
+<section class="offer-stats" aria-label="إحصائيات العروض">
+    <div class="offer-stats-desktop">
+        <article class="offer-stat-card offer-stat-card--active">
+            <span class="offer-stat-label">العروض النشطة</span>
+            <span class="offer-stat-value">{{ active_offers|default(0) }}</span>
+            <span class="offer-stat-note">عروض متاحة للعملاء حالياً</span>
+        </article>
+        <article class="offer-stat-card offer-stat-card--inactive">
+            <span class="offer-stat-label">العروض غير النشطة</span>
+            <span class="offer-stat-value">{{ inactive_offers|default(0) }}</span>
+            <span class="offer-stat-note">متوقفة أو منتهية</span>
+        </article>
+        <article class="offer-stat-card offer-stat-card--activations">
+            <span class="offer-stat-label">عمليات التفعيل</span>
+            <span class="offer-stat-value">{{ total_activations|default(0) }}</span>
+            <span class="offer-stat-note">إجمالي التفعيلات الناجحة</span>
+        </article>
+    </div>
+    <div class="offer-stats-mobile">
+        <article class="offer-stat-card offer-stat-card--active">
+            <span class="offer-stat-label">العروض النشطة</span>
+            <span class="offer-stat-value">{{ active_offers|default(0) }}</span>
+        </article>
+        <article class="offer-stat-card offer-stat-card--inactive">
+            <span class="offer-stat-label">العروض غير النشطة</span>
+            <span class="offer-stat-value">{{ inactive_offers|default(0) }}</span>
+        </article>
+        <article class="offer-stat-card offer-stat-card--activations offer-stat-card--wide">
+            <span class="offer-stat-label">إجمالي عمليات التفعيل</span>
+            <span class="offer-stat-value">{{ total_activations|default(0) }}</span>
+        </article>
+    </div>
+</section>
+
 <section class="offer-listing">
     <div class="offer-table-wrapper">
         <div class="table-responsive">
