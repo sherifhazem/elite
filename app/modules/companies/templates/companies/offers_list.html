@@ -6,22 +6,6 @@
 {% block portal_title %}العروض{% endblock %}
 
 {% block portal_content %}
-<section class="company-page-intro">
-    <div>
-        <h2 class="section-title">إدارة عروض الشركة</h2>
-        <p class="section-subtitle">أنشئ العروض أو حدّثها أو عطّلها عبر مساحة عمل مرنة لكل الأجهزة.</p>
-    </div>
-    <div class="intro-actions">
-        <div class="search-field">
-            <label for="offer-search" class="visually-hidden">البحث في العروض</label>
-            <input id="offer-search" type="search" class="form-control" placeholder="ابحث في العروض">
-        </div>
-        <a class="btn btn-elite-primary" id="offer-add-btn" href="{{ url_for('company_portal.offer_new') }}">
-            إضافة عرض
-        </a>
-    </div>
-</section>
-
 <section class="offer-stats" aria-label="إحصائيات العروض">
     <div class="offer-stats-desktop">
         <article class="offer-stat-panel offer-stat-panel--active">
@@ -81,6 +65,21 @@
         </article>
     </div>
 </section>
+
+<section class="company-page-intro">
+   
+    <div class="intro-actions">
+        <div class="search-field">
+            <label for="offer-search" class="visually-hidden">البحث في العروض</label>
+            <input id="offer-search" type="search" class="form-control" placeholder="ابحث في العروض">
+        </div>
+        <a class="btn btn-elite-primary" id="offer-add-btn" href="{{ url_for('company_portal.offer_new') }}">
+            إضافة عرض
+        </a>
+    </div>
+</section>
+
+
 
 <section class="offer-listing">
     <div class="offer-table-wrapper">
