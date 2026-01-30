@@ -569,6 +569,71 @@
     min-width: 0;
 }
 
+.offer-stats {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.offer-stats-desktop,
+.offer-stats-mobile {
+    display: none;
+}
+
+.offer-stats-mobile {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.offer-stat-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid rgba(31, 59, 112, 0.08);
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
+}
+
+.offer-stat-card--wide {
+    grid-column: 1 / -1;
+}
+
+.offer-stat-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--elite-muted);
+}
+
+.offer-stat-value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--elite-primary);
+}
+
+.offer-stat-note {
+    font-size: 0.8rem;
+    color: var(--elite-muted);
+}
+
+.offer-stat-card--active {
+    border-color: rgba(31, 59, 112, 0.2);
+    background: rgba(31, 59, 112, 0.05);
+}
+
+.offer-stat-card--inactive {
+    border-color: rgba(107, 114, 128, 0.2);
+    background: rgba(148, 163, 184, 0.08);
+}
+
+.offer-stat-card--activations {
+    border-color: rgba(19, 90, 156, 0.2);
+    background: rgba(14, 116, 144, 0.08);
+}
+
 .offer-listing {
     display: flex;
     flex-direction: column;
@@ -888,6 +953,24 @@
     .redemption-cards,
     .offer-card-collection {
         display: none;
+    }
+
+    .offer-stats-desktop {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .offer-stats-mobile {
+        display: none;
+    }
+
+    .offer-stat-card {
+        padding: 1rem 1.25rem;
+    }
+
+    .offer-stat-value {
+        font-size: 1.6rem;
     }
 
     .offer-listing {
