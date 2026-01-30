@@ -14,7 +14,7 @@ from urllib.parse import quote
 from flask import Blueprint, Response, jsonify, redirect, render_template, request, url_for
 
 from app.core.database import db
-from app.models import Notification, Offer, User
+from app.models import ActivityLog, Notification, Offer, User
 from app.modules.members.auth.utils import AUTH_COOKIE_NAME, get_user_from_token
 from app.modules.members.services.member_notifications_service import (
     notify_offer_feedback,
@@ -111,6 +111,58 @@ def _membership_card_payload(user: Optional[User]) -> Dict[str, str]:
     }
 
 
+def _activity_label(entry: ActivityLog) -> str:
+    result = (entry.result or "").strip().lower()
+    labels = {
+        "valid": "تم التفعيل بنجاح",
+        "success": "تم التفعيل بنجاح",
+        "invalid": "صيغة كود غير صحيحة",
+        "not_found": "كود غير صحيح",
+        "expired": "انتهت صلاحية الكود",
+        "not_eligible": "غير مؤهل لهذا العرض",
+        "usage_limit_reached": "تم التفعيل مسبقاً",
+        "limit_exceeded": "تم تحديث الكود بعد نفاد الحد",
+        "error": "حدث خطأ أثناء التفعيل",
+    }
+    return labels.get(result, "محاولة تفعيل")
+
+
+def _activity_status(entry: ActivityLog) -> str:
+    result = (entry.result or "").strip().lower()
+    if result in {"valid", "success"}:
+        return "success"
+    if result in {"invalid", "not_found", "expired", "not_eligible", "usage_limit_reached", "limit_exceeded"}:
+        return "warning"
+    if result == "error":
+        return "danger"
+    return "neutral"
+
+
+def _member_activity_entries(user: User, limit: int = 12) -> list[dict]:
+    entries = (
+        ActivityLog.query.filter_by(member_id=user.id, action="usage_code_attempt")
+        .order_by(ActivityLog.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    activity = []
+    for entry in entries:
+        offer_title = entry.offer.title if entry.offer else "عرض غير معروف"
+        partner_name = entry.partner.name if entry.partner else "شريك غير معروف"
+        created_at = entry.created_at.strftime("%Y-%m-%d %H:%M") if entry.created_at else "—"
+        activity.append(
+            {
+                "offer_title": offer_title,
+                "partner_name": partner_name,
+                "code_used": entry.code_used or "—",
+                "label": _activity_label(entry),
+                "status": _activity_status(entry),
+                "created_at": created_at,
+            }
+        )
+    return activity
+
+
 # Render the portal home view summarizing the member's benefits.
 @portal.route("/", methods=["GET"], endpoint="member_portal_home")
 def member_portal_home():
@@ -164,11 +216,11 @@ def member_portal_profile():
     if user is None:
         return _redirect_to_login()
 
-
     return render_template(
         "members/portal/profile.html",
         user=user,
         membership_card=_membership_card_payload(user),
+        activity_entries=_member_activity_entries(user),
         notification_unread_count=_unread_notification_count(user),
         active_nav="profile",
         current_year=datetime.utcnow().year,

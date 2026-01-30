@@ -33,6 +33,39 @@
         <a class="ghost-button logout-button" id="logout-action" href="{{ url_for('auth.logout') }}" role="button"
             rel="nofollow">تسجيل الخروج</a>
     </div>
+
+    <section class="activations-panel">
+        <header class="panel-header">
+            <h2 class="panel-header__title">سجل النشاط</h2>
+            <p class="panel-header__subtitle">آخر محاولات تفعيل العروض الخاصة بك.</p>
+        </header>
+        <div class="activity-list">
+            {% if activity_entries %}
+                {% for entry in activity_entries %}
+                    <article class="activation-card activity-card">
+                        <div class="activity-card__meta">
+                            <span class="activity-card__date">{{ entry.created_at }}</span>
+                            <span class="activity-card__status activity-card__status--{{ entry.status }}">
+                                {{ entry.label }}
+                            </span>
+                        </div>
+                        <h3 class="activation-card__title">
+                            {{ entry.offer_title }}
+                        </h3>
+                        <div class="activity-card__details">
+                            <p class="activity-card__partner">{{ entry.partner_name }}</p>
+                            <p class="activity-card__code">كود: {{ entry.code_used }}</p>
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <article class="activation-card activity-card activity-card--empty">
+                    <h3 class="activation-card__title">لا يوجد نشاط بعد</h3>
+                    <p class="activity-card__empty">عند تفعيل أي عرض سيظهر هنا.</p>
+                </article>
+            {% endif %}
+        </div>
+    </section>
 </section>
 
 {% endblock %}
