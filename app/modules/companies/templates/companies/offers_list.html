@@ -24,34 +24,60 @@
 
 <section class="offer-stats" aria-label="إحصائيات العروض">
     <div class="offer-stats-desktop">
-        <article class="offer-stat-card offer-stat-card--active">
-            <span class="offer-stat-label">العروض النشطة</span>
-            <span class="offer-stat-value">{{ active_offers|default(0) }}</span>
-            <span class="offer-stat-note">عروض متاحة للعملاء حالياً</span>
+        <article class="offer-stat-panel offer-stat-panel--active">
+            <div class="offer-stat-panel__icon" aria-hidden="true">
+                <i class="fa-solid fa-bolt"></i>
+            </div>
+            <div class="offer-stat-panel__content">
+                <span class="offer-stat-panel__label">العروض النشطة</span>
+                <span class="offer-stat-panel__value">{{ active_offers|default(0) }}</span>
+                <span class="offer-stat-panel__note">عروض متاحة للعملاء حالياً</span>
+            </div>
         </article>
-        <article class="offer-stat-card offer-stat-card--inactive">
-            <span class="offer-stat-label">العروض غير النشطة</span>
-            <span class="offer-stat-value">{{ inactive_offers|default(0) }}</span>
-            <span class="offer-stat-note">متوقفة أو منتهية</span>
+        <article class="offer-stat-panel offer-stat-panel--inactive">
+            <div class="offer-stat-panel__icon" aria-hidden="true">
+                <i class="fa-solid fa-circle-pause"></i>
+            </div>
+            <div class="offer-stat-panel__content">
+                <span class="offer-stat-panel__label">العروض غير النشطة</span>
+                <span class="offer-stat-panel__value">{{ inactive_offers|default(0) }}</span>
+                <span class="offer-stat-panel__note">متوقفة أو منتهية</span>
+            </div>
         </article>
-        <article class="offer-stat-card offer-stat-card--activations">
-            <span class="offer-stat-label">عمليات التفعيل</span>
-            <span class="offer-stat-value">{{ total_activations|default(0) }}</span>
-            <span class="offer-stat-note">إجمالي التفعيلات الناجحة</span>
+        <article class="offer-stat-panel offer-stat-panel--activations">
+            <div class="offer-stat-panel__icon" aria-hidden="true">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div class="offer-stat-panel__content">
+                <span class="offer-stat-panel__label">تفاعلات العروض</span>
+                <span class="offer-stat-panel__value">{{ total_activations|default(0) }}</span>
+                <span class="offer-stat-panel__note">إجمالي عمليات التفعيل</span>
+            </div>
         </article>
     </div>
     <div class="offer-stats-mobile">
-        <article class="offer-stat-card offer-stat-card--active">
-            <span class="offer-stat-label">العروض النشطة</span>
-            <span class="offer-stat-value">{{ active_offers|default(0) }}</span>
+        <article class="offer-stat-tile offer-stat-tile--active">
+            <div>
+                <span class="offer-stat-tile__label">العروض النشطة</span>
+                <span class="offer-stat-tile__value">{{ active_offers|default(0) }}</span>
+            </div>
+            <span class="offer-stat-tile__hint">قابلة للاستخدام الآن</span>
         </article>
-        <article class="offer-stat-card offer-stat-card--inactive">
-            <span class="offer-stat-label">العروض غير النشطة</span>
-            <span class="offer-stat-value">{{ inactive_offers|default(0) }}</span>
+        <article class="offer-stat-tile offer-stat-tile--inactive">
+            <div>
+                <span class="offer-stat-tile__label">غير النشطة</span>
+                <span class="offer-stat-tile__value">{{ inactive_offers|default(0) }}</span>
+            </div>
+            <span class="offer-stat-tile__hint">متوقفة أو منتهية</span>
         </article>
-        <article class="offer-stat-card offer-stat-card--activations offer-stat-card--wide">
-            <span class="offer-stat-label">إجمالي عمليات التفعيل</span>
-            <span class="offer-stat-value">{{ total_activations|default(0) }}</span>
+        <article class="offer-stat-banner">
+            <div class="offer-stat-banner__badge">
+                <i class="fa-solid fa-wave-square"></i>
+            </div>
+            <div>
+                <span class="offer-stat-banner__label">تفاعلات العروض</span>
+                <span class="offer-stat-banner__value">{{ total_activations|default(0) }}</span>
+            </div>
         </article>
     </div>
 </section>
