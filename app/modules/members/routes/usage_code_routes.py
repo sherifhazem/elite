@@ -8,6 +8,7 @@ from flask import Blueprint, g, jsonify, request
 
 from app.services.access_control import resolve_user_from_request
 from app.services.usage_code_service import verify_usage_code
+from app.core.database import db
 
 usage_codes = Blueprint("usage_codes", __name__, url_prefix="/api/usage-codes")
 
@@ -60,6 +61,10 @@ def verify_usage_code_endpoint():
         return jsonify({"error": "offer_id must be numeric."}), HTTPStatus.BAD_REQUEST
 
     result = verify_usage_code(member_id=user.id, offer_id=offer_identifier, code=code)
+    
+    # Ensure changes (ActivityLog, Usage count, etc.) are persisted
+    db.session.commit()
+    
     return jsonify(result), HTTPStatus.OK
 
 

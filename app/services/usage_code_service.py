@@ -157,13 +157,14 @@ def verify_usage_code(
     session = db.session
 
     # 1. تحديد حالة المعاملة (Transaction) لضمان الحفظ الصحيح
+    # ملاحظة: db.session هو scoped_session، نحتاج للجلسة الفعلية للتحقق من الحالة
+    actual_session = session() if callable(session) else session
     is_in_txn = False
-    if hasattr(session, "in_transaction"):
-        is_in_txn = session.in_transaction()
-    elif hasattr(session, "get_transaction"):
-        is_in_txn = session.get_transaction() is not None
-    else:
-        is_in_txn = session.is_active
+    if hasattr(actual_session, "in_transaction"):
+        is_in_txn = actual_session.in_transaction()
+    elif hasattr(actual_session, "get_transaction"):
+        is_in_txn = actual_session.get_transaction() is not None
+
 
     # استخدام معاملة متداخلة (Nested) إذا كنا داخل معاملة بالفعل، أو معاملة جديدة
     transaction_context = session.begin_nested() if is_in_txn else session.begin()
