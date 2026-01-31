@@ -38,6 +38,27 @@
         }
     }
 
+    /** Format offer validity as date-only (localized day/month/year). */
+    function formatOfferDate(value) {
+        if (!value) {
+            return "—";
+        }
+        try {
+            const date = value instanceof Date ? value : new Date(value);
+            if (Number.isNaN(date.getTime())) {
+                return typeof value === "string" ? value : "—";
+            }
+            return date.toLocaleDateString("ar-SA", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+            });
+        } catch (error) {
+            console.error("Failed to format offer date", error);
+            return typeof value === "string" ? value : "—";
+        }
+    }
+
     function resetModalLayout() {
         if (modalSheet) {
             modalSheet.classList.remove("app-modal__sheet--tall");
@@ -411,37 +432,6 @@
         if (!gallery) {
             return;
         }
-        const items = Array.from(gallery.querySelectorAll("[data-gallery-item]"));
-        const dots = modalBody?.querySelectorAll("[data-gallery-dot]") || [];
-        const counter = modalBody?.querySelector("[data-offer-gallery-counter]");
-        if (items.length === 0) {
-            return;
-        }
-
-        const updateIndicators = () => {
-            const galleryRect = gallery.getBoundingClientRect();
-            let activeIndex = 0;
-            let minDistance = Infinity;
-            items.forEach((item, index) => {
-                const distance = Math.abs(item.getBoundingClientRect().left - galleryRect.left);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    activeIndex = index;
-                }
-            });
-            dots.forEach((dot, index) => {
-                dot.classList.toggle("is-active", index === activeIndex);
-            });
-            if (counter) {
-                counter.textContent = `${activeIndex + 1} / ${items.length}`;
-            }
-        };
-
-        updateIndicators();
-        gallery.addEventListener("scroll", () => {
-            window.requestAnimationFrame(updateIndicators);
-        }, { passive: true });
-
         gallery.querySelectorAll("[data-gallery-open]").forEach((button) => {
             button.addEventListener("click", () => {
                 const src = button.dataset.gallerySrc;
@@ -474,29 +464,18 @@
         modalTitle.textContent = offerData.title;
         setModalBadge(`${offerData.discount}%`);
 
-        const galleryImages = [offerData.image, offerData.companyLogo].filter(Boolean);
-        const hasGalleryImages = galleryImages.length > 0;
-        const galleryMarkup = hasGalleryImages
-            ? galleryImages
-                .map(
-                    (src, index) => `
+        const hasGalleryImage = Boolean(offerData.image);
+        const gallerySection = hasGalleryImage
+            ? `
+                <section class="offer-gallery offer-gallery--single" data-offer-gallery>
                     <div class="offer-gallery__item" data-gallery-item>
-                        <button class="offer-gallery__button" type="button" data-gallery-open data-gallery-src="${src}" data-gallery-alt="صورة ${index + 1}">
-                            <img class="offer-gallery__image" src="${src}" alt="صورة ${index + 1}" loading="lazy">
+                        <button class="offer-gallery__button" type="button" data-gallery-open data-gallery-src="${offerData.image}" data-gallery-alt="صورة العرض">
+                            <img class="offer-gallery__image" src="${offerData.image}" alt="صورة العرض" loading="lazy">
                         </button>
                     </div>
-                `
-                )
-                .join("")
-            : `
-                <div class="offer-gallery__item" data-gallery-item>
-                    <div class="offer-gallery__fallback">لا توجد صور للعرض حالياً</div>
-                </div>
-            `;
-
-        const dotsMarkup = (hasGalleryImages ? galleryImages : [null])
-            .map((_, index) => `<span class="offer-gallery__dot ${index === 0 ? "is-active" : ""}" data-gallery-dot></span>`)
-            .join("");
+                </section>
+            `
+            : "";
 
         const conditions = getOfferConditions(offerData.classifications);
         const showToggle = offerData.description && offerData.description.length > 140;
@@ -504,12 +483,6 @@
         modalBody.innerHTML = `
             <article class="offer-modal">
                 <section class="offer-partner">
-                    <div class="offer-partner__logo">
-                        ${offerData.companyLogo
-                ? `<img src="${offerData.companyLogo}" alt="${offerData.company} logo" loading="lazy">`
-                : `<span>${offerData.company.charAt(0)}</span>`
-            }
-                    </div>
                     <div>
                         <p class="offer-partner__name">${offerData.company}</p>
                         <p class="offer-partner__valid">
@@ -523,15 +496,7 @@
             }
                 </section>
 
-                <section class="offer-gallery" data-offer-gallery>
-                    ${galleryMarkup}
-                </section>
-                <div class="offer-gallery__meta">
-                    <div class="offer-gallery__dots">
-                        ${dotsMarkup}
-                    </div>
-                    <span class="offer-gallery__counter" data-offer-gallery-counter>1 / ${hasGalleryImages ? galleryImages.length : 1}</span>
-                </div>
+                ${gallerySection}
 
                 <section class="offer-description">
                     <h3>تفاصيل العرض</h3>
@@ -723,7 +688,7 @@
             companySummary: source.dataset.offerCompanySummary || "",
             companyDescription: source.dataset.offerCompanyDescription || "",
             description: source.dataset.offerDescription || "",
-            validLabel: formatDateTime(source.dataset.offerValid || "مستمر"),
+            validLabel: formatOfferDate(source.dataset.offerValid || "مستمر"),
             image: source.dataset.offerImage || "",
             companyLogo: source.dataset.offerCompanyLogo || "",
             classifications: (source.dataset.offerClassifications || "")
