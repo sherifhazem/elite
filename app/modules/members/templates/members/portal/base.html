@@ -136,10 +136,14 @@
         <div class="app-modal__backdrop" data-modal-dismiss aria-hidden="true"></div>
         <article class="app-modal__sheet" role="document">
             <header class="app-modal__header">
-                <h2 class="app-modal__title" id="modal-title">Details</h2>
+                <div class="app-modal__heading">
+                    <h2 class="app-modal__title" id="modal-title">Details</h2>
+                    <span class="app-modal__badge" id="modal-badge" hidden></span>
+                </div>
                 <button class="app-modal__close" type="button" data-modal-dismiss aria-label="Close">×</button>
             </header>
             <div class="app-modal__body" id="modal-body"></div>
+            <footer class="app-modal__footer" id="modal-footer" hidden></footer>
         </article>
     </div>
 

@@ -65,6 +65,10 @@ The offers screen is designed to feel like a mobile app: a single Arabic title, 
 
 Recent refinements are visual and interaction-only updates (icons, focus/hover feedback, and touch states) that keep the existing layout and offer logic intact.
 
+### Offer Activation Modal (Members Portal)
+
+تم تحديث نافذة تفاصيل العرض لتصبح بطول الشاشة مع رأس وتذييل ثابتين، وشريط صور أفقي مع مؤشرات واضحة، وقسم تفاصيل قابل للتمديد، وقائمة شروط مختصرة عند توفرها. خطوة التفعيل أصبحت نافذة منفصلة بتركيز كامل على إدخال رمز التفعيل دون عناصر مشتتة، مع إبقاء زر التفعيل واضحًا دائمًا. التغييرات بصرية فقط دون تعديل منطق الأعمال.
+
 ---
 
 ## Dark Mode (Members Portal)
