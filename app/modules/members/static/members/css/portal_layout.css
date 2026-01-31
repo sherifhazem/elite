@@ -590,8 +590,8 @@ textarea {
 
 /* UI update: offer activation modal uses sticky header/footer and scrollable content. */
 .app-modal__sheet--tall {
-    height: 88vh;
-    max-height: 90vh;
+    height: calc(100vh - 120px);
+    max-height: calc(100vh - 120px);
     display: flex;
     flex-direction: column;
 }
@@ -737,6 +737,12 @@ textarea {
     -webkit-overflow-scrolling: touch;
 }
 
+.offer-gallery--single {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0;
+}
+
 .offer-gallery__item {
     flex: 0 0 82%;
     scroll-snap-align: start;
@@ -744,6 +750,11 @@ textarea {
     overflow: hidden;
     position: relative;
     background: rgba(17, 17, 17, 0.05);
+}
+
+.offer-gallery--single .offer-gallery__item {
+    flex: none;
+    width: 100%;
 }
 
 .offer-gallery__button {
