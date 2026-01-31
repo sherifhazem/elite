@@ -588,6 +588,14 @@ textarea {
     color: var(--portal-text);
 }
 
+/* UI update: offer activation modal uses sticky header/footer and scrollable content. */
+.app-modal__sheet--tall {
+    height: 88vh;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
 .app-modal__header {
     display: flex;
     justify-content: space-between;
@@ -596,9 +604,36 @@ textarea {
     border-bottom: 1px solid rgba(17, 17, 17, 0.08);
 }
 
+.app-modal__sheet--tall .app-modal__header {
+    background: color-mix(in srgb, var(--card-bg) 88%, var(--bg-primary));
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.app-modal__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
 .app-modal__title {
     font-size: 1rem;
     font-weight: 600;
+}
+
+.app-modal__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    background: var(--gold);
+    color: var(--royal-black);
+    font-weight: 700;
+    font-size: 0.8rem;
+    min-width: 2.3rem;
 }
 
 .app-modal__close {
@@ -614,6 +649,273 @@ textarea {
     gap: 0.85rem;
     font-size: 0.95rem;
     color: var(--color-gray-600);
+}
+
+.app-modal__sheet--tall .app-modal__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.1rem 1.4rem 1.4rem;
+}
+
+.app-modal__footer {
+    padding: 1rem 1.4rem 1.2rem;
+    border-top: 1px solid rgba(17, 17, 17, 0.08);
+    background: color-mix(in srgb, var(--card-bg) 92%, var(--bg-primary));
+    display: flex;
+    gap: 0.75rem;
+}
+
+.app-modal__footer[hidden] {
+    display: none;
+}
+
+.app-modal__footer .cta-button {
+    flex: 1;
+}
+
+.app-modal__footer .ghost-button {
+    flex: 0 0 auto;
+}
+
+.offer-modal {
+    display: grid;
+    gap: 1rem;
+}
+
+.offer-partner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.85rem;
+    background: rgba(17, 17, 17, 0.04);
+    border-radius: var(--radius-md);
+}
+
+.offer-partner__logo {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(17, 17, 17, 0.08);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: var(--royal-black);
+}
+
+.offer-partner__logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.offer-partner__name {
+    font-weight: 700;
+    color: var(--portal-text);
+    margin-bottom: 0.15rem;
+}
+
+.offer-partner__valid {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--portal-muted);
+}
+
+.offer-partner__cta {
+    margin-inline-start: auto;
+}
+
+.offer-gallery {
+    display: flex;
+    gap: 0.8rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.offer-gallery__item {
+    flex: 0 0 82%;
+    scroll-snap-align: start;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    position: relative;
+    background: rgba(17, 17, 17, 0.05);
+}
+
+.offer-gallery__button {
+    width: 100%;
+    height: 100%;
+    border: none;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.offer-gallery__image {
+    width: 100%;
+    height: 190px;
+    object-fit: cover;
+    display: block;
+}
+
+.offer-gallery__fallback {
+    height: 190px;
+    display: grid;
+    place-items: center;
+    font-size: 0.9rem;
+    color: var(--portal-muted);
+}
+
+.offer-gallery__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.offer-gallery__dots {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.offer-gallery__dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: rgba(17, 17, 17, 0.18);
+}
+
+.offer-gallery__dot.is-active {
+    background: var(--royal-black);
+}
+
+.offer-gallery__counter {
+    font-size: 0.8rem;
+    color: var(--portal-muted);
+}
+
+.offer-description h3,
+.offer-conditions h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--portal-text);
+}
+
+.offer-description__text {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+    color: var(--portal-text);
+    line-height: 1.6;
+}
+
+.offer-description__text.is-expanded {
+    -webkit-line-clamp: unset;
+}
+
+.offer-conditions__list {
+    list-style: none;
+    padding: 0;
+    margin: 0.25rem 0 0;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.offer-conditions__list li {
+    position: relative;
+    padding-inline-start: 1.1rem;
+    color: var(--portal-text);
+}
+
+.offer-conditions__list li::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0.5rem;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--gold);
+}
+
+.activation-modal {
+    display: grid;
+    gap: 1rem;
+}
+
+.activation-modal__hint {
+    color: var(--portal-muted);
+    line-height: 1.6;
+}
+
+.activation-modal__field {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.activation-modal__input {
+    font-size: 1.2rem;
+    padding: 0.85rem 1rem;
+    text-align: center;
+    letter-spacing: 0.3rem;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(17, 17, 17, 0.2);
+    width: 100%;
+}
+
+.activation-modal__input.is-success {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 2px color-mix(in srgb, #16a34a 22%, transparent);
+}
+
+.activation-modal__input.is-error {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 2px color-mix(in srgb, #dc2626 22%, transparent);
+}
+
+.offer-image-viewer {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 16, 26, 0.82);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    z-index: 100;
+}
+
+.offer-image-viewer[hidden] {
+    display: none;
+}
+
+.offer-image-viewer__inner {
+    position: relative;
+    width: min(92vw, 420px);
+}
+
+.offer-image-viewer__image {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+}
+
+.offer-image-viewer__close {
+    position: absolute;
+    top: -2.2rem;
+    inset-inline-end: 0;
+    background: var(--card-bg);
+    border: none;
+    border-radius: 999px;
+    width: 2.2rem;
+    height: 2.2rem;
+    box-shadow: var(--shadow-soft);
+    font-size: 1rem;
 }
 
 .usage-code-entry {

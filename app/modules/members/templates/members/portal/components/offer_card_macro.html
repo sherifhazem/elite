@@ -21,6 +21,12 @@ offer.membership_discount) %}
     data-offer-company="{{ offer.company.name if offer.company else 'شريك ELITE' }}"
     data-company-name="{{ offer.company.name if offer.company else '' }}" data-offer-discount="{{ discount_value }}"
     data-offer-valid="{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'مستمر' }}"
+    data-offer-description="{{ offer.description or '' }}"
+    data-offer-company-summary="{{ (offer.company.description or '')[:140] if offer.company else '' }}"
+    data-offer-company-description="{{ offer.company.description if offer.company else '' }}"
+    data-offer-image="{{ offer.image_url or '' }}"
+    data-offer-company-logo="{{ offer.company.logo_url if offer.company and offer.company.logo_url else '' }}"
+    data-offer-classifications="{{ offer.classification_values | join(',') }}"
     data-offer-eligible="{{ 'true' if is_eligible else 'false' }}"
     data-category="{{ offer.company.industry if offer.company and offer.company.industry else '' }}">
 

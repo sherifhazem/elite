@@ -13,6 +13,9 @@
     const modal = document.getElementById("portal-modal");
     const modalBody = document.getElementById("modal-body");
     const modalTitle = document.getElementById("modal-title");
+    const modalFooter = document.getElementById("modal-footer");
+    const modalBadge = document.getElementById("modal-badge");
+    const modalSheet = modal ? modal.querySelector(".app-modal__sheet") : null;
 
     let isNavigating = false;
     let pullStartY = null;
@@ -32,6 +35,37 @@
         } catch (error) {
             console.error("Failed to format date", error);
             return typeof value === "string" ? value : "—";
+        }
+    }
+
+    function resetModalLayout() {
+        if (modalSheet) {
+            modalSheet.classList.remove("app-modal__sheet--tall");
+        }
+        if (modalFooter) {
+            modalFooter.innerHTML = "";
+            modalFooter.hidden = true;
+        }
+        if (modalBadge) {
+            modalBadge.textContent = "";
+            modalBadge.hidden = true;
+        }
+        const viewer = modal?.querySelector(".offer-image-viewer");
+        if (viewer) {
+            viewer.setAttribute("hidden", "hidden");
+        }
+    }
+
+    function setModalBadge(text) {
+        if (!modalBadge) {
+            return;
+        }
+        if (text) {
+            modalBadge.textContent = text;
+            modalBadge.removeAttribute("hidden");
+        } else {
+            modalBadge.textContent = "";
+            modalBadge.setAttribute("hidden", "hidden");
         }
     }
 
@@ -242,6 +276,9 @@
                 card.dataset.offerDescription = offer.description || "";
                 card.dataset.offerDiscount = Math.round(offer.discount_percent || offer.base_discount || 0);
                 card.dataset.offerValid = offer.valid_until ? offer.valid_until.split("T")[0] : "مستمر";
+                card.dataset.offerImage = offer.image_url || "";
+                card.dataset.offerCompanyLogo = offer.company_logo_url || "";
+                card.dataset.offerClassifications = (offer.classification_values || []).join(",");
                 const industryIcon = offer.industry_icon || 'fix.png';
 
                 // Match the structure of offer_card_macro.html
@@ -294,6 +331,7 @@
         if (!modal || !modalBody || !modalTitle) {
             return;
         }
+        resetModalLayout();
         const name = fallbackName || "الشركة الشريكة";
         const summary = fallbackSummary || "";
         const description = fallbackDescription || "";
@@ -332,52 +370,209 @@
         }
     }
 
-    /** Open the shared modal with details derived from the dataset. */
-    function openOfferModal(source) {
-        if (!modal || !modalBody || !modalTitle || !source) {
+    function getOfferConditions(classifications = []) {
+        const labels = {
+            first_time_offer: "لأول زيارة فقط",
+            loyalty_offer: "مخصص لعملاء الولاء",
+            mid_week: "ساري منتصف الأسبوع",
+            happy_hour: "ساري خلال ساعة السعادة",
+            active_members_only: "للأعضاء النشطين فقط",
+        };
+        return classifications
+            .map((key) => labels[key])
+            .filter((label) => Boolean(label));
+    }
+
+    function ensureOfferViewer() {
+        if (!modal) {
+            return null;
+        }
+        let viewer = modal.querySelector(".offer-image-viewer");
+        if (!viewer) {
+            viewer = document.createElement("div");
+            viewer.className = "offer-image-viewer";
+            viewer.setAttribute("hidden", "hidden");
+            viewer.innerHTML = `
+                <div class="offer-image-viewer__inner">
+                    <button class="offer-image-viewer__close" type="button" aria-label="إغلاق الصورة">×</button>
+                    <img class="offer-image-viewer__image" alt="">
+                </div>
+            `;
+            modal.appendChild(viewer);
+            const closeButton = viewer.querySelector(".offer-image-viewer__close");
+            closeButton?.addEventListener("click", () => {
+                viewer.setAttribute("hidden", "hidden");
+            });
+        }
+        return viewer;
+    }
+
+    function setupOfferGallery(gallery) {
+        if (!gallery) {
             return;
         }
-        modalTitle.textContent = source.dataset.offerTitle || "Offer";
-        const discount = source.dataset.offerDiscount || "0";
-        const company = source.dataset.offerCompany || "ELITE Partner";
-        const companyId = source.dataset.offerCompanyId || "";
-        const summary = source.dataset.offerCompanySummary || "";
-        const description = source.dataset.offerDescription || "";
-        const valid = source.dataset.offerValid || "مستمر";
+        const items = Array.from(gallery.querySelectorAll("[data-gallery-item]"));
+        const dots = modalBody?.querySelectorAll("[data-gallery-dot]") || [];
+        const counter = modalBody?.querySelector("[data-offer-gallery-counter]");
+        if (items.length === 0) {
+            return;
+        }
+
+        const updateIndicators = () => {
+            const galleryRect = gallery.getBoundingClientRect();
+            let activeIndex = 0;
+            let minDistance = Infinity;
+            items.forEach((item, index) => {
+                const distance = Math.abs(item.getBoundingClientRect().left - galleryRect.left);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    activeIndex = index;
+                }
+            });
+            dots.forEach((dot, index) => {
+                dot.classList.toggle("is-active", index === activeIndex);
+            });
+            if (counter) {
+                counter.textContent = `${activeIndex + 1} / ${items.length}`;
+            }
+        };
+
+        updateIndicators();
+        gallery.addEventListener("scroll", () => {
+            window.requestAnimationFrame(updateIndicators);
+        }, { passive: true });
+
+        gallery.querySelectorAll("[data-gallery-open]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const src = button.dataset.gallerySrc;
+                if (!src) {
+                    return;
+                }
+                const viewer = ensureOfferViewer();
+                if (!viewer) {
+                    return;
+                }
+                const img = viewer.querySelector(".offer-image-viewer__image");
+                if (img) {
+                    img.src = src;
+                    img.alt = button.dataset.galleryAlt || "صورة العرض";
+                }
+                viewer.removeAttribute("hidden");
+            });
+        });
+    }
+
+    function renderOfferModal(offerData) {
+        if (!modal || !modalBody || !modalTitle) {
+            return;
+        }
+        resetModalLayout();
+        if (modalSheet) {
+            modalSheet.classList.add("app-modal__sheet--tall");
+        }
+
+        modalTitle.textContent = offerData.title;
+        setModalBadge(`${offerData.discount}%`);
+
+        const galleryImages = [offerData.image, offerData.companyLogo].filter(Boolean);
+        const hasGalleryImages = galleryImages.length > 0;
+        const galleryMarkup = hasGalleryImages
+            ? galleryImages
+                .map(
+                    (src, index) => `
+                    <div class="offer-gallery__item" data-gallery-item>
+                        <button class="offer-gallery__button" type="button" data-gallery-open data-gallery-src="${src}" data-gallery-alt="صورة ${index + 1}">
+                            <img class="offer-gallery__image" src="${src}" alt="صورة ${index + 1}" loading="lazy">
+                        </button>
+                    </div>
+                `
+                )
+                .join("")
+            : `
+                <div class="offer-gallery__item" data-gallery-item>
+                    <div class="offer-gallery__fallback">لا توجد صور للعرض حالياً</div>
+                </div>
+            `;
+
+        const dotsMarkup = (hasGalleryImages ? galleryImages : [null])
+            .map((_, index) => `<span class="offer-gallery__dot ${index === 0 ? "is-active" : ""}" data-gallery-dot></span>`)
+            .join("");
+
+        const conditions = getOfferConditions(offerData.classifications);
+        const showToggle = offerData.description && offerData.description.length > 140;
+
         modalBody.innerHTML = `
             <article class="offer-modal">
-                <p><strong>الشركة:</strong> ${company}</p>
-                <p><strong>نسبة الخصم:</strong> ${discount}%</p>
-                <p><strong>صالح حتى:</strong> ${valid}</p>
-                ${description ? `<p>${description}</p>` : ""}
-                ${summary ? `<p class="text-muted">${summary}</p>` : ""}
-                ${companyId
-                ? `<button class="ghost-button" type="button" data-modal-company data-company-id="${companyId}" data-company-name="${company}" data-company-summary="${summary}" data-company-description="${source.dataset.offerCompanyDescription || ""}">عن الشركة</button>`
+                <section class="offer-partner">
+                    <div class="offer-partner__logo">
+                        ${offerData.companyLogo
+                ? `<img src="${offerData.companyLogo}" alt="${offerData.company} logo" loading="lazy">`
+                : `<span>${offerData.company.charAt(0)}</span>`
+            }
+                    </div>
+                    <div>
+                        <p class="offer-partner__name">${offerData.company}</p>
+                        <p class="offer-partner__valid">
+                            <i class="fa-regular fa-calendar"></i>
+                            <span>ينتهي في ${offerData.validLabel}</span>
+                        </p>
+                    </div>
+                    ${offerData.companyId
+                ? `<button class="ghost-button ghost-button--small offer-partner__cta" type="button" data-modal-company data-company-id="${offerData.companyId}" data-company-name="${offerData.company}" data-company-summary="${offerData.companySummary}" data-company-description="${offerData.companyDescription}">عن الشريك</button>`
                 : ""
             }
-                <div class="usage-code-entry">
-                    <h4>توثيق الاستخدام</h4>
-                    <p class="text-muted">أدخل رمز الاستخدام الذي يقدمه الشريك لإتمام التحقق.</p>
-                    <form class="usage-code-form" data-usage-code-form>
-                        <label class="form-label" for="usage-code-input">رمز الاستخدام</label>
-                        <div class="usage-code-input-group">
-                            <input
-                                class="form-control"
-                                id="usage-code-input"
-                                name="usage_code"
-                                type="text"
-                                inputmode="numeric"
-                                maxlength="5"
-                                autocomplete="one-time-code"
-                                placeholder="أدخل الرمز"
-                                data-usage-code-input
-                            >
-                            <button class="cta-button" type="submit">تحقق</button>
-                        </div>
-                    </form>
+                </section>
+
+                <section class="offer-gallery" data-offer-gallery>
+                    ${galleryMarkup}
+                </section>
+                <div class="offer-gallery__meta">
+                    <div class="offer-gallery__dots">
+                        ${dotsMarkup}
+                    </div>
+                    <span class="offer-gallery__counter" data-offer-gallery-counter>1 / ${hasGalleryImages ? galleryImages.length : 1}</span>
                 </div>
+
+                <section class="offer-description">
+                    <h3>تفاصيل العرض</h3>
+                    <p class="offer-description__text" data-offer-description>${offerData.description || "لا توجد تفاصيل إضافية لهذا العرض."}</p>
+                    <button class="ghost-button ghost-button--small" type="button" data-offer-description-toggle ${showToggle ? "" : "hidden"}>عرض المزيد</button>
+                </section>
+
+                ${conditions.length
+                ? `
+                    <section class="offer-conditions">
+                        <h3>الشروط</h3>
+                        <ul class="offer-conditions__list">
+                            ${conditions.map((item) => `<li>${item}</li>`).join("")}
+                        </ul>
+                    </section>
+                `
+                : ""
+            }
             </article>
         `;
+
+        if (modalFooter) {
+            modalFooter.innerHTML = `
+                <button class="cta-button" type="button" data-offer-activate>تفعيل العرض</button>
+                <button class="ghost-button" type="button" data-modal-dismiss>تراجع</button>
+            `;
+            modalFooter.hidden = false;
+        }
+
+        const description = modalBody.querySelector("[data-offer-description]");
+        const toggle = modalBody.querySelector("[data-offer-description-toggle]");
+        if (description && toggle) {
+            toggle.addEventListener("click", () => {
+                description.classList.toggle("is-expanded");
+                toggle.textContent = description.classList.contains("is-expanded") ? "عرض أقل" : "عرض المزيد";
+            });
+        }
+
+        const gallery = modalBody.querySelector("[data-offer-gallery]");
+        setupOfferGallery(gallery);
+
         const companyButton = modalBody.querySelector("[data-modal-company]");
         if (companyButton) {
             companyButton.addEventListener("click", () => {
@@ -389,62 +584,154 @@
                 );
             });
         }
-        const usageForm = modalBody.querySelector("[data-usage-code-form]");
-        const usageInput = modalBody.querySelector("[data-usage-code-input]");
-        if (usageForm && usageInput) {
-            usageForm.addEventListener("submit", async (event) => {
-                event.preventDefault();
-                const offerId = source.dataset.offerId;
-                const code = usageInput.value.trim();
-                if (!offerId) {
-                    showToast("تعذر تحديد العرض المحدد.", "error");
-                    return;
-                }
-                if (!code) {
-                    showToast("يرجى إدخال رمز الاستخدام.", "error");
-                    return;
-                }
-                const submitButton = usageForm.querySelector("button[type=\"submit\"]");
-                if (submitButton) {
-                    submitButton.disabled = true;
-                }
-                try {
-                    const response = await fetch("/api/usage-codes/verify", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "X-Requested-With": "XMLHttpRequest",
-                        },
-                        credentials: "include",
-                        body: JSON.stringify({
-                            offer_id: Number.parseInt(offerId, 10) || offerId,
-                            code,
-                        }),
-                    });
-                    const payload = await response.json().catch(() => ({}));
-                    if (!response.ok || payload.ok === false) {
-                        throw new Error(
-                            payload.message || payload.error || "تعذر التحقق من الرمز."
-                        );
-                    }
-                    showToast("تم توثيق الاستخدام بنجاح.");
-                    usageInput.value = "";
-                    setTimeout(() => {
-                        closeModal();
-                        refreshCurrentView(false);
-                    }, 1500);
-                } catch (error) {
-                    console.error("Usage code verification failed", error);
-                    showToast(error.message || "تعذر التحقق من الرمز.", "error");
-                } finally {
-                    if (submitButton) {
-                        submitButton.disabled = false;
-                    }
-                }
-            });
+
+        const activateButton = modalFooter?.querySelector("[data-offer-activate]");
+        if (activateButton) {
+            activateButton.addEventListener("click", () => openActivationModal(offerData));
         }
+
         modal.removeAttribute("hidden");
         document.body.style.overflow = "hidden";
+    }
+
+    function openActivationModal(offerData) {
+        if (!modal || !modalBody || !modalTitle) {
+            return;
+        }
+        resetModalLayout();
+        if (modalSheet) {
+            modalSheet.classList.add("app-modal__sheet--tall");
+        }
+
+        modalTitle.textContent = "تفعيل العرض";
+        setModalBadge("");
+
+        modalBody.innerHTML = `
+            <article class="activation-modal">
+                <p class="activation-modal__hint">اطلب رمز التفعيل من الكاشير.</p>
+                <form class="activation-modal__field" data-usage-code-form>
+                    <label class="form-label" for="activation-code-input">رمز التفعيل</label>
+                    <input
+                        class="activation-modal__input"
+                        id="activation-code-input"
+                        name="usage_code"
+                        type="text"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        maxlength="6"
+                        autocomplete="one-time-code"
+                        placeholder="أدخل رمز التفعيل"
+                        data-usage-code-input
+                    >
+                </form>
+            </article>
+        `;
+
+        if (modalFooter) {
+            modalFooter.innerHTML = `
+                <button class="cta-button" type="button" data-usage-code-submit>تحقق / تفعيل</button>
+                <button class="ghost-button" type="button" data-back-to-offer>تراجع</button>
+            `;
+            modalFooter.hidden = false;
+        }
+
+        const usageForm = modalBody.querySelector("[data-usage-code-form]");
+        const usageInput = modalBody.querySelector("[data-usage-code-input]");
+        const submitButton = modalFooter?.querySelector("[data-usage-code-submit]");
+        const backButton = modalFooter?.querySelector("[data-back-to-offer]");
+
+        backButton?.addEventListener("click", () => renderOfferModal(offerData));
+
+        const handleSubmit = async () => {
+            if (!usageInput) {
+                return;
+            }
+            const code = usageInput.value.trim();
+            usageInput.classList.remove("is-error", "is-success");
+            if (!code) {
+                usageInput.classList.add("is-error");
+                showToast("يرجى إدخال رمز التفعيل.", "error");
+                return;
+            }
+            if (submitButton) {
+                submitButton.disabled = true;
+            }
+            try {
+                const response = await fetch("/api/usage-codes/verify", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        offer_id: Number.parseInt(offerData.id, 10) || offerData.id,
+                        code,
+                    }),
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || payload.ok === false) {
+                    throw new Error(payload.message || payload.error || "تعذر التحقق من الرمز.");
+                }
+                showToast("تم توثيق الاستخدام بنجاح.");
+                usageInput.classList.add("is-success");
+                usageInput.value = "";
+                setTimeout(() => {
+                    closeModal();
+                    refreshCurrentView(false);
+                }, 1500);
+            } catch (error) {
+                console.error("Usage code verification failed", error);
+                usageInput.classList.add("is-error");
+                showToast(error.message || "تعذر التحقق من الرمز.", "error");
+            } finally {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                }
+            }
+        };
+
+        usageForm?.addEventListener("submit", (event) => {
+            event.preventDefault();
+            handleSubmit();
+        });
+
+        usageInput?.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                handleSubmit();
+            }
+        });
+
+        submitButton?.addEventListener("click", handleSubmit);
+
+        modal.removeAttribute("hidden");
+        document.body.style.overflow = "hidden";
+    }
+
+    /** Open the shared modal with details derived from the dataset. */
+    function openOfferModal(source) {
+        if (!modal || !modalBody || !modalTitle || !source) {
+            return;
+        }
+        const offerData = {
+            id: source.dataset.offerId,
+            title: source.dataset.offerTitle || "تفاصيل العرض",
+            discount: source.dataset.offerDiscount || "0",
+            company: source.dataset.offerCompany || "شريك ELITE",
+            companyId: source.dataset.offerCompanyId || "",
+            companySummary: source.dataset.offerCompanySummary || "",
+            companyDescription: source.dataset.offerCompanyDescription || "",
+            description: source.dataset.offerDescription || "",
+            validLabel: formatDateTime(source.dataset.offerValid || "مستمر"),
+            image: source.dataset.offerImage || "",
+            companyLogo: source.dataset.offerCompanyLogo || "",
+            classifications: (source.dataset.offerClassifications || "")
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean),
+        };
+        renderOfferModal(offerData);
     }
 
     /** Present a redemption code modal with QR support. */
@@ -452,6 +739,7 @@
         if (!modal || !modalBody || !modalTitle) {
             return;
         }
+        resetModalLayout();
         const status = (payload.status || "pending").toLowerCase();
         const statusMap = {
             pending: "قيد التفعيل",
@@ -525,12 +813,14 @@
         }
         modal.setAttribute("hidden", "hidden");
         document.body.style.overflow = "";
+        resetModalLayout();
     }
 
     function showRedemptionDetails(button) {
         if (!modal || !modalBody || !modalTitle) {
             return;
         }
+        resetModalLayout();
         const card = button.closest(".activation-card");
         if (!card) {
             return;
@@ -793,8 +1083,11 @@
         if (!modal) {
             return;
         }
-        modal.querySelectorAll("[data-modal-dismiss]").forEach((element) => {
-            element.addEventListener("click", closeModal);
+        modal.addEventListener("click", (event) => {
+            const target = event.target.closest("[data-modal-dismiss]");
+            if (target) {
+                closeModal();
+            }
         });
         document.addEventListener("keydown", (event) => {
             if (event.key === "Escape" && !modal.hasAttribute("hidden")) {
