@@ -222,6 +222,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     def inject_user_context():
         """Inject user and role context into all templates, including status labels."""
         from app.services.incentive_eligibility_service import get_offer_runtime_flags
+        from app.services.access_control import can_access
 
         user = getattr(g, "current_user", None)
         role = getattr(g, "user_role", "guest") or "guest"
@@ -275,6 +276,8 @@ def create_app(config_class: type[Config] = Config) -> Flask:
                 user_status_label = f"🛡 Admin ({username})"
             elif normalized_role == "company":
                 user_status_label = f"🏢 {username} (شركة)"
+            elif normalized_role == "company_staff":
+                user_status_label = f"🏢 {username} (فريق الشركة)"
             else:
                 user_status_label = f"👤 {username}"
         else:
@@ -301,6 +304,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             "is_superadmin": is_superadmin,
             "get_offer_runtime_flags": get_offer_runtime_flags,
             "unread_messages_count": unread_messages_count,
+            "can_access": can_access,
         }
 
     with app.app_context():

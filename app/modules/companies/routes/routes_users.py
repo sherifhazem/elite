@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from app.core.database import db
 from app.models import Permission, User
 from app.services.access_control import company_required
+from app.modules.members.services.member_roles_service import assign_permissions
 from app.utils.company_context import _current_company
 
 from . import company_portal
@@ -17,7 +18,7 @@ from . import company_portal
 
 ROLE_LABELS = {
     "manage_offers": "إدارة العروض",
-    "view_usage_codes": "عرض رمز التفعيل",
+    "manage_usage_codes": "إدارة أكواد الاستخدام",
 }
 
 
@@ -97,18 +98,14 @@ def company_users() -> str:
             email=email,
             phone_number=phone_number,
             company_id=company.id,
-            role="company",
+            role="company_staff",
             is_active=True,
         )
         staff_user.set_password(password)
-        permissions = _get_or_create_permissions(selected_roles)
-        for permission in permissions:
-            if permission not in staff_user.permissions:
-                staff_user.permissions.append(permission)
-
         db.session.add(staff_user)
         try:
-            db.session.commit()
+            _get_or_create_permissions(selected_roles)
+            assign_permissions(staff_user, selected_roles)
         except IntegrityError:
             db.session.rollback()
             flash("تعذر إنشاء المستخدم. يرجى التحقق من البيانات والمحاولة مرة أخرى.", "danger")

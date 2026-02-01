@@ -7,7 +7,7 @@ from datetime import datetime
 from http import HTTPStatus
 from typing import Dict, Set, Tuple
 
-from flask import current_app, flash, jsonify, redirect, render_template, request, url_for
+from flask import current_app, flash, g, jsonify, redirect, render_template, request, url_for
 from werkzeug.utils import secure_filename
 
 from app.core.database import db
@@ -18,7 +18,7 @@ from app.modules.members.services.member_notifications_service import (
     fetch_offer_feedback_counts,
 )
 from app.modules.admin.services import admin_settings_service
-from app.services.access_control import company_required
+from app.services.access_control import can_access, company_required
 from . import company_portal
 from app.utils.company_context import _current_company
 
@@ -31,6 +31,21 @@ CLASSIFICATION_LABELS = {
     "happy_hour": "ساعة السعادة",
     "mid_week": "منتصف الأسبوع",
 }
+
+
+def _ensure_manage_offers():
+    """Return a response when the current user lacks offer permissions."""
+
+    user = getattr(g, "current_user", None)
+    if can_access(user, "manage_offers"):
+        return None
+    if request.is_json:
+        return (
+            jsonify({"ok": False, "message": "ليس لديك صلاحية إدارة العروض."}),
+            HTTPStatus.FORBIDDEN,
+        )
+    flash("ليس لديك صلاحية إدارة العروض.", "warning")
+    return redirect(url_for("company_portal.company_users"))
 
 
 def _get_offer_type_availability() -> Dict[str, bool]:
@@ -226,6 +241,9 @@ def _handle_offer_image_upload(offer: Offer) -> str:
 def company_offers_list() -> str:
     """Display the offer management table scoped to the current company."""
 
+    permission_guard = _ensure_manage_offers()
+    if permission_guard is not None:
+        return permission_guard
     company = _current_company()
     now = datetime.utcnow()
     offers = (
@@ -262,6 +280,9 @@ def company_offers_list() -> str:
 def offer_new() -> str:
     """Render the offer creation form in a dedicated workspace."""
 
+    permission_guard = _ensure_manage_offers()
+    if permission_guard is not None:
+        return permission_guard
     company = _current_company()
     if company.status == "correction":
         flash("الحساب معلق جزئيا. لا يمكن إنشاء عروض جديدة.", "warning")
@@ -283,6 +304,9 @@ def offer_new() -> str:
 def offer_create():
     """Persist a new offer and optionally broadcast notifications."""
 
+    permission_guard = _ensure_manage_offers()
+    if permission_guard is not None:
+        return permission_guard
     company = _current_company()
     if company.status == "correction":
         if request.is_json:
@@ -358,6 +382,9 @@ def offer_create():
 def offer_edit(offer_id: int) -> str:
     """Return the pre-filled offer form for inline editing."""
 
+    permission_guard = _ensure_manage_offers()
+    if permission_guard is not None:
+        return permission_guard
     company = _current_company()
     if company.status == "correction":
         flash("الحساب معلق جزئيا. لا يمكن تعديل العروض.", "warning")
@@ -384,6 +411,9 @@ def offer_edit(offer_id: int) -> str:
 def offer_update(offer_id: int):
     """Update an existing offer ensuring it belongs to the current company."""
 
+    permission_guard = _ensure_manage_offers()
+    if permission_guard is not None:
+        return permission_guard
     company = _current_company()
     if company.status == "correction":
         if request.is_json:
@@ -459,6 +489,9 @@ def offer_update(offer_id: int):
 def offer_delete(offer_id: int):
     """Delete the specified offer owned by the current company."""
 
+    permission_guard = _ensure_manage_offers()
+    if permission_guard is not None:
+        return permission_guard
     company = _current_company()
     offer = Offer.query.filter_by(company_id=company.id, id=offer_id).first_or_404()
     db.session.delete(offer)

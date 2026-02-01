@@ -19,8 +19,8 @@ _LOGGER = get_logger(__name__)
 
 # Mapping of role requirements to the set of roles allowed to satisfy them.
 ROLE_ACCESS_MATRIX = {
-    "member": {"member", "company", "admin", "superadmin"},
-    "company": {"company", "superadmin"},
+    "member": {"member", "company_staff", "company", "admin", "superadmin"},
+    "company": {"company_staff", "company", "superadmin"},
     "admin": {"admin", "superadmin"},
     "superadmin": {"superadmin"},
 }
@@ -32,6 +32,7 @@ PERMISSION_ROLE_MATRIX = {
     "delete_users": {"superadmin"},
     "view_reports": {"admin", "superadmin"},
     "manage_offers": {"company", "admin", "superadmin"},
+    "manage_usage_codes": {"company", "admin", "superadmin"},
 }
 
 
