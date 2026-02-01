@@ -17,6 +17,34 @@ if current_user else '') %}
         class="settings-form" novalidate enctype="multipart/form-data">
         {% include "companies/_csrf_field.html" %}
         <fieldset class="settings-section">
+            <legend>ملف الشركة</legend>
+            <div class="row g-4">
+                <div class="col-12 col-lg-5">
+                    <label class="form-label" for="company-logo">الشعار</label>
+                    <input type="file" class="form-control visually-hidden" id="company-logo" name="logo_file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml">
+                    <label class="logo-upload-card" for="company-logo">
+                        <span class="logo-upload-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                                <path
+                                    d="M9 3a1 1 0 0 0-1 1v1H6a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3h-2V4a1 1 0 1 0-2 0v1h-4V4a1 1 0 0 0-1-1Zm9 4a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h12Zm-6 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm0 2a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" />
+                            </svg>
+                        </span>
+                        <span class="logo-upload-text">اضغط لإضافة الشعار</span>
+                        <img id="company-logo-preview"
+                            src="{{ company.logo_url or url_for('static', filename='companies/images/logo-placeholder.svg') }}"
+                            alt="{{ company.name }} شعار" class="logo-upload-preview">
+                    </label>
+                    <div class="form-text">الرجاء رفع لوجو بقياس 400×120 بحد أقصى وحجم أقل من 2MB.</div>
+                </div>
+                <div class="col-12 col-lg-7">
+                    <label for="company-description" class="form-label">الوصف</label>
+                    <textarea class="form-control" id="company-description" name="description" rows="4"
+                        placeholder="صف مزايا شركتك">{{ company.description or '' }}</textarea>
+                </div>
+            </div>
+        </fieldset>
+        <fieldset class="settings-section">
             <legend>نظرة عامة على الحساب</legend>
             <div class="row g-4">
                 <div class="col-md-6">
@@ -52,49 +80,6 @@ if current_user else '') %}
                     <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة للتعديل.</div>
                 </div>
                 {% endif %}
-            </div>
-        </fieldset>
-        <fieldset class="settings-section">
-            <legend>ملف الشركة</legend>
-            <div class="row g-4">
-                <div class="col-12">
-                    <label for="company-description" class="form-label">الوصف</label>
-                    <textarea class="form-control" id="company-description" name="description" rows="4"
-                        placeholder="صف مزايا شركتك">{{ company.description or '' }}</textarea>
-                </div>
-                <div class="col-12 col-md-6">
-                    <label for="company-logo" class="form-label">الشعار</label>
-                    <input type="file" class="form-control" id="company-logo" name="logo_file"
-                        accept="image/png,image/jpeg,image/webp,image/svg+xml">
-                    <div class="form-text">الرجاء رفع لوجو بقياس 400×120 بحد أقصى وحجم أقل من 2MB.</div>
-                </div>
-                <div class="col-12 col-md-6 d-flex align-items-end">
-                    <div class="logo-preview-wrapper">
-                        <div class="form-text mb-1">معاينة اللوجو الحالي</div>
-                        <img id="company-logo-preview"
-                            src="{{ company.logo_url or url_for('static', filename='companies/images/logo-placeholder.svg') }}"
-                            alt="{{ company.name }} شعار" class="img-fluid rounded shadow-sm border">
-                    </div>
-                </div>
-            </div>
-        </fieldset>
-        <fieldset class="settings-section">
-            <legend>الإشعارات</legend>
-            <div class="row g-3">
-                <div class="col-12 col-sm-6">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="notify-email" name="notify_email" {% if
-                            preferences.email %}checked{% endif %}>
-                        <label class="form-check-label" for="notify-email">تحديثات البريد الإلكتروني</label>
-                    </div>
-                </div>
-                <div class="col-12 col-sm-6">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="notify-sms" name="notify_sms" {% if
-                            preferences.sms %}checked{% endif %}>
-                        <label class="form-check-label" for="notify-sms">تنبيهات الرسائل النصية</label>
-                    </div>
-                </div>
             </div>
         </fieldset>
         <div class="settings-actions">
