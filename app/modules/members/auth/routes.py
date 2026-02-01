@@ -390,7 +390,7 @@ def api_login() -> tuple:
     
     # ... (rest of the logic remains similar)
     role_source = current_user if current_user.is_authenticated else user
-    member_role, company_role, admin_role, superadmin_role = user.ROLE_CHOICES
+    member_role, company_staff_role, company_role, admin_role, superadmin_role = user.ROLE_CHOICES
     
     member_dashboard_url = url_for("portal.member_portal_home")
     company_staff_redirect = None
@@ -413,7 +413,7 @@ def api_login() -> tuple:
 
     role_redirects = {
         member_role: member_dashboard_url,
-        "company_staff": company_staff_redirect or url_for("company_portal.company_users"),
+        company_staff_role: company_staff_redirect or url_for("company_portal.company_users"),
         company_role: url_for("company_portal.company_usage_codes"),
         admin_role: url_for("admin.dashboard_alias"),
         superadmin_role: url_for("admin.dashboard_alias"),
