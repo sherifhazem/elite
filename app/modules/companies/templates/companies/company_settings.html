@@ -18,66 +18,72 @@ if current_user else '') %}
         {% include "companies/_csrf_field.html" %}
         <fieldset class="settings-section">
             <legend>ملف الشركة</legend>
-            <div class="row g-4">
-                <div class="col-12 col-lg-5">
-                    <label class="form-label" for="company-logo">الشعار</label>
-                    <input type="file" class="form-control visually-hidden" id="company-logo" name="logo_file"
-                        accept="image/png,image/jpeg,image/webp,image/svg+xml">
-                    <label class="logo-upload-card" for="company-logo">
-                        <span class="logo-upload-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                                <path
-                                    d="M9 3a1 1 0 0 0-1 1v1H6a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3h-2V4a1 1 0 1 0-2 0v1h-4V4a1 1 0 0 0-1-1Zm9 4a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h12Zm-6 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm0 2a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" />
-                            </svg>
-                        </span>
-                        <span class="logo-upload-text">اضغط لإضافة الشعار</span>
-                        <img id="company-logo-preview"
-                            src="{{ company.logo_url or url_for('static', filename='companies/images/logo-placeholder.svg') }}"
-                            alt="{{ company.name }} شعار" class="logo-upload-preview">
-                    </label>
-                    <div class="form-text">الرجاء رفع لوجو بقياس 400×120 بحد أقصى وحجم أقل من 2MB.</div>
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <h3>الشعار</h3>
+                        <p>حجم خفيف، ألوان واضحة، وخلفية شفافة إن أمكن.</p>
+                    </div>
+                    <div class="settings-card-body">
+                        <input type="file" class="form-control visually-hidden" id="company-logo" name="logo_file"
+                            accept="image/png,image/jpeg,image/webp,image/svg+xml">
+                        <label class="logo-upload-simple" for="company-logo">
+                            <img id="company-logo-preview"
+                                src="{{ company.logo_url or url_for('static', filename='companies/images/logo-placeholder.svg') }}"
+                                alt="{{ company.name }} شعار" class="logo-upload-preview">
+                            <span class="logo-upload-text">اضغط لاختيار ملف الشعار</span>
+                        </label>
+                        <div class="form-text">القياس المقترح 400×120 وحجم أقل من 2MB.</div>
+                    </div>
                 </div>
-                <div class="col-12 col-lg-7">
-                    <label for="company-description" class="form-label">الوصف</label>
-                    <textarea class="form-control" id="company-description" name="description" rows="4"
-                        placeholder="صف مزايا شركتك">{{ company.description or '' }}</textarea>
+                <div class="settings-card settings-card--wide">
+                    <div class="settings-card-header">
+                        <h3>وصف الشركة</h3>
+                        <p>اختصر رسالة الشركة ونبذة عن المزايا الأساسية.</p>
+                    </div>
+                    <div class="settings-card-body">
+                        <label for="company-description" class="form-label">الوصف</label>
+                        <textarea class="form-control" id="company-description" name="description" rows="4"
+                            placeholder="صف مزايا شركتك">{{ company.description or '' }}</textarea>
+                    </div>
                 </div>
             </div>
         </fieldset>
         <fieldset class="settings-section">
             <legend>نظرة عامة على الحساب</legend>
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <label for="company-name" class="form-label">اسم الشركة</label>
-                    <input type="text" class="form-control" id="company-name" name="name" value="{{ company.name }}"
-                        readonly data-restricted-field>
-                    <div class="form-text text-warning-emphasis">هذا الحقل لا يمكن تعديله إلا بموافقة الإدارة.</div>
+            <div class="settings-grid settings-grid--compact">
+                <div class="settings-card">
+                    <div class="settings-card-body">
+                        <label for="company-name" class="form-label">اسم الشركة</label>
+                        <input type="text" class="form-control" id="company-name" name="name" value="{{ company.name }}"
+                            readonly data-restricted-field>
+                        <div class="form-text text-warning-emphasis">هذا الحقل لا يمكن تعديله إلا بموافقة الإدارة.</div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <label for="company-email" class="form-label">البريد الإلكتروني للحساب</label>
-                    <input type="email" class="form-control" id="company-email" name="account_email"
-                        value="{{ owner_email }}" readonly data-restricted-field>
-                    <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة.</div>
+                <div class="settings-card">
+                    <div class="settings-card-body">
+                        <label for="company-email" class="form-label">البريد الإلكتروني للحساب</label>
+                        <input type="email" class="form-control" id="company-email" name="account_email"
+                            value="{{ owner_email }}" readonly data-restricted-field>
+                        <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة.</div>
+                    </div>
+                </div>
+                <div class="settings-card">
+                    <div class="settings-card-body">
+                        <label for="company-industry" class="form-label">مجال العمل</label>
+                        <input type="text" class="form-control" id="company-industry" name="industry"
+                            value="{{ company.industry or '' }}" readonly data-restricted-field>
+                        <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة للتعديل.</div>
+                    </div>
                 </div>
                 {% if registration_value is not none %}
-                <div class="col-md-6">
-                    <label for="company-industry" class="form-label">مجال العمل</label>
-                    <input type="text" class="form-control" id="company-industry" name="industry"
-                        value="{{ company.industry or '' }}" readonly data-restricted-field>
-                    <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة للتعديل.</div>
-                </div>
-                <div class="col-md-6">
-                    <label for="company-registration" class="form-label">رقم السجل</label>
-                    <input type="text" class="form-control" id="company-registration" name="registration_number"
-                        value="{{ registration_value }}" readonly data-restricted-field>
-                    <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة.</div>
-                </div>
-                {% else %}
-                <div class="col-md-6">
-                    <label for="company-industry" class="form-label">مجال العمل</label>
-                    <input type="text" class="form-control" id="company-industry" name="industry"
-                        value="{{ company.industry or '' }}" readonly data-restricted-field>
-                    <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة للتعديل.</div>
+                <div class="settings-card">
+                    <div class="settings-card-body">
+                        <label for="company-registration" class="form-label">رقم السجل</label>
+                        <input type="text" class="form-control" id="company-registration" name="registration_number"
+                            value="{{ registration_value }}" readonly data-restricted-field>
+                        <div class="form-text text-warning-emphasis">يتطلب موافقة الإدارة.</div>
+                    </div>
                 </div>
                 {% endif %}
             </div>
