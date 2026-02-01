@@ -11,7 +11,19 @@
 
   <div class="card shadow-sm mb-4">
     <div class="card-body">
-      <h5 class="mb-3">Company Information</h5>
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <h5 class="mb-0">Company Information</h5>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small">Logo</span>
+          <img
+            src="{{ company.logo_url or url_for('static', filename='companies/images/logo-placeholder.svg') }}"
+            alt="{{ company.name }} logo"
+            class="border rounded bg-white"
+            style="width: 72px; height: 72px; object-fit: contain;"
+            loading="lazy"
+          />
+        </div>
+      </div>
 
       <div class="row">
         <div class="col-md-6">
