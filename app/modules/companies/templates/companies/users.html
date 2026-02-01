@@ -1,0 +1,83 @@
+{% extends "companies/base.html" %}
+
+{% block portal_title %}مستخدمو الشركة{% endblock %}
+{% block portal_subtitle %}إدارة حسابات الفريق وصلاحياتهم داخل البوابة.{% endblock %}
+
+{% block portal_content %}
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h6 mb-3">إضافة مستخدم جديد</h2>
+                <form method="post" action="{{ url_for('company_portal.company_users') }}" novalidate>
+                    {% include "companies/_csrf_field.html" %}
+                    <div class="mb-3">
+                        <label for="staff-name" class="form-label">الاسم</label>
+                        <input type="text" class="form-control" id="staff-name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="staff-phone" class="form-label">رقم الجوال</label>
+                        <input type="tel" class="form-control" id="staff-phone" name="phone_number" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="staff-password" class="form-label">كلمة المرور</label>
+                        <input type="password" class="form-control" id="staff-password" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label d-block">الصلاحيات</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="roles" value="manage_offers"
+                                id="role-manage-offers">
+                            <label class="form-check-label" for="role-manage-offers">إدارة العروض</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="roles" value="view_usage_codes"
+                                id="role-view-usage-codes">
+                            <label class="form-check-label" for="role-view-usage-codes">عرض رمز التفعيل</label>
+                        </div>
+                        <div class="form-text">اختر صلاحية واحدة على الأقل لإنشاء المستخدم.</div>
+                    </div>
+                    <button type="submit" class="btn btn-elite-primary w-100">إضافة المستخدم</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h6 mb-3">قائمة المستخدمين</h2>
+                {% if staff_users %}
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>رقم الجوال</th>
+                                <th>الصلاحيات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in staff_users %}
+                            <tr>
+                                <td>{{ entry.user.username }}</td>
+                                <td>{{ entry.user.phone_number or '-' }}</td>
+                                <td>
+                                    {% set labels = [] %}
+                                    {% for permission in entry.permissions %}
+                                    {% set _ = labels.append(role_labels.get(permission, permission)) %}
+                                    {% endfor %}
+                                    {{ labels | join('، ') if labels else '—' }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">لا يوجد مستخدمون مضافون بعد.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

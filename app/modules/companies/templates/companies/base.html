@@ -109,6 +109,13 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_users')) %}active{% endif %}"
+                            href="{{ url_for('company_portal.company_users') }}">
+                            <i class="fas fa-users me-2"></i>
+                            <span>المستخدمون</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_settings')) %}active{% endif %}"
                             href="{{ url_for('company_portal.company_settings') }}">
                             <i class="fas fa-gear me-2"></i>
@@ -196,6 +203,11 @@
                 </span>
             </span>
             <span class="company-mobile-nav__label">الرسائل</span>
+        </a>
+        <a class="company-mobile-nav__item {% if current_path.startswith(url_for('company_portal.company_users')) %}company-mobile-nav__item--active{% endif %}"
+            href="{{ url_for('company_portal.company_users') }}">
+            <span class="company-mobile-nav__icon"><i class="fas fa-users"></i></span>
+            <span class="company-mobile-nav__label">المستخدمون</span>
         </a>
         <a class="company-mobile-nav__item {% if current_path.startswith(url_for('company_portal.company_settings')) %}company-mobile-nav__item--active{% endif %}"
             href="{{ url_for('company_portal.company_settings') }}">

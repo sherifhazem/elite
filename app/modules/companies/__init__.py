@@ -19,6 +19,7 @@ from .routes import (  # noqa: E402,F401
     routes_settings,
     routes_usage_codes,
     routes_communication,
+    routes_users,
 )
 
 __all__ = ["company_portal"]
