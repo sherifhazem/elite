@@ -956,6 +956,48 @@
     color: var(--elite-primary);
 }
 
+.settings-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.settings-grid--compact {
+    gap: 1rem;
+}
+
+.settings-card {
+    background: #fff;
+    border: 1px solid rgba(26, 64, 120, 0.08);
+    border-radius: calc(var(--elite-radius) - 4px);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.settings-card--wide {
+    min-height: 100%;
+}
+
+.settings-card-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+    color: var(--elite-primary);
+}
+
+.settings-card-header p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--elite-muted);
+}
+
+.settings-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
 .settings-actions {
     display: flex;
     flex-wrap: wrap;
@@ -968,23 +1010,12 @@
     color: #9a6b00 !important;
 }
 
-.logo-preview-wrapper {
-    width: 100%;
-}
-
-.logo-preview-wrapper img {
-    max-height: 140px;
-    object-fit: contain;
-    background: #fff;
-    padding: 0.5rem;
-}
-
-.logo-upload-card {
-    border: 2px dashed rgba(26, 64, 120, 0.3);
-    border-radius: var(--elite-radius);
-    background: #fff;
-    padding: 1.25rem;
-    min-height: 200px;
+.logo-upload-simple {
+    border: 1px dashed rgba(26, 64, 120, 0.3);
+    border-radius: calc(var(--elite-radius) - 4px);
+    background: #fdfdff;
+    padding: 1rem;
+    min-height: 160px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -995,24 +1026,9 @@
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.logo-upload-card:hover {
+.logo-upload-simple:hover {
     border-color: rgba(26, 64, 120, 0.6);
-    box-shadow: 0 0 0 3px rgba(26, 64, 120, 0.12);
-}
-
-.logo-upload-icon {
-    width: 48px;
-    height: 48px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--elite-primary);
-}
-
-.logo-upload-icon svg {
-    width: 100%;
-    height: 100%;
-    fill: currentColor;
+    box-shadow: 0 0 0 3px rgba(26, 64, 120, 0.08);
 }
 
 .logo-upload-text {
@@ -1025,8 +1041,18 @@
     width: 100%;
     object-fit: contain;
     background: #f8fafc;
-    border-radius: calc(var(--elite-radius) - 4px);
-    padding: 0.5rem;
+    border-radius: calc(var(--elite-radius) - 6px);
+    padding: 0.75rem;
+}
+
+@media (min-width: 992px) {
+    .settings-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .settings-card--wide {
+        grid-column: span 1;
+    }
 }
 
 /* Toast overrides */
