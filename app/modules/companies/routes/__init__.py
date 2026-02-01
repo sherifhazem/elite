@@ -9,6 +9,7 @@ from . import (
     routes_settings,
     routes_usage_codes,
     routes_communication,
+    routes_users,
 )
 
 __all__ = ["company_bp", "company_portal"]
