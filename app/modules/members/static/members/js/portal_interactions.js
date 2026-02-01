@@ -60,9 +60,6 @@
     }
 
     function resetModalLayout() {
-        if (modalSheet) {
-            modalSheet.classList.remove("app-modal__sheet--tall");
-        }
         if (modalFooter) {
             modalFooter.innerHTML = "";
             modalFooter.hidden = true;
@@ -353,6 +350,9 @@
             return;
         }
         resetModalLayout();
+        if (modalSheet) {
+            modalSheet.classList.remove("app-modal__sheet--tall");
+        }
         const name = fallbackName || "الشركة الشريكة";
         const summary = fallbackSummary || "";
         const description = fallbackDescription || "";
@@ -483,6 +483,11 @@
         modalBody.innerHTML = `
             <article class="offer-modal">
                 <section class="offer-partner">
+                    ${!hasGalleryImage ? `
+                        <div class="offer-partner__logo">
+                            ${offerData.companyLogo ? `<img src="${offerData.companyLogo}" alt="${offerData.company}">` : offerData.company.charAt(0)}
+                        </div>
+                    ` : ''}
                     <div>
                         <p class="offer-partner__name">${offerData.company}</p>
                         <p class="offer-partner__valid">
@@ -491,7 +496,7 @@
                         </p>
                     </div>
                     ${offerData.companyId
-                ? `<button class="ghost-button ghost-button--small offer-partner__cta" type="button" data-modal-company data-company-id="${offerData.companyId}" data-company-name="${offerData.company}" data-company-summary="${offerData.companySummary}" data-company-description="${offerData.companyDescription}">عن الشريك</button>`
+                ? `<button class="ghost-button ghost-button--tiny offer-partner__cta" type="button" data-modal-company data-company-id="${offerData.companyId}" data-company-name="${offerData.company}" data-company-summary="${offerData.companySummary}" data-company-description="${offerData.companyDescription}">عن الشريك</button>`
                 : ""
             }
                 </section>
@@ -563,10 +568,12 @@
         if (!modal || !modalBody || !modalTitle) {
             return;
         }
-        resetModalLayout();
-        if (modalSheet) {
-            modalSheet.classList.add("app-modal__sheet--tall");
-        }
+
+        // Transition: instead of a full reset, we swap contents smoothly
+        modalBody.innerHTML = "";
+        modalFooter.innerHTML = "";
+        modalFooter.hidden = true;
+        modalBadge.hidden = true;
 
         modalTitle.textContent = "تفعيل العرض";
         setModalBadge("");
@@ -705,6 +712,9 @@
             return;
         }
         resetModalLayout();
+        if (modalSheet) {
+            modalSheet.classList.remove("app-modal__sheet--tall");
+        }
         const status = (payload.status || "pending").toLowerCase();
         const statusMap = {
             pending: "قيد التفعيل",
@@ -778,6 +788,9 @@
         }
         modal.setAttribute("hidden", "hidden");
         document.body.style.overflow = "";
+        if (modalSheet) {
+            modalSheet.classList.remove("app-modal__sheet--tall");
+        }
         resetModalLayout();
     }
 
