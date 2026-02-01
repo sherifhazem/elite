@@ -94,6 +94,7 @@
                     <p class="text-muted small mb-0">مرحبًا بك في مساحة عمل شركتك.</p>
                 </div>
                 <ul class="nav flex-column">
+                    {% if can_access(current_user, 'manage_usage_codes') %}
                     <li class="nav-item">
                         <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_usage_codes')) %}active{% endif %}"
                             href="{{ url_for('company_portal.company_usage_codes') }}">
@@ -101,6 +102,8 @@
                             <span>أكواد الاستخدام</span>
                         </a>
                     </li>
+                    {% endif %}
+                    {% if can_access(current_user, 'manage_offers') %}
                     <li class="nav-item">
                         <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_offers_list')) %}active{% endif %}"
                             href="{{ url_for('company_portal.company_offers_list') }}">
@@ -108,6 +111,7 @@
                             <span>العروض</span>
                         </a>
                     </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link {% if current_path.startswith(url_for('company_portal.company_users')) %}active{% endif %}"
                             href="{{ url_for('company_portal.company_users') }}">
@@ -182,16 +186,20 @@
         </div>
     </div>
     <nav class="company-mobile-nav" aria-label="Primary navigation">
+        {% if can_access(current_user, 'manage_usage_codes') %}
         <a class="company-mobile-nav__item {% if current_path.startswith(url_for('company_portal.company_usage_codes')) %}company-mobile-nav__item--active{% endif %}"
             href="{{ url_for('company_portal.company_usage_codes') }}">
             <span class="company-mobile-nav__icon"><i class="fas fa-key"></i></span>
             <span class="company-mobile-nav__label">الأكواد</span>
         </a>
+        {% endif %}
+        {% if can_access(current_user, 'manage_offers') %}
         <a class="company-mobile-nav__item {% if current_path.startswith(url_for('company_portal.company_offers_list')) %}company-mobile-nav__item--active{% endif %}"
             href="{{ url_for('company_portal.company_offers_list') }}">
             <span class="company-mobile-nav__icon"><i class="fas fa-gift"></i></span>
             <span class="company-mobile-nav__label">العروض</span>
         </a>
+        {% endif %}
         <a class="company-mobile-nav__item {% if current_path.startswith(url_for('company_portal.company_messages_list')) %}company-mobile-nav__item--active{% endif %}"
             href="{{ url_for('company_portal.company_messages_list') }}">
             <span class="company-mobile-nav__icon position-relative">

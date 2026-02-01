@@ -38,11 +38,11 @@ class User(UserMixin, db.Model):
     __tablename__ = "users"
 
     #: List of supported roles ordered from least to most privileged.
-    ROLE_CHOICES = ("member", "company", "admin", "superadmin")
+    ROLE_CHOICES = ("member", "company_staff", "company", "admin", "superadmin")
     #: Mapping of required roles to the allowed role set, kept local to avoid cross-layer imports.
     ROLE_ACCESS_MATRIX = {
-        "member": {"member", "company", "admin", "superadmin"},
-        "company": {"company", "superadmin"},
+        "member": {"member", "company_staff", "company", "admin", "superadmin"},
+        "company": {"company_staff", "company", "superadmin"},
         "admin": {"admin", "superadmin"},
         "superadmin": {"superadmin"},
     }

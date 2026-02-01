@@ -5,11 +5,11 @@ from __future__ import annotations
 from datetime import datetime
 from http import HTTPStatus
 
-from flask import jsonify, render_template
+from flask import flash, g, jsonify, redirect, render_template, request, url_for
 from sqlalchemy import or_
 
 from app.models import UsageCode
-from app.services.access_control import company_required
+from app.services.access_control import can_access, company_required
 from app.services.usage_code_service import generate_usage_code, get_usage_code_settings
 from app.utils.company_context import _current_company
 from .. import company_portal
@@ -20,6 +20,14 @@ from .. import company_portal
 def company_usage_codes() -> str:
     """Render the usage code management screen for partners."""
 
+    if not can_access(getattr(g, "current_user", None), "manage_usage_codes"):
+        if request.is_json:
+            return (
+                jsonify({"ok": False, "message": "ليس لديك صلاحية إدارة أكواد الاستخدام."}),
+                HTTPStatus.FORBIDDEN,
+            )
+        flash("ليس لديك صلاحية إدارة أكواد الاستخدام.", "warning")
+        return redirect(url_for("company_portal.company_users"))
     company = _current_company()
     settings = get_usage_code_settings()
     now = datetime.utcnow()
@@ -46,6 +54,11 @@ def company_usage_codes() -> str:
 def company_usage_codes_generate():
     """Generate a new usage code for the authenticated partner."""
 
+    if not can_access(getattr(g, "current_user", None), "manage_usage_codes"):
+        return (
+            jsonify({"ok": False, "message": "ليس لديك صلاحية إدارة أكواد الاستخدام."}),
+            HTTPStatus.FORBIDDEN,
+        )
     company = _current_company()
     if company.status == "correction":
         return (
@@ -82,6 +95,11 @@ def company_usage_codes_generate():
 def company_usage_codes_current():
     """Fetch the current usage code for the authenticated partner."""
 
+    if not can_access(getattr(g, "current_user", None), "manage_usage_codes"):
+        return (
+            jsonify({"ok": False, "message": "ليس لديك صلاحية إدارة أكواد الاستخدام."}),
+            HTTPStatus.FORBIDDEN,
+        )
     company = _current_company()
     if company.status == "correction":
         return (
