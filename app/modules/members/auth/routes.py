@@ -47,6 +47,7 @@ from .utils import (
     set_auth_cookie,
 )
 from app.core.extensions import csrf
+from app.services.access_control import can_access
 
 
 auth = Blueprint(
@@ -392,9 +393,27 @@ def api_login() -> tuple:
     member_role, company_role, admin_role, superadmin_role = user.ROLE_CHOICES
     
     member_dashboard_url = url_for("portal.member_portal_home")
-    
+    company_staff_redirect = None
+    if normalized_role == "company_staff":
+        if can_access(user, "manage_offers"):
+            company_staff_redirect = url_for("company_portal.company_offers_list")
+        elif can_access(user, "manage_usage_codes"):
+            company_staff_redirect = url_for("company_portal.company_usage_codes")
+        else:
+            response = jsonify(
+                {
+                    "error": "لا تملك أي صلاحيات لإدارة العروض أو أكواد الاستخدام.",
+                    "message": "يرجى التواصل مع مدير الشركة لمنحك الصلاحيات المناسبة.",
+                    "redirect_url": url_for("company_portal.company_users"),
+                }
+            )
+            clear_auth_cookie(response)
+            set_auth_cookie(response, token)
+            return response, HTTPStatus.FORBIDDEN
+
     role_redirects = {
         member_role: member_dashboard_url,
+        "company_staff": company_staff_redirect or url_for("company_portal.company_users"),
         company_role: url_for("company_portal.company_usage_codes"),
         admin_role: url_for("admin.dashboard_alias"),
         superadmin_role: url_for("admin.dashboard_alias"),
