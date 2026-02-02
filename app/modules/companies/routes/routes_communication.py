@@ -1,16 +1,21 @@
 """Communication routes for the company portal."""
 
 from flask import render_template, request, flash, redirect, url_for, g
-from flask_login import login_required, current_user
 
 from app.modules.companies import company_portal
 from app.services.communication_service import CommunicationService
 from app.models import User
+from app.services.access_control import company_required
+from app.modules.companies.routes.permissions import guard_company_staff_only_tabs
 
 @company_portal.route("/messages")
-@login_required
+@company_required
 def company_messages_list():
     """Display list of conversations for the current company user."""
+    permission_guard = guard_company_staff_only_tabs()
+    if permission_guard is not None:
+        return permission_guard
+    current_user = g.current_user
     page = request.args.get("page", 1, type=int)
     pagination = CommunicationService.get_user_conversations(current_user.id, page=page)
     
@@ -21,9 +26,13 @@ def company_messages_list():
     return render_template("communications/list.html", pagination=pagination, has_unread_messages=has_unread_messages)
 
 @company_portal.route("/messages/new", methods=["GET", "POST"])
-@login_required
+@company_required
 def company_messages_new():
     """Create a new conversation (Send message to Admin)."""
+    permission_guard = guard_company_staff_only_tabs()
+    if permission_guard is not None:
+        return permission_guard
+    current_user = g.current_user
     if request.method == "POST":
         subject = request.form.get("subject")
         body = request.form.get("body")
@@ -59,9 +68,13 @@ def company_messages_new():
     return render_template("communications/compose.html")
 
 @company_portal.route("/messages/<int:conversation_id>")
-@login_required
+@company_required
 def company_messages_view(conversation_id):
     """View a single conversation."""
+    permission_guard = guard_company_staff_only_tabs()
+    if permission_guard is not None:
+        return permission_guard
+    current_user = g.current_user
     conversation = CommunicationService.get_conversation(conversation_id, current_user.id)
     if not conversation:
         flash("المحادثة غير موجودة أو ليس لديك صلاحية الوصول إليها", "danger")
@@ -73,9 +86,13 @@ def company_messages_view(conversation_id):
     return render_template("communications/view.html", conversation=conversation)
 
 @company_portal.route("/messages/<int:conversation_id>/reply", methods=["POST"])
-@login_required
+@company_required
 def company_messages_reply(conversation_id):
     """Reply to an existing conversation."""
+    permission_guard = guard_company_staff_only_tabs()
+    if permission_guard is not None:
+        return permission_guard
+    current_user = g.current_user
     body = request.form.get("body")
     files = request.files.getlist("attachments")
     
@@ -95,10 +112,16 @@ def company_messages_reply(conversation_id):
         flash(f"حدث خطأ أثناء الرد: {str(e)}", "danger")
         
     return redirect(url_for("company_portal.company_messages_view", conversation_id=conversation_id))
+
+
 @company_portal.route("/messages/<int:conversation_id>/sync")
-@login_required
+@company_required
 def company_messages_sync(conversation_id):
     """Retrieve new messages for polling."""
+    permission_guard = guard_company_staff_only_tabs()
+    if permission_guard is not None:
+        return permission_guard
+    current_user = g.current_user
     last_id = request.args.get("last_id", 0, type=int)
     messages = CommunicationService.get_new_messages(conversation_id, current_user.id, last_id)
     
@@ -121,9 +144,14 @@ def company_messages_sync(conversation_id):
             } for m in messages
         ]
     }
+
+
 @company_portal.route("/api/messages/unread-count")
-@login_required
+@company_required
 def get_company_unread_count():
     """Endpoint for global unread message count badge."""
-    count = CommunicationService.get_unread_count(current_user.id)
+    permission_guard = guard_company_staff_only_tabs()
+    if permission_guard is not None:
+        return permission_guard
+    count = CommunicationService.get_unread_count(g.current_user.id)
     return {"unread_count": count}

@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from app.core.database import db
 from app.models import Permission, User
 from app.services.access_control import company_required
+from app.modules.companies.routes.permissions import guard_company_staff_only_tabs
 from app.modules.members.services.member_roles_service import assign_permissions
 from app.utils.company_context import _current_company
 
@@ -69,6 +70,9 @@ def _get_or_create_permissions(permission_names: list[str]) -> list[Permission]:
 def company_users() -> str:
     """Display and create company staff accounts."""
 
+    permission_guard = guard_company_staff_only_tabs()
+    if permission_guard is not None:
+        return permission_guard
     company = _current_company()
 
     if request.method == "POST":

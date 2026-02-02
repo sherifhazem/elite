@@ -21,6 +21,7 @@ from werkzeug.utils import secure_filename
 
 from app.core.database import db
 from app.services.access_control import company_required
+from app.modules.companies.routes.permissions import guard_company_staff_only_tabs
 from app.modules.companies.services.company_profile_service import (
     get_notification_preferences,
 )
@@ -80,6 +81,9 @@ def _save_logo_file(upload, company) -> str:
 def company_settings():
     """Display and persist company profile metadata."""
 
+    permission_guard = guard_company_staff_only_tabs()
+    if permission_guard is not None:
+        return permission_guard
     company = _current_company()
 
     if request.method == "POST":
