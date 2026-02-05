@@ -20,10 +20,12 @@ from app.modules.members.services.member_notifications_service import (
     notify_offer_feedback,
 )
 from app.modules.companies.services.company_offers_service import (
+    OfferCompanyBundle,
     get_company_brief,
     get_portal_offers_with_company,
 )
 
+from app.services.activity_evaluation_service import is_member_active
 from app.services.incentive_eligibility_service import get_offer_runtime_flags
 
 portal = Blueprint(
@@ -163,13 +165,34 @@ def _member_activity_entries(user: User, limit: int = 12) -> list[dict]:
     return activity
 
 
+def _filter_featured_offers_for_member(
+    user: User, offers: list[OfferCompanyBundle]
+) -> list[OfferCompanyBundle]:
+    exclusive_classifications = {"active_members_only", "happy_hour"}
+    can_view_exclusive = bool(user.is_active and is_member_active(user.id))
+    if can_view_exclusive:
+        return offers
+
+    non_exclusive_offers: list[OfferCompanyBundle] = []
+    exclusive_offers: list[OfferCompanyBundle] = []
+    for offer in offers:
+        classifications = set(offer.classification_values or [])
+        if classifications.intersection(exclusive_classifications):
+            exclusive_offers.append(offer)
+        else:
+            non_exclusive_offers.append(offer)
+
+    return non_exclusive_offers + exclusive_offers[:3]
+
+
 # Render the portal home view summarizing the member's benefits.
 @portal.route("/", methods=["GET"], endpoint="member_portal_home")
 def member_portal_home():
     user = _resolve_user_context()
     if user is None:
         return _redirect_to_login()
-    featured_offers = get_portal_offers_with_company(limit=6, featured=True)
+    featured_offers = get_portal_offers_with_company(featured=True)
+    featured_offers = _filter_featured_offers_for_member(user, featured_offers)
     return render_template(
         "members/portal/home.html",
         user=user,
