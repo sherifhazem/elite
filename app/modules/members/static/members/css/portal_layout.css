@@ -1158,14 +1158,14 @@ textarea {
 }
 
 .offer-card__eligibility {
-    background: #dc2626;
+    background: #6b7280;
     color: #fff;
     padding: 6px 12px;
     border-radius: 8px;
     font-size: 0.8rem;
     font-weight: 700;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.25);
 }
 
 .offer-card__discount-wrapper {
